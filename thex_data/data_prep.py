@@ -146,22 +146,23 @@ def get_data(col_list, incl_redshift=False, file='THEx-catalog.v0_0_3.fits'):
     df = collect_data(cur_path + "/../../../data/" + file)
     df = group_cts(df)
     df = filter_columns(df, col_list, incl_redshift)
+
     df = filter_top_classes(df, top=5)
 
     # Randomly subsample any over-represented classes down to 100
-    df = sub_sample(df, count=100, col_val='transient_type')
+    df = sub_sample(df, count=400, col_val='transient_type')
 
     # df.dropna(inplace=True)
 
     # Derive colors from data, and keep only colors
-    df = derive_diffs(df.copy())
+    # df = derive_diffs(df.copy())
 
     return df
 
 
-def init_data(col_list, incl_redshift=False, file='THEx-catalog.v0_0_3.fits'):
+def get_train_test(col_list, incl_redshift=False, file='THEx-catalog.v0_0_3.fits'):
     """
-    Initialize data for Naive Bayes classifier
+    Initialize data for Naive Bayes classifier using 70/30 split for train/test
     """
     df = get_data(col_list, incl_redshift, file)
 

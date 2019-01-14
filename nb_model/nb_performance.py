@@ -35,7 +35,7 @@ def get_accuracy(predicted_classes, actual_classes):
     """
     df_compare = combine_dfs(predicted_classes, actual_classes)
     perc_correct = get_percent_correct(df_compare)
-    total_accuracy = (str(round(perc_correct * 100, 4)) + " % correctly predicted.")
+    total_accuracy = round(perc_correct * 100, 4)
     return total_accuracy
 
 
@@ -59,7 +59,7 @@ def get_class_accuracies(df):
     # List of corresponding class codes
     tclasses = list(df.transient_type.unique())
     for transient_type in tclasses:
-        df_ttype = df[df.transient_type == transient_type]
+        df_ttype = df[df.transient_type == transient_type]  # filter df on this ttype
         perc_correct = get_percent_correct(df_ttype)
         taccuracies.append(perc_correct)
     return taccuracies, tclasses
@@ -169,9 +169,22 @@ def plot_compare_accuracy(predicted_classes, actual_classes, predicted_classes2,
     plt.show()
 
 
-def plot_class_accuracy(predicted_classes, actual_classes, plot_title):
+def plot_class_accuracy(accuracies, transient_classes, plot_title="Accuracy per Transient Type"):
+    rcParams['figure.figsize'] = 10, 10
+    class_index = np.arange(len(transient_classes))
+    plt.bar(class_index, accuracies)
+    plt.xticks(class_index, transient_classes, fontsize=12, rotation=30)
+    plt.yticks(list(np.linspace(0, 1, 11)), [
+               str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=12)
+    plt.title(plot_title, fontsize=15)
+    plt.xlabel('Transient Class', fontsize=12)
+    plt.ylabel('Accuracy', fontsize=12)
+    plt.show()
+
+
+def compute_plot_class_accuracy(predicted_classes, actual_classes, plot_title):
     """
-    Visualize accuracy per class with bar graph
+    Computes and Visualizes accuracy per class with bar graph
     """
     df_compare = combine_dfs(predicted_classes, actual_classes)
     # Get accuracy per class of transient
