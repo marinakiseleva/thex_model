@@ -1,4 +1,8 @@
 
+
+# Global variable for label of target
+TARGET_LABEL = 'transient_type'
+
 """
 Transient Type categories, mapped to codes (integer values).
 """

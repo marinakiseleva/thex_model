@@ -4,16 +4,16 @@ data_clean:
 
 """
 
-from .data_maps import groupings
+from .data_consts import groupings, TARGET_LABEL
 
 
 def group_cts(t_df):
     """
     Normalizes claimed type (transient type) into a specific category (one of the values in the groupings map). If claimed type is not in map, it is removed.
     :param t_df: Pandas DataFrame of galaxy/transient data. Must have column 'claimedtype' with transient type
-    :return t_df: Returns Pandas DataFrame with new column claimedtype_group, which has normalized transient type for each galaxy. 
+    :return t_df: Returns Pandas DataFrame with new column TARGET_LABEL, which has normalized transient type for each galaxy. 
     """
-    new_column = 'claimedtype_group'
+    new_column = TARGET_LABEL
     # Group claimed types into supergroups, defined in groupings dict
     # Only considers 1-1 mappings, does not use galaxies that have more than 1
     # transient class possible

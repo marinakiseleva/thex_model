@@ -3,7 +3,7 @@ import pandas as pd
 import sys
 from sklearn.model_selection import KFold
 
-from thex_data.data_maps import code_cat
+from thex_data.data_consts import code_cat, TARGET_LABEL
 from thex_data.data_prep import get_train_test, get_data
 from thex_data import data_plot
 import nb_performance as nbp
@@ -21,7 +21,6 @@ def run_cv(data_columns, incl_redshift=False, k=3):
     """
 
     data = get_data(data_columns, incl_redshift)
-    print(data)
     print("Rows in dataset: " + str(data.shape[0]))
 
     kf = KFold(n_splits=k, shuffle=True, random_state=10)
@@ -58,8 +57,8 @@ def run_cv(data_columns, incl_redshift=False, k=3):
     avg_accuracy = sum(accuracies) / k
     print("Average accuracy: " + str(avg_accuracy))
 
-    for f in list(data):
-        data_plot.plot_feature_distribution(data, feature=f)
+    # for f in list(data):
+    #     data_plot.plot_feature_distribution(data, feature=f)
     return avg_accuracy
 
 
@@ -67,10 +66,10 @@ def test_model(test, summaries, priors):
     """
     Tests model using established summaires & priors on test data (includes ttype)
     """
-    test_set = test.drop(["transient_type"], axis=1)
+    test_set = test.drop([TARGET_LABEL], axis=1)
     predictions = test_set_samples(summaries, priors, test_set)
     predicted_classes = pd.DataFrame(predictions, columns=['predicted_class'])
-    actual_classes = test['transient_type'].reset_index(drop=True)
+    actual_classes = test[TARGET_LABEL].reset_index(drop=True)
 
     return predicted_classes, actual_classes
 

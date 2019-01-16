@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from pylab import rcParams
 import sys
 sys.path.append("..")
-from thex_data.data_maps import code_cat
+from thex_data.data_consts import code_cat, TARGET_LABEL
 from thex_data.data_plot import get_class_names
 
 
@@ -15,13 +15,13 @@ def combine_dfs(predicted_classes, actual_classes):
     """
     df_compare = pd.concat([predicted_classes, actual_classes], axis=1)
     df_compare['correct'] = df_compare.apply(
-        lambda row: 1 if row.predicted_class == row.transient_type else 0, axis=1)
+        lambda row: 1 if row.predicted_class == row[TARGET_LABEL] else 0, axis=1)
     return df_compare
 
 
 def get_percent_correct(df_compare):
     """
-    Gets % of rows of dataframe that have correct column marked as 1. This column indicates if transient_type == predicted_class
+    Gets % of rows of dataframe that have correct column marked as 1. This column indicates if TARGET_LABEL == predicted_class
     """
     count_correct = df_compare[df_compare.correct == 1].shape[0]
     count_total = df_compare.shape[0]
@@ -46,7 +46,7 @@ def get_class_counts(df, classes):
     class_counts = []
     for tclass in classes:
         # Get count of this class
-        class_count = df.loc[df.transient_type == tclass].shape[0]
+        class_count = df.loc[df[TARGET_LABEL] == tclass].shape[0]
         class_counts.append(class_count)
     return class_counts
 
@@ -57,9 +57,10 @@ def get_class_accuracies(df):
     """
     taccuracies = []  # Percent correctly predicted
     # List of corresponding class codes
-    tclasses = list(df.transient_type.unique())
-    for transient_type in tclasses:
-        df_ttype = df[df.transient_type == transient_type]  # filter df on this ttype
+    tclasses = list(df[TARGET_LABEL].unique())
+    for tclass in tclasses:
+        # filter df on this ttype
+        df_ttype = df[df[TARGET_LABEL] == tclass]
         perc_correct = get_percent_correct(df_ttype)
         taccuracies.append(perc_correct)
     return taccuracies, tclasses

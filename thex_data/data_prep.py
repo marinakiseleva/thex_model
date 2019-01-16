@@ -13,9 +13,10 @@ import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from .data_maps import cat_code
+from .data_consts import cat_code, TARGET_LABEL
 from .data_init import collect_data
 from .data_clean import group_cts
+from .data_print import *
 
 
 def sub_sample(df, count, col_val):
@@ -38,27 +39,6 @@ def sub_sample(df, count, col_val):
     return subsampled_df
 
 
-def set_up_target(df_rs_band):
-    """
-    Sets up Target dataframe. Converts claimedtype_group strings to numeric codes
-    using cat_code map above
-    """
-    df_analyze = df_rs_band.copy()
-    # Split out claimedtype_group into new dataframe
-    y = df_analyze.claimedtype_group.to_frame(name='group')
-    # Use category code numbers from cat_code dict, instead of strings
-    y['cat_code'] = y.apply(lambda row:  cat_code[row.group], axis=1)
-    y = y.drop('group', axis=1)
-    return y
-
-
-def set_up_source(df_analyze):
-    X = df_analyze.copy()
-    X = X.drop(['redshift', 'claimedtype_group'], axis=1)
-
-    return X
-
-
 def split_train_test(X, y):
     # Split Training and Testing Data
     X_train, X_test, y_train, y_test = train_test_split(
@@ -68,35 +48,33 @@ def split_train_test(X, y):
 
 def filter_columns(df, col_list, incl_redshift=False):
     """
-    Filters columns down to those passed in as col_list PLUS redshift and claimedtype_group
-    If col_list is None, a set of columns is created
+    Filters columns down to those passed in as col_list (+ target label and redshift if selected)
     """
-    print("Filtering on columns " + str(col_list))
     if col_list is None:
-        full_list = ['NSA_ELPETRO_KCORRECT', 'Kmag']
-        col_list = [col for col in list(df) if any(
-            col_val in col and "_e_" not in col for col_val in full_list)]
+        raise ValueError('Need to pass in values for col_list')
 
     # Filter DataFrame down to these columns
-    sel_cols = col_list + ['claimedtype_group']
+    sel_cols = col_list + [TARGET_LABEL]
     if incl_redshift:
         sel_cols.append('redshift')
+    print("Filtering on columns " + str(sel_cols))
     df = df[sel_cols]
 
     # Convert transient class to number code
-    df['transient_type'] = df.apply(lambda row:  int(
-        cat_code[row.claimedtype_group]), axis=1)
-    df.drop(['claimedtype_group'], axis=1, inplace=True)
-
+    df[TARGET_LABEL] = df[TARGET_LABEL].apply(lambda x: int(cat_code[x]))
     return df
 
 
-def one_all(df, keep_cols, col):
-    one = df[df['claimedtype_group'].isin(keep_cols)]  # keep unique classes
-    rem = df.loc[~df['claimedtype_group'].isin(keep_cols)].copy()  # set to other
-    rem[col] = 'Other'
+def one_all(df, keep_classes):
+    """
+    Convert all classes not in keep_classes to 'Other' 
+    :param keep_classes: list of class NAMES to keep unique
+    """
+    class_codes = [cat_code[name] for name in keep_classes]
+    one = df[df[TARGET_LABEL].isin(class_codes)]  # keep unique classes
+    rem = df.loc[~df[TARGET_LABEL].isin(class_codes)].copy()  # set to other
+    rem[TARGET_LABEL] = 100
     df = pd.concat([one, rem])
-
     return df
 
 
@@ -125,37 +103,59 @@ def derive_diffs(df):
 
 def get_popular_classes(df, top=5):
     """
-    Gets most popular classes, top is the # of classes
+    Gets most popular classes by frequency. Returns list of 'top' most popular class class codes
+    :param top: # of classes to return
     """
-    ttype_counts = df.groupby('transient_type').count()
+    ttype_counts = df.groupby(TARGET_LABEL).count()
     ttype_counts['avg_count'] = ttype_counts.mean(axis=1)
     ttype_counts = ttype_counts.sort_values(
         'avg_count', ascending=False).reset_index().head(top)
-
-    return list(ttype_counts['transient_type'])
+    return list(ttype_counts[TARGET_LABEL])
 
 
 def filter_top_classes(df, top=5):
     top_classes = get_popular_classes(df, top=top)
-    return df.loc[df['transient_type'].isin(top_classes)]
+    return df.loc[df[TARGET_LABEL].isin(top_classes)]
+
+
+def filter_data(df):
+    """
+    Filters DataFrame to keep only rows that have at least 1 valid value in the features
+    """
+    df = df.reset_index(drop=True)
+    cols = list(df)
+    if 'redshift' in cols:
+        cols.remove('redshift')
+    cols.remove(TARGET_LABEL)
+    # Only check for NULLs on real feature columns
+    df_filtered = pd.DataFrame(df[cols].reset_index(drop=True))
+
+    non_null_indices = df_filtered.loc[~df_filtered.isnull().all(1)].index
+    return df.iloc[non_null_indices]
 
 
 def get_data(col_list, incl_redshift=False, file='THEx-catalog.v0_0_3.fits'):
+    """
+    Pull in data and filter based on different biases and corrections: group transient types, fitler to passed-in columns, keep only rows with at least 1 valid value, filter to most frequent classes, sub-sample each class to same number, and take difference between wavelengths to make new features 
+    """
     cur_path = os.path.dirname(__file__)
     # Go back one directory, because we are in thex_model
     df = collect_data(cur_path + "/../../../data/" + file)
     df = group_cts(df)
     df = filter_columns(df, col_list, incl_redshift)
+    filtered_df = filter_data(df)
 
-    df = filter_top_classes(df, top=5)
+    df = filter_top_classes(df, top=4)
 
     # Randomly subsample any over-represented classes down to 100
-    df = sub_sample(df, count=400, col_val='transient_type')
-
-    # df.dropna(inplace=True)
+    df = sub_sample(df, count=100, col_val=TARGET_LABEL)
 
     # Derive colors from data, and keep only colors
     # df = derive_diffs(df.copy())
+
+    # df = one_all(df, ['Ia', 'Ib'])
+
+    get_class_counts(df)
 
     return df
 

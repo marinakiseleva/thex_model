@@ -6,7 +6,7 @@ import pylab
 from pylab import rcParams
 from math import ceil
 
-from .data_maps import fnames, code_cat
+from .data_consts import fnames, code_cat, TARGET_LABEL
 
 
 def get_class_names(class_codes):
@@ -15,8 +15,7 @@ def get_class_names(class_codes):
     """
     tclasses_names = []
     for tclass in class_codes:
-        class_name = code_cat[tclass]
-        tclasses_names.append(class_name)
+        tclasses_names.append(code_cat[tclass])
     return tclasses_names
 
 
@@ -33,56 +32,37 @@ def get_shapiro(values):
         print('Sample does not look Gaussian (reject H0)')
 
 
-def plot_feature_distribution(df, feature='redshift', class_name='transient_type'):
+def plot_feature_distribution(df, feature='redshift'):
     """
     Plots the distribution of each transient type in df over 'feature'
     """
     rcParams['figure.figsize'] = 10, 10
-    unique_ttypes = list(df[class_name].unique())
+    unique_ttypes = list(df[TARGET_LABEL].unique())
     num_plot_rows = len(unique_ttypes)
     fig, axs = plt.subplots(nrows=num_plot_rows, ncols=1, sharex=True, sharey=True)
     row_num = col_num = 0
+    # find min and max values of this feature
+    max_value = df[feature].max()
+    min_value = df[feature].min()
     for ttype in unique_ttypes:
 
-        values = list(df.loc[(df[class_name] == ttype)
+        values = list(df.loc[(df[TARGET_LABEL] == ttype)
                              & (df[feature].notnull())][feature])
-        # bin_vals = np.arange(min(values), max(values) + 0.1,
-        #                      (max(values) - min(values)) / 20)
-        axs[row_num].hist(values, bins=10)
+        axs[row_num].hist(values, range=(min_value, max_value), bins=10)
         axs[row_num].set_title(code_cat[ttype])
         row_num += 1
         col_num = 0
     plt.suptitle("Transient Type Distributions over " + feature)
     plt.xlabel(feature)
-    # plt.show()
-    plt.savefig("../output/feature_dist/" + feature)
-    # plt.show()
-
-
-# def plot_feature_distribution(df):
-#     """
-#     Plots values of feature per sample to determine if they are normally distributed
-#     """
-
-#     features = list(df)
-#     features.remove('transient_type')
-#     print(features)
-#     for feature in features:
-#         values = sorted(list(df[feature]))
-#         fit = stats.norm.pdf(values, np.mean(values),
-#                              np.std(values))
-#         pylab.plot(values, fit, '-o')
-
-#     pylab.legend([fnames[f] if f in fnames else f for f in features], loc='upper left')
-#     pylab.title("Feature Distribution")
-#     pylab.show()
+    # plt.savefig("../output/feature_dist/" + feature)
+    plt.show()
 
 
 def count_ttypes(df):
     """
     Returns transient type codes and corresponding counts of each type in dataframe df
     """
-    ttype_counts = pd.DataFrame(df.groupby('transient_type').size())
+    ttype_counts = pd.DataFrame(df.groupby(TARGET_LABEL).size())
     types = []
     counts = []
     for ttype, row in ttype_counts.iterrows():

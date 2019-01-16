@@ -1,5 +1,5 @@
 import math
-
+from thex_data.data_consts import TARGET_LABEL
 """
 Logic for training and testing using Gaussian Naive Bayes
 """
@@ -26,7 +26,7 @@ def summarize(df):
     # get mean and stdev of each column in DataFrame
     for column_name in df:
 
-        if column_name != 'transient_type':
+        if column_name != TARGET_LABEL:
             col_values = df[column_name].dropna(axis=0)
             if len(col_values) > 0:
                 # Take mean and stdev using only non-NULL values
@@ -43,12 +43,12 @@ def separate_classes(train):
     Separate by class (of unique transient types)
     Return map of {transient type : DataFrame of samples of that type}
     """
-    transient_classes = list(train.transient_type.unique())
+    transient_classes = list(train[TARGET_LABEL].unique())
     separated_classes = {}
     priors = {}  # Prior value of class, based on frequency
     total_count = train.shape[0]
     for transient in transient_classes:
-        sub_df = train.loc[train.transient_type == transient]
+        sub_df = train.loc[train[TARGET_LABEL] == transient]
 
         # SET PRIOR value, by frequency of class in total set
         # Uniform prior
@@ -58,7 +58,7 @@ def separate_classes(train):
         # priors[transient] = 1 - (class_count / total_count)
 
         # Set class value
-        sub_df.drop(['transient_type'], axis=1, inplace=True)
+        sub_df.drop([TARGET_LABEL], axis=1, inplace=True)
         separated_classes[transient] = sub_df
     print("Unique transient types: " + str(len(separated_classes)))
 
