@@ -35,7 +35,8 @@ def run_cv(data_columns, incl_redshift=False, k=3):
         summaries, priors = summarize_by_class(train_data)
 
         # Test
-        predicted_classes, actual_classes = test_model(test_data, summaries, priors)
+        predicted_classes, actual_classes = test_model(
+            test_data, summaries, priors)
 
         df_compare = nbp.combine_dfs(predicted_classes, actual_classes)
         # Get accuracy per class of transient
@@ -88,12 +89,17 @@ def run_model(data_columns, incl_redshift=False, plot_title="Naive Bayes Accurac
     summaries, priors = summarize_by_class(train)
 
     # Test: Predict on test data without using transient type
-    predicted_classes, actual_classes = test_model(test, summaries, priors)
+    predicted_classes, actual_classes = test_model(
+        test, summaries, priors)
 
+    # Plot Results
     nbp.get_accuracy(predicted_classes, actual_classes)
-    nbp.compute_plot_class_accuracy(predicted_classes, actual_classes, plot_title)
-    for f in list(train):
-        data_plot.plot_feature_distribution(train, feature=f)
+    # nbp.compute_plot_class_accuracy(predicted_classes, actual_classes, plot_title)
+
+    nbp.get_rocs(test, summaries, priors)
+
+    # for f in list(train):
+    #     data_plot.plot_feature_distribution(train, feature=f)
     return predicted_classes, actual_classes
 
 
@@ -117,28 +123,19 @@ def main():
     # PS1_gKmag PS1_rKmag PS1_iKmag PS1_zKmag PS1_yKmag
     parser.add_argument('-cols', '--cols', nargs='+',
                         help='<Required> Pass column names', required=False)
-    # parser.add_argument('-col_names', '--col_names', nargs='+',
-    # help='Pass in string by which columns will be selected. For example:
-    # AllWISE will use all AlLWISE columns.', required=False)
     parser.add_argument('-incl_redshift', '--incl_redshift', nargs='+',
                         help='<Required> Set flag', required=False)
     args = parser.parse_args()
 
-    # if args.col_names is None and args.cols is None:
-    #     print("Either col_name or cols needs to be passed in. Exiting.")
-    #     return -1
+    if args.cols is None:
+        print("cols needs to be passed in. Exiting.")
+        return -1
 
-    # col_list = []
-    # if args.col_names is not None:
-    #     # Make list of column/feature names; exlcude _e_ (errors)
-    #     col_list = [col for col in list(df) if any(
-    #         col_val in col and "_e_" not in col for col_val in args.col_names)]
-    # elif args.cols is not None:
     col_list = args.cols
     incl_redshift = args.incl_redshift if args.incl_redshift is not None else False
     # compare_datasets(col_list)
-    # run_model(data_columns=col_list, incl_redshift=incl_redshift)
-    run_cv(data_columns=col_list, incl_redshift=incl_redshift)
+    run_model(data_columns=col_list, incl_redshift=incl_redshift)
+    # run_cv(data_columns=col_list, incl_redshift=incl_redshift)
 
 if __name__ == '__main__':
     main()

@@ -89,7 +89,7 @@ def calculate_probability_density(x, mean, stdev):
 
 def calculate_class_probabilities(summaries, priors, test_dp):
     """
-    Calculates probability of each transient class (the keys of summaries map), for the test data point (test_dp). Calculates probability by multiplying probability of each feature together.
+    Calculates probability of each transient class (the keys of summaries map), for the test data point (test_dp). Calculates probability by multiplying probability of each feature together. Returns map of class codes to probability.
     """
     probabilities = {}
     sum_probabilities = 0
@@ -126,14 +126,7 @@ def test_sample(summaries, priors, test_point):
     Returns: class that has maximum probability
     """
     probabilities = calculate_class_probabilities(summaries, priors, test_point)
-
-    max_prob = 0
-    max_class = 0
-    for current_class, class_probability in probabilities.items():
-        if class_probability > max_prob:
-            max_prob = class_probability
-            max_class = current_class
-
+    max_class = max(probabilities, key=lambda k: probabilities[k])
     return max_class
 
 
