@@ -93,11 +93,12 @@ def get_rocs(test, summaries, priors):
     """
     Plot ROC curves for performance based on predictions, for each class
     """
+
     actual_classes = test[TARGET_LABEL].reset_index(drop=True)
     test_set = test.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
 
     ttypes = list(set(actual_classes))
-    f, ax = plt.subplots(len(ttypes), 2, figsize=(10, 10))
+    f, ax = plt.subplots(len(ttypes), 3, figsize=(10, 10))
     for index, cur_class in enumerate(ttypes):
         get_roc(test_set, actual_classes, cur_class, summaries, priors, ax[index])
     plt.tight_layout()
@@ -109,35 +110,78 @@ def get_roc(df, actual_classes, class_code, summaries, priors, ax):
     Plot ROC Curve for this df (over 1 class)
     """
     # For each row in df, get probability of this class and whether it was right or wrong
+    # pred_classes = []
     for index, row in df.iterrows():
         probabilities = calculate_class_probabilities(summaries, priors, row)
         prob = probabilities[class_code]
-        df.loc[index, 'probability'] = prob  # column for probability
+        # Save probability of this class for this row
+        df.loc[index, 'probability'] = prob
+        # Save whether or not this row IS this class
         actual_class = actual_classes.iloc[index]
-        pred_class = max(probabilities, key=lambda k: probabilities[k])
-        # column marking which points predicted correctly
-        df.loc[index, 'correct'] = True if actual_class == pred_class else False
+        df.loc[index, 'is_class'] = True if (actual_class == class_code) else False
 
-    correct_probs = df.loc[df.correct == True]['probability']
-    wrong_probs = df.loc[df.correct == False]['probability']
-
+    prob_when_class = df.loc[df.is_class == True]['probability']
+    prob_when_not_class = df.loc[df.is_class == False]['probability']
     ttype = code_cat[class_code]
 
+    # Plot histogram of correct and incorrect probs
+    ax[0] = plot_hist(prob_when_class, ax[0], "green")
+    ax[0] = plot_hist(prob_when_not_class, ax[0], "red")
+    ax[0].set_xlabel('P(class =' + ttype + ')', fontsize=12)
+    ax[0].set_ylabel('Counts', fontsize=12)
+    ax[0].set_title('Distribution', fontsize=15)
+    ax[0].legend(["Type " + ttype, "NOT Type " + ttype])
+
     # Plot PDF for correct and incorrect distribution of probs
-    ax[1] = plot_pdf(correct_probs, ax[1], color="green")
-    ax[1] = plot_pdf(wrong_probs, ax[1], color="red")
+    x, y_prob_class = get_pdf(prob_when_class)
+    ax[1] = plot_pdf(x, y_prob_class, ax[1], color="green")
+    x, y_prob_when_not_class = get_pdf(prob_when_not_class)
+    ax[1] = plot_pdf(x, y_prob_when_not_class, ax[1], color="red")
     ax[1].set_xlabel('P(class =' + ttype + ')', fontsize=12)
     ax[1].set_ylabel('PDF', fontsize=12)
     ax[1].set_title('Probability Distribution of ' + ttype, fontsize=15)
     ax[1].legend(["Type " + ttype, "NOT Type " + ttype])
 
-    # Plot histogram of correct and incorrect probs
-    ax[0] = plot_hist(correct_probs, ax[0], "green")
-    ax[0] = plot_hist(wrong_probs, ax[0], "red")
-    ax[0].set_xlabel('P(class =' + ttype + ')', fontsize=12)
-    ax[0].set_ylabel('Counts', fontsize=12)
-    ax[0].set_title('Distribution', fontsize=15)
-    ax[0].legend(["Type " + ttype, "NOT Type " + ttype])
+    plot_roc(x, y_prob_class, y_prob_when_not_class, ax[2])
+
+
+def plot_roc(x, y_pred_class, y_pred_not_class, ax):
+    """
+    Derive true positive rate (TPR) and false positive rate (FPR) for different thresholds of x. Create ROC curve based on that. 
+    """
+    # Total
+    total_class_predicted = np.sum(y_pred_class)
+    total_class_not_predicted = np.sum(y_pred_not_class)
+    # Cumulative sum
+    area_TP = 0  # Total area under correct curve
+    area_FP = 0  # Total area under incorrect curve
+
+    TP_rates = []  # True positive rates
+    FP_rates = []  # False positive rates
+    # Iteratre through all values of x
+    for i in range(len(x)):
+        if y_pred_class[i] > 0:
+            area_TP += y_pred_class[len(x) - 1 - i]
+            area_FP += y_pred_not_class[len(x) - 1 - i]
+        # Calculate FPR and TPR for threshold x
+        # Volume of false positives over total incorrects
+        FPR = area_FP / total_class_not_predicted
+        # Volume of true positives over total corrects
+        TPR = area_TP / total_class_predicted
+        TP_rates.append(TPR)
+        FP_rates.append(FPR)
+    # auc = Probability that it will guess true over false
+    auc = np.sum(TP_rates) / 100  # 100= # of values for x
+    # Plotting final ROC curve, FP against TP
+    ax.plot(FP_rates, TP_rates)
+    ax.plot(x, x, "--")  # baseline
+    ax.set_xlim([0, 1])
+    ax.set_ylim([0, 1])
+    ax.set_title("ROC Curve", fontsize=14)
+    ax.set_ylabel('True Positive Rate', fontsize=12)
+    ax.set_xlabel('False Positive Rate', fontsize=12)
+    ax.grid()
+    ax.legend(["AUC=%.3f" % auc])
 
 
 def plot_hist(samples, ax, color):
@@ -150,26 +194,25 @@ def plot_hist(samples, ax, color):
     return ax
 
 
-def pdf(x, std, mean):
+def get_pdf(probabilities):
     """
     Returns normal PDF values
-    """
-    const = 1.0 / np.sqrt(2 * np.pi * (std**2))
-    pdf_normal_dist = const * np.exp(-((x - mean)**2) / (2.0 * (std**2)))
-    return pdf_normal_dist
-
-
-def plot_pdf(probabilities, ax, color):
-    """
-    Plots the probability distribution function values of probabilities on ax
     """
     samples = np.array(probabilities)
     mean = np.mean(samples)
     std = np.sqrt(np.var(samples))
     x = np.linspace(0, 1, num=100)
+    const = 1.0 / np.sqrt(2 * np.pi * (std**2))
+    y = const * np.exp(-((x - mean)**2) / (2.0 * (std**2)))
+    return x, y
+
+
+def plot_pdf(x, y, ax, color):
+    """
+    Plots the probability distribution function values of probabilities on ax
+    """
     # Fit normal distribution to mean and std of data
-    y_pdf = pdf(x, std, mean)
-    ax.plot(x, y_pdf, color, alpha=0.5)
+    ax.plot(x, y, color, alpha=0.5)
     ax.set_xlim([0, 1])
     return ax
 

@@ -6,6 +6,7 @@ from sklearn.model_selection import KFold
 from thex_data.data_consts import code_cat, TARGET_LABEL
 from thex_data.data_prep import get_train_test, get_data
 from thex_data import data_plot
+from thex_data.data_init import collect_data
 import nb_performance as nbp
 from nb_classifier import *
 
@@ -94,7 +95,7 @@ def run_model(data_columns, incl_redshift=False, plot_title="Naive Bayes Accurac
 
     # Plot Results
     nbp.get_accuracy(predicted_classes, actual_classes)
-    # nbp.compute_plot_class_accuracy(predicted_classes, actual_classes, plot_title)
+    nbp.compute_plot_class_accuracy(predicted_classes, actual_classes, plot_title)
 
     nbp.get_rocs(test, summaries, priors)
 
@@ -123,15 +124,24 @@ def main():
     # PS1_gKmag PS1_rKmag PS1_iKmag PS1_zKmag PS1_yKmag
     parser.add_argument('-cols', '--cols', nargs='+',
                         help='<Required> Pass column names', required=False)
+    parser.add_argument('-col_names', '--col_names', nargs='+',
+                        help='Pass in string by which columns will be selected. For example: AllWISE will use all AlLWISE columns.', required=False)
     parser.add_argument('-incl_redshift', '--incl_redshift', nargs='+',
                         help='<Required> Set flag', required=False)
     args = parser.parse_args()
 
+    col_list = []
     if args.cols is None:
-        print("cols needs to be passed in. Exiting.")
-        return -1
-
-    col_list = args.cols
+        if args.col_names is not None:
+            df = collect_data("./../../../data/THEx-catalog.v0_0_3.fits")
+            # Make list of column/feature names; exlcude _e_ (errors)
+            col_list = [col for col in list(df) if any(
+                col_val in col and "_e_" not in col for col_val in args.col_names)]
+        else:
+            print("cols or col_names needs to be passed in. Exiting.")
+            return -1
+    else:
+        col_list = args.cols
     incl_redshift = args.incl_redshift if args.incl_redshift is not None else False
     # compare_datasets(col_list)
     run_model(data_columns=col_list, incl_redshift=incl_redshift)

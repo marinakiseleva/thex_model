@@ -145,10 +145,10 @@ def get_data(col_list, incl_redshift=False, file='THEx-catalog.v0_0_3.fits'):
     df = filter_columns(df, col_list, incl_redshift)
     filtered_df = filter_data(df)
 
-    df = filter_top_classes(df, top=4)
+    df = filter_top_classes(df, top=5)
 
     # Randomly subsample any over-represented classes down to 100
-    df = sub_sample(df, count=100, col_val=TARGET_LABEL)
+    df = sub_sample(df, count=200, col_val=TARGET_LABEL)
 
     # Derive colors from data, and keep only colors
     # df = derive_diffs(df.copy())
