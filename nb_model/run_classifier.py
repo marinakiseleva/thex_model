@@ -94,10 +94,10 @@ def run_model(data_columns, incl_redshift=False, plot_title="Naive Bayes Accurac
         test, summaries, priors)
 
     # Plot Results
-    nbp.get_accuracy(predicted_classes, actual_classes)
+    total_accuracy = nbp.get_accuracy(predicted_classes, actual_classes)
     nbp.compute_plot_class_accuracy(predicted_classes, actual_classes, plot_title)
 
-    nbp.get_rocs(test, summaries, priors)
+    # nbp.get_rocs(test, summaries, priors)
 
     # for f in list(train):
     #     data_plot.plot_feature_distribution(train, feature=f)

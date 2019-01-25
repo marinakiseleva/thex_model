@@ -1,8 +1,35 @@
 import math
-from thex_data.data_consts import TARGET_LABEL
+from thex_data.data_consts import code_cat, TARGET_LABEL
+import scipy.stats as stats
+# import numpy as np
 """
 Logic for training and testing using Gaussian Naive Bayes
 """
+
+
+def find_best_fitting_dist(data):
+    """
+    Finds best fitting distribution for this particular set of features (features of a single transient type)
+    """
+    distributions = [stats.norm]
+    mles = []
+    for distribution in distributions:
+        # Fits data to distribution and returns MLEs of scale and loc
+        # pars -> mu = loc, sigma = scale
+        pars = distribution.fit(data)
+        # negative loglikelihood: -sum(log pdf(x, theta), axis=0)
+        mle = distribution.nnlf(pars, data)
+        mles.append(mle)
+
+    results = [(distribution.name, mle)
+               for distribution, mle in zip(distributions, mles)]
+    # Sorts smallest to largest -- smallest NNL is best
+    best_fit = sorted(zip(distributions, mles), key=lambda d: d[1])[0]
+    # print('Best fit reached using {}, MLE value: {}'.format(
+    #     best_fit[0].name, best_fit[1]))
+
+    # Return best fitting distribution and parameters (loc and scale)
+    return [best_fit[0], best_fit[0].fit(data)]
 
 
 def mean(numbers):
@@ -18,22 +45,22 @@ def stdev(numbers):
 
 
 def summarize(df):
-    """ 
+    """
     Summarizes features across df by getting mean and stdev across each column.
-    Saves in map, mapping column name to list of values: col_name : [mean, stdev]
     """
     class_summaries = {}
-    # get mean and stdev of each column in DataFrame
+    # get distribution of each feature
     for column_name in df:
-
         if column_name != TARGET_LABEL:
             col_values = df[column_name].dropna(axis=0)
             if len(col_values) > 0:
-                # Take mean and stdev using only non-NULL values
+                # # Take mean and stdev using only non-NULL values
                 mean_col = mean(col_values)
                 stdev_col = stdev(col_values)
-                #  Map column name to mean and stdev of that column
-                class_summaries[column_name] = [mean_col, stdev_col]
+                # #  Map column name to mean and stdev of that column
+                # class_summaries[column_name] = [mean_col, stdev_col]
+
+                class_summaries[column_name] = find_best_fitting_dist(col_values)
 
     return class_summaries
 
@@ -75,36 +102,26 @@ def summarize_by_class(training_dataset):
     return summaries, priors
 
 
-def calculate_probability_density(x, mean, stdev):
-    """
-    Using Gaussian PDF with passed in mean and stdev to find probability density of x
-    """
-    if stdev == 0:
-        stdev = 0.2
-
-    exponent = math.exp(-(math.pow(x - mean, 2) / (2 * math.pow(stdev, 2))))
-    probability = (1 / (math.sqrt(2 * math.pi) * stdev)) * exponent
-    return probability
-
-
 def calculate_class_probabilities(summaries, priors, test_dp):
     """
     Calculates probability of each transient class (the keys of summaries map), for the test data point (test_dp). Calculates probability by multiplying probability of each feature together. Returns map of class codes to probability.
     """
     probabilities = {}
     sum_probabilities = 0
-    # Get probability density of each class, and add it to a running sum of all
-    # probability densities
+    # Get probability density of each class, and add it to a running sum of
+    # all probability densities
     for transient_class, feature_mappings in summaries.items():
         probabilities[transient_class] = 1
-
         # Iterate through mean/stdev of each feature in features map
-        for feature_name, vals in feature_mappings.items():
-            mean, stdev = vals
+        for feature_name, f_dist in feature_mappings.items():
             test_value = test_dp[feature_name]
-            if None not in (test_value, mean, stdev) and not math.isnan(test_value):
-                prob_density = calculate_probability_density(test_value, mean, stdev)
+            dist = f_dist[0]
+            mu, sigma = f_dist[1]
+            if test_value is not None and not math.isnan(test_value):
+                prob_density = dist(mu, sigma).pdf(test_value)
+                # Multiply together probability of each feature
                 probabilities[transient_class] *= prob_density
+
             # Factor in prior
             probabilities[transient_class] *= priors[transient_class]
         # Keep track of total sum of probabilities for normalization
@@ -126,6 +143,7 @@ def test_sample(summaries, priors, test_point):
     Returns: class that has maximum probability
     """
     probabilities = calculate_class_probabilities(summaries, priors, test_point)
+
     max_class = max(probabilities, key=lambda k: probabilities[k])
     return max_class
 
