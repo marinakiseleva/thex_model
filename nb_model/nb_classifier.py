@@ -32,18 +32,6 @@ def find_best_fitting_dist(data):
     return [best_fit[0], best_fit[0].fit(data)]
 
 
-def mean(numbers):
-    return sum(numbers) / float(len(numbers))
-
-
-def stdev(numbers):
-    avg = mean(numbers)
-    numerator = sum([pow(x - avg, 2) for x in numbers])
-    # denominator = float(len(numbers) - 1)
-    variance = numerator / len(numbers)
-    return math.sqrt(variance)
-
-
 def summarize(df):
     """
     Summarizes features across df by getting mean and stdev across each column.
@@ -54,12 +42,6 @@ def summarize(df):
         if column_name != TARGET_LABEL:
             col_values = df[column_name].dropna(axis=0)
             if len(col_values) > 0:
-                # # Take mean and stdev using only non-NULL values
-                mean_col = mean(col_values)
-                stdev_col = stdev(col_values)
-                # #  Map column name to mean and stdev of that column
-                # class_summaries[column_name] = [mean_col, stdev_col]
-
                 class_summaries[column_name] = find_best_fitting_dist(col_values)
 
     return class_summaries
