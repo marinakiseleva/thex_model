@@ -9,7 +9,7 @@ from pylab import rcParams
 
 from thex_data.data_consts import code_cat, TARGET_LABEL
 from thex_data.data_plot import get_class_names
-from nb_classifier import calculate_class_probabilities
+from nb_test import calculate_class_probabilities
 
 
 def combine_dfs(predicted_classes, actual_classes):

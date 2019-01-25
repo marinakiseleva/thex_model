@@ -8,7 +8,8 @@ from thex_data.data_prep import get_train_test, get_data
 from thex_data import data_plot
 from thex_data.data_init import collect_data
 import nb_performance as nbp
-from nb_classifier import *
+from nb_train import *
+from nb_test import *
 
 
 """
