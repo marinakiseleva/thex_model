@@ -5,6 +5,7 @@ data_clean:
 """
 
 from .data_consts import groupings, TARGET_LABEL
+import numpy as np
 
 
 def group_cts(df):
@@ -34,4 +35,8 @@ def fill_nulls(df):
     """
     for col_name in list(df):
         df[col_name].fillna((df[col_name].mean()), inplace=True)
+
+        mask = df[col_name] != np.inf
+        df.loc[~mask, col_name] = df.loc[mask, col_name].mean()
+
     return df

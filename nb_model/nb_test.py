@@ -17,9 +17,8 @@ def calculate_class_probabilities(summaries, priors, test_dp):
         for feature_name, f_dist in feature_mappings.items():
             test_value = test_dp[feature_name]
             dist = f_dist[0]
-            mu, sigma = f_dist[1]
             if test_value is not None and not isnan(test_value):
-                prob_density = dist(mu, sigma).pdf(test_value)
+                prob_density = dist(*f_dist[1]).pdf(test_value)
 
                 # Multiply together probability of each feature
                 probabilities[transient_class] *= prob_density

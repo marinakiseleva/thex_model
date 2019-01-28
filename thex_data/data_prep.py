@@ -15,7 +15,7 @@ from sklearn.model_selection import train_test_split
 
 from .data_consts import cat_code, TARGET_LABEL
 from .data_init import collect_data
-from .data_clean import group_cts
+from .data_clean import *
 from .data_print import *
 
 
@@ -129,8 +129,10 @@ def filter_data(df):
     cols.remove(TARGET_LABEL)
     # Only check for NULLs on real feature columns
     df_filtered = pd.DataFrame(df[cols].reset_index(drop=True))
+    # Indices of data that do not have all NULL or 0 values
+    non_null_indices = df_filtered.loc[
+        (~df_filtered.isnull().all(1)) & (~(df_filtered == 0).all(1))].index
 
-    non_null_indices = df_filtered.loc[~df_filtered.isnull().all(1)].index
     return df.iloc[non_null_indices]
 
 
@@ -143,20 +145,24 @@ def get_data(col_list, incl_redshift=False, file='THEx-catalog.v0_0_3.fits'):
     df = collect_data(cur_path + "/../../../data/" + file)
     df = group_cts(df)
     df = filter_columns(df, col_list, incl_redshift)
-    filtered_df = filter_data(df)
+    df = filter_data(df)
+    # df.dropna(axis=0, inplace=True)
 
-    df = filter_top_classes(df, top=5)
+    df = filter_top_classes(df, top=9)
 
     # Randomly subsample any over-represented classes down to 100
-    df = sub_sample(df, count=200, col_val=TARGET_LABEL)
+    df = sub_sample(df, count=300, col_val=TARGET_LABEL)
 
     # Derive colors from data, and keep only colors
     # df = derive_diffs(df.copy())
 
-    # df = one_all(df, ['Ia', 'Ib'])
+    # df = one_all(df, ['CC', 'nIa', 'Ib', 'Ic', 'Ia'])
+    df = fill_nulls(df)
 
     get_class_counts(df)
+    df.to_csv("../output/training_data.csv")
 
+    df.dtypes.to_csv("../output/training_data_types.csv")
     return df
 
 
@@ -167,7 +173,7 @@ def get_train_test(col_list, incl_redshift=False, file='THEx-catalog.v0_0_3.fits
     df = get_data(col_list, incl_redshift, file)
 
     # Split into train and test
-    train = df.sample(frac=0.7, random_state=200)
+    train = df.sample(frac=0.7, random_state=20)
     test = df.drop(train.index)
 
     print("Training set size: " + str(train.shape[0]))

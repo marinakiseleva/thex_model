@@ -3,6 +3,14 @@ from astropy.table import Table
 import numpy as np
 
 
+def collect_cols(file, col_names):
+    df = collect_data(file)
+    # Make list of column/feature names; exlcude _e_ (errors)
+    col_list = [col for col in list(df) if any(
+                col_val in col and "_e_" not in col for col_val in col_names)]
+    return col_list
+
+
 def collect_data(file):
     """ 
     Sets up Data Object using data from a passed in fits file

@@ -1,4 +1,4 @@
-from thex_data.data_consts import TARGET_LABEL
+from thex_data.data_consts import TARGET_LABEL, code_cat
 import scipy.stats as stats
 
 """
@@ -10,7 +10,11 @@ def find_best_fitting_dist(data):
     """
     Finds best fitting distribution for this particular set of features (features of a single transient type)
     """
-    distributions = [stats.norm]
+    distributions = [stats.norm, stats.beta, stats.gamma, stats.t, stats.gennorm, stats.alpha,  stats.arcsine,
+                     stats.argus, stats.betaprime, stats.bradford, stats.burr, stats.burr12,
+                     stats.cauchy, stats.chi, stats.chi2, stats.crystalball,
+                     stats.dgamma, stats.dweibull, stats.laplace,
+                     stats.skewnorm, stats.kappa4, stats.loglaplace]
     mles = []
     for distribution in distributions:
         # Fits data to distribution and returns MLEs of scale and loc
@@ -24,8 +28,8 @@ def find_best_fitting_dist(data):
                for distribution, mle in zip(distributions, mles)]
     # Sorts smallest to largest -- smallest NNL is best
     best_fit = sorted(zip(distributions, mles), key=lambda d: d[1])[0]
-    # print('Best fit reached using {}, MLE value: {}'.format(
-    #     best_fit[0].name, best_fit[1]))
+    print('Best fit reached using {}, MLE value: {}'.format(
+        best_fit[0].name, best_fit[1]))
 
     # Return best fitting distribution and parameters (loc and scale)
     return [best_fit[0], best_fit[0].fit(data)]
@@ -40,6 +44,7 @@ def summarize(df):
     for column_name in df:
         if column_name != TARGET_LABEL:
             col_values = df[column_name].dropna(axis=0)
+
             if len(col_values) > 0:
                 class_summaries[column_name] = find_best_fitting_dist(col_values)
 
@@ -56,20 +61,26 @@ def separate_classes(train):
     priors = {}  # Prior value of class, based on frequency
     total_count = train.shape[0]
     for transient in transient_classes:
-        sub_df = train.loc[train[TARGET_LABEL] == transient]
+        trans_df = train.loc[train[TARGET_LABEL] == transient]
 
-        # SET PRIOR value, by frequency of class in total set
+        # SET PRIOR value
+        # Frequency of class in total set
+        # priors[transient] = trans_df.shape[0] / total_count
+
         # Uniform prior
         priors[transient] = 1 / len(transient_classes)
-        class_count = sub_df.shape[0]
+
         # Inverted Frequency-based prior
-        # priors[transient] = 1 - (class_count / total_count)
+        # priors[transient] = 1 - (trans_df.shape[0] / total_count)
 
         # Set class value
-        sub_df.drop([TARGET_LABEL], axis=1, inplace=True)
-        separated_classes[transient] = sub_df
+        trans_df.drop([TARGET_LABEL], axis=1, inplace=True)
+        separated_classes[transient] = trans_df
     print("Unique transient types: " + str(len(separated_classes)))
+    # Make priors sum to 1
+    priors = {k: v / sum(priors.values()) for k, v in priors.items()}
 
+    print("Priors \n" + str(priors))
     return separated_classes, priors
 
 
@@ -77,5 +88,9 @@ def summarize_by_class(training_dataset):
     separated, priors = separate_classes(training_dataset)
     summaries = {}
     for class_value, instances in separated.items():
+        print("******************************************************** Summary for class: " +
+              str(code_cat[class_value]))
+        # if column_name == 'nIa' or column_name == 'CC':
+        print("number of values " + str(instances.shape[0]))
         summaries[class_value] = summarize(instances)
     return summaries, priors

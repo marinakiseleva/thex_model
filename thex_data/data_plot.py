@@ -19,19 +19,6 @@ def get_class_names(class_codes):
     return tclasses_names
 
 
-def get_shapiro(values):
-    """
-    Performs Shapiro-Wilk test on values
-    """
-    stat, p = stats.shapiro(values)
-    print('Statistics=%.3f, p=%.3f' % (stat, p))
-    alpha = 0.05
-    if p > alpha:
-        print('Sample looks Gaussian (fail to reject H0)')
-    else:
-        print('Sample does not look Gaussian (reject H0)')
-
-
 def plot_feature_distribution(df, feature='redshift'):
     """
     Plots the distribution of each transient type in df over 'feature'

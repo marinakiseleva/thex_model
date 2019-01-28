@@ -510,24 +510,3 @@ fnames = {
     'PS1_yKmag_minus_PS1_zKmag': 'y - z'
 
 }
-
-
-# col_lists = {
-# 'ned_mass_cols': ['NED_2MASS_J', 'NED_2MASS_H', 'NED_2MASS_Ks'],
-# # ned_sdss_cols = ['NED_SDSS_u', 'NED_SDSS_g', 'NED_SDSS_r', 'NED_SDSS_i', 'NED_SDSS_z']
-# # ned_galex_cols = ['NED_GALEX_NUV', 'NED_GALEX_FUV']
-# # ned_iras_cols = ['NED_IRAS_12m', 'NED_IRAS_25m', 'NED_IRAS_60m', 'NED_IRAS_100m', 'NED_HI_21cm', 'NED_1p4GHz']
-# # all_ned_cols = [col for col in list(data_df) if "NED_" in col] # All NED_
-# # hyperleda = [col for col in list(data_df) if "HyperLEDA" in col]
-# 'allwise' : [col for col in list(data_df) if "AllWISE" in col and "Err" not in col],
-# 'firefly_cols' : [col for col in list(data_df) if "Firefly" in col], # Firefly
-# 'mpa_cols' : [col for col in list(data_df) if "MPAJHU" in col], # MPAJHU
-# 'zoo_cols' : [col for col in list(data_df) if "Zoo" in col], # GalaxyZoo
-# 'gswlc' : [col for col in list(data_df) if "GSWLC" in col], # GSWLC
-# 'wiscpca' : [col for col in list(data_df) if "WiscPCA" in col], # WiscPCA
-# 'nsa' : [col for col in list(data_df) if "NSA_" in col], # NSA
-# 'nsa_k' : [col for col in list(data_df) if "NSA_" in col and "KCORRECT_" in col], # NSA
-# 'scos' : [col for col in list(data_df) if "SCOS_" in col], # SCOS
-# 'ps1' : [col for col in list(data_df) if "PS1" in col] # PS1
-# # 'full' : scos + ps1 + nsa + wiscpca + gswlc + zoo_cols + mpa_cols
-# }
