@@ -19,7 +19,7 @@ def get_class_names(class_codes):
     return tclasses_names
 
 
-def plot_feature_distribution(df, feature='redshift'):
+def plot_feature_distribution(df, feature):
     """
     Plots the distribution of each transient type in df over 'feature'
     """

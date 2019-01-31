@@ -1,4 +1,5 @@
 from math import isnan
+import pandas as pd
 """
 Logic for classifying testing data on Naive Bayes classifier
 """
@@ -53,3 +54,12 @@ def test_set_samples(summaries, priors, testing_set):
         max_class = test_sample(summaries, priors, row)
         predictions.append(max_class)
     return predictions
+
+
+def test_model(X_test, summaries, priors):
+    """
+    Tests model using established summaires & priors on test data (includes ttype)
+    """
+    predictions = test_set_samples(summaries, priors, X_test)
+    predicted_classes = pd.DataFrame(predictions, columns=['predicted_class'])
+    return predicted_classes

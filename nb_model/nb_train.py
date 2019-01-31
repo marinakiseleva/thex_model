@@ -1,5 +1,6 @@
 from thex_data.data_consts import TARGET_LABEL, code_cat
 import scipy.stats as stats
+import pandas as pd
 
 """
 Logic for training the Naive Bayes classifier
@@ -10,11 +11,12 @@ def find_best_fitting_dist(data):
     """
     Finds best fitting distribution for this particular set of features (features of a single transient type)
     """
-    distributions = [stats.norm, stats.beta, stats.gamma, stats.t, stats.gennorm, stats.alpha,  stats.arcsine,
-                     stats.argus, stats.betaprime, stats.bradford, stats.burr, stats.burr12,
-                     stats.cauchy, stats.chi, stats.chi2, stats.crystalball,
-                     stats.dgamma, stats.dweibull, stats.laplace,
-                     stats.skewnorm, stats.kappa4, stats.loglaplace]
+    distributions = [stats.norm]
+    # , stats.beta, stats.gamma, stats.t, stats.gennorm, stats.alpha,  stats.arcsine,
+    #                  stats.argus, stats.betaprime, stats.bradford, stats.burr, stats.burr12,
+    #                  stats.cauchy, stats.chi, stats.chi2, stats.crystalball,
+    #                  stats.dgamma, stats.dweibull, stats.laplace,
+    #                  stats.skewnorm, stats.kappa4, stats.loglaplace]
     mles = []
     for distribution in distributions:
         # Fits data to distribution and returns MLEs of scale and loc
@@ -84,13 +86,15 @@ def separate_classes(train):
     return separated_classes, priors
 
 
-def summarize_by_class(training_dataset):
+def train_nb(X_train, y_train):
+    """
+    Train Naive Bayes classifier on training set
+    """
+    training_dataset = pd.concat([X_train, y_train], axis=1)
     separated, priors = separate_classes(training_dataset)
     summaries = {}
     for class_value, instances in separated.items():
         print("******************************************************** Summary for class: " +
               str(code_cat[class_value]))
-        # if column_name == 'nIa' or column_name == 'CC':
-        print("number of values " + str(instances.shape[0]))
         summaries[class_value] = summarize(instances)
     return summaries, priors

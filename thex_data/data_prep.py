@@ -46,7 +46,7 @@ def split_train_test(X, y):
     return X_train, X_test, y_train, y_test
 
 
-def filter_columns(df, col_list, incl_redshift=False):
+def filter_columns(df, col_list, incl_redshift):
     """
     Filters columns down to those passed in as col_list (+ target label and redshift if selected)
     """
@@ -110,6 +110,7 @@ def get_popular_classes(df, top=5):
     ttype_counts['avg_count'] = ttype_counts.mean(axis=1)
     ttype_counts = ttype_counts.sort_values(
         'avg_count', ascending=False).reset_index().head(top)
+
     return list(ttype_counts[TARGET_LABEL])
 
 
@@ -136,7 +137,7 @@ def filter_data(df):
     return df.iloc[non_null_indices]
 
 
-def get_data(col_list, incl_redshift=False, file='THEx-catalog.v0_0_3.fits'):
+def get_data(col_list, incl_redshift, file='THEx-catalog.v0_0_3.fits'):
     """
     Pull in data and filter based on different biases and corrections: group transient types, fitler to passed-in columns, keep only rows with at least 1 valid value, filter to most frequent classes, sub-sample each class to same number, and take difference between wavelengths to make new features 
     """
@@ -145,37 +146,38 @@ def get_data(col_list, incl_redshift=False, file='THEx-catalog.v0_0_3.fits'):
     df = collect_data(cur_path + "/../../../data/" + file)
     df = group_cts(df)
     df = filter_columns(df, col_list, incl_redshift)
-    df = filter_data(df)
-    # df.dropna(axis=0, inplace=True)
+    # df = filter_data(df)
+    # df = fill_nulls(df)
+    df.dropna(axis=0, inplace=True)
 
-    df = filter_top_classes(df, top=9)
+    df = filter_top_classes(df, top=10)
 
     # Randomly subsample any over-represented classes down to 100
-    df = sub_sample(df, count=300, col_val=TARGET_LABEL)
+    df = sub_sample(df, count=100, col_val=TARGET_LABEL)
 
     # Derive colors from data, and keep only colors
     # df = derive_diffs(df.copy())
 
     # df = one_all(df, ['CC', 'nIa', 'Ib', 'Ic', 'Ia'])
-    df = fill_nulls(df)
 
     get_class_counts(df)
-    df.to_csv("../output/training_data.csv")
+    # df.to_csv("../output/training_data.csv")
 
-    df.dtypes.to_csv("../output/training_data_types.csv")
+    # df.dtypes.to_csv("../output/training_data_types.csv")
     return df
 
 
-def get_train_test(col_list, incl_redshift=False, file='THEx-catalog.v0_0_3.fits'):
-    """
-    Initialize data for Naive Bayes classifier using 70/30 split for train/test
-    """
-    df = get_data(col_list, incl_redshift, file)
+def get_source_target_data(data_columns, incl_redshift):
+    data = get_data(col_list=data_columns, incl_redshift=incl_redshift)
+    X = data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
+    y = data[[TARGET_LABEL]].astype(int).reset_index(drop=True)
+    return X, y
 
-    # Split into train and test
-    train = df.sample(frac=0.7, random_state=20)
-    test = df.drop(train.index)
 
-    print("Training set size: " + str(train.shape[0]))
-    print("Testing set size: " + str(test.shape[0]))
-    return train, test
+def get_train_test(data_columns, incl_redshift, split=0.4):
+    """
+    cat: Boolean on whether to record classes as category strings (True) or category codes (False)
+    """
+    X, y = get_source_target_data(data_columns, incl_redshift)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=split)
+    return X_train.reset_index(drop=True), X_test.reset_index(drop=True), y_train.reset_index(drop=True), y_test.reset_index(drop=True)

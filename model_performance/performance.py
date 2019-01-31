@@ -92,6 +92,7 @@ def get_percent_correct(df_compare):
     """
     Gets % of rows of dataframe that have correct column marked as 1. This column indicates if TARGET_LABEL == predicted_class
     """
+
     count_correct = df_compare[df_compare.correct == 1].shape[0]
     count_total = df_compare.shape[0]
     perc_correct = count_correct / count_total
@@ -102,6 +103,7 @@ def get_class_accuracies(df):
     """
     Get accuracy of each class separately
     """
+
     tclasses = list(df[TARGET_LABEL].unique())
     class_accuracies = {}
     for tclass in tclasses:
@@ -114,10 +116,42 @@ def combine_dfs(predicted_classes, actual_classes):
     """
     Combines predicted with actual classes in 1 DataFrame with new 'correct' column which has a 1 if the prediction matches the actual class, and 0 otherwise
     """
+
+    PRED_LABEL = 'predicted_class'
+    if type(predicted_classes) == list:
+        predicted_classes = pd.DataFrame(predicted_classes, columns=[PRED_LABEL])
+    if type(actual_classes) == list:
+        actual_classes = pd.DataFrame(actual_classes, columns=[TARGET_LABEL])
+
+    # Reset index in order to ensure concat works properly
+    predicted_classes.reset_index(drop=True, inplace=True)
+    actual_classes.reset_index(drop=True, inplace=True)
+
     df_compare = pd.concat([predicted_classes, actual_classes], axis=1)
     df_compare['correct'] = df_compare.apply(
-        lambda row: 1 if row.predicted_class == row[TARGET_LABEL] else 0, axis=1)
+        lambda row: 1 if row[PRED_LABEL] == row[TARGET_LABEL] else 0, axis=1)
     return df_compare
+
+
+def plot_class_accuracy(class_accuracies, plot_title="Accuracy per Transient Type"):
+    """
+    Plots class accuracies as percentages only. Used for CV runs.
+    :param class_accuracies: Mapping of classes to accuracies
+    """
+    transient_classes, accuracies = [], []
+    for c in class_accuracies.keys():
+        transient_classes.append(code_cat[c])
+        accuracies.append(class_accuracies[c])
+    rcParams['figure.figsize'] = 8, 8
+    class_index = np.arange(len(transient_classes))
+    plt.bar(class_index, accuracies)
+    plt.xticks(class_index, transient_classes, fontsize=12, rotation=30)
+    plt.yticks(list(np.linspace(0, 1, 11)), [
+               str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=12)
+    plt.title(plot_title, fontsize=15)
+    plt.xlabel('Transient Class', fontsize=12)
+    plt.ylabel('Accuracy', fontsize=12)
+    plt.show()
 
 
 def compute_plot_class_accuracy(predicted_classes, actual_classes, plot_title):

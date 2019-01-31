@@ -236,16 +236,3 @@ def plot_compare_accuracy(predicted_classes, actual_classes, predicted_classes2,
     # plt.savefig(cur_path + "/../output/" + plot_title.replace(" ", "_"))
 
     plt.show()
-
-
-def plot_class_accuracy(accuracies, transient_classes, plot_title="Accuracy per Transient Type"):
-    rcParams['figure.figsize'] = 10, 10
-    class_index = np.arange(len(transient_classes))
-    plt.bar(class_index, accuracies)
-    plt.xticks(class_index, transient_classes, fontsize=12, rotation=30)
-    plt.yticks(list(np.linspace(0, 1, 11)), [
-               str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=12)
-    plt.title(plot_title, fontsize=15)
-    plt.xlabel('Transient Class', fontsize=12)
-    plt.ylabel('Accuracy', fontsize=12)
-    plt.show()

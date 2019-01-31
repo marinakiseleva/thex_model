@@ -1,9 +1,12 @@
 
+"""
+All constant, global variables needed in THEx data program. Includes mapping of transient types and codes, as well as the hard-coded column name of the claimed type that is used in the program (TARGET_LABEL)
+"""
 
-# Global variable for label of target
-TARGET_LABEL = 'transient_type'
+TARGET_LABEL = 'transient_type'  # label of target
 
 """
+transient type name : transient type class code
 Transient Type categories, mapped to codes (integer values).
 """
 cat_code = {
@@ -74,21 +77,20 @@ cat_code = {
     'Ia-91T': 65,
     'Ia-99aa': 66,
     'KilonovaCand': 67,
-    'Other': 100
+    'Other': 100,
+    'TTypes': 200
 }
 
 """
-Inversion of cat_code.
+transient type class code : transient type name 
 Transient Type codes mapped to categories.
 """
 code_cat = {v: k for k, v in cat_code.items()}
 
 
 """ 
-The groupings below map specific data-based transient types to larger 
-groupings. For example: nIa, Ia, Ia*, and Ia-HV all map to Ia.
-Any new claimed types to be considered in the analysis need to be added 
-here and mapped to a larger group, which also needs to be in cat_code
+data values : transient type 
+The groupings below map specific transient types in the data set to claimed type groups. For example: nIa, Ia, Ia*, and Ia-HV all map to Ia.
 """
 groupings = {
     'Candidate': 'Candidate',
@@ -375,8 +377,8 @@ groupings = {
     'Planet + WD': 'Planet + WD',
     'Low-mass TDE': 'Low-mass TDE',
     'He + SMBH': 'He + SMBH',
-    'LGRB': 'GRB',
-    'SGRB': 'GRB',
+    'LGRB': 'LGRB',
+    'SGRB': 'SGRB',
     'GRB': 'GRB',
     'Kilonova': 'Kilonova',
     'KN': 'Kilonova',
@@ -407,7 +409,10 @@ groupings = {
     'LSQ': 'Other'
 }
 
-
+"""
+transient type : possible data values
+inverse of groupings
+"""
 grouping_lists = {
     "Candidate":     ["Candidate", "PSN", "Cand", "Stale", "CandFaint"],
     "CC":            ["CC", "CCSN", "Core-Collapse"],
@@ -486,7 +491,7 @@ grouping_lists = {
     "TDE":           ["TDE", "TDE?", "MS + SMBH", "WD + IMBH", "Planet + WD", "Low-mass TDE", "He + SMBH"],
     "LGRB":          ["LGRB"],
     "SGRB":          ["SGRB"],
-    "GRB":           ["GRB", "LGRB", "SGRB"],
+    "GRB":           ["GRB"],
     "Kilonova":      ["Kilonova", "KN", "KilonovaCand"],
     "KilonovaCand":  ["KilonovaCand"],
     "GW":            ["GW"],
@@ -501,12 +506,40 @@ grouping_lists = {
 }
 
 """
-Feature name mappings
+Feature name mappings  for plotting
 """
 fnames = {
     'PS1_rKmag_minus_PS1_gKmag': 'r - g',
     'PS1_iKmag_minus_PS1_rKmag': 'i - r',
     'PS1_zKmag_minus_PS1_iKmag': 'z - i',
     'PS1_yKmag_minus_PS1_zKmag': 'y - z'
+
+}
+
+class_to_subclass = {
+    "TTypes": ["I", "CC", "SLSN", "GRB", "Kilonova"],
+    "I": ["I Pec", "Ia", "Ib", "Ic", "Ib/c"],
+    "I Pec": ["Ia Pec", "I-rapid", "I-faint"],
+    "Ia": ["Ia Pec"],
+    "Ia Pec": ["Ia CSM", "Ia-91bg", "Ia-91T", "Ia-02cx",
+               "Ia-00cx", "Ia-99aa", "Ia-09dc", "Ia-HV"],
+    "CC": ["Ib", "Ic", "II"],
+    "Ib": ["Ibn", "Ib Pec"],
+    "Ib Pec": ["Ib-Ca"],
+    "Ic": ["Ic Pec"],
+    "Ic Pec": ["Ic BL", "Ic-lum"],
+    "Ib/c": ["Ib/c Pec"],
+    "II": ["II P", "II L", "IIn", "IIb", "IIc", "II Pec"],
+    "II Pec": ["IIn Pec", "II P-97D"],
+    "II P": ["II P Pec", "IIn P"],
+    "II P Pec": ["II P-97D"],
+    "II L": ["IIn L"],
+    "IIn": ["IIn P", "IIn L", "IIn Pec"],
+    "IIb": ["IIb Pec"],
+    "SLSN": ["SLSN-I", "SLSN-II", "SLSN-R"],
+    "GRB": ["LGRB", "SGRB"],
+    "Kilonova": ["KilonovaCand"]
+    # "TDE": ["CandidateTDE", "XrayTDE", "UVOptTDE"]
+
 
 }
