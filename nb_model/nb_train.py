@@ -67,10 +67,10 @@ def separate_classes(train):
 
         # SET PRIOR value
         # Frequency of class in total set
-        # priors[transient] = trans_df.shape[0] / total_count
+        priors[transient] = trans_df.shape[0] / total_count
 
         # Uniform prior
-        priors[transient] = 1 / len(transient_classes)
+        # priors[transient] = 1 / len(transient_classes)
 
         # Inverted Frequency-based prior
         # priors[transient] = 1 - (trans_df.shape[0] / total_count)

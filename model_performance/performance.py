@@ -23,8 +23,6 @@ def get_accuracy(predicted_classes, actual_classes):
 def get_feature_importance(clf, train):
     cols = list(train.drop([TARGET_LABEL], axis=1))
     importances = clf.feature_importances_
-    # print(importances)
-
     cols_importance = dict(zip(cols, importances))
 
     sorted_keys = sorted(cols_importance, key=cols_importance.get, reverse=True)
@@ -54,7 +52,6 @@ def plot_confusion_matrix(actual_classes, predicted_classes, normalize=False, ti
     else:
         print('Confusion matrix, without normalization')
 
-    # print(cm)
     rcParams['figure.figsize'] = 8, 8
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
     plt.title(title)
@@ -133,7 +130,7 @@ def combine_dfs(predicted_classes, actual_classes):
     return df_compare
 
 
-def plot_class_accuracy(class_accuracies, plot_title="Accuracy per Transient Type"):
+def plot_class_accuracy(class_accuracies, plot_title):
     """
     Plots class accuracies as percentages only. Used for CV runs.
     :param class_accuracies: Mapping of classes to accuracies
@@ -151,6 +148,10 @@ def plot_class_accuracy(class_accuracies, plot_title="Accuracy per Transient Typ
     plt.title(plot_title, fontsize=15)
     plt.xlabel('Transient Class', fontsize=12)
     plt.ylabel('Accuracy', fontsize=12)
+    local_dir = "../../../documentation/astronomy/galaxies/reports/thex/figures/performance/comparison/"
+    print(plot_title)
+    print(plot_title.replace(" ", ""))
+    plt.savefig(local_dir + plot_title.replace(" ", ""))
     plt.show()
 
 

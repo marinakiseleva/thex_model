@@ -517,7 +517,7 @@ fnames = {
 }
 
 class_to_subclass = {
-    "TTypes": ["I", "CC", "SLSN", "GRB", "Kilonova"],
+    "TTypes": ["I", "CC", "SLSN", "GRB", "Kilonova", "TDE"],
     "I": ["I Pec", "Ia", "Ib", "Ic", "Ib/c"],
     "I Pec": ["Ia Pec", "I-rapid", "I-faint"],
     "Ia": ["Ia Pec"],
@@ -538,7 +538,8 @@ class_to_subclass = {
     "IIb": ["IIb Pec"],
     "SLSN": ["SLSN-I", "SLSN-II", "SLSN-R"],
     "GRB": ["LGRB", "SGRB"],
-    "Kilonova": ["KilonovaCand"]
+    "Kilonova": ["KilonovaCand"],
+    "TDE": ["TDE"]
     # "TDE": ["CandidateTDE", "XrayTDE", "UVOptTDE"]
 
 

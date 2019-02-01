@@ -35,7 +35,6 @@ def aggregate_accuracies(fold_accuracy, k, y):
     """
     accuracy_per_class = {c: 0 for c in list(y[TARGET_LABEL].unique())}
     for class_accuracies in fold_accuracy:
-        print(class_accuracies)
         # class_accuracies maps class to accuracy as %
         for tclass in class_accuracies.keys():
             accuracy_per_class[tclass] += class_accuracies[tclass]
@@ -43,7 +42,7 @@ def aggregate_accuracies(fold_accuracy, k, y):
     return {c: acc / k for c, acc in accuracy_per_class.items()}
 
 
-def run_cv(data_columns, incl_redshift=False, k=3):
+def run_cv(data_columns, incl_redshift=False, test_on_train=False, k=3):
     """
     Split data into k-folds and perform k-fold cross validation
     """
@@ -53,6 +52,12 @@ def run_cv(data_columns, incl_redshift=False, k=3):
     for train_index, test_index in kf.split(X):
         X_train, X_test = X.iloc[train_index], X.iloc[test_index]
         y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+
+        data_type = ' Testing '
+        if test_on_train:  # Update fields to test models on training data
+            X_test = X_train.copy()
+            y_test = y_train.copy()
+            data_type = ' Training '
 
         nb_predictions, tree_predictions = run_models(X_train, y_train, X_test, y_test)
 
@@ -69,15 +74,15 @@ def run_cv(data_columns, incl_redshift=False, k=3):
     avg_tree_acc = aggregate_accuracies(tree_recall, k, y)
     avg_nb_acc = aggregate_accuracies(nb_recall, k, y)
     plot_class_accuracy(
-        avg_tree_acc, plot_title="CV Tree Accuracy with " + str(k) + " folds")
+        avg_tree_acc, plot_title="HSC Tree: " + str(k) + "-fold CV on" + data_type + " data")
     plot_class_accuracy(
-        avg_nb_acc, plot_title="CV Naive Bayes Accuracy with " + str(k) + " folds")
+        avg_nb_acc, plot_title="Gaussian Naive Bayes: " + str(k) + "-fold CV on" + data_type + " data")
 
 
 def main(test_on_train=True, cv=True):
     col_list, incl_redshift = collect_args()
     if cv:
-        run_cv(col_list, incl_redshift, k=3)
+        run_cv(col_list, incl_redshift, test_on_train=test_on_train, k=3)
         return 1
 
     X_train, X_test, y_train, y_test = get_train_test(
