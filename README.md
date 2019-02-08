@@ -47,4 +47,6 @@ This module requires you to have the following librarie already installed:
 
 
 
+# Acknowledgments
+This project uses a fork off of HMC, available by the BSD 3-Clause "New" or "Revised" License.  
 
