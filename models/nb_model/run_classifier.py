@@ -1,12 +1,12 @@
-
-# import pandas as pd
 from sklearn.model_selection import KFold
+from pandas import concat
 
 from thex_data.data_consts import code_cat, TARGET_LABEL
 from thex_data.data_prep import get_train_test
 from thex_data import data_plot
-from model_performance.init_classifier import *
+from model_performance.init_classifier import collect_args
 from model_performance.performance import *
+
 from nb_performance import *
 from nb_train import *
 from nb_test import *
@@ -31,17 +31,16 @@ def run_model(data_columns, incl_redshift=False, plots=True):
 
     # Test: Predict on test data without using transient type
     predicted_classes = test_model(X_test, summaries, priors)
-    print(predicted_classes)
 
     if plots:
         total_accuracy = get_accuracy(predicted_classes, y_test)
         compute_plot_class_accuracy(
             predicted_classes, y_test, plot_title="Naive Bayes Accuracy, on Testing Data")
 
-        # get_rocs(test, summaries, priors)
+        # get_rocs(X_test, y_test, summaries, priors)
 
-        # for f in list(train):
-        #     data_plot.plot_feature_distribution(train, feature=f)
+        for f in list(X_train):
+            data_plot.plot_feature_distribution(concat([X_train, y_train], axis=1), f)
 
         plot_confusion_matrix(y_test, predicted_classes,
                               normalize=True,
@@ -50,7 +49,7 @@ def run_model(data_columns, incl_redshift=False, plots=True):
     return predicted_classes, y_test
 
 
-def compare_datasets(data_columns, plot_title="Naive Bayes Accuracy per Class, compared"):
+def compare_datasets(data_columns):
     """
     Run model with and without redshift and compare accuracies
     """
@@ -61,13 +60,13 @@ def compare_datasets(data_columns, plot_title="Naive Bayes Accuracy per Class, c
     # comparing non redshift to redshift valued
     plot_compare_accuracy(predicted_classes, actual_classes,
                           predicted_classes2, actual_classes2,
-                          "Without redshift", "With redshift", plot_title)
+                          "Without redshift", "With redshift", "Naive Bayes Accuracy per Class, compared")
 
 
 def main():
     col_list, incl_redshift = collect_args()
     run_model(data_columns=col_list, incl_redshift=incl_redshift)
-    # run_cv(data_columns=col_list, incl_redshift=incl_redshift)
+    # compare_datasets(data_columns=col_list)
 
 
 if __name__ == '__main__':

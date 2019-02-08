@@ -8,6 +8,10 @@ from math import ceil
 
 from .data_consts import fnames, code_cat, TARGET_LABEL
 
+"""
+data_plot contains helper functions to plot the data. This includes plotting the distribution of features, and the distributions of transient types over redshift.
+"""
+
 
 def get_class_names(class_codes):
     """
@@ -25,14 +29,13 @@ def plot_feature_distribution(df, feature):
     """
     rcParams['figure.figsize'] = 10, 10
     unique_ttypes = list(df[TARGET_LABEL].unique())
-    num_plot_rows = len(unique_ttypes)
-    fig, axs = plt.subplots(nrows=num_plot_rows, ncols=1, sharex=True, sharey=True)
+
+    fig, axs = plt.subplots(nrows=len(unique_ttypes), ncols=1, sharex=True, sharey=True)
     row_num = col_num = 0
     # find min and max values of this feature
     max_value = df[feature].max()
     min_value = df[feature].min()
     for ttype in unique_ttypes:
-
         values = list(df.loc[(df[TARGET_LABEL] == ttype)
                              & (df[feature].notnull())][feature])
         axs[row_num].hist(values, range=(min_value, max_value), bins=10)

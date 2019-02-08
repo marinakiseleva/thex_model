@@ -12,23 +12,24 @@ from thex_data.data_plot import get_class_names
 from nb_test import calculate_class_probabilities
 
 
-#
-#
+############################################################
 # Plotting code for Naive Bayes ROC ########################
 
 
-def get_rocs(test, summaries, priors):
+def get_rocs(test_data, actual_classes, summaries, priors):
     """
     Plot ROC curves for performance based on predictions, for each class
+    :param test_data: Test data
+    :param actual_classes: True labels for test set
     """
 
-    actual_classes = test[TARGET_LABEL].reset_index(drop=True)
-    test_set = test.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
+    actual_classes = actual_classes[TARGET_LABEL].reset_index(drop=True)
+    test_data = test_data.reset_index(drop=True)
 
     ttypes = list(set(actual_classes))
     f, ax = plt.subplots(len(ttypes), 3, figsize=(10, 10))
     for index, cur_class in enumerate(ttypes):
-        get_roc(test_set, actual_classes, cur_class, summaries, priors, ax[index])
+        get_roc(test_data, actual_classes, cur_class, summaries, priors, ax[index])
     plt.tight_layout()
     plt.show()
 
@@ -145,8 +146,7 @@ def plot_pdf(x, y, ax, color):
     return ax
 
 
-#
-#
+################################################################
 # Plotting code for Naive Bayes Results ########################
 
 
@@ -166,7 +166,7 @@ def prep_dataset_plot(predicted_classes, actual_classes):
     class_counts = get_class_counts(df_compare, transient_classes)
 
     print("Total classes: " + str(len(transient_classes)))
-    print("0 accuracy class count: " + str(low_accuracy_classes))
+    print("Classes with 0% accuracy: " + str(low_accuracy_classes))
 
     # Convert 2 lists to maps
     accs_by_class = {}
@@ -232,7 +232,7 @@ def plot_compare_accuracy(predicted_classes, actual_classes, predicted_classes2,
     plt.title(plot_title, fontsize=16)
     plt.gca().legend((data1_desc, data2_desc), fontsize=default_fontsize)
 
-    cur_path = os.path.dirname(__file__)
+    # cur_path = os.path.dirname(__file__)
     # plt.savefig(cur_path + "/../output/" + plot_title.replace(" ", "_"))
 
     plt.show()

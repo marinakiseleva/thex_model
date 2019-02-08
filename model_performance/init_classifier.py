@@ -39,5 +39,5 @@ def collect_args():
 
     incl_redshift = args.incl_redshift if args.incl_redshift is not None else False
 
-    print("\n\nUsing data columns:\n\n" + str(col_list))
+    # print("\n\nUsing data columns:\n\n" + str(col_list))
     return col_list, args.incl_redshift

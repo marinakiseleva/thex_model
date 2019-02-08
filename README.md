@@ -38,7 +38,7 @@ Update the following values in thex_data/data_consts.py:
 
 
 # Dependencies
-This module requires you to have the following librarie already installed:
+This module requires you to have the following libraries already installed:
 - numpy
 - pandas
 - sklearn
