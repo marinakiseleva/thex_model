@@ -1,21 +1,32 @@
-import os
 """
-All constant, global variables needed in THEx data program. Includes file of data, mapping of transient types and codes, as well as the hard-coded column name of the claimed type that is used in the program (TARGET_LABEL)
+All constant, global variables needed in THEx data program. Includes file of data, mapping of transient types and codes, as well as the hard-coded column name of the claimed type that is used in the program (TARGET_LABEL). 
+
+**Update the values on lines 9 and 11 to run locally.**
 """
 
+
+# UPDATE THESE VALUES TO RUN LOCALLY #############################
+# LOCAL_DATA_PATH: Path to FITS file, relative to root of package: thex_model
+LOCAL_DATA_PATH = '/../../data/THEx-catalog.v0_0_3.fits'
+# LOCAL_DATA_PATH: Path to HMC program, relative to root of package: thex_model
+LOCAL_LIBS_PATH = '/../libraries'
+##################################################################
+
+
+# ROOT_DIR = /full/path/up/to/thex_model
+import os
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
 
 # FITS file of transient/galaxy data
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-# ROOT_DIR = /full/path/up/to/thex_data
-DATA_PATH = ROOT_DIR + '/../../../data/THEx-catalog.v0_0_3.fits'
+DATA_PATH = ROOT_DIR + LOCAL_DATA_PATH
 
 # Directory to libraries, where we expect HMC to be
-LIB_PATH = ROOT_DIR + "/../../libraries"
-
+LIB_PATH = ROOT_DIR + LOCAL_LIBS_PATH
 
 TARGET_LABEL = 'transient_type'  # label of target
 
 """
+cat_code
 transient type name : transient type class code
 Transient Type categories, mapped to codes (integer values).
 """
@@ -92,6 +103,7 @@ cat_code = {
 }
 
 """
+code_cat
 transient type class code : transient type name 
 Transient Type codes mapped to categories.
 """
@@ -99,6 +111,7 @@ code_cat = {v: k for k, v in cat_code.items()}
 
 
 """ 
+groupings
 data values : transient type 
 The groupings below map specific transient types in the data set to claimed type groups. For example: nIa, Ia, Ia*, and Ia-HV all map to Ia.
 """
@@ -526,6 +539,10 @@ fnames = {
 
 }
 
+"""
+Parent : Children
+Hierarchy used for HMC tree
+"""
 class_to_subclass = {
     "TTypes": ["I", "CC", "SLSN", "GRB", "Kilonova", "TDE"],
     "I": ["I Pec", "Ia", "Ib", "Ic", "Ib/c"],

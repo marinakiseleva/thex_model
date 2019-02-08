@@ -30,3 +30,21 @@ Or using a generic column name that will match on all relevant columns:
 > python run_classifier.py -col_names PS1
 
 
+# Set-Up
+Acquire FITS data file, and install HMC from https://github.com/marinakiseleva/hmc.
+Update the following values in thex_data/data_consts.py:
+- DATA_PATH : Path to FITS file  (relative to thex_model root dir)
+- LIB_PATH : Path to HMC root  (relative to thex_model root dir)
+
+
+# Dependencies
+This module requires you to have the following librarie already installed:
+- numpy
+- pandas
+- sklearn
+- scipy
+- hmc (https://github.com/marinakiseleva/hmc) -- see above
+
+
+
+
