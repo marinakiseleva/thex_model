@@ -1,8 +1,8 @@
 from sklearn.model_selection import KFold
 
-from tree_model.hmc_tree import train_tree, convert_target
-from nb_model.nb_train import train_nb
-from nb_model.nb_test import test_model
+from models.tree_model.hmc_tree import train_tree, convert_target
+from models.nb_model.nb_train import train_nb
+from models.nb_model.nb_test import test_model
 
 from thex_data.data_prep import get_train_test, get_source_target_data
 from model_performance.performance import *
@@ -80,6 +80,11 @@ def run_cv(data_columns, incl_redshift=False, test_on_train=False, k=3):
 
 
 def main(test_on_train=True, cv=True):
+    """
+    Runs comparison between Naive Bayes and Tree - using same data
+    :param test_on_train: Boolean for testing on training data. If false, it will test on different testing data.
+    :param cv: Boolean for running 3-fold cross-validation. If false, it will run only once. 
+    """
     col_list, incl_redshift = collect_args()
     if cv:
         run_cv(col_list, incl_redshift, test_on_train=test_on_train, k=3)
