@@ -30,8 +30,8 @@ def find_best_fitting_dist(data):
                for distribution, mle in zip(distributions, mles)]
     # Sorts smallest to largest -- smallest NNL is best
     best_fit = sorted(zip(distributions, mles), key=lambda d: d[1])[0]
-    print('Best fit reached using {}, MLE value: {}'.format(
-        best_fit[0].name, best_fit[1]))
+    # print('Best fit reached using {}, MLE value: {}'.format(
+    #     best_fit[0].name, best_fit[1]))
 
     # Return best fitting distribution and parameters (loc and scale)
     return [best_fit[0], best_fit[0].fit(data)]
@@ -94,7 +94,6 @@ def train_nb(X_train, y_train):
     separated, priors = separate_classes(training_dataset)
     summaries = {}
     for class_value, instances in separated.items():
-        print("******************************************************** Summary for class: " +
-              str(code_cat[class_value]))
+        # print("\n\nSummary for class: " + str(code_cat[class_value]))
         summaries[class_value] = summarize(instances)
     return summaries, priors

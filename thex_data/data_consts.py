@@ -1,7 +1,17 @@
+import os
+"""
+All constant, global variables needed in THEx data program. Includes file of data, mapping of transient types and codes, as well as the hard-coded column name of the claimed type that is used in the program (TARGET_LABEL)
+"""
 
-"""
-All constant, global variables needed in THEx data program. Includes mapping of transient types and codes, as well as the hard-coded column name of the claimed type that is used in the program (TARGET_LABEL)
-"""
+
+# FITS file of transient/galaxy data
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+# ROOT_DIR = /full/path/up/to/thex_data
+DATA_PATH = ROOT_DIR + '/../../../data/THEx-catalog.v0_0_3.fits'
+
+# Directory to libraries, where we expect HMC to be
+LIB_PATH = ROOT_DIR + "/../../libraries"
+
 
 TARGET_LABEL = 'transient_type'  # label of target
 

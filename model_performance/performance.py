@@ -148,10 +148,10 @@ def plot_class_accuracy(class_accuracies, plot_title):
     plt.title(plot_title, fontsize=15)
     plt.xlabel('Transient Class', fontsize=12)
     plt.ylabel('Accuracy', fontsize=12)
-    local_dir = "../../../documentation/astronomy/galaxies/reports/thex/figures/performance/comparison/"
-    print(plot_title)
-    print(plot_title.replace(" ", ""))
-    plt.savefig(local_dir + plot_title.replace(" ", ""))
+    # local_dir = "../../../documentation/astronomy/galaxies/reports/thex/figures/performance/comparison/"
+    # print(plot_title)
+    # print(plot_title.replace(" ", ""))
+    # plt.savefig(local_dir + plot_title.replace(" ", ""))
     plt.show()
 
 

@@ -13,7 +13,7 @@ import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from .data_consts import cat_code, TARGET_LABEL
+from .data_consts import cat_code, TARGET_LABEL, DATA_PATH
 from .data_init import collect_data
 from .data_clean import *
 from .data_print import *
@@ -54,12 +54,14 @@ def filter_columns(df, col_list, incl_redshift):
         raise ValueError('Need to pass in values for col_list')
 
     # Filter DataFrame down to these columns
-    sel_cols = col_list + [TARGET_LABEL]
+    col_list = col_list + [TARGET_LABEL]
     if incl_redshift:
-        sel_cols.append('redshift')
-    print("Filtering on columns " + str(sel_cols))
-    df = df[sel_cols]
+        col_list.append('redshift')
+    if 'AllWISE_IsVar' in col_list:
+        col_list.remove('AllWISE_IsVar')
 
+    print("\nFiltering on columns\n " + str(col_list))
+    df = df[col_list]
     # Convert transient class to number code
     df[TARGET_LABEL] = df[TARGET_LABEL].apply(lambda x: int(cat_code[x]))
     return df
@@ -137,13 +139,12 @@ def filter_data(df):
     return df.iloc[non_null_indices]
 
 
-def get_data(col_list, incl_redshift, file='THEx-catalog.v0_0_3.fits'):
+def get_data(col_list, incl_redshift):
     """
     Pull in data and filter based on different biases and corrections: group transient types, fitler to passed-in columns, keep only rows with at least 1 valid value, filter to most frequent classes, sub-sample each class to same number, and take difference between wavelengths to make new features 
     """
-    cur_path = os.path.dirname(__file__)
     # Go back one directory, because we are in thex_model
-    df = collect_data(cur_path + "/../../../data/" + file)
+    df = collect_data()
     df = group_cts(df)
     df = filter_columns(df, col_list, incl_redshift)
     # df = filter_data(df)
@@ -157,12 +158,10 @@ def get_data(col_list, incl_redshift, file='THEx-catalog.v0_0_3.fits'):
 
     # Derive colors from data, and keep only colors
     # df = derive_diffs(df.copy())
-
-    # df = one_all(df, ['CC', 'nIa', 'Ib', 'Ic', 'Ia'])
+    # df = one_all(df, ['TDE'])
 
     get_class_counts(df)
     # df.to_csv("../output/training_data.csv")
-
     # df.dtypes.to_csv("../output/training_data_types.csv")
     return df
 

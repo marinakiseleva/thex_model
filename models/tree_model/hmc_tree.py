@@ -1,17 +1,14 @@
-import os
+from thex_data.data_prep import get_train_test
+from thex_data.data_consts import class_to_subclass as hierarchy
+from thex_data.data_consts import TARGET_LABEL, code_cat, cat_code, LIB_PATH
+from model_performance.performance import *
+
+# Import HMC library
 import sys
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) +
-                "/../../libraries/hmc/hmc")
-
+sys.path.insert(0, LIB_PATH + "/hmc/hmc")
 import hmc
 import metrics
 from datasets import *
-
-from thex_data.data_prep import get_train_test
-from thex_data.data_consts import class_to_subclass as hierarchy
-from thex_data.data_consts import TARGET_LABEL, code_cat, cat_code
-from model_performance.performance import *
 
 
 def run_tree(data_columns, incl_redshift):
@@ -69,6 +66,18 @@ def evaluate_tree(tree, hmc_hierarchy, X_test, y_test):
         hmc_hierarchy, y_test, predictions))
     print("F1 Descendants: %s" % metrics.f1_score_descendants(
         hmc_hierarchy, y_test, predictions))
+
+    class_precisions = metrics.precision_score_hierarchy(
+        hmc_hierarchy, y_test, predictions, level=1)
+    class_accuracies = {}
+    for tclass in class_precisions.keys():
+        correct = class_precisions[tclass][0]
+        total = class_precisions[tclass][1]
+        if total != 0:
+            class_accuracies[cat_code[tclass]] = correct / total
+    plot_class_accuracy(class_accuracies, "Top-Level Hierarchy Performance")
+
+    # print("Precision at the top level of the hierarchy: " + str(acc))
 
     prediction_codes = [cat_code[cc] for cc in predictions]
     actual_codes = [cat_code[cc] for cc in y_test[TARGET_LABEL].values]

@@ -15,11 +15,10 @@ def collect_args():
     col_list = []
     if args.cols is None:
         if args.col_names is not None:
-            col_list = collect_cols(
-                "./../../../data/THEx-catalog.v0_0_3.fits", args.col_names)
+            col_list = collect_cols(args.col_names)
         else:
             # Use all columns in data set with number values
-            cols = list(collect_data("./../../../data/THEx-catalog.v0_0_3.fits"))
+            cols = list(collect_data())
             drop_cols = ['event', 'ra', 'dec', 'ra_deg', 'dec_deg', 'radec_err', 'redshift', 'claimedtype', 'host', 'host_ra', 'host_dec', 'ebv', 'host_ra_deg',
                          'host_dec_deg', 'host_dist', 'host_search_radius', 'is_confirmed_host', 'by_primary_cand', 'by_transient', "Err", "_e_", 'AllWISE_IsVar',
                          'HyperLEDA_objtype',

@@ -1,12 +1,32 @@
-# thex_model
-Source code for THEx transient prediction using host-galaxy information. Includes data pulling, cleansing, and preparation. Also has an implementation of a Gaussian Naive Bayes Classifier designed to predict astronomical transient events using galaxy data. 
+# THEx Background
+Source code contributing to the research of the Transient Host Exchange project (THEx) project at the University of Arizona. THEx aims to predict astronomical transients for the Large Synoptic Survey Telescope (LSST) before they occur, in order to expedite their follow up once detected by LSST, by predicting transients using host-galaxy information alone. 
 
+# thex_model
+This model is broken up into smaller modules that each provide different utilities and are described below.
 
 ## thex_data 
-Contains all setup code for pulling in, normalizing, and cleansing data
+Data pulling, cleansing, normalizing, preparation, and plotting. 
+
+## models
+Contains the different classifiers explored/used in the project.
+
+### tree_model
+Decisioning tree using the Hierarchical Multi-label Decisioing Tree from Vens, et al. 2008. 
+
+### nb_model
+The Gaussian (or on-demand best-fitting distribution) Naive Bayes Model that runs on the code. 
+
+## model_performance
+Compares the existing models in this project.
+
+# Running
+
+The Naive Bayes or Tree programs can be run using specific column names:
+
+> python run_classifier.py -cols PS1_gKmag PS1_rKmag PS1_iKmag PS1_zKmag PS1_yKmag
+
+Or using a generic column name that will match on all relevant columns:
+
+> python run_classifier.py -col_names PS1
 
 
-## nb_model
-The Gaussian Naive Bayes Model that runs on the code. Run like so:
-
-python run_classifier.py -cols PS1_gKmag PS1_rKmag PS1_iKmag PS1_zKmag PS1_yKmag
