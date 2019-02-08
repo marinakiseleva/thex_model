@@ -31,7 +31,7 @@ Or using a generic column name that will match on all relevant columns:
 
 
 # Set-Up
-Acquire FITS data file, and install HMC from https://github.com/marinakiseleva/hmc.
+Acquire FITS data file from THEx. Download and install [HMC](https://github.com/marinakiseleva/hmc).
 Update the following values in thex_data/data_consts.py:
 - DATA_PATH : Path to FITS file  (relative to thex_model root dir)
 - LIB_PATH : Path to HMC root  (relative to thex_model root dir)
