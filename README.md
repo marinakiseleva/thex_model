@@ -43,10 +43,10 @@ This module requires you to have the following librarie already installed:
 - pandas
 - sklearn
 - scipy
-- hmc (https://github.com/marinakiseleva/hmc) -- see above
+- [hmc](https://github.com/marinakiseleva/hmc) -- see above
 
 
 
 # Acknowledgments
-This project uses a fork off of HMC, available by the BSD 3-Clause "New" or "Revised" License.  
+This project uses a [fork](https://github.com/marinakiseleva/hmc) of [HMC](https://github.com/davidwarshaw/hmc), available by the BSD 3-Clause "New" or "Revised" License.  
 
