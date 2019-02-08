@@ -78,11 +78,13 @@ def separate_classes(train):
         # Set class value
         trans_df.drop([TARGET_LABEL], axis=1, inplace=True)
         separated_classes[transient] = trans_df
-    print("Unique transient types: " + str(len(separated_classes)))
-    # Make priors sum to 1
-    priors = {k: v / sum(priors.values()) for k, v in priors.items()}
 
-    print("Priors \n" + str(priors))
+    # Make priors sum to 1
+    priors = {k: round(v / sum(priors.values()), 6) for k, v in priors.items()}
+
+    print("\nPriors\n------------------")
+    for k in priors.keys():
+        print(code_cat[k] + " : " + str(priors[k]))
     return separated_classes, priors
 
 

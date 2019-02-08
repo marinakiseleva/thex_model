@@ -12,9 +12,9 @@ from hmc_tree import *
 
 
 def main():
-    col_list, incl_redshift = collect_args()
+    col_list, incl_redshift, test_on_train = collect_args()
 
-    run_tree(col_list, incl_redshift)
+    run_tree(col_list, incl_redshift, test_on_train)
 
 
 if __name__ == '__main__':

@@ -39,13 +39,10 @@ def run_model(data_columns, incl_redshift=False, plots=True):
 
         # get_rocs(X_test, y_test, summaries, priors)
 
-        for f in list(X_train):
-            data_plot.plot_feature_distribution(concat([X_train, y_train], axis=1), f)
+        # for f in list(X_train):
+        #     data_plot.plot_feature_distribution(concat([X_train, y_train], axis=1), f)
 
-        plot_confusion_matrix(y_test, predicted_classes,
-                              normalize=True,
-                              title='Confusion matrix',
-                              cmap=plt.cm.Blues)
+        plot_confusion_matrix(y_test, predicted_classes, normalize=True)
     return predicted_classes, y_test
 
 
@@ -64,7 +61,7 @@ def compare_datasets(data_columns):
 
 
 def main():
-    col_list, incl_redshift = collect_args()
+    col_list, incl_redshift, test_on_train = collect_args()
     run_model(data_columns=col_list, incl_redshift=incl_redshift)
     # compare_datasets(data_columns=col_list)
 

@@ -11,9 +11,12 @@ import metrics
 from datasets import *
 
 
-def run_tree(data_columns, incl_redshift):
-    X_train, X_test, y_train, y_test = get_train_test(
-        data_columns, incl_redshift)
+def run_tree(data_columns, incl_redshift, test_on_train):
+    X_train, X_test, y_train, y_test = get_train_test(data_columns, incl_redshift)
+
+    if test_on_train == True:
+        X_test = X_train
+        y_test = y_train
 
     # Convert codes back to category titles since hierarchy is in category form
     y_train_strs, y_test_strs = convert_target(y_train, y_test)

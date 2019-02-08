@@ -8,6 +8,8 @@ def collect_args():
                         help='<Required> Pass column names', required=False)
     parser.add_argument('-col_names', '--col_names', nargs='+',
                         help='Pass in string by which columns will be selected. For example: AllWISE will use all AlLWISE columns.', required=False)
+    parser.add_argument('-test_on_train', '--test_on_train', nargs='+',
+                        help='True if want to test on training data.', required=False)
     parser.add_argument('-incl_redshift', '--incl_redshift', nargs='+',
                         help='<Required> Set flag', required=False)
     args = parser.parse_args()
@@ -38,6 +40,6 @@ def collect_args():
         col_list = args.cols
 
     incl_redshift = args.incl_redshift if args.incl_redshift is not None else False
-
+    test_on_train = args.test_on_train if args.test_on_train is not None else False
     # print("\n\nUsing data columns:\n\n" + str(col_list))
-    return col_list, args.incl_redshift
+    return col_list, incl_redshift, test_on_train

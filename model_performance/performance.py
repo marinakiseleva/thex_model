@@ -37,7 +37,7 @@ def get_confusion_matrix(actual_classes, predicted_classes):
     return cf_matrix
 
 
-def plot_confusion_matrix(actual_classes, predicted_classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
+def plot_confusion_matrix(actual_classes, predicted_classes, normalize=False, cmap=plt.cm.Blues):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
@@ -48,9 +48,9 @@ def plot_confusion_matrix(actual_classes, predicted_classes, normalize=False, ti
 
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        print("Normalized confusion matrix")
+        title = "Normalized Confusion Matrix"
     else:
-        print('Confusion matrix, without normalization')
+        title = "Confusion Matrix (without normalization)"
 
     rcParams['figure.figsize'] = 8, 8
     plt.imshow(cm, interpolation='nearest', cmap=cmap)

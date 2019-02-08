@@ -79,13 +79,13 @@ def run_cv(data_columns, incl_redshift=False, test_on_train=False, k=3):
         avg_nb_acc, plot_title="Gaussian Naive Bayes: " + str(k) + "-fold CV on" + data_type + " data")
 
 
-def main(test_on_train=True, cv=True):
+def main(cv=True):
     """
     Runs comparison between Naive Bayes and Tree - using same data
-    :param test_on_train: Boolean for testing on training data. If false, it will test on different testing data.
+
     :param cv: Boolean for running 3-fold cross-validation. If false, it will run only once. 
     """
-    col_list, incl_redshift = collect_args()
+    col_list, incl_redshift, test_on_train = collect_args()
     if cv:
         run_cv(col_list, incl_redshift, test_on_train=test_on_train, k=3)
         return 1
