@@ -7,10 +7,31 @@ import matplotlib.pyplot as plt
 from pylab import rcParams
 
 from model_performance.performance import *
-from thex_data.data_consts import code_cat, TARGET_LABEL
+from thex_data.data_consts import code_cat, TARGET_LABEL, ROOT_DIR
 from thex_data.data_plot import get_class_names
 from nb_test import calculate_class_probabilities
 
+
+def plot_dist_fit(data, kde, bandwidth, title):
+    """
+    Plot distribution fitted to feature
+    """
+    rcParams['figure.figsize'] = 6, 6
+    n_bins = 30
+    range_vals = data.max() - data.min()
+    x_line = np.linspace(data.min() - (range_vals / 5),
+                         data.max() + (range_vals / 5), 1000)
+    data_vector = np.matrix(x_line).T
+    pdf = kde.score_samples(data_vector)
+    plt.plot(x_line, np.exp(pdf), linewidth=3, alpha=0.5, label='bw=%.2f' % bandwidth)
+    plt.hist(data, n_bins, fc='gray', histtype='stepfilled', alpha=0.3, normed=True)
+    plt.title(title)
+    replace_strs = ["\n", " ", ":", ".", ",", "/"]
+    for r in replace_strs:
+        title = title.replace(r, "_")
+    plt.savefig(ROOT_DIR + "/output/kernel_fits/" + title)
+    # plt.show()
+    plt.cla()
 
 ############################################################
 # Plotting code for Naive Bayes ROC ########################

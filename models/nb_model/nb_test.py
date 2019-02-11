@@ -1,5 +1,6 @@
 from math import isnan
 import pandas as pd
+import numpy as np
 """
 Logic for classifying testing data on Naive Bayes classifier
 """
@@ -19,10 +20,11 @@ def calculate_class_probabilities(summaries, priors, test_dp):
             test_value = test_dp[feature_name]
             dist = f_dist[0]
             if test_value is not None and not isnan(test_value):
-                prob_density = dist(*f_dist[1]).pdf(test_value)
-
+                # prob_density = dist(*f_dist[1]).pdf(test_value)
+                parms = dist.get_params()
+                prob_density = np.exp(dist.score_samples([[test_value]]))
                 # Multiply together probability of each feature
-                probabilities[transient_class] *= prob_density
+                probabilities[transient_class] *= prob_density[0]
 
             # Factor in prior
             probabilities[transient_class] *= priors[transient_class]
