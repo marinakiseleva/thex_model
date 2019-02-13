@@ -43,6 +43,7 @@ This module requires you to have the following libraries already installed:
 - pandas
 - sklearn
 - scipy
+- astropy
 - [hmc](https://github.com/marinakiseleva/hmc) -- see above
 
 

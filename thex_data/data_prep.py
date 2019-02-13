@@ -153,12 +153,13 @@ def get_data(col_list, incl_redshift):
 
     df = filter_top_classes(df, top=10)
 
+    # df = one_all(df, ['TDE', 'Ia', 'II P'])
+
     # Randomly subsample any over-represented classes down to 100
     df = sub_sample(df, count=100, col_val=TARGET_LABEL)
 
     # Derive colors from data, and keep only colors
     # df = derive_diffs(df.copy())
-    # df = one_all(df, ['TDE'])
 
     get_class_counts(df)
     # df.to_csv("../output/training_data.csv")

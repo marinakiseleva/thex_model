@@ -85,7 +85,7 @@ def evaluate_tree(tree, hmc_hierarchy, X_test, y_test):
     prediction_codes = [cat_code[cc] for cc in predictions]
     actual_codes = [cat_code[cc] for cc in y_test[TARGET_LABEL].values]
     plot_confusion_matrix(actual_codes, prediction_codes,
-                          normalize=True, title='Confusion matrix')
+                          normalize=True)
 
     compute_plot_class_accuracy(prediction_codes, actual_codes, "HMC Tree Accuracy")
 
