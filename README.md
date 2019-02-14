@@ -36,6 +36,8 @@ python models/tree_model/run_classifier.py -col_names PS1 GALEX AllWISE
 Listed in requirements.txt and the following that needs to be separately installed in another directory. 
 - [hmc](https://github.com/marinakiseleva/hmc) -- see above
 
+Do not pip install hmc. Download it from the link above and install it using setup.py. This is a forked and edited version, and only this version will work with our project.
+
 # Project Structure
 This module is broken up into smaller modules that each provide different utilities and are described below.
 
@@ -49,7 +51,7 @@ Contains the different classifiers explored/used in the project. Contains the Hi
 Decisioning tree using the Hierarchical Multi-label Decisioing Tree from Vens, et al. 2008. 
 
 ### nb_model
-The Gaussian (or on-demand best-fitting distribution) Naive Bayes Model that runs on the code. 
+Naive Bayes Model using kernel density estimation to determine the feature distributions.
 
 ## model_performance
 Evaluates the existing models in this project.

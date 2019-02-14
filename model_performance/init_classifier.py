@@ -11,7 +11,9 @@ def collect_args():
     parser.add_argument('-test_on_train', '--test_on_train', nargs='+',
                         help='True if want to test on training data.', required=False)
     parser.add_argument('-incl_redshift', '--incl_redshift', nargs='+',
-                        help='<Required> Set flag', required=False)
+                        help='<Not Required> Boolean on using redshift as a feature', required=False)
+    parser.add_argument('-folds', '--folds', nargs='+',
+                        help='<Not Required> Number of folds to use in k-fold Cross Validation', required=False)
     args = parser.parse_args()
 
     col_list = []

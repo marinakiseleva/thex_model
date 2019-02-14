@@ -1,5 +1,5 @@
 from thex_data.data_consts import TARGET_LABEL, code_cat
-from nb_performance import plot_dist_fit
+from .nb_performance import plot_dist_fit
 import scipy.stats as stats
 from sklearn.neighbors.kde import KernelDensity
 import pandas as pd
