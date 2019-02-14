@@ -1,25 +1,6 @@
 # THEx Background
 Source code contributing to the research of the Transient Host Exchange project (THEx) project at the University of Arizona. THEx aims to predict astronomical transients for the Large Synoptic Survey Telescope (LSST) before they occur, in order to expedite their follow up once detected by LSST, by predicting transients using host-galaxy information alone. 
 
-# thex_model
-This model is broken up into smaller modules that each provide different utilities and are described below.
-
-## thex_data 
-Data pulling, cleansing, normalizing, preparation, and plotting. 
-
-## models
-Contains the different classifiers explored/used in the project.
-
-### tree_model
-Decisioning tree using the Hierarchical Multi-label Decisioing Tree from Vens, et al. 2008. 
-
-### nb_model
-The Gaussian (or on-demand best-fitting distribution) Naive Bayes Model that runs on the code. 
-
-## model_performance
-Compares the existing models in this project.
-
-
 
 # Set-Up
 Set up with thex_model using Python virtualenv with the following commands:
@@ -52,6 +33,23 @@ Or using a generic column name that will match on all relevant columns:
 Listed in requirements.txt and the following that needs to be separately installed in another directory. 
 - [hmc](https://github.com/marinakiseleva/hmc) -- see above
 
+# Project Structure
+This module is broken up into smaller modules that each provide different utilities and are described below.
+
+## thex_data 
+Data pulling, cleansing, normalizing, preparation, and plotting. 
+
+## models
+Contains the different classifiers explored/used in the project. Contains the Hierarchical Decision Tree model and Naive Bayes model.
+
+### tree_model
+Decisioning tree using the Hierarchical Multi-label Decisioing Tree from Vens, et al. 2008. 
+
+### nb_model
+The Gaussian (or on-demand best-fitting distribution) Naive Bayes Model that runs on the code. 
+
+## model_performance
+Evaluates the existing models in this project.
 
 
 # Acknowledgments
