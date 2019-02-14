@@ -20,17 +20,7 @@ Update the following values in thex_data/data_consts.py:
 
 
 # Running
-
-The Naive Bayes or Tree programs can be run using specific column names:
-```
-python models/nb_model/run_classifier.py -cols PS1_gKmag PS1_rKmag PS1_iKmag PS1_zKmag PS1_yKmag
-```
-Or using a generic column name that will match on all relevant columns:
-
-```
-python models/tree_model/run_classifier.py -col_names PS1 GALEX AllWISE
-```
-
+Please use the Jupyter Notebook 'THEx Model Intro' located in the notebooks directory to help you get started with running the models.
 
 # Dependencies
 Listed in requirements.txt and the following that needs to be separately installed in another directory. 
