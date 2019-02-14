@@ -10,13 +10,14 @@ data_prep:
 """
 
 import os
+import sys
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from .data_consts import cat_code, TARGET_LABEL, DATA_PATH
+from .data_print import *
 from .data_init import collect_data
 from .data_clean import *
-from .data_print import *
 
 
 def sub_sample(df, count, col_val):
@@ -60,7 +61,7 @@ def filter_columns(df, col_list, incl_redshift):
     if 'AllWISE_IsVar' in col_list:
         col_list.remove('AllWISE_IsVar')
 
-    print("\nFeatures Used\n------------------" + str(col_list))
+    print_features_used(col_list)
     df = df[col_list]
     # Convert transient class to number code
     df[TARGET_LABEL] = df[TARGET_LABEL].apply(lambda x: int(cat_code[x]))
@@ -146,13 +147,12 @@ def get_data(col_list, incl_redshift):
     # Go back one directory, because we are in thex_model
     df = collect_data()
     df = group_cts(df)
-    df = filter_columns(df, col_list, incl_redshift)
+
+    df = filter_columns(df.copy(), col_list, incl_redshift)
     # df = filter_data(df)
-    # df = fill_nulls(df)
     df.dropna(axis=0, inplace=True)
 
     df = filter_top_classes(df, top=10)
-
     # df = one_all(df, ['TDE', 'Ia', 'II P'])
 
     # Randomly subsample any over-represented classes down to 100
@@ -161,9 +161,11 @@ def get_data(col_list, incl_redshift):
     # Derive colors from data, and keep only colors
     # df = derive_diffs(df.copy())
 
-    get_class_counts(df)
-    # df.to_csv("../output/training_data.csv")
-    # df.dtypes.to_csv("../output/training_data_types.csv")
+    if df.shape[0] == 0:
+        print("No data to run model on. Try changing filters or limiting number of features. Note: Running on all columns will not work since no data spans all features.")
+        sys.exit()
+
+    print_class_counts(df)
     return df
 
 

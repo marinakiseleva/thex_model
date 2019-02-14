@@ -1,5 +1,6 @@
 from thex_data.data_consts import TARGET_LABEL, code_cat
-from .nb_performance import plot_dist_fit
+from thex_data.data_print import print_priors
+from models.nb_model.nb_performance import plot_dist_fit
 import scipy.stats as stats
 from sklearn.neighbors.kde import KernelDensity
 import pandas as pd
@@ -10,9 +11,12 @@ Logic for training the Naive Bayes classifier
 """
 
 
-def find_best_fitting_dist(data, column_name=None, ttype=None):
+def find_best_fitting_dist(data, feature=None, class_name=None):
     """
-    Finds best fitting distribution for this particular set of features (features of a single transient type)
+    Uses kernel density estimation to find the distribution of this data. Also plots data and distribution fit to it. Returns [distribution, parameters of distribution].
+    :param data: set of values corresponding to feature and class
+    :param feature: Name of feature/column this data corresponds to
+    :param class_name: Name of class this data corresponds to
     """
 
     # Use Kernel Density
@@ -30,40 +34,42 @@ def find_best_fitting_dist(data, column_name=None, ttype=None):
     best_params = kde.get_params()
 
     plot_dist_fit(data.values, kde, bw, "Kernel Distribution with bandwidth: %.6f\n for feature %s in class %s" % (
-        bw, column_name, ttype))
+        bw, feature, class_name))
 
     # Return best fitting distribution and parameters (loc and scale)
     return [best_dist, best_params]
 
 
-def summarize(df, ttype=None):
+def summarize(data, class_name=None):
     """
-    Summarizes features across df by getting mean and stdev across each column.
+    Estimate distribution of each feature in this data. Return mapping of {feature : [distribution, parameters of distribution]}
+    :param data: DataFrame corresponding to all data of this class (class_name)
+    :param class_name: Name of class this data corresponds to
     """
     class_summaries = {}
     # get distribution of each feature
-    for column_name in df:
-        if column_name != TARGET_LABEL:
-            col_values = df[column_name].dropna(axis=0)
-
+    for feature in data:
+        if feature != TARGET_LABEL:
+            col_values = data[feature].dropna(axis=0)
             if len(col_values) > 0:
-                class_summaries[column_name] = find_best_fitting_dist(
-                    col_values, column_name, ttype)
+                class_summaries[feature] = find_best_fitting_dist(
+                    col_values, feature, class_name)
 
     return class_summaries
 
 
-def separate_classes(train):
+def separate_classes(data):
     """
     Separate by class (of unique transient types)
-    Return map of {transient type : DataFrame of samples of that type}
+    Return map of {class code : DataFrame of samples of that type}, and priors
+    :param data: DataFrame of feature and labels
     """
-    transient_classes = list(train[TARGET_LABEL].unique())
+    transient_classes = list(data[TARGET_LABEL].unique())
     separated_classes = {}
     priors = {}  # Prior value of class, based on frequency
-    total_count = train.shape[0]
+    total_count = data.shape[0]
     for transient in transient_classes:
-        trans_df = train.loc[train[TARGET_LABEL] == transient]
+        trans_df = data.loc[data[TARGET_LABEL] == transient]
 
         # SET PRIOR value
         # Frequency of class in total set
@@ -81,22 +87,19 @@ def separate_classes(train):
 
     # Make priors sum to 1
     priors = {k: round(v / sum(priors.values()), 6) for k, v in priors.items()}
-
-    print("\nPriors\n------------------")
-    for k in priors.keys():
-        print(code_cat[k] + " : " + str(priors[k]))
+    print_priors(priors)
     return separated_classes, priors
 
 
 def train_nb(X_train, y_train):
     """
-    Train Naive Bayes classifier on training set
+    Train Naive Bayes classifier on this training set
+    :param X_train: Features of data
+    :param y_train: Labels of data
     """
     training_dataset = pd.concat([X_train, y_train], axis=1)
     separated, priors = separate_classes(training_dataset)
     summaries = {}
     for class_code, instances in separated.items():
-        print("\n\n CLASS " + str(code_cat[class_code]) + "\n\n")
         summaries[class_code] = summarize(instances, code_cat[class_code])
-
     return summaries, priors

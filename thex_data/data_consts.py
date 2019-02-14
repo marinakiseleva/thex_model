@@ -530,15 +530,12 @@ grouping_lists = {
 }
 
 """
-Feature name mappings  for plotting
+Columns with non-numeric values that are not used
 """
-fnames = {
-    'PS1_rKmag_minus_PS1_gKmag': 'r - g',
-    'PS1_iKmag_minus_PS1_rKmag': 'i - r',
-    'PS1_zKmag_minus_PS1_iKmag': 'z - i',
-    'PS1_yKmag_minus_PS1_zKmag': 'y - z'
-
-}
+non_numeric_cols = ['event', 'ra', 'dec', 'ra_deg', 'dec_deg', 'radec_err', 'redshift', 'claimedtype', 'host', 'host_ra', 'host_dec', 'ebv', 'host_ra_deg',
+                    'host_dec_deg', 'host_dist', 'host_search_radius', 'is_confirmed_host', 'by_primary_cand', 'by_transient', "Err", "_e_", 'AllWISE_IsVar', 'HyperLEDA_objtype', 'HyperLEDA_type', 'HyperLEDA_bar', 'HyperLEDA_ring', 'HyperLEDA_multiple', 'HyperLEDA_compactness',
+                    'HyperLEDA_agnclass'
+                    ]
 
 """
 Parent : Children

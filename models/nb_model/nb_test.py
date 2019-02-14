@@ -2,13 +2,16 @@ from math import isnan
 import pandas as pd
 import numpy as np
 """
-Logic for classifying testing data on Naive Bayes classifier
+Logic for classifying testing data using the Naive Bayes classifier
 """
 
 
 def calculate_class_probabilities(summaries, priors, test_dp):
     """
     Calculates probability of each transient class (the keys of summaries map), for the test data point (test_dp). Calculates probability by multiplying probability of each feature together. Returns map of class codes to probability.
+    :param summaries: Summaries computed by train_nb in nb_train.py
+    :param priors: Priors computed by train_nb in nb_train.py
+    :param test_point: Single row of features as datapoint
     """
     probabilities = {}
     # Get probability density of each class, and add it to a running sum of
@@ -39,29 +42,27 @@ def calculate_class_probabilities(summaries, priors, test_dp):
 def test_sample(summaries, priors, test_point):
     """
     Run sample point through Naive Bayes distributions, and get probability for each class
-    Returns: class that has maximum probability
+    Returns class that has maximum probability.
+    :param summaries: Summaries computed by train_nb in nb_train.py
+    :param priors: Priors computed by train_nb in nb_train.py
+    :param test_point: Single row of features as datapoint
     """
     probabilities = calculate_class_probabilities(summaries, priors, test_point)
-
     max_class = max(probabilities, key=lambda k: probabilities[k])
     return max_class
 
 
-def test_set_samples(summaries, priors, testing_set):
+def test_nb(X_test, summaries, priors):
     """
-    Tests all samples in testing_set using Naive Bayes probabilities from summaries (created in training) and priors of each class
+    Tests model using established summaires & priors on test data. Returns class code predictions for these classes.
+    :param X_test: Features of test data
+    :param summaries: Summaries computed by train_nb in nb_train.py
+    :param priors: Priors computed by train_nb in nb_train.py
     """
+    # predictions = test_set_samples(summaries, priors, X_test)
     predictions = []
-    for index, row in testing_set.iterrows():
+    for index, row in X_test.iterrows():
         max_class = test_sample(summaries, priors, row)
         predictions.append(max_class)
-    return predictions
-
-
-def test_model(X_test, summaries, priors):
-    """
-    Tests model using established summaires & priors on test data (includes ttype)
-    """
-    predictions = test_set_samples(summaries, priors, X_test)
     predicted_classes = pd.DataFrame(predictions, columns=['predicted_class'])
     return predicted_classes

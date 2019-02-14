@@ -1,13 +1,12 @@
 from sklearn.model_selection import KFold
 
+from model_performance.performance import *
+from models.base_model.cmd_interpreter import get_model_data
+
 from models.tree_model.hmc_tree import train_tree, convert_target
 from models.nb_model.nb_train import train_nb
-from models.nb_model.nb_test import test_model
-
+from models.nb_model.nb_test import test_nb
 from thex_data.data_prep import get_train_test, get_source_target_data
-from model_performance.performance import *
-from model_performance.init_classifier import collect_args
-
 from thex_data.data_consts import cat_code, TARGET_LABEL
 
 
@@ -18,7 +17,7 @@ def run_models(X_train, y_train, X_test, y_test):
     """
     # Run Naive Bayes
     summaries, priors = train_nb(X_train, y_train)
-    nb_predictions = test_model(X_test, summaries, priors)
+    nb_predictions = test_nb(X_test, summaries, priors)
 
     # Run HMC Tree
     # Tree uses category names, not codes
@@ -76,13 +75,12 @@ def run_cv(data_columns, incl_redshift=False, test_on_train=False, k=3):
     plot_class_accuracy(
         avg_tree_acc, plot_title="HSC Tree: " + str(k) + "-fold CV on" + data_type + " data")
     plot_class_accuracy(
-        avg_nb_acc, plot_title="Gaussian Naive Bayes: " + str(k) + "-fold CV on" + data_type + " data")
+        avg_nb_acc, plot_title="Naive Bayes: " + str(k) + "-fold CV on" + data_type + " data")
 
 
 def main(cv=True):
     """
     Runs comparison between Naive Bayes and Tree - using same data
-
     :param cv: Boolean for running 3-fold cross-validation. If false, it will run only once. 
     """
     col_list, incl_redshift, test_on_train = collect_args()

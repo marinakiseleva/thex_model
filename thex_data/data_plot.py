@@ -1,12 +1,9 @@
 import numpy as np
 import pandas as pd
-import scipy.stats as stats
 import matplotlib.pyplot as plt
-import pylab
 from pylab import rcParams
-from math import ceil
 
-from .data_consts import fnames, code_cat, TARGET_LABEL
+from .data_consts import code_cat, TARGET_LABEL
 
 """
 data_plot contains helper functions to plot the data. This includes plotting the distribution of features, and the distributions of transient types over redshift.

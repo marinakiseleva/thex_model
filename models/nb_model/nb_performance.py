@@ -9,7 +9,7 @@ from pylab import rcParams
 from model_performance.performance import *
 from thex_data.data_consts import code_cat, TARGET_LABEL, ROOT_DIR
 from thex_data.data_plot import get_class_names
-from .nb_test import calculate_class_probabilities
+from models.nb_model.nb_test import calculate_class_probabilities
 
 
 def plot_dist_fit(data, kde, bandwidth, title):
