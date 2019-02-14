@@ -19,31 +19,37 @@ The Gaussian (or on-demand best-fitting distribution) Naive Bayes Model that run
 ## model_performance
 Compares the existing models in this project.
 
-# Running
-
-The Naive Bayes or Tree programs can be run using specific column names:
-
-> python run_classifier.py -cols PS1_gKmag PS1_rKmag PS1_iKmag PS1_zKmag PS1_yKmag
-
-Or using a generic column name that will match on all relevant columns:
-
-> python run_classifier.py -col_names PS1
 
 
 # Set-Up
-Acquire FITS data file from THEx. Download and install [HMC](https://github.com/marinakiseleva/hmc).
+Set up with thex_model using Python virtualenv with the following commands:
+
+> mkdir environments
+> virtualenv environments/thex_env
+> source environments/thex_env/bin/activate
+> cd thex_model
+> pip install -r requirements.txt 
+
+Lastly, the LOCAL_DATA_PATH and LOCAL_LIBS_PATH paths in thex_data/data_consts.py need to be updated with the data path and directory containing hmc, respectively. Acquire FITS data file from THEx. Download and install [HMC](https://github.com/marinakiseleva/hmc).
 Update the following values in thex_data/data_consts.py:
 - DATA_PATH : Path to FITS file  (relative to thex_model root dir)
 - LIB_PATH : Path to HMC root  (relative to thex_model root dir)
 
 
+# Running
+
+The Naive Bayes or Tree programs can be run using specific column names:
+
+> python models/nb_model/run_classifier.py -cols PS1_gKmag PS1_rKmag PS1_iKmag PS1_zKmag PS1_yKmag
+
+Or using a generic column name that will match on all relevant columns:
+
+> python models/tree_model/run_classifier.py -col_names PS1 GALEX AllWISE
+
+
+
 # Dependencies
-This module requires you to have the following libraries already installed:
-- numpy
-- pandas
-- sklearn
-- scipy
-- astropy
+Listed in requirements.txt and the following that needs to be separately installed in another directory. 
 - [hmc](https://github.com/marinakiseleva/hmc) -- see above
 
 
