@@ -3,20 +3,29 @@ Source code contributing to the research of the Transient Host Exchange project 
 
 
 # Set-Up
-Set up with thex_model using Python virtualenv with the following commands:
+Set up thex_model using Python virtualenv with the following commands (ensure that you have [HMC](https://github.com/marinakiseleva/hmc) downloaded beforehand.)
 
 ```
 mkdir environments
 virtualenv environments/thex_env
 source environments/thex_env/bin/activate
-cd thex_model
+cd libraries/hmc
+python setup.py install
+cd ../../thex_model
 pip install -r requirements.txt 
+python setup.py develop
+```
+Update LOCAL_DATA_PATH in [thex_data/data_consts.py](thex_data/data_consts.py) with the path to data FITS file  (relative to thex_model root dir)
+
+When you are finished, you may exit virtualenv with:
+```
+deactivate
 ```
 
-Lastly, the LOCAL_DATA_PATH and LOCAL_LIBS_PATH paths in thex_data/data_consts.py need to be updated with the data path and directory containing hmc, respectively. Acquire FITS data file from THEx. Download and install [HMC](https://github.com/marinakiseleva/hmc).
+<!-- The LOCAL_DATA_PATH and LOCAL_LIBS_PATH paths in thex_data/data_consts.py need to be updated with the data path and directory containing hmc, respectively. Acquire FITS data file from THEx. Download and install [HMC](https://github.com/marinakiseleva/hmc).
 Update the following values in thex_data/data_consts.py:
 - DATA_PATH : Path to FITS file  (relative to thex_model root dir)
-- LIB_PATH : Path to HMC root  (relative to thex_model root dir)
+- LIB_PATH : Path to HMC root  (relative to thex_model root dir) -->
 
 
 # Running

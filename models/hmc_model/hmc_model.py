@@ -1,14 +1,11 @@
 from models.base_model.base_model import BaseModel
 from thex_data.data_consts import class_to_subclass as hierarchy
-from thex_data.data_consts import TARGET_LABEL, code_cat, cat_code, LIB_PATH
+from thex_data.data_consts import TARGET_LABEL, code_cat, cat_code
 from model_performance.performance import *
 
-# Import HMC library
-import sys
-sys.path.insert(0, LIB_PATH + "/hmc/hmc")
-import hmc
-import metrics
-from datasets import *
+from hmc import hmc
+from hmc import metrics
+from hmc.datasets import *
 
 
 class HMCModel(BaseModel):

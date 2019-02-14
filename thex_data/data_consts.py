@@ -1,28 +1,21 @@
+import os
 """
 All constant, global variables needed in THEx data program. Includes file of data, mapping of transient types and codes, as well as the hard-coded column name of the claimed type that is used in the program (TARGET_LABEL). 
-
-**Update the values on lines 9 and 11 to run locally.**
 """
 
 
-# UPDATE THESE VALUES TO RUN LOCALLY #############################
-# LOCAL_DATA_PATH: Path to FITS file, relative to root of package: thex_model
+#***************************************************************
+# LOCAL_DATA_PATH to relative path of THEx FITS file, relative to root of
+# package: thex_model
 LOCAL_DATA_PATH = '/../../data/THEx-catalog.v0_0_3.fits'
-# LOCAL_DATA_PATH: Path to HMC program, relative to root of package: thex_model
-LOCAL_LIBS_PATH = '/../libraries'
-##################################################################
+#***************************************************************
 
 
 # ROOT_DIR = /full/path/up/to/thex_model
-import os
-import sys
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
 
 # FITS file of transient/galaxy data
 DATA_PATH = ROOT_DIR + LOCAL_DATA_PATH
-
-# Directory to libraries, where we expect HMC to be
-LIB_PATH = ROOT_DIR + LOCAL_LIBS_PATH
 
 TARGET_LABEL = 'transient_type'  # label of target
 
