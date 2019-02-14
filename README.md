@@ -3,7 +3,7 @@ Source code contributing to the research of the Transient Host Exchange project 
 
 
 # Set-Up
-Set up thex_model using Python virtualenv with the following commands (ensure that you have [HMC](https://github.com/marinakiseleva/hmc) downloaded beforehand.)
+Set up thex_model using Python virtualenv with the following commands (ensure that you have [HMC](https://github.com/marinakiseleva/hmc) downloaded into a neighboring directory called 'libraries'.)
 
 ```
 mkdir environments
@@ -14,6 +14,8 @@ python setup.py install
 cd ../../thex_model
 pip install -r requirements.txt 
 python setup.py develop
+python -m ipykernel install --user --name thexenv --display-name "THEx env (py3env)"
+
 ```
 Update LOCAL_DATA_PATH in [thex_data/data_consts.py](thex_data/data_consts.py) with the path to data FITS file  (relative to thex_model root dir)
 

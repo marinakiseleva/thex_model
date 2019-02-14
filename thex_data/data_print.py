@@ -18,6 +18,7 @@ def print_class_counts(df):
     print("Counts per Class\n------------------ ")
     for index, value in enumerate(class_names):
         print(str(value) + " : " + str(class_counts[index]))
+    print("\nTotal: " + str(df.shape[0]))
 
 
 def print_priors(priors):
@@ -27,8 +28,14 @@ def print_priors(priors):
 
 
 def print_features_used(col_list):
-    print("\nFeatures Used\n------------------")
-    out_list = ""
-    for c in col_list:
+    print("\nFeatures\n------------------")
+    out_list = col_list[0]
+    for c in col_list[1:]:
         out_list += ", " + c
     print(out_list)
+
+
+def print_filters(filters):
+    print("\nData Filters\n------------------")
+    for data_filter in filters.keys():
+        print(str(data_filter) + " : " + str(filters[data_filter]))

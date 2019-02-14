@@ -8,9 +8,9 @@ class NaiveBayesModel(BaseModel):
     Naive Bayes Model, based on kernel density estimation of feature distributions per class.
     """
 
-    def __init__(self, cols=None, col_match=None, test_on_train=False, incl_redshift=False, folds=3):
+    def __init__(self, cols=None, col_match=None, test_on_train=False, folds=3, **data_args):
         self.name = "Naive Bayes Model"
-        self.run_model(cols, col_match, test_on_train, incl_redshift, folds)
+        self.run_model(cols, col_match, test_on_train, folds, **data_args)
 
     def train_model(self):
         self.summaries, self.priors = train_nb(self.X_train, self.y_train)

@@ -69,10 +69,13 @@ def map_counts_types(df):
     return map_counts
 
 
-def plot_ttype_distribution(df):
+def plot_class_hist(df):
+    """
+    Plots histogram of class sizes
+    :param df: DataFrame with TARGET_LABEL column
+    """
     rcParams['figure.figsize'] = 10, 6
     plt.gcf().subplots_adjust(bottom=0.2)
-
     types, counts = count_ttypes(df)
     class_index = np.arange(len(types))
     plt.bar(class_index, counts)
@@ -80,4 +83,5 @@ def plot_ttype_distribution(df):
     plt.xlabel('Transient Type', fontsize=12)
     plt.ylabel('Number of Galaxies', fontsize=12)
     plt.title("Distribution of Transient Types in Data Sample", fontsize=16)
+    plt.savefig("../output/class_distribution")
     plt.show()

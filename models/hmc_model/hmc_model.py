@@ -13,9 +13,9 @@ class HMCModel(BaseModel):
     Hierarchical Multi-Label Classifier using decision trees, based on the HMC in Vens, et al 2008. 
     """
 
-    def __init__(self, cols=None, col_match=None, test_on_train=False, incl_redshift=False, folds=3):
+    def __init__(self, cols=None, col_match=None, test_on_train=False, folds=3, **data_args):
         self.name = "HMC Decisioning Tree Model"
-        self.run_model(cols, col_match, test_on_train, incl_redshift, folds)
+        self.run_model(cols, col_match, test_on_train, folds, **data_args)
 
     def train_model(self):
         """
@@ -59,7 +59,7 @@ class HMCModel(BaseModel):
                     hmc_hierarchy.add_node(child, parent)
                 except ValueError as e:
                     print(e)
-        hmc_hierarchy.print_()
+        # hmc_hierarchy.print_()
         return hmc_hierarchy
 
     def evaluate_tree(self, predictions, y_test_names):

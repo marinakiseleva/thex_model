@@ -40,13 +40,6 @@ def sub_sample(df, count, col_val):
     return subsampled_df
 
 
-def split_train_test(X, y):
-    # Split Training and Testing Data
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.33, random_state=2)
-    return X_train, X_test, y_train, y_test
-
-
 def filter_columns(df, col_list, incl_redshift):
     """
     Filters columns down to those passed in as col_list (+ target label and redshift if selected)
@@ -73,6 +66,8 @@ def one_all(df, keep_classes):
     Convert all classes not in keep_classes to 'Other' 
     :param keep_classes: list of class NAMES to keep unique
     """
+    if keep_classes is None:
+        return df
     class_codes = [cat_code[name] for name in keep_classes]
     one = df[df[TARGET_LABEL].isin(class_codes)]  # keep unique classes
     rem = df.loc[~df[TARGET_LABEL].isin(class_codes)].copy()  # set to other
@@ -140,26 +135,33 @@ def filter_data(df):
     return df.iloc[non_null_indices]
 
 
-def get_data(col_list, incl_redshift):
+def get_data(col_list, **data_filters):
     """
     Pull in data and filter based on different biases and corrections: group transient types, fitler to passed-in columns, keep only rows with at least 1 valid value, filter to most frequent classes, sub-sample each class to same number, and take difference between wavelengths to make new features 
     """
-    # Go back one directory, because we are in thex_model
+
+    filters = {'top_classes': 10, 'one_all': None,
+               'subsample': 200, 'derive_diffs': False, 'incl_redshift': False}
+    for data_filter in data_filters.keys():
+        filters[data_filter] = data_filters[data_filter]
+    print_filters(filters)
     df = collect_data()
     df = group_cts(df)
-
-    df = filter_columns(df.copy(), col_list, incl_redshift)
-    # df = filter_data(df)
+    df = filter_columns(df.copy(), col_list, filters['incl_redshift'])
     df.dropna(axis=0, inplace=True)
 
-    df = filter_top_classes(df, top=10)
-    # df = one_all(df, ['TDE', 'Ia', 'II P'])
+    # Filter to most popular classes
+    df = filter_top_classes(df, top=filters['top_classes'])
+
+    # Keep only some classes, and turn remaining to 'Other'
+    df = one_all(df, filters['one_all'])
 
     # Randomly subsample any over-represented classes down to 100
-    df = sub_sample(df, count=500, col_val=TARGET_LABEL)
+    df = sub_sample(df, count=filters['subsample'], col_val=TARGET_LABEL)
 
     # Derive colors from data, and keep only colors
-    # df = derive_diffs(df.copy())
+    if filters['derive_diffs']:
+        df = derive_diffs(df.copy())
 
     if df.shape[0] == 0:
         print("No data to run model on. Try changing filters or limiting number of features. Note: Running on all columns will not work since no data spans all features.")
@@ -169,17 +171,13 @@ def get_data(col_list, incl_redshift):
     return df
 
 
-def get_source_target_data(data_columns, incl_redshift):
-    data = get_data(col_list=data_columns, incl_redshift=incl_redshift)
-    X = data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
-    y = data[[TARGET_LABEL]].astype(int).reset_index(drop=True)
-    return X, y
-
-
-def get_train_test(data_columns, incl_redshift, split=0.4):
+def get_train_test(data_columns, split=0.3, **data_filters):
     """
     cat: Boolean on whether to record classes as category strings (True) or category codes (False)
     """
-    X, y = get_source_target_data(data_columns, incl_redshift)
+    data = get_data(col_list=data_columns, **data_filters)
+    X = data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
+    y = data[[TARGET_LABEL]].astype(int).reset_index(drop=True)
+
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=split)
     return X_train.reset_index(drop=True), X_test.reset_index(drop=True), y_train.reset_index(drop=True), y_test.reset_index(drop=True)
