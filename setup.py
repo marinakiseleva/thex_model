@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(name='thex',
       # packages=find_packages('thex_model'),
-      packages=['thex_data'],
+      packages=['thex_data', 'model_performance', 'models'],
       version='2.0',
       description='THEx Model',
       author='Marina Kiseleva',

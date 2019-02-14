@@ -7,9 +7,9 @@ from thex_data.data_consts import DATA_PATH
 
 def collect_cols(col_names):
     df = collect_data()
-    # Make list of column/feature names; exlcude _e_ (errors)
+    # Make list of column/feature names; exlcude error columns
     col_list = [col for col in list(df) if any(
-                col_val in col and "_e_" not in col for col_val in col_names)]
+                col_val in col and "_e_" not in col and "Err" not in col and "Kmag" not in col for col_val in col_names)]
     return col_list
 
 

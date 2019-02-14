@@ -15,6 +15,7 @@ LOCAL_LIBS_PATH = '/../libraries'
 
 # ROOT_DIR = /full/path/up/to/thex_model
 import os
+import sys
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
 
 # FITS file of transient/galaxy data

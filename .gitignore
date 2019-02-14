@@ -1,3 +1,5 @@
+dist/
+build/
 output/*
 *.egg-info/
 **/.ipynb_checkpoints

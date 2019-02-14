@@ -1,7 +1,7 @@
-import argparse
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
+# import argparse
+# import sys
+# import os
+# sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
 
 
 from thex_data.data_init import *
@@ -12,7 +12,7 @@ from thex_data.data_consts import code_cat, TARGET_LABEL, ROOT_DIR
 from model_performance.performance import *
 from model_performance.init_classifier import *
 
-from hmc_tree import *
+from hmc_tree import run_tree
 
 
 def main():

@@ -156,7 +156,7 @@ def get_data(col_list, incl_redshift):
     # df = one_all(df, ['TDE', 'Ia', 'II P'])
 
     # Randomly subsample any over-represented classes down to 100
-    df = sub_sample(df, count=100, col_val=TARGET_LABEL)
+    df = sub_sample(df, count=500, col_val=TARGET_LABEL)
 
     # Derive colors from data, and keep only colors
     # df = derive_diffs(df.copy())

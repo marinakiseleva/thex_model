@@ -24,7 +24,7 @@ def plot_dist_fit(data, kde, bandwidth, title):
     data_vector = np.matrix(x_line).T
     pdf = kde.score_samples(data_vector)
     plt.plot(x_line, np.exp(pdf), linewidth=3, alpha=0.5, label='bw=%.2f' % bandwidth)
-    plt.hist(data, n_bins, fc='gray', histtype='stepfilled', alpha=0.3, normed=True)
+    plt.hist(data, n_bins, fc='gray', histtype='stepfilled', alpha=0.3, density=True)
     plt.title(title)
     replace_strs = ["\n", " ", ":", ".", ",", "/"]
     for r in replace_strs:

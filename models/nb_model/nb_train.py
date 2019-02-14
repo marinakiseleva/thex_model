@@ -14,26 +14,6 @@ def find_best_fitting_dist(data, column_name=None, ttype=None):
     """
     Finds best fitting distribution for this particular set of features (features of a single transient type)
     """
-    # distributions = [stats.norm]
-    # , stats.beta, stats.gamma, stats.t, stats.gennorm, stats.alpha,  stats.arcsine,
-    #                  stats.argus, stats.betaprime, stats.bradford, stats.burr, stats.burr12,
-    #                  stats.cauchy, stats.chi, stats.chi2, stats.crystalball,
-    #                  stats.dgamma, stats.dweibull, stats.laplace,
-    #                  stats.skewnorm, stats.kappa4, stats.loglaplace]
-    # mles = []
-    # for distribution in distributions:
-    #     # Fits data to distribution and returns MLEs of scale and loc
-    #     pars = distribution.fit(data)
-    #     # negative loglikelihood: -sum(log pdf(x, theta), axis=0)
-    #     mle = distribution.nnlf(pars, data)
-    #     mles.append(mle)
-
-    # results = [(distribution.name, mle)
-    #            for distribution, mle in zip(distributions, mles)]
-    # # Sorts smallest to largest -- smallest NNL is best
-    # ordered_dists = sorted(zip(distributions, mles), key=lambda d: d[1])[0]
-    # best_dist = ordered_dists[0]
-    # best_params = ordered_dists[0].fit(data)
 
     # Use Kernel Density
 
@@ -41,7 +21,9 @@ def find_best_fitting_dist(data, column_name=None, ttype=None):
     range_vals = data.values.max() - data.values.min()
     min_val = data.values.min() - (range_vals / 5)
     max_val = data.values.max() + (range_vals / 5)
-    bw = (max_val - min_val) / 100
+    bw = abs(max_val - min_val) / 100
+    if bw == 0:
+        bw = 0.1
 
     kde = KernelDensity(kernel='gaussian', bandwidth=bw)
     best_dist = kde.fit(np.matrix(data.values).T)
