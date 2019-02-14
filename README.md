@@ -17,19 +17,14 @@ python setup.py develop
 ```
 Update LOCAL_DATA_PATH in [thex_data/data_consts.py](thex_data/data_consts.py) with the path to data FITS file  (relative to thex_model root dir)
 
-When you are finished, you may exit virtualenv with:
+When you are done developing and running models you may exit virtualenv with the following command.
 ```
 deactivate
 ```
 
-<!-- The LOCAL_DATA_PATH and LOCAL_LIBS_PATH paths in thex_data/data_consts.py need to be updated with the data path and directory containing hmc, respectively. Acquire FITS data file from THEx. Download and install [HMC](https://github.com/marinakiseleva/hmc).
-Update the following values in thex_data/data_consts.py:
-- DATA_PATH : Path to FITS file  (relative to thex_model root dir)
-- LIB_PATH : Path to HMC root  (relative to thex_model root dir) -->
-
 
 # Running
-Please use the Jupyter Notebook 'THEx Model Intro' located in the notebooks directory to help you get started with running the models.
+Please use the Jupyter Notebook [THEx Model Intro](notebooks/THEx%20Model%20Intro.ipynb) located in the notebooks directory to help you get started with running the models.
 
 # Dependencies
 Listed in requirements.txt and the following that needs to be separately installed in another directory. 
