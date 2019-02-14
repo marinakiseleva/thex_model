@@ -4,6 +4,9 @@ from models.nb_model.nb_test import test_nb
 
 
 class NaiveBayesModel(BaseModel):
+    """
+    Naive Bayes Model, based on kernel density estimation of feature distributions per class.
+    """
 
     def __init__(self, cols=None, col_match=None, test_on_train=False, incl_redshift=False, folds=3):
         self.name = "Naive Bayes Model"

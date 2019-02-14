@@ -11,6 +11,9 @@ from thex_data import data_plot
 
 
 class BaseModel(ABC):
+    """
+    Abstract Class representing base functionality of all models. Subclasses of models implement their own training and testing functions. 
+    """
 
     def run_model(self, cols=None, col_match=None, test_on_train=False, incl_redshift=False, folds=3):
         """
@@ -114,5 +117,6 @@ class BaseModel(ABC):
     def test_model(self):
         """
         Test model using testing data self.X_test self.y_test
+        Returns predictions (in class code format)
         """
         pass

@@ -12,6 +12,9 @@ from datasets import *
 
 
 class HMCModel(BaseModel):
+    """
+    Hierarchical Multi-Label Classifier using decision trees, based on the HMC in Vens, et al 2008. 
+    """
 
     def __init__(self, cols=None, col_match=None, test_on_train=False, incl_redshift=False, folds=3):
         self.name = "HMC Decisioning Tree Model"
