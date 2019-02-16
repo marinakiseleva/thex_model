@@ -1,7 +1,7 @@
 from models.base_model.base_model import BaseModel
+from models.base_model.base_model_performance import *
 from thex_data.data_consts import class_to_subclass as hierarchy
 from thex_data.data_consts import TARGET_LABEL, code_cat, cat_code
-from model_performance.performance import *
 
 from hmc import hmc
 from hmc import metrics
