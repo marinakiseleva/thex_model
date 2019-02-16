@@ -525,8 +525,9 @@ grouping_lists = {
 """
 Columns with non-numeric values that are not used
 """
-drop_cols = ['event', 'ra', 'dec', 'ra_deg', 'dec_deg', 'radec_err', 'host', 'host_ra', 'host_dec', 'ebv', 'host_ra_deg', 'host_dec_deg', 'host_dist', 'host_search_radius', 'is_confirmed_host', 'by_primary_cand', 'by_transient', "Err", "_e_", 'AllWISE_IsVar', 'HyperLEDA_objtype', 'HyperLEDA_type', 'HyperLEDA_bar', 'HyperLEDA_ring', 'HyperLEDA_multiple', 'HyperLEDA_compactness', 'HyperLEDA_agnclass'
-             ]
+drop_cols = ['event', 'ra', 'dec', 'ra_deg', 'dec_deg', 'radec_err', 'host', 'host_ra', 'host_dec', 'ebv', 'host_ra_deg', 'host_dec_deg', 'host_dist', 'host_search_radius', 'is_confirmed_host', 'by_primary_cand',
+             'by_transient', 'AllWISE_IsVar', 'HyperLEDA_objtype', 'HyperLEDA_type', 'HyperLEDA_bar', 'HyperLEDA_ring', 'HyperLEDA_multiple', 'HyperLEDA_compactness', 'HyperLEDA_agnclass', "Err",  "_e_",  "_ERR"]
+
 
 """
 Parent : Children

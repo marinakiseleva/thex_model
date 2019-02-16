@@ -25,7 +25,7 @@ class BaseModel(ABC):
         """
         # Set defaults on filters
         data_filters = {'top_classes': 10, 'one_all': None, 'data_split': 0.3,
-                        'subsample': 200, 'derive_diffs': False, 'incl_redshift': False}
+                        'subsample': 200, 'transform_features': False, 'incl_redshift': False}
         # Update filters with any passed-in filters
         for data_filter in user_data_filters.keys():
             data_filters[data_filter] = user_data_filters[data_filter]

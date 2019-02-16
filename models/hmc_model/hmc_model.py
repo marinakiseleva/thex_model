@@ -29,9 +29,11 @@ class HMCModel(BaseModel):
 
     def test_model(self):
         predicted_classes = self.tree.predict(self.X_test)
-        # predicted_classes are in terms of class names, so need to be converted back to codes
-        # evaluate_tree(predictions y_test_strs)
+        self.evaluate_tree(predicted_classes)
+        # predicted_classes are in terms of class names, so need to be converted
+        # back to codes
         prediction_codes = [cat_code[pred_class] for pred_class in predicted_classes]
+
         return prediction_codes
 
     def convert_target(self, class_codes):
@@ -62,13 +64,15 @@ class HMCModel(BaseModel):
         # hmc_hierarchy.print_()
         return hmc_hierarchy
 
-    def evaluate_tree(self, predictions, y_test_names):
+    def evaluate_tree(self, predictions):
         """
         Evaluates tree performance using Tree metrics
-        :param y_test_names: y_test labels in class name form
         """
-        dth_accuracy = self.tree.score(self.X_test, y_test_names)
+        # y_test labels in class name form
+        y_test_names = self.convert_target(self.y_test)
+        # dth_accuracy = self.tree.score(self.X_test, y_test_names)
 
+        print("\n\n-------------------------- HMC HSC-Clus Tree Performance --------------------------\n\n")
         print("Accuracy: %s" % metrics.accuracy_score(
             self.hmc_hierarchy, y_test_names, predictions))
         print("-------------------------- Ancestors -------------------------- ")
@@ -86,6 +90,7 @@ class HMCModel(BaseModel):
         print("F1 Descendants: %s" % metrics.f1_score_descendants(
             self.hmc_hierarchy, y_test_names, predictions))
 
+        # Get accuracy at highest level of hierarchy
         class_precisions = metrics.precision_score_hierarchy(
             self.hmc_hierarchy, y_test_names, predictions, level=1)
         class_accuracies = {}
