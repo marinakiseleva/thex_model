@@ -1,13 +1,12 @@
-import argparse
+from abc import ABC, abstractmethod
+from sklearn.model_selection import KFold
+
 from thex_data.data_init import *
 from thex_data.data_consts import drop_cols
-from thex_data.data_prep import get_train_test
-
-from abc import ABC, abstractmethod
-
-from models.nb_model.nb_performance import get_rocs
-from model_performance.performance import compute_plot_class_accuracy, plot_confusion_matrix, get_accuracy
+from thex_data.data_prep import get_train_test, get_source_target_data
+from thex_data.data_print import print_filters
 from thex_data import data_plot
+from models.base_model.base_model_performance import *
 
 
 class BaseModel(ABC):
@@ -15,28 +14,28 @@ class BaseModel(ABC):
     Abstract Class representing base functionality of all models. Subclasses of models implement their own training and testing functions. 
     """
 
-    def run_model(self, cols=None, col_match=None, test_on_train=False,  folds=3, **data_filters):
+    def run_model(self, cols=None, col_matches=None, test_on_train=False,  folds=None, **user_data_filters):
         """
-        Collects data based on column parameters, trains, and tests model. Either cols or col_match need to be passed in, otherwise all numeric columns are used.
+        Collects data based on column parameters, trains, and tests model. Either cols or col_matches need to be passed in, otherwise all numeric columns are used.
         :param cols: Names of columns to filter on
-        :param col_match: String by which columns will be selected. For example: AllWISE will use all AlLWISE columns.
+        :param col_matches: String by which columns will be selected. For example: AllWISE will use all AlLWISE columns.
         :param test_on_train: Boolean to test on training data.
         :param folds: Number of folds to use in k-fold Cross Validation
+        :param user_data_filters: List of data filters user passed in. User options over-ride any default.
         """
+        # Set defaults on filters
+        data_filters = {'top_classes': 10, 'one_all': None, 'data_split': 0.3,
+                        'subsample': 200, 'derive_diffs': False, 'incl_redshift': False}
+        # Update filters with any passed-in filters
+        for data_filter in user_data_filters.keys():
+            data_filters[data_filter] = user_data_filters[data_filter]
+        print_filters(data_filters)
 
-        col_list = []
-        if cols is not None:
-            col_list = cols
-        else:
-            if col_match is not None:
-                col_list = collect_cols(col_match)
-            else:
-                # Use all columns in data set with numeric values
-                cols = list(collect_data())
-                col_list = []
-                for c in cols:
-                    if not any(drop in c for drop in drop_cols):
-                        col_list.append(c)  # Keep only numeric columns
+        col_list = collect_cols(cols, col_matches)
+        if isinstance(folds, int):
+            self.run_model_cv(col_list, folds, test_on_train, data_filters)
+            return 0
+
         # Collect data filtered on these parameters
         self.X_train, self.X_test, self.y_train, self.y_test = self.get_model_data(
             col_list, test_on_train, **data_filters)
@@ -44,6 +43,21 @@ class BaseModel(ABC):
         self.train_model()
         predictions = self.test_model()
         self.evaluate_model(predictions)
+        return self
+
+    def get_model_data(self, col_list, test_on_train, **data_filters):
+        """
+        Collects data for model
+        :param col_list: List of columns to filter on
+        :param test_on_train: Boolean to test on training data.
+        :param user_data_filters: List of data filters user passed in.
+        """
+        X_train, X_test, y_train, y_test = get_train_test(
+            col_list, **data_filters)
+        if test_on_train == True:
+            X_test = X_train.copy()
+            y_test = y_train.copy()
+        return X_train, X_test, y_train, y_test
 
     def visualize_data(self):
         """
@@ -55,65 +69,44 @@ class BaseModel(ABC):
     def evaluate_model(self, predicted_classes):
         """
         Evaluate and plot performance of model
+        :param predicted_classes: classes predicted by label (as class codes)
         """
-
         total_accuracy = get_accuracy(predicted_classes, self.y_test)
         model_name = self.name
         compute_plot_class_accuracy(
             predicted_classes, self.y_test, plot_title=model_name + " Accuracy, on Testing Data")
-
-        # get_rocs(X_test, y_test, summaries, priors)
 
         # for f in list(X_train):
         #     data_plot.plot_feature_distribution(concat([X_train, y_train], axis=1), f)
 
         plot_confusion_matrix(self.y_test, predicted_classes, normalize=True)
 
-    def run_cv(data_columns, incl_redshift=False, test_on_train=False, k=3):
+    def run_model_cv(self, data_columns, k, test_on_train, data_filters):
         """
         Split data into k-folds and perform k-fold cross validation
         """
-        X, y = get_source_target_data(data_columns, incl_redshift)
+        X, y = get_source_target_data(data_columns, **data_filters)
         kf = KFold(n_splits=k, shuffle=True, random_state=10)
-        nb_recall, tree_recall = [], []
+        accuracies = []
         for train_index, test_index in kf.split(X):
-            X_train, X_test = X.iloc[train_index], X.iloc[test_index]
-            y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+            self.X_train, self.X_test = X.iloc[train_index], X.iloc[test_index]
+            self.y_train, self.y_test = y.iloc[train_index], y.iloc[test_index]
 
-            data_type = ' Testing '
-            if test_on_train:  # Update fields to test models on training data
-                X_test = X_train.copy()
-                y_test = y_train.copy()
-                data_type = ' Training '
+            if test_on_train:
+                self.X_test = self.X_train
+                self.y_test = self.y_train
 
-            nb_predictions, tree_predictions = run_models(
-                X_train, y_train, X_test, y_test)
-
-            # Save Naive Bayes accuracy
-            nb_class_accuracies = get_class_accuracies(
-                combine_dfs(nb_predictions, y_test))
-            nb_recall.append(nb_class_accuracies)
-
-            # Save tree accuracy
-            tree_class_accuracies = get_class_accuracies(
-                combine_dfs(tree_predictions, y_test))
-            tree_recall.append(tree_class_accuracies)
+            # Save model accuracy
+            self.train_model()
+            predictions = self.test_model()
+            accuracies.append(get_class_accuracies(
+                combine_dfs(predictions, self.y_test)))
 
         # Get average accuracy per class (mapping)
-        avg_tree_acc = aggregate_accuracies(tree_recall, k, y)
-        avg_nb_acc = aggregate_accuracies(nb_recall, k, y)
+        avg_acc = aggregate_accuracies(accuracies, k, y)
+        data_type = 'Training' if test_on_train else 'Testing'
         plot_class_accuracy(
-            avg_tree_acc, plot_title="HSC Tree: " + str(k) + "-fold CV on" + data_type + " data")
-        plot_class_accuracy(
-            avg_nb_acc, plot_title="Naive Bayes: " + str(k) + "-fold CV on" + data_type + " data")
-
-    def get_model_data(self, col_list, test_on_train, **data_filters):
-        X_train, X_test, y_train, y_test = get_train_test(
-            col_list, **data_filters)
-        if test_on_train == True:
-            X_test = X_train.copy()
-            y_test = y_train.copy()
-        return X_train, X_test, y_train, y_test
+            avg_acc, plot_title=self.name + " " + str(k) + "-fold CV on " + data_type + " data")
 
     @abstractmethod
     def train_model(self):

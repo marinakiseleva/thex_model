@@ -25,11 +25,11 @@ def find_best_fitting_dist(data, feature=None, class_name=None):
     range_vals = data.values.max() - data.values.min()
     min_val = data.values.min() - (range_vals / 5)
     max_val = data.values.max() + (range_vals / 5)
-    bw = abs(max_val - min_val) / 100
+    bw = abs(max_val - min_val) / 50
     if bw == 0:
         bw = 0.1
 
-    kde = KernelDensity(kernel='gaussian', bandwidth=bw)
+    kde = KernelDensity(bandwidth=bw, kernel='gaussian', metric='euclidean')
     best_dist = kde.fit(np.matrix(data.values).T)
     best_params = kde.get_params()
 

@@ -1,6 +1,5 @@
 import itertools
 import collections
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -10,9 +9,28 @@ from sklearn.metrics import confusion_matrix
 from thex_data.data_consts import code_cat, TARGET_LABEL
 
 
+def aggregate_accuracies(fold_accuracies, k, y):
+    """
+    Aggregate accuracies from cross-validation
+    :param fold_accuracies: List of accuracies across classes for each fold
+    :param k: Number of folds
+    :param y: Testing labels 
+    """
+    accuracy_per_class = {c: 0 for c in y[TARGET_LABEL].unique().tolist()}
+    print(fold_accuracies)
+    for class_accuracies in fold_accuracies:
+        # class_accuracies maps class to accuracy as %
+        for tclass in class_accuracies.keys():
+            accuracy_per_class[tclass] += class_accuracies[tclass]
+    # Divide each % by number of folds to get average accuracy
+    return {c: acc / k for c, acc in accuracy_per_class.items()}
+
+
 def get_accuracy(predicted_classes, actual_classes):
     """
     Returns overall accuracy of Naive Bayes classifier
+    :param predicted_classes: DataFrame of predicted classes, as codes
+    :param actual_classes: DataFrame of actual classes, as codes
     """
     df_compare = combine_dfs(predicted_classes, actual_classes)
     perc_correct = get_percent_correct(df_compare)
@@ -20,18 +38,10 @@ def get_accuracy(predicted_classes, actual_classes):
     return total_accuracy
 
 
-def get_feature_importance(clf, train):
-    cols = list(train.drop([TARGET_LABEL], axis=1))
-    importances = clf.feature_importances_
-    cols_importance = dict(zip(cols, importances))
-
-    sorted_keys = sorted(cols_importance, key=cols_importance.get, reverse=True)
-    for r in sorted_keys:
-        if cols_importance[r] > 0:
-            print(r, cols_importance[r])
-
-
 def get_confusion_matrix(actual_classes, predicted_classes):
+    """
+    Creates Confusion Matrix, using sklearn implementation
+    """
     cf_matrix = confusion_matrix(
         actual_classes, predicted_classes, labels=np.unique(actual_classes))
     return cf_matrix
@@ -89,7 +99,6 @@ def get_percent_correct(df_compare):
     """
     Gets % of rows of dataframe that have correct column marked as 1. This column indicates if TARGET_LABEL == predicted_class
     """
-
     count_correct = df_compare[df_compare.correct == 1].shape[0]
     count_total = df_compare.shape[0]
     perc_correct = count_correct / count_total
@@ -148,10 +157,6 @@ def plot_class_accuracy(class_accuracies, plot_title):
     plt.title(plot_title, fontsize=15)
     plt.xlabel('Transient Class', fontsize=12)
     plt.ylabel('Accuracy', fontsize=12)
-    # local_dir = "../../../documentation/astronomy/galaxies/reports/thex/figures/performance/comparison/"
-    # print(plot_title)
-    # print(plot_title.replace(" ", ""))
-    # plt.savefig(local_dir + plot_title.replace(" ", ""))
     plt.show()
 
 

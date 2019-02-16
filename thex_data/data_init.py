@@ -5,22 +5,37 @@ import numpy as np
 from thex_data.data_consts import DATA_PATH, drop_cols
 
 
-def collect_cols(col_matches):
-    """
-    Return all columns that contain at least one string in the list of col_matches
-    """
-    all_cols = list(collect_data())
-    # Make list of column/feature names; exlcude error columns
-    column_list = []
-    for column in all_cols:
-        if any(match_value in column for match_value in col_matches):
-            column_list.append(column)
+"""
+Initializes data from initial pull. Filters down list of columns based on user-input.
+"""
 
-    # Drop all non-numeric columns
-    column_list_numeric = []
-    for c in column_list:
-        if not any(col in c for col in drop_cols):
-            column_list_numeric.append(c)
+
+def collect_cols(cols, col_matches):
+    """
+    Return all columns that contain at least one string in the list of col_matches or all columns in cols list
+    :param cols: Names of columns to filter on
+    :param col_matches: String by which columns will be selected. For example: AllWISE will use all AlLWISE columns.
+    """
+    col_list = []
+    if cols is not None:
+        col_list = cols
+    else:
+        # Make list of column/feature names; exlcude error columns
+        all_cols = list(collect_data())
+        column_list = []
+        if col_matches is not None:
+            for column in all_cols:
+                if any(match_value in column for match_value in col_matches):
+                    column_list.append(column)
+        else:
+            # Use all columns in data set with numeric values
+            column_list = all_cols
+
+        # Drop all non-numeric columns
+        column_list_numeric = []
+        for c in column_list:
+            if not any(col in c for col in drop_cols):
+                column_list_numeric.append(c)  # Keep only numeric columns
 
     return column_list_numeric
 
