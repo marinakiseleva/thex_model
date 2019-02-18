@@ -32,14 +32,16 @@ class BaseModel(ABC):
         print_filters(data_filters)
 
         col_list = collect_cols(cols, col_matches)
-        if isinstance(folds, int):
-            self.run_model_cv(col_list, folds, test_on_train, data_filters)
-            return 0
 
         # Collect data filtered on these parameters
         self.X_train, self.X_test, self.y_train, self.y_test = self.get_model_data(
             col_list, test_on_train, **data_filters)
         self.visualize_data()
+
+        if isinstance(folds, int):
+            self.run_model_cv(col_list, folds, test_on_train, data_filters)
+            return 0
+
         self.train_model()
         predictions = self.test_model()
         self.evaluate_model(predictions)

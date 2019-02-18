@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pylab import rcParams
 
-from .data_consts import code_cat, TARGET_LABEL
+from .data_consts import code_cat, TARGET_LABEL, ROOT_DIR
 
 """
 data_plot contains helper functions to plot the data. This includes plotting the distribution of features, and the distributions of transient types over redshift.
@@ -74,14 +74,21 @@ def plot_class_hist(df):
     Plots histogram of class sizes
     :param df: DataFrame with TARGET_LABEL column
     """
+
     rcParams['figure.figsize'] = 10, 6
     plt.gcf().subplots_adjust(bottom=0.2)
     types, counts = count_ttypes(df)
+    print(types)
+    print(counts)
     class_index = np.arange(len(types))
     plt.bar(class_index, counts)
     plt.xticks(class_index, get_class_names(types), fontsize=9, rotation=50)
     plt.xlabel('Transient Type', fontsize=12)
     plt.ylabel('Number of Galaxies', fontsize=12)
-    plt.title("Distribution of Transient Types in Data Sample", fontsize=16)
-    plt.savefig("../output/class_distribution")
+    title = "Distribution of Transient Types in Data Sample"
+    plt.title(title, fontsize=16)
+    replace_strs = ["\n", " ", ":", ".", ",", "/"]
+    for r in replace_strs:
+        title = title.replace(r, "_")
+    plt.savefig(ROOT_DIR + "/output/classdistributions/" + title)
     plt.show()

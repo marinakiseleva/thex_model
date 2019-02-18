@@ -11,25 +11,34 @@ from thex_data.data_consts import code_cat, TARGET_LABEL, ROOT_DIR
 from thex_data.data_plot import get_class_names
 
 
-def plot_dist_fit(data, kde, bandwidth, title):
+def plot_dist_fit(data, kde, bandwidth, feature, title):
     """
     Plot distribution fitted to feature
     """
+    plt.ioff()
     rcParams['figure.figsize'] = 6, 6
-    n_bins = 30
+    n_bins = 20
     range_vals = data.max() - data.min()
-    x_line = np.linspace(data.min() - (range_vals / 5),
-                         data.max() + (range_vals / 5), 1000)
+    x_line = np.linspace(data.min(),
+                         data.max(), 1000)
     data_vector = np.matrix(x_line).T
     pdf = kde.score_samples(data_vector)
-    plt.plot(x_line, np.exp(pdf), linewidth=3, alpha=0.5, label='bw=%.2f' % bandwidth)
-    plt.hist(data, n_bins, fc='gray', histtype='stepfilled', alpha=0.3, density=True)
+    fig, ax1 = plt.subplots()
+
+    ax1.hist(data, n_bins, fc='gray',  alpha=0.3)
+    ax1.set_ylabel('Count', color='gray')
+
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Kernel Density', color='blue')
+    ax2.plot(x_line, np.exp(pdf), linewidth=3, alpha=0.5, label='bw=%.2f' % bandwidth)
+    ax1.set_xlabel(feature)
     plt.title(title)
     replace_strs = ["\n", " ", ":", ".", ",", "/"]
     for r in replace_strs:
         title = title.replace(r, "_")
     plt.savefig(ROOT_DIR + "/output/kernel_fits/" + title)
     # plt.show()
+    plt.close()
     plt.cla()
 
 ############################################################

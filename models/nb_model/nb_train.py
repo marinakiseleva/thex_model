@@ -1,39 +1,57 @@
-from thex_data.data_consts import TARGET_LABEL, code_cat
-from thex_data.data_print import print_priors
-from models.nb_model.nb_performance import plot_dist_fit
-import scipy.stats as stats
-from sklearn.neighbors.kde import KernelDensity
 import pandas as pd
 import numpy as np
+
+import scipy.stats as stats
+from sklearn.neighbors.kde import KernelDensity
+from sklearn.grid_search import GridSearchCV
+
+from thex_data.data_consts import TARGET_LABEL, code_cat
+from thex_data.data_print import print_priors
+
+from models.nb_model.nb_performance import plot_dist_fit
 
 """
 Logic for training the Naive Bayes classifier
 """
 
 
+def get_best_bandwidth(data):
+    """
+    Estimate best bandwidth value based on iteratively running over different bandwidths
+    :param data: Pandas Series of particular feature
+    """
+    # Set bandwidth of kernel
+    range_vals = data.values.max() - data.values.min()
+    min_val = data.values.min() - (range_vals / 5)
+    max_val = data.values.max() + (range_vals / 5)
+    min_search = abs(max_val - min_val) / 200
+    max_search = abs(max_val - min_val) / 5
+    iter_value = 100
+    grid = GridSearchCV(KernelDensity(),
+                        {'bandwidth': np.linspace(min_search, max_search, iter_value)}, cv=3)
+    grid.fit([[cv] for cv in data])
+    bw = grid.best_params_['bandwidth']
+    if bw == 0:
+        bw = 0.001
+    return bw
+
+
 def find_best_fitting_dist(data, feature=None, class_name=None):
     """
     Uses kernel density estimation to find the distribution of this data. Also plots data and distribution fit to it. Returns [distribution, parameters of distribution].
-    :param data: set of values corresponding to feature and class
+    :param data: Pandas Series, set of values corresponding to feature and class
     :param feature: Name of feature/column this data corresponds to
     :param class_name: Name of class this data corresponds to
     """
 
     # Use Kernel Density
-
-    # Set bandwidth of kernel
-    range_vals = data.values.max() - data.values.min()
-    min_val = data.values.min() - (range_vals / 5)
-    max_val = data.values.max() + (range_vals / 5)
-    bw = abs(max_val - min_val) / 50
-    if bw == 0:
-        bw = 0.1
-
+    bw = get_best_bandwidth(data)
     kde = KernelDensity(bandwidth=bw, kernel='gaussian', metric='euclidean')
     best_dist = kde.fit(np.matrix(data.values).T)
     best_params = kde.get_params()
 
-    plot_dist_fit(data.values, kde, bw, "Kernel Distribution with bandwidth: %.6f\n for feature %s in class %s" % (
+    vals_2d = [[cv] for cv in data]
+    plot_dist_fit(data.values, kde, bw, feature, "Kernel Distribution with bandwidth: %.6f\n for feature %s in class %s" % (
         bw, feature, class_name))
 
     # Return best fitting distribution and parameters (loc and scale)
