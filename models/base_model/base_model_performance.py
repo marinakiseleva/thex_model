@@ -9,21 +9,19 @@ from sklearn.metrics import confusion_matrix
 from thex_data.data_consts import code_cat, TARGET_LABEL
 
 
-def aggregate_accuracies(fold_accuracies, k, y):
+def aggregate_accuracies(model_results, y):
     """
-    Aggregate accuracies from cross-validation
-    :param fold_accuracies: List of accuracies across classes for each fold
-    :param k: Number of folds
+    Aggregate accuracies from several runs. Returns mapping of classes to average accuracy.
+    :param model_results: List of accuracies from 1 or more runs; each item in list is a mapping from get_class_accuracies
     :param y: Testing labels 
     """
     accuracy_per_class = {c: 0 for c in y[TARGET_LABEL].unique().tolist()}
-    print(fold_accuracies)
-    for class_accuracies in fold_accuracies:
+    for class_accuracies in model_results:
         # class_accuracies maps class to accuracy as %
         for tclass in class_accuracies.keys():
             accuracy_per_class[tclass] += class_accuracies[tclass]
     # Divide each % by number of folds to get average accuracy
-    return {c: acc / k for c, acc in accuracy_per_class.items()}
+    return {c: acc / len(model_results) for c, acc in accuracy_per_class.items()}
 
 
 def get_accuracy(predicted_classes, actual_classes):

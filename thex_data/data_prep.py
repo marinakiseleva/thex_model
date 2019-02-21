@@ -4,7 +4,7 @@ Connection between data manipulation and models: calls upon other functionalitie
 import sys
 from sklearn.model_selection import train_test_split
 
-from .data_features import transform_features
+from .data_transform import transform_features
 from .data_filter import *
 from .data_consts import TARGET_LABEL
 from .data_print import *

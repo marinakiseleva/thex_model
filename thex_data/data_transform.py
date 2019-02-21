@@ -4,6 +4,21 @@ Enhance features by scaling and changing them
 import pandas as pd
 import numpy as np
 
+from sklearn.decomposition import PCA
+
+
+def run_pca(df, k=5):
+    pca = PCA(n_components=k)
+    principalComponents = pca.fit_transform(df)
+    reduced_columns = []
+    for i in range(k):
+        reduced_columns.append("PC" + str(i + 1))
+
+    principalDf = pd.DataFrame(data=principalComponents, columns=reduced_columns)
+    # print("\nPCA Analysis\n")
+    # print(pca.explained_variance_ratio_)
+    return principalDf
+
 
 def transform_features(df):
     """
@@ -12,6 +27,7 @@ def transform_features(df):
     """
     df = derive_diffs(df)
     df = derive_reciprocals(df)
+    df = run_pca(df)
     return df
 
 
@@ -21,6 +37,7 @@ def derive_diffs(df):
     :param df: DataFrame of features
     """
     features = list(df)
+    print(features)
     for index, colname1 in enumerate(features):
         if index < len(features) - 1:
             colname2 = df.columns[index + 1]  # Get next column
@@ -28,9 +45,11 @@ def derive_diffs(df):
             val1 = df[colname1]
             val2 = df[colname2]
             # Only take difference if adjacent columns are both magnitudes
-            if val1 is not None and val2 is not None and (('mag' in colname2 and 'mag' in colname1) or ('KCORRECT' in colname2 and 'KCORRECT' in colname1)):
-                new_col_name = colname2 + "_minus_" + colname1
-                df[new_col_name] = val2 - val1
+            # if val1 is not None and val2 is not None and (('mag' in colname2 and
+            # 'mag' in colname1) or ('KCORRECT' in colname2 and 'KCORRECT' in
+            # colname1)):
+            new_col_name = colname2 + "_minus_" + colname1
+            df[new_col_name] = val2 - val1
 
     return df
 

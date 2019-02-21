@@ -3,7 +3,7 @@ import numpy as np
 
 import scipy.stats as stats
 from sklearn.neighbors.kde import KernelDensity
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 
 from thex_data.data_consts import TARGET_LABEL, code_cat
 from thex_data.data_print import print_priors
@@ -78,7 +78,7 @@ def summarize(data, class_name=None):
 
 def separate_classes(data):
     """
-    Separate by class (of unique transient types)
+    Separate by class (of unique transient types) and assigns priors (uniform)
     Return map of {class code : DataFrame of samples of that type}, and priors
     :param data: DataFrame of feature and labels
     """
@@ -89,8 +89,9 @@ def separate_classes(data):
     for transient in transient_classes:
         trans_df = data.loc[data[TARGET_LABEL] == transient]
 
-        # SET PRIOR value
-        # Frequency of class in total set
+        # Priors
+
+        # Frequency-based
         # priors[transient] = trans_df.shape[0] / total_count
 
         # Uniform prior
@@ -105,7 +106,7 @@ def separate_classes(data):
 
     # Make priors sum to 1
     priors = {k: round(v / sum(priors.values()), 6) for k, v in priors.items()}
-    print_priors(priors)
+    # print_priors(priors)
     return separated_classes, priors
 
 

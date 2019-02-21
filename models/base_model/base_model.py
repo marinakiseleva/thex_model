@@ -14,7 +14,7 @@ class BaseModel(ABC):
     Abstract Class representing base functionality of all models. Subclasses of models implement their own training and testing functions. 
     """
 
-    def run_model(self, cols=None, col_matches=None, test_on_train=False,  folds=None, **user_data_filters):
+    def run_model(self, cols=None, col_matches=None, folds=None, **user_data_filters):
         """
         Collects data based on column parameters, trains, and tests model. Either cols or col_matches need to be passed in, otherwise all numeric columns are used.
         :param cols: Names of columns to filter on
@@ -25,7 +25,7 @@ class BaseModel(ABC):
         """
         # Set defaults on filters
         data_filters = {'top_classes': 10, 'one_all': None, 'data_split': 0.3,
-                        'subsample': 200, 'transform_features': False, 'incl_redshift': False}
+                        'subsample': 200, 'transform_features': False, 'incl_redshift': False, 'num_runs': 1, 'test_on_train': False}
         # Update filters with any passed-in filters
         for data_filter in user_data_filters.keys():
             data_filters[data_filter] = user_data_filters[data_filter]
@@ -33,21 +33,21 @@ class BaseModel(ABC):
 
         col_list = collect_cols(cols, col_matches)
 
+        if isinstance(folds, int):
+            self.run_model_cv(col_list, folds, data_filters)
+            return 0
+
         # Collect data filtered on these parameters
         self.X_train, self.X_test, self.y_train, self.y_test = self.get_model_data(
-            col_list, test_on_train, **data_filters)
+            col_list, **data_filters)
         self.visualize_data()
-
-        if isinstance(folds, int):
-            self.run_model_cv(col_list, folds, test_on_train, data_filters)
-            return 0
 
         self.train_model()
         predictions = self.test_model()
         self.evaluate_model(predictions)
         return self
 
-    def get_model_data(self, col_list, test_on_train, **data_filters):
+    def get_model_data(self, col_list, **data_filters):
         """
         Collects data for model
         :param col_list: List of columns to filter on
@@ -56,16 +56,19 @@ class BaseModel(ABC):
         """
         X_train, X_test, y_train, y_test = get_train_test(
             col_list, **data_filters)
-        if test_on_train == True:
+        if data_filters['test_on_train'] == True:
             X_test = X_train.copy()
             y_test = y_train.copy()
         return X_train, X_test, y_train, y_test
 
-    def visualize_data(self):
+    def visualize_data(self, y=None):
         """
         Visualize distribution of data used to train and test
         """
-        labels = pd.concat([self.y_train, self.y_test], axis=0)
+        if y is None:
+            labels = pd.concat([self.y_train, self.y_test], axis=0)
+        else:
+            labels = y
         data_plot.plot_class_hist(labels)
 
     def evaluate_model(self, predicted_classes):
@@ -83,18 +86,17 @@ class BaseModel(ABC):
 
         plot_confusion_matrix(self.y_test, predicted_classes, normalize=True)
 
-    def run_model_cv(self, data_columns, k, test_on_train, data_filters):
+    def run_cross_validation(self, k, X, y, data_filters):
         """
-        Split data into k-folds and perform k-fold cross validation
+        Run k-fold cross validation
         """
-        X, y = get_source_target_data(data_columns, **data_filters)
         kf = KFold(n_splits=k, shuffle=True, random_state=10)
         accuracies = []
         for train_index, test_index in kf.split(X):
             self.X_train, self.X_test = X.iloc[train_index], X.iloc[test_index]
             self.y_train, self.y_test = y.iloc[train_index], y.iloc[test_index]
 
-            if test_on_train:
+            if data_filters['test_on_train']:
                 self.X_test = self.X_train
                 self.y_test = self.y_train
 
@@ -105,8 +107,20 @@ class BaseModel(ABC):
                 combine_dfs(predictions, self.y_test)))
 
         # Get average accuracy per class (mapping)
-        avg_acc = aggregate_accuracies(accuracies, k, y)
-        data_type = 'Training' if test_on_train else 'Testing'
+        avg_acc = aggregate_accuracies(accuracies, y)
+        return avg_acc
+
+    def run_model_cv(self, data_columns, k, data_filters):
+        """
+        Split data into k-folds and perform k-fold cross validation
+        """
+        X, y = get_source_target_data(data_columns, **data_filters)
+        self.visualize_data(y)
+        run_accuracies = []  # list of model accuracies from each run
+        for index_run in range(data_filters['num_runs']):
+            run_accuracies.append(self.run_cross_validation(k, X, y, data_filters))
+        avg_acc = aggregate_accuracies(run_accuracies, y)
+        data_type = 'Training' if data_filters['test_on_train'] else 'Testing'
         plot_class_accuracy(
             avg_acc, plot_title=self.name + " " + str(k) + "-fold CV on " + data_type + " data")
 

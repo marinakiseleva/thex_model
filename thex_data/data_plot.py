@@ -78,8 +78,7 @@ def plot_class_hist(df):
     rcParams['figure.figsize'] = 10, 6
     plt.gcf().subplots_adjust(bottom=0.2)
     types, counts = count_ttypes(df)
-    print(types)
-    print(counts)
+
     class_index = np.arange(len(types))
     plt.bar(class_index, counts)
     plt.xticks(class_index, get_class_names(types), fontsize=9, rotation=50)

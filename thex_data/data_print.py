@@ -15,7 +15,7 @@ def print_class_counts(df):
     classes = df[TARGET_LABEL].value_counts().keys().tolist()
     class_names = [code_cat[code] for code in classes]
     class_counts = df[TARGET_LABEL].value_counts().tolist()
-    print("Counts per Class\n------------------ ")
+    print("\nCounts per Class\n------------------ ")
     for index, value in enumerate(class_names):
         print(str(value) + " : " + str(class_counts[index]))
     print("\nTotal: " + str(df.shape[0]))
