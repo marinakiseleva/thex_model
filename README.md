@@ -41,13 +41,13 @@ This module is broken up into smaller modules that each provide different utilit
 Data pulling, cleansing, normalizing, preparation, and plotting. 
 
 ## models
-Contains the different classifiers explored/used in the project. Contains the Hierarchical Decision Tree model and Naive Bayes model.
+Contains the different classifiers explored/used in the project. Contains the Hierarchical Decision Tree model and likelihood-driven model based on Kernel Density Estimates (KDEModel)
 
 ### tree_model
 Decisioning tree using the Hierarchical Multi-label Decisioing Tree from Vens, et al. 2008. 
 
-### nb_model
-Naive Bayes Model using kernel density estimation to determine the feature distributions.
+### kde_model
+Naive model (assumes feature independences) using kernel density estimation to determine the feature distributions.
 
 ## model_performance
 Evaluates the existing models in this project.
