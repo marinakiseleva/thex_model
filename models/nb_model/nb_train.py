@@ -51,8 +51,8 @@ def find_best_fitting_dist(data, feature=None, class_name=None):
     best_params = kde.get_params()
 
     vals_2d = [[cv] for cv in data]
-    plot_dist_fit(data.values, kde, bw, feature, "Kernel Distribution with bandwidth: %.6f\n for feature %s in class %s" % (
-        bw, feature, class_name))
+    # plot_dist_fit(data.values, kde, bw, feature, "Kernel Distribution with bandwidth: %.6f\n for feature %s in class %s" % (
+    #     bw, feature, class_name))
 
     # Return best fitting distribution and parameters (loc and scale)
     return [best_dist, best_params]

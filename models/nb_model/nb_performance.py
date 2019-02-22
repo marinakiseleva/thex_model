@@ -41,43 +41,100 @@ def plot_dist_fit(data, kde, bandwidth, feature, title):
     plt.close()
     plt.cla()
 
+
+def get_class_prob_sums(test_X, classes, summaries, priors):
+    """
+    Get normalized probabilities and predictions -- normalizing over all predictions per class per sample
+    """
+    # Initialize dict from class to list of probabilities
+
+    test_X = test_X.sample(frac=1)
+    class_probs = {}
+    class_prob_sums = {}
+    class_counts = {}
+
+    for c in classes:
+        class_probs[c] = []
+        class_prob_sums[c] = 0
+        class_counts[c] = 0
+
+    for index, row in test_X.iterrows():
+        probabilities = calculate_class_probabilities(summaries, priors, row)
+        for c in classes:
+            # if class_counts[c] < 20:
+            class_probs[c].append(probabilities[c])
+            class_counts[c] += 1
+
+    for c in class_probs.keys():
+        class_prob_sums[c] = sum(class_probs[c])
+        print("Min value for class " + str(c) + " is " + str(min(class_probs[c])))
+        print("Max value for class " + str(c) + " is " + str(max(class_probs[c])))
+
+    return class_prob_sums
+
+
 ############################################################
 # Plotting code for Naive Bayes ROC ########################
 
 
-def get_rocs(test_data, actual_classes, summaries, priors):
+def get_rocs(test_X, test_y, summaries, priors):
     """
     Plot ROC curves for performance based on predictions, for each class
     :param test_data: Test data
     :param actual_classes: True labels for test set
     """
 
-    actual_classes = actual_classes[TARGET_LABEL].reset_index(drop=True)
-    test_data = test_data.reset_index(drop=True)
+    test_y = test_y[TARGET_LABEL].reset_index(drop=True)
+    test_X = test_X.reset_index(drop=True)
 
-    ttypes = list(set(actual_classes))
-    f, ax = plt.subplots(len(ttypes), 3, figsize=(10, 10))
-    for index, cur_class in enumerate(ttypes):
-        get_roc(test_data, actual_classes, cur_class, summaries, priors, ax[index])
+    classes = list(set(test_y))
+    f, ax = plt.subplots(len(classes), 3, figsize=(10, 10))
+    class_prob_sums = get_class_prob_sums(test_X, classes, summaries, priors)
+    print(class_prob_sums)
+    for index, cur_class in enumerate(classes):
+        test_X = get_prediction_accuracies(
+            test_X, test_y, summaries, priors, cur_class, class_prob_sums)
+        get_roc(test_X, cur_class, ax[index])
     plt.tight_layout()
     plt.show()
 
 
-def get_roc(df, actual_classes, class_code, summaries, priors, ax):
+def normalize_probabilities(probabilities, class_prob_sums):
+    for c in probabilities.keys():
+        probabilities[c] = probabilities[c] / class_prob_sums[c]
+    # Normalize all probabilities to sum to 1
+    for c in probabilities.keys():
+        probabilities[c] = probabilities[c] / sum(probabilities.values())
+    return probabilities
+
+
+def get_prediction_accuracies(test_X, test_y, summaries, priors, class_code, class_prob_sums):
+    # For each row in df, get probability of this class and whether it was right or wrong
+    # pred_classes = []
+    for index, row in test_X.iterrows():
+        # Optional : Can re-normalize probabilities across classes so they all sum
+        # to 1, per row
+        probabilities = calculate_class_probabilities(summaries, priors, row)
+        prob = probabilities[class_code]
+        # print("\n\nOriginal probabilities " + str(probabilities))
+
+        # probabilities = normalize_probabilities(probabilities, class_prob_sums)
+        # prob = probabilities[class_code]
+        # print("Normed probabilities " + str(probabilities))
+
+        # Save probability of this class for this row
+        test_X.loc[index, 'probability'] = prob
+        # Save whether or not this row IS this class
+        actual_class = test_y.iloc[index]
+        test_X.loc[index, 'is_class'] = True if (actual_class == class_code) else False
+
+    return test_X
+
+
+def get_roc(df, class_code, ax):
     """
     Plot ROC Curve for this df (over 1 class)
     """
-    # For each row in df, get probability of this class and whether it was right or wrong
-    # pred_classes = []
-    for index, row in df.iterrows():
-        probabilities = calculate_class_probabilities(summaries, priors, row)
-        prob = probabilities[class_code]
-        # Save probability of this class for this row
-        df.loc[index, 'probability'] = prob
-        # Save whether or not this row IS this class
-        actual_class = actual_classes.iloc[index]
-        df.loc[index, 'is_class'] = True if (actual_class == class_code) else False
-
     prob_when_class = df.loc[df.is_class == True]['probability']
     prob_when_not_class = df.loc[df.is_class == False]['probability']
     ttype = code_cat[class_code]
@@ -105,7 +162,7 @@ def get_roc(df, actual_classes, class_code, summaries, priors, ax):
 
 def plot_roc(x, y_pred_class, y_pred_not_class, ax):
     """
-    Derive true positive rate (TPR) and false positive rate (FPR) for different thresholds of x. Create ROC curve based on that. 
+    Derive true positive rate (TPR) and false positive rate (FPR) for different thresholds of x. Create ROC curve based on that.
     """
     # Total
     total_class_predicted = np.sum(y_pred_class)

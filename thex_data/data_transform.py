@@ -15,8 +15,9 @@ def run_pca(df, k=5):
         reduced_columns.append("PC" + str(i + 1))
 
     principalDf = pd.DataFrame(data=principalComponents, columns=reduced_columns)
-    # print("\nPCA Analysis\n")
-    # print(pca.explained_variance_ratio_)
+    print("\nPCA Analysis: Explained Variance Ratio")
+    print(pca.explained_variance_ratio_)
+    # print(pd.DataFrame(pca.components_, columns=df.columns, index=reduced_columns))
     return principalDf
 
 
@@ -26,8 +27,21 @@ def transform_features(df):
     :param df: DataFrame of features
     """
     df = derive_diffs(df)
-    df = derive_reciprocals(df)
+    # df = derive_reciprocals(df)
+    df = scale_data(df)
     df = run_pca(df)
+    return df
+
+
+def scale_data(df):
+    """
+    Scale each feature between 0 and 1 for consistent PCA
+    """
+    for index, colname in enumerate(list(df)):
+        max_col = df[colname].max()
+        min_col = df[colname].min()
+        df[colname] = df[colname].apply(
+            lambda x: (x - min_col) / (max_col - min_col))
     return df
 
 

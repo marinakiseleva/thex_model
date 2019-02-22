@@ -122,7 +122,7 @@ class BaseModel(ABC):
         avg_acc = aggregate_accuracies(run_accuracies, y)
         data_type = 'Training' if data_filters['test_on_train'] else 'Testing'
         plot_class_accuracy(
-            avg_acc, plot_title=self.name + " " + str(k) + "-fold CV on " + data_type + " data")
+            avg_acc, plot_title=self.name + " Average Accuracy from " + str(data_filters['num_runs']) + " runs of " + str(k) + "-fold CV on " + data_type + " data")
 
     @abstractmethod
     def train_model(self):
