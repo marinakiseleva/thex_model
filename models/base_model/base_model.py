@@ -24,8 +24,15 @@ class BaseModel(ABC):
         :param user_data_filters: List of data filters user passed in. User options over-ride any default.
         """
         # Set defaults on filters
-        data_filters = {'top_classes': 10, 'one_all': None, 'data_split': 0.3,
-                        'subsample': 200, 'transform_features': False, 'incl_redshift': False, 'num_runs': 1, 'test_on_train': False}
+        data_filters = {'num_runs': 1,
+                        'test_on_train': False,
+                        'top_classes': 10,
+                        'one_all': None,
+                        'data_split': 0.3,
+                        'subsample': 200,
+                        'transform_features': False,
+                        'incl_redshift': False
+                        }
         # Update filters with any passed-in filters
         for data_filter in user_data_filters.keys():
             data_filters[data_filter] = user_data_filters[data_filter]
@@ -46,6 +53,21 @@ class BaseModel(ABC):
         predictions = self.test_model()
         self.evaluate_model(predictions)
         return self
+
+    @abstractmethod
+    def train_model(self):
+        """
+        Train model using training data, self.X_train self.y_train
+        """
+        pass
+
+    @abstractmethod
+    def test_model(self):
+        """
+        Test model using testing data self.X_test self.y_test
+        Returns predictions (in class code format)
+        """
+        pass
 
     def get_model_data(self, col_list, **data_filters):
         """
@@ -80,10 +102,6 @@ class BaseModel(ABC):
         model_name = self.name
         compute_plot_class_accuracy(
             predicted_classes, self.y_test, plot_title=model_name + " Accuracy, on Testing Data")
-
-        # for f in list(X_train):
-        #     data_plot.plot_feature_distribution(concat([X_train, y_train], axis=1), f)
-
         plot_confusion_matrix(self.y_test, predicted_classes, normalize=True)
 
     def run_cross_validation(self, k, X, y, data_filters):
@@ -123,18 +141,3 @@ class BaseModel(ABC):
         data_type = 'Training' if data_filters['test_on_train'] else 'Testing'
         plot_class_accuracy(
             avg_acc, plot_title=self.name + " Average Accuracy from " + str(data_filters['num_runs']) + " runs of " + str(k) + "-fold CV on " + data_type + " data")
-
-    @abstractmethod
-    def train_model(self):
-        """
-        Train model using training data, self.X_train self.y_train
-        """
-        pass
-
-    @abstractmethod
-    def test_model(self):
-        """
-        Test model using testing data self.X_test self.y_test
-        Returns predictions (in class code format)
-        """
-        pass

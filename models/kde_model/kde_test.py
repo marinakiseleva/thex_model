@@ -9,7 +9,7 @@ Logic for classifying testing data using the KDE Model
 
 class KDEModelTest:
     """
-    KDE Model Testing functionality, used in KDEModel
+    Mixin Class for KDE Model Testing functionality, used in KDEModel
     """
 
     def test(self):
@@ -31,7 +31,7 @@ class KDEModelTest:
         probabilities = self.calculate_class_probabilities(x)
         return max(probabilities, key=lambda k: probabilities[k])
 
-    def calculate_class_probabilities(self, x):
+    def calculate_class_probabilities(self, x, naive=False):
         """
         Calculates probability of each transient class (the keys of summaries map), for the test data point (x). Calculates probability by multiplying probability of each feature together. Returns map of class codes to probability.
         :param x: Single row of features as datapoint
@@ -39,21 +39,23 @@ class KDEModelTest:
         probabilities = {}
         # Get probability density of each class, and add it to a running sum of
         # all probability densities
-        for transient_class, feature_mappings in self.summaries.items():
-            probabilities[transient_class] = 1
-            # Iterate through mean/stdev of each feature in features map
-            for feature_name, f_dist in feature_mappings.items():
-                test_value = x[feature_name]
-                dist = f_dist[0]
-                if test_value is not None and not isnan(test_value):
-                    # prob_density = dist(*f_dist[1]).pdf(test_value)
-                    parms = dist.get_params()
-                    prob_density = np.exp(dist.score_samples([[test_value]]))
-                    # Multiply together probability of each feature
-                    probabilities[transient_class] *= prob_density[0]
+        for class_code, distribution in self.summaries.items():
+            probabilities[class_code] = 1
+            if naive:
+                # Iterate through mean/stdev of each feature in features map
+                for feature_name, dist in distribution.items():
+                    test_value = x[feature_name]
+                    if test_value is not None and not isnan(test_value):
+                        prob_density = np.exp(dist.score_samples([[test_value]]))
+                        # Multiply together probability of each feature
+                        probabilities[class_code] *= prob_density
+            else:
+                # direct distribution
+                prob_density = np.exp(distribution.score_samples([x.values]))
+                probabilities[class_code] *= prob_density
 
-                # Factor in prior
-                probabilities[transient_class] *= self.priors[transient_class]
+            # Factor in prior
+            probabilities[class_code] *= self.priors[class_code]
 
         # Normalize probabilities, to sum to 1
         sum_probabilities = sum(probabilities.values())

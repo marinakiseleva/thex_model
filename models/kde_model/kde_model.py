@@ -19,5 +19,5 @@ class KDEModel(BaseModel, KDEModelTrain, KDEModelTest):
     def test_model(self):
         predicted_classes = self.test()
         kdep = KDEPerformance(self)
-        kdep.get_rocs()
+        # kdep.get_rocs()
         return predicted_classes

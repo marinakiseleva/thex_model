@@ -40,7 +40,9 @@ class KDEPerformance:
         """
         # Initialize dict from class to list of probabilities
         test_X = test_X.sample(frac=1)
-        class_probs = class_prob_sums = class_counts = {}
+        class_probs = {}
+        class_prob_sums = {}
+        class_counts = {}
         for c in classes:
             class_probs[c] = []
             class_prob_sums[c] = 0

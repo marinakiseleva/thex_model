@@ -19,46 +19,96 @@ Logic for training the KDE classifier
 
 class KDEModelTrain:
     """
-    KDE Model Training functionality, used in KDEModel
+    Mixin Class for KDE Model Training functionality, used in KDEModel
     """
 
-    def train(self):
+    def train(self, naive=False):
         """
-        Train Naive Bayes classifier on this training set
-        :param X_train: Features of data
-        :param y_train: Labels of data
+        Train KDE classifier
         """
-        separated, priors = self.separate_classes()
+        data = pd.concat([self.X_train, self.y_train], axis=1)
+        classes = list(data[TARGET_LABEL].unique())
+        priors = self.set_priors(data, classes)
+        class_data = self.separate_classes(data, classes)
+
         summaries = {}
-        for class_code, instances in separated.items():
-            summaries[class_code] = self.summarize(instances, code_cat[class_code])
+        for class_code, instances in class_data.items():
+            if naive:
+                summaries[class_code] = self.get_naive_distributions(
+                    instances, code_cat[class_code])
+            else:
+                # Do not assume feature independence. Create distribution over all
+                # features at once
+                summaries[class_code] = self.get_class_distribution(
+                    instances, class_code)
+
         return summaries, priors
+
+    def set_priors(self, data, unique_classes, prior_type="uniform"):
+        priors = {}  # Prior value of class, based on frequency
+        for class_code in unique_classes:
+            class_data = data.loc[data[TARGET_LABEL] == class_code]
+            if prior_type == "uniform":
+                priors[class_code] = 1 / len(unique_classes)
+            elif prior_type == "inv_frequency":
+                priors[class_code] = 1  (class_data.shape[0] / data.shape[0])
+            else:  # traditional, frequency-based
+                priors[class_code] = class_data.shape[0] / data.shape[0]
+
+        # Make priors sum to 1
+        priors = {k: round(v / sum(priors.values()), 6) for k, v in priors.items()}
+        return priors
+
+    def separate_classes(self, data, unique_classes):
+        """
+        Separate by class (of unique transient types)
+        Return map of {class code : DataFrame of samples of that type}
+        """
+        separated_classes = {}
+        for class_code in unique_classes:
+            # Add data for this class to mapping
+            class_data = data.loc[data[TARGET_LABEL] == class_code]
+            separated_classes[class_code] = class_data.drop([TARGET_LABEL], axis=1)
+        return separated_classes
+
+    def get_class_distribution(self, X_class, class_code):
+        """
+        Get maximum likelihood estimated distribution by kernel density estimate of this class over all features
+        :param X_class: DataFrame of data of with target=class_name
+        :param class_code: Class code of X_class
+
+        """
+        # Create grid to search over bandwidth for
+        range_bws = np.linspace(0.01, 2, 100)
+        grid = GridSearchCV(
+            KernelDensity(), {'bandwidth': range_bws}, cv=3)
+
+        grid.fit(X_class.values)
+        bw = grid.best_params_['bandwidth']
+
+        kde = KernelDensity(bandwidth=bw, kernel='gaussian', metric='euclidean')
+
+        kde = kde.fit(X_class.values)
+        # y_class = self.y_test.loc[self.y_test[TARGET_LABEL] == class_code]
+        # kde.score(X_class.values, y_class.values)
+        return kde
 
     def get_best_bandwidth(self, data):
         """
         Estimate best bandwidth value based on iteratively running over different bandwidths
         :param data: Pandas Series of particular feature
         """
-        # Determine best bandwidth of kernel
-        range_vals = data.values.max() - data.values.min()
-        min_val = data.values.min() - (range_vals / 5)
-        max_val = data.values.max() + (range_vals / 5)
-        min_bw = abs(max_val - min_val) / 200
-        max_bw = abs(max_val - min_val) / 5
-        iter_value = 100
+        range_bws = np.linspace(0.01, 2, 100)
         # Find bandwidth between min and max that maximizes likelihood
         grid = GridSearchCV(KernelDensity(),
-                            {'bandwidth': np.linspace(min_bw, max_bw, iter_value)}, cv=3)
+                            {'bandwidth': range_bws}, cv=3)
         grid.fit([[cv] for cv in data])
-        bw = grid.best_params_['bandwidth']
-        if bw == 0:
-            bw = 0.001
-        return bw
+        return grid.best_params_['bandwidth']
 
-    def get_best_fitting_dist(self, data, feature=None, class_name=None):
+    def get_feature_distribution(self, data, feature=None, class_name=None):
         """
-        Uses kernel density estimation to find the distribution of this data. Also plots data and distribution fit to it. Returns [distribution, parameters of distribution].
-        :param data: Pandas Series, set of values corresponding to feature and class
+        Uses kernel density estimation to find the distribution of feature. Returns [distribution, parameters of distribution].
+        :param data: values in Pandas Series of feature and class
         :param feature: Name of feature/column this data corresponds to
         :param class_name: Name of class this data corresponds to
         """
@@ -66,14 +116,32 @@ class KDEModelTrain:
         # Use Kernel Density
         bw = self.get_best_bandwidth(data)
         kde = KernelDensity(bandwidth=bw, kernel='gaussian', metric='euclidean')
-        best_dist = kde.fit(np.matrix(data.values).T)
-        best_params = kde.get_params()
+        # select column of values for this feature
+        kde = kde.fit(np.matrix(data.values).T)
 
         vals_2d = [[cv] for cv in data]
-        # self.plot_dist_fit(data.values, kde, bw, feature, "Kernel Distribution with bandwidth: %.6f\n for feature %s in class %s" % (bw, feature, class_name))
+        # self.plot_dist_fit(data.values, kde, bw, feature,
+        #                    "Kernel Distribution with bandwidth: %.6f\n for feature %s in class %s" % (bw, feature, class_name))
 
         # Return best fitting distribution and parameters (loc and scale)
-        return [best_dist, best_params]
+        return kde
+
+    def get_naive_distributions(self, X_class, class_name=None):
+        """
+        Estimate distribution of each feature in X_class. Return mapping of {feature : [distribution, parameters of distribution]}
+        :param X_class: DataFrame of data of with target=class_name
+        :param class_name: Name of class this X_class corresponds to
+        """
+        class_summaries = {}
+        # get distribution of each feature
+        for feature in X_class:
+            if feature != TARGET_LABEL:
+                col_values = X_class[feature].dropna(axis=0)
+                if len(col_values) > 0:
+                    class_summaries[feature] = self.get_feature_distribution(
+                        col_values, feature, class_name)
+
+        return class_summaries
 
     def plot_dist_fit(self, data, kde, bandwidth, feature, title):
         """
@@ -105,54 +173,3 @@ class KDEModelTrain:
         # plt.show()
         plt.close()
         plt.cla()
-
-    def summarize(self, data, class_name=None):
-        """
-        Estimate distribution of each feature in this data. Return mapping of {feature : [distribution, parameters of distribution]}
-        :param data: DataFrame corresponding to all data of this class (class_name)
-        :param class_name: Name of class this data corresponds to
-        """
-        class_summaries = {}
-        # get distribution of each feature
-        for feature in data:
-            if feature != TARGET_LABEL:
-                col_values = data[feature].dropna(axis=0)
-                if len(col_values) > 0:
-                    class_summaries[feature] = self.get_best_fitting_dist(
-                        col_values, feature, class_name)
-
-        return class_summaries
-
-    def separate_classes(self):
-        """
-        Separate by class (of unique transient types) and assigns priors (uniform)
-        Return map of {class code : DataFrame of samples of that type}, and priors
-        :param data: DataFrame of feature and labels
-        """
-        data = pd.concat([self.X_train, self.y_train], axis=1)
-        transient_classes = list(data[TARGET_LABEL].unique())
-        separated_classes = {}
-        priors = {}  # Prior value of class, based on frequency
-        total_count = data.shape[0]
-        for transient in transient_classes:
-            trans_df = data.loc[data[TARGET_LABEL] == transient]
-
-            # Priors
-
-            # Frequency-based
-            # priors[transient] = trans_df.shape[0] / total_count
-
-            # Uniform prior
-            priors[transient] = 1 / len(transient_classes)
-
-            # Inverted Frequency-based prior
-            # priors[transient] = 1 - (trans_df.shape[0] / total_count)
-
-            # Set class value
-            trans_df.drop([TARGET_LABEL], axis=1, inplace=True)
-            separated_classes[transient] = trans_df
-
-        # Make priors sum to 1
-        priors = {k: round(v / sum(priors.values()), 6) for k, v in priors.items()}
-        # print_priors(priors)
-        return separated_classes, priors
