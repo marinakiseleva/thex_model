@@ -24,7 +24,6 @@ When you are done developing and running models you may exit virtualenv with the
 deactivate
 ```
 
-
 # Running
 Please use the Jupyter Notebook [THEx Model Intro](notebooks/THEx%20Model%20Intro.ipynb) located in the notebooks directory to help you get started with running the models.
 
@@ -37,20 +36,17 @@ Do not pip install hmc. Download it from the link above and install it using set
 # Project Structure
 This module is broken up into smaller modules that each provide different utilities and are described below.
 
-## thex_data 
-Data pulling, cleansing, normalizing, preparation, and plotting. 
-
 ## models
 Contains the different classifiers explored/used in the project. Contains the Hierarchical Decision Tree model and likelihood-driven model based on Kernel Density Estimates (KDEModel)
+
+### kde_model
+Model based n kernel density estimation of feature distributions. Can be run either 'naively' (assuming feature independence and creating distinct distributions per feature per class) or non-naively, which creates a single distribution over all features. 
 
 ### tree_model
 Decisioning tree using the Hierarchical Multi-label Decisioing Tree from Vens, et al. 2008. 
 
-### kde_model
-Naive model (assumes feature independences) using kernel density estimation to determine the feature distributions.
-
-## model_performance
-Evaluates the existing models in this project.
+## thex_data 
+Data pulling, cleansing, normalizing, preparation, and plotting. 
 
 
 # Acknowledgments
