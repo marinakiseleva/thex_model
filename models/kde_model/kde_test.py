@@ -29,9 +29,13 @@ class KDEModelTest:
         :param x: Single row of features as datapoint
         """
         probabilities = self.calculate_class_probabilities(x)
-        return max(probabilities, key=lambda k: probabilities[k])
+        max_prob_class = max(probabilities, key=lambda k: probabilities[k])
 
-    def calculate_class_probabilities(self, x, naive=False):
+        # TODO: Get normalized probabilities of classes
+
+        return max_prob_class
+
+    def calculate_class_probabilities(self, x):
         """
         Calculates probability of each transient class (the keys of summaries map), for the test data point (x). Calculates probability by multiplying probability of each feature together. Returns map of class codes to probability.
         :param x: Single row of features as datapoint
@@ -41,7 +45,7 @@ class KDEModelTest:
         # all probability densities
         for class_code, distribution in self.summaries.items():
             probabilities[class_code] = 1
-            if naive:
+            if self.naive:
                 # Iterate through mean/stdev of each feature in features map
                 for feature_name, dist in distribution.items():
                     test_value = x[feature_name]

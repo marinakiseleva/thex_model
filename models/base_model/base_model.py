@@ -19,13 +19,13 @@ class BaseModel(ABC):
         Collects data based on column parameters, trains, and tests model. Either cols or col_matches need to be passed in, otherwise all numeric columns are used.
         :param cols: Names of columns to filter on
         :param col_matches: String by which columns will be selected. For example: AllWISE will use all AlLWISE columns.
-        :param test_on_train: Boolean to test on training data.
         :param folds: Number of folds to use in k-fold Cross Validation
         :param user_data_filters: List of data filters user passed in. User options over-ride any default.
         """
         # Set defaults on filters
         data_filters = {'num_runs': 1,
                         'test_on_train': False,
+                        'naive': False,
                         'top_classes': 10,
                         'one_all': None,
                         'data_split': 0.3,
@@ -111,8 +111,10 @@ class BaseModel(ABC):
         kf = KFold(n_splits=k, shuffle=True, random_state=10)
         accuracies = []
         for train_index, test_index in kf.split(X):
-            self.X_train, self.X_test = X.iloc[train_index], X.iloc[test_index]
-            self.y_train, self.y_test = y.iloc[train_index], y.iloc[test_index]
+            self.X_train, self.X_test = X.iloc[train_index].reset_index(
+                drop=True), X.iloc[test_index].reset_index(drop=True)
+            self.y_train, self.y_test = y.iloc[train_index].reset_index(
+                drop=True), y.iloc[test_index].reset_index(drop=True)
 
             if data_filters['test_on_train']:
                 self.X_test = self.X_train

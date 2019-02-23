@@ -7,7 +7,7 @@ from thex_data.data_consts import ROOT_DIR
 import scipy.stats as stats
 from sklearn.neighbors.kde import KernelDensity
 from sklearn.model_selection import GridSearchCV
-
+from sklearn.model_selection import PredefinedSplit
 from thex_data.data_consts import TARGET_LABEL, code_cat
 from thex_data.data_print import print_priors
 
@@ -22,7 +22,7 @@ class KDEModelTrain:
     Mixin Class for KDE Model Training functionality, used in KDEModel
     """
 
-    def train(self, naive=False):
+    def train(self):
         """
         Train KDE classifier
         """
@@ -33,7 +33,7 @@ class KDEModelTrain:
 
         summaries = {}
         for class_code, instances in class_data.items():
-            if naive:
+            if self.naive:
                 summaries[class_code] = self.get_naive_distributions(
                     instances, code_cat[class_code])
             else:
@@ -45,6 +45,11 @@ class KDEModelTrain:
         return summaries, priors
 
     def set_priors(self, data, unique_classes, prior_type="uniform"):
+        """
+        Set prior probabilities of classes (defaults to uniform)
+        :param data: X_train concat with y_train
+        :param classes: list of unique classes
+        """
         priors = {}  # Prior value of class, based on frequency
         for class_code in unique_classes:
             class_data = data.loc[data[TARGET_LABEL] == class_code]
@@ -61,8 +66,9 @@ class KDEModelTrain:
 
     def separate_classes(self, data, unique_classes):
         """
-        Separate by class (of unique transient types)
-        Return map of {class code : DataFrame of samples of that type}
+        Split data by class. Return map of {class code : DataFrame of samples of that type}
+        :param data: X_train concat with y_train
+        :param classes: list of unique classes
         """
         separated_classes = {}
         for class_code in unique_classes:
@@ -76,36 +82,30 @@ class KDEModelTrain:
         Get maximum likelihood estimated distribution by kernel density estimate of this class over all features
         :param X_class: DataFrame of data of with target=class_name
         :param class_code: Class code of X_class
-
         """
         # Create grid to search over bandwidth for
         range_bws = np.linspace(0.01, 2, 100)
         grid = GridSearchCV(
             KernelDensity(), {'bandwidth': range_bws}, cv=3)
-
         grid.fit(X_class.values)
         bw = grid.best_params_['bandwidth']
-
         kde = KernelDensity(bandwidth=bw, kernel='gaussian', metric='euclidean')
+        return kde.fit(X_class.values)
 
-        kde = kde.fit(X_class.values)
-        # y_class = self.y_test.loc[self.y_test[TARGET_LABEL] == class_code]
-        # kde.score(X_class.values, y_class.values)
-        return kde
-
-    def get_best_bandwidth(self, data):
+    def get_best_bandwidth(self, data, ps):
         """
         Estimate best bandwidth value based on iteratively running over different bandwidths
         :param data: Pandas Series of particular feature
         """
         range_bws = np.linspace(0.01, 2, 100)
+
         # Find bandwidth between min and max that maximizes likelihood
         grid = GridSearchCV(KernelDensity(),
-                            {'bandwidth': range_bws}, cv=3)
+                            {'bandwidth': range_bws}, cv=ps)
         grid.fit([[cv] for cv in data])
         return grid.best_params_['bandwidth']
 
-    def get_feature_distribution(self, data, feature=None, class_name=None):
+    def get_feature_distribution(self, data, ps, feature, class_name):
         """
         Uses kernel density estimation to find the distribution of feature. Returns [distribution, parameters of distribution].
         :param data: values in Pandas Series of feature and class
@@ -114,16 +114,15 @@ class KDEModelTrain:
         """
 
         # Use Kernel Density
-        bw = self.get_best_bandwidth(data)
+        bw = self.get_best_bandwidth(data, ps)
         kde = KernelDensity(bandwidth=bw, kernel='gaussian', metric='euclidean')
         # select column of values for this feature
         kde = kde.fit(np.matrix(data.values).T)
 
         vals_2d = [[cv] for cv in data]
-        # self.plot_dist_fit(data.values, kde, bw, feature,
-        #                    "Kernel Distribution with bandwidth: %.6f\n for feature %s in class %s" % (bw, feature, class_name))
+        self.plot_dist_fit(data.values, kde, bw, feature,
+                           "Kernel Distribution with bandwidth: %.6f\n for feature %s in class %s" % (bw, feature, class_name))
 
-        # Return best fitting distribution and parameters (loc and scale)
         return kde
 
     def get_naive_distributions(self, X_class, class_name=None):
@@ -133,13 +132,20 @@ class KDEModelTrain:
         :param class_name: Name of class this X_class corresponds to
         """
         class_summaries = {}
-        # get distribution of each feature
+
+        # Set training and testing indices for CV in KDE
+        num_samples = X_class.shape[0]
+        # 0 for validation, -1 for training
+        test_assignments = [-1] * num_samples
+        validation_indices = random.sample(
+            list(enumerate(test_assignments)), int(num_samples * 0.3))
+        for i in validation_indices:
+            test_assignments[i] = 0
+        ps = PredefinedSplit(test_assignments)
+
         for feature in X_class:
-            if feature != TARGET_LABEL:
-                col_values = X_class[feature].dropna(axis=0)
-                if len(col_values) > 0:
-                    class_summaries[feature] = self.get_feature_distribution(
-                        col_values, feature, class_name)
+            class_summaries[feature] = self.get_feature_distribution(
+                X_class[feature], ps, feature, class_name)
 
         return class_summaries
 

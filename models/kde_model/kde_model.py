@@ -11,6 +11,7 @@ class KDEModel(BaseModel, KDEModelTrain, KDEModelTest):
 
     def __init__(self, cols=None, col_match=None, folds=None, **data_args):
         self.name = "KDE Model"
+        self.naive = data_args['naive']
         self.run_model(cols, col_match, folds, **data_args)
 
     def train_model(self):
@@ -19,5 +20,5 @@ class KDEModel(BaseModel, KDEModelTrain, KDEModelTest):
     def test_model(self):
         predicted_classes = self.test()
         kdep = KDEPerformance(self)
-        # kdep.get_rocs()
+        kdep.plot_probability_metrics()
         return predicted_classes
