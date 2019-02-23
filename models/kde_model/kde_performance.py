@@ -24,7 +24,8 @@ class KDEPerformance:
         y_test = self.model.y_test[TARGET_LABEL]
         unique_classes = list(set(y_test))
 
-        f, ax = plt.subplots(len(unique_classes), 3, figsize=(10, 10))
+        f, ax = plt.subplots(len(unique_classes), 3,
+                             figsize=(10, len(unique_classes) * 3))
         class_prob_sums = self.get_class_prob_sums(self.model.X_test, unique_classes)
 
         for index, class_code in enumerate(unique_classes):
@@ -67,7 +68,7 @@ class KDEPerformance:
 
         for c in class_probs.keys():
             class_prob_sums[c] = sum(class_probs[c])
-        print(class_prob_sums)
+        # print(class_prob_sums)
         return class_prob_sums
 
     def normalize_probabilities(self, probabilities, class_prob_sums):

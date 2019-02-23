@@ -1,14 +1,15 @@
+import random
+import scipy.stats as stats
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from pylab import rcParams
-from thex_data.data_consts import ROOT_DIR
 
-import scipy.stats as stats
+from pylab import rcParams
 from sklearn.neighbors.kde import KernelDensity
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import PredefinedSplit
-from thex_data.data_consts import TARGET_LABEL, code_cat
+
+from thex_data.data_consts import ROOT_DIR, TARGET_LABEL, code_cat
 from thex_data.data_print import print_priors
 
 
@@ -119,7 +120,6 @@ class KDEModelTrain:
         # select column of values for this feature
         kde = kde.fit(np.matrix(data.values).T)
 
-        vals_2d = [[cv] for cv in data]
         self.plot_dist_fit(data.values, kde, bw, feature,
                            "Kernel Distribution with bandwidth: %.6f\n for feature %s in class %s" % (bw, feature, class_name))
 
@@ -134,13 +134,14 @@ class KDEModelTrain:
         class_summaries = {}
 
         # Set training and testing indices for CV in KDE
-        num_samples = X_class.shape[0]
         # 0 for validation, -1 for training
+        num_samples = X_class.shape[0]
         test_assignments = [-1] * num_samples
         validation_indices = random.sample(
             list(enumerate(test_assignments)), int(num_samples * 0.3))
+        # validation_indices is randomly selected tuples of (index, value)
         for i in validation_indices:
-            test_assignments[i] = 0
+            test_assignments[i[0]] = 0
         ps = PredefinedSplit(test_assignments)
 
         for feature in X_class:
@@ -153,7 +154,7 @@ class KDEModelTrain:
         """
         Plot distribution fitted to feature
         """
-        plt.ioff()
+        # plt.ioff()
         rcParams['figure.figsize'] = 6, 6
         n_bins = 20
         range_vals = data.max() - data.min()
@@ -176,6 +177,5 @@ class KDEModelTrain:
         for r in replace_strs:
             title = title.replace(r, "_")
         plt.savefig(ROOT_DIR + "/output/kernel_fits/" + title)
-        # plt.show()
         plt.close()
-        plt.cla()
+        # plt.cla()
