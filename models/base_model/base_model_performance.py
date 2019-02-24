@@ -51,11 +51,12 @@ class BaseModelPerformance:
         Get accuracy of each class separately
         """
         df = self.combine_dfs()
-        tclasses = list(df[TARGET_LABEL].unique())
+        class_codes = list(df[TARGET_LABEL].unique())
         class_accuracies = {}
-        for tclass in tclasses:
-            df_ttype = df[df[TARGET_LABEL] == tclass]  # filter df on this ttype
-            class_accuracies[tclass] = self.get_percent_correct(df_ttype)
+        for class_code in class_codes:
+            # filter df on this class code
+            df_class = df[df[TARGET_LABEL] == class_code]
+            class_accuracies[class_code] = self.get_percent_correct(df_class)
         return collections.OrderedDict(sorted(class_accuracies.items()))
 
     def combine_dfs(self):

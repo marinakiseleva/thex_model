@@ -1,10 +1,13 @@
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import rcParams
+from cycler import cycler
 from sklearn.metrics import confusion_matrix
 
 from thex_data.data_consts import code_cat, TARGET_LABEL
+
+FIG_WIDTH = 8
+FIG_HEIGHT = 6
 
 
 class BaseModelVisualization:
@@ -12,10 +15,40 @@ class BaseModelVisualization:
     Mixin Class for BaseModel performance visualization
     """
 
-    # def plot_roc_curves(self):
-    #     """
-    #     Plot ROC curves of each class on plot
-    #     """
+    def plot_roc_curves(self):
+        """
+        Plot ROC curves of each class on same plot
+        """
+        y_test = self.y_test[TARGET_LABEL]
+        unique_classes = list(set(y_test))
+
+        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
+        cm = plt.get_cmap('gist_rainbow')
+        NUM_COLORS = len(unique_classes)
+        ax.set_prop_cycle('color', [cm(1. * i / NUM_COLORS) for i in range(NUM_COLORS)])
+        for index, class_code in enumerate(unique_classes):
+            pos_probs, neg_probs = self.get_split_probabilities(
+                self.X_test.copy(), y_test, class_code)
+            x, pos_pdf = self.get_pdf(pos_probs)
+            x, neg_pdf = self.get_pdf(neg_probs)
+
+            FP_rates, TP_rates = self.get_fp_tp_rates(x, pos_pdf, neg_pdf)
+
+            # Calculate area under curve
+            auc = np.sum(TP_rates) / 100  # 100= # of values for x
+            label_text = code_cat[class_code] + ", AUC: %.2f" % auc
+            # Plotting ROC curve, FP against TP
+            ax.plot(FP_rates, TP_rates, label=label_text)
+        ax.grid()
+        ax.plot(x, x, "--", label="Baseline")  # baseline
+        ax.set_xlim([0, 1])
+        ax.set_ylim([0, 1])
+        ax.set_title("ROC Curves", fontsize=14)
+        ax.set_ylabel('True Positive Rate', fontsize=12)
+        ax.set_xlabel('False Positive Rate', fontsize=12)
+        ax.legend(loc='best')
+        plt.show()
+
     def plot_probability_metrics(self):
         """
         Plot ROC curves and distributions they are built on, for performance based on probabilities for each class
@@ -26,7 +59,7 @@ class BaseModelVisualization:
         unique_classes = list(set(y_test))
 
         f, ax = plt.subplots(len(unique_classes), 3,
-                             figsize=(10, len(unique_classes) * 3))
+                             figsize=(10, len(unique_classes) * 3), dpi=640)
 
         for index, class_code in enumerate(unique_classes):
             pos_probs, neg_probs = self.get_split_probabilities(
@@ -95,13 +128,7 @@ class BaseModelVisualization:
         y = const * np.exp(-((x - mean)**2) / (2.0 * (std**2)))
         return x, y
 
-    def plot_roc(self, x, pos_pdf, neg_pdf, ax):
-        """
-        Plot ROC curve of x, given probabilities for positive and negative examples
-        :param pos_pdf: Probability of class for positive examples
-        :param neg_pdf: Probability of class for negative examples
-        :param ax: axis to plot on
-        """
+    def get_fp_tp_rates(self, x, pos_pdf, neg_pdf):
         # Sum of all probabilities
         total_class = np.sum(pos_pdf)
         total_not_class = np.sum(neg_pdf)
@@ -123,8 +150,18 @@ class BaseModelVisualization:
             TPR = area_TP / total_class
             TP_rates.append(TPR)
             FP_rates.append(FPR)
-        # auc = Probability that it will guess true over false
-        auc = np.sum(TP_rates) / 100  # 100= # of values for x
+
+        # Plotting final ROC curve, FP against TP
+        return FP_rates, TP_rates
+
+    def plot_roc(self, x, pos_pdf, neg_pdf, ax):
+        """
+        Plot ROC curve of x, given probabilities for positive and negative examples
+        :param pos_pdf: Probability of class for positive examples
+        :param neg_pdf: Probability of class for negative examples
+        :param ax: axis to plot on
+        """
+        FP_rates, TP_rates = self.get_fp_tp_rates(x, pos_pdf, neg_pdf)
         # Plotting final ROC curve, FP against TP
         ax.plot(FP_rates, TP_rates)
         ax.plot(x, x, "--")  # baseline
@@ -134,8 +171,9 @@ class BaseModelVisualization:
         ax.set_ylabel('True Positive Rate', fontsize=12)
         ax.set_xlabel('False Positive Rate', fontsize=12)
         ax.grid()
+        # auc = Probability that it will guess true over false
+        auc = np.sum(TP_rates) / 100  # 100= # of values for x
         ax.legend(["AUC=%.3f" % auc])
-
         return ax
 
     def plot_confusion_matrix(self, normalize=False, cmap=plt.cm.Blues):
@@ -154,7 +192,7 @@ class BaseModelVisualization:
         else:
             title = "Confusion Matrix (without normalization)"
 
-        rcParams['figure.figsize'] = 8, 8
+        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
         plt.imshow(cm, interpolation='nearest', cmap=cmap)
         plt.title(title)
         plt.colorbar()
@@ -165,63 +203,42 @@ class BaseModelVisualization:
         fmt = '.2f' if normalize else 'd'
         thresh = cm.max() / 2.
         for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-            plt.text(j, i, format(cm[i, j], fmt),
-                     horizontalalignment="center",
-                     color="white" if cm[i, j] > thresh else "black")
+            ax.text(j, i, format(cm[i, j], fmt),
+                    horizontalalignment="center",
+                    color="white" if cm[i, j] > thresh else "black")
 
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
         plt.tight_layout()
         plt.show()
 
-    def plot_class_accuracy(self, class_accuracies, plot_title):
+    def plot_class_accuracy(self, plot_title, class_accuracies, class_counts=None):
         """
-        Plots class accuracies as percentages only. Used for CV runs.
-        :param class_accuracies: Mapping of classes to accuracies
-        """
-        transient_classes, accuracies = [], []
-        for c in class_accuracies.keys():
-            transient_classes.append(code_cat[c])
-            accuracies.append(class_accuracies[c])
-        rcParams['figure.figsize'] = 8, 8
-        class_index = np.arange(len(transient_classes))
-        plt.bar(class_index, accuracies)
-        plt.xticks(class_index, transient_classes, fontsize=12, rotation=30)
-        plt.yticks(list(np.linspace(0, 1, 11)), [
-                   str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=12)
-        plt.title(plot_title, fontsize=15)
-        plt.xlabel('Transient Class', fontsize=12)
-        plt.ylabel('Accuracy', fontsize=12)
-        plt.show()
-
-    def compute_plot_class_accuracy(self, class_accuracies, class_counts):
-        """
-        Computes and Visualizes accuracy per class with bar graph
+        Visualizes accuracy per class with bar graph
         """
 
-        # Convert transient class codes into names
-        class_names = [code_cat[cc] for cc in class_accuracies.keys()]
-
-        # Generate array of length tclasses - class names will be assigned below
-        # in yticks , in same order as these indices from tclasses_names
-        class_index = np.arange(len(class_accuracies.keys()))
-
-        # Plot and save figure
-        rcParams['figure.figsize'] = 8, 8
+        # Get class names and corresponding accuracies
+        class_names = [code_cat[c] for c in class_accuracies.keys()]
         accuracies = [class_accuracies[c] for c in class_accuracies.keys()]
-        plt.bar(class_index, accuracies)
 
-        cur_class = 0
-        for xy in zip(class_index, accuracies):
-            cur_count = class_counts[cur_class]  # Get class count of current class_index
-            cur_class += 1
-            plt.annotate(str(cur_count) + " total", xy=xy, textcoords='data',
-                         ha='center', va='bottom', fontsize=12)
+        # Class names will be assigned in same order as these indices
+        class_indices = np.arange(len(class_accuracies.keys()))
+
+        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
+        ax.bar(class_indices, accuracies)
+
+        if class_counts is not None:
+            cur_class = 0
+            for xy in zip(class_indices, accuracies):
+                # Get class count of current class_index
+                cur_count = class_counts[cur_class]
+                cur_class += 1
+                ax.annotate(str(cur_count) + " total", xy=xy,
+                            textcoords='data', ha='center', va='bottom', fontsize=12)
         plt.xlabel('Transient Class', fontsize=12)
         plt.ylabel('Accuracy', fontsize=12)
-        plt.xticks(class_index, class_names, fontsize=12, rotation=30)
+        plt.xticks(class_indices, class_names, fontsize=12, rotation=30)
         plt.yticks(list(np.linspace(0, 1, 11)), [
                    str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=12)
-        plot_title = self.name + " Accuracy, on Testing Data"
         plt.title(plot_title, fontsize=15)
         plt.show()

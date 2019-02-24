@@ -52,7 +52,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
 
         self.train_model()
         self.predictions = self.test_model()
-        self.evaluate_model()
+        self.evaluate_model(data_filters['test_on_train'])
         return self
 
     @abstractmethod
@@ -94,14 +94,18 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
             labels = y
         data_plot.plot_class_hist(labels)
 
-    def evaluate_model(self):
+    def evaluate_model(self, test_on_train):
         """
         Evaluate and plot performance of model
         """
+
+        self.plot_roc_curves()
         # Get accuracy per class of transient
         class_accuracies = self.get_class_accuracies()
         class_counts = self.get_class_counts(class_accuracies.keys())
-        self.compute_plot_class_accuracy(class_accuracies, class_counts)
+        data_type = 'Training' if test_on_train else 'Testing'
+        title = self.name + " Accuracy on " + data_type + " Data"
+        self.plot_class_accuracy(title, class_accuracies, class_counts)
         self.plot_confusion_matrix(normalize=True)
 
     def run_cross_validation(self, k, X, y, data_filters):
@@ -140,5 +144,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
             run_accuracies.append(self.run_cross_validation(k, X, y, data_filters))
         avg_acc = self.aggregate_accuracies(run_accuracies, y)
         data_type = 'Training' if data_filters['test_on_train'] else 'Testing'
-        self.plot_class_accuracy(
-            avg_acc, plot_title=self.name + " Average Accuracy from " + str(data_filters['num_runs']) + " runs of " + str(k) + "-fold CV on " + data_type + " data")
+        title = self.name + " Average Accuracy from " + \
+            str(data_filters['num_runs']) + " runs of " + \
+            str(k) + "-fold CV on " + data_type + " data"
+        self.plot_class_accuracy(title, avg_acc)

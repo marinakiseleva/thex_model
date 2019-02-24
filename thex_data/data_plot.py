@@ -5,29 +5,23 @@ from pylab import rcParams
 
 from .data_consts import code_cat, TARGET_LABEL, ROOT_DIR
 
+FIG_WIDTH = 8
+FIG_HEIGHT = 6
+
 """
 data_plot contains helper functions to plot the data. This includes plotting the distribution of features, and the distributions of transient types over redshift.
 """
-
-
-def get_class_names(class_codes):
-    """
-    Convert class code numbers to corresponding strings (names) of classes of transient
-    """
-    tclasses_names = []
-    for tclass in class_codes:
-        tclasses_names.append(code_cat[tclass])
-    return tclasses_names
 
 
 def plot_feature_distribution(df, feature):
     """
     Plots the distribution of each transient type in df over 'feature'
     """
-    rcParams['figure.figsize'] = 10, 10
+
     unique_ttypes = list(df[TARGET_LABEL].unique())
 
-    fig, axs = plt.subplots(nrows=len(unique_ttypes), ncols=1, sharex=True, sharey=True)
+    fig, axs = plt.subplots(nrows=len(unique_ttypes), ncols=1, sharex=True,
+                            sharey=True, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
     row_num = col_num = 0
     # find min and max values of this feature
     max_value = df[feature].max()
@@ -45,28 +39,15 @@ def plot_feature_distribution(df, feature):
     plt.show()
 
 
-def count_ttypes(df):
+def count_classes(df):
     """
-    Returns transient type codes and corresponding counts of each type in dataframe df
+    Returns class codes and corresponding counts in DataFrame
     """
-    ttype_counts = pd.DataFrame(df.groupby(TARGET_LABEL).size())
-    types = []
-    counts = []
-    for ttype, row in ttype_counts.iterrows():
-        t_count = row[0]
-        if t_count > 0:
-            counts.append(t_count)
-            types.append(ttype)
-
-    return types, counts
-
-
-def map_counts_types(df):
-    types, counts = count_ttypes(df)
-    map_counts = {}
-    for index, t in enumerate(types):
-        map_counts[t] = counts[index]
-    return map_counts
+    class_sizes = pd.DataFrame(df.groupby(TARGET_LABEL).size())
+    class_counts = {}
+    for class_code, row in class_sizes.iterrows():
+        class_counts[class_code] = row[0]
+    return class_counts
 
 
 def plot_class_hist(df):
@@ -75,17 +56,20 @@ def plot_class_hist(df):
     :param df: DataFrame with TARGET_LABEL column
     """
 
-    rcParams['figure.figsize'] = 10, 6
-    plt.gcf().subplots_adjust(bottom=0.2)
-    types, counts = count_ttypes(df)
+    class_counts = count_classes(df)
+    class_names = [code_cat[c] for c in class_counts.keys()]
+    class_indices = np.arange(len(class_names))
 
-    class_index = np.arange(len(types))
-    plt.bar(class_index, counts)
-    plt.xticks(class_index, get_class_names(types), fontsize=9, rotation=50)
-    plt.xlabel('Transient Type', fontsize=12)
-    plt.ylabel('Number of Galaxies', fontsize=12)
+    f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
+    plt.gcf().subplots_adjust(bottom=0.2)
+    ax.bar(class_indices, list(class_counts.values()))
+    plt.xticks(class_indices, class_names, fontsize=12)
+    plt.xlabel('Class', fontsize=12)
+    plt.ylabel('Number of Samples', fontsize=12)
     title = "Distribution of Transient Types in Data Sample"
-    plt.title(title, fontsize=16)
+    plt.title(title, fontsize=15)
+
+    # Save to file
     replace_strs = ["\n", " ", ":", ".", ",", "/"]
     for r in replace_strs:
         title = title.replace(r, "_")

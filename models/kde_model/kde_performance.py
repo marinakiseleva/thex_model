@@ -7,7 +7,6 @@ from pylab import rcParams
 # from models.base_model.base_model_performance import *
 
 from thex_data.data_consts import code_cat, TARGET_LABEL, ROOT_DIR
-from thex_data.data_plot import get_class_names
 
 
 class KDEPerformance:
