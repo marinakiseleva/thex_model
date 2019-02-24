@@ -20,7 +20,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         Collects data based on column parameters, trains, and tests model. Either cols or col_matches need to be passed in, otherwise all numeric columns are used.
         :param cols: Names of columns to filter on
         :param col_matches: String by which columns will be selected. For example: AllWISE will use all AlLWISE columns.
-        :param folds: Number of folds to use in k-fold Cross Validation
+        :param folds: Number of folds if using k-fold Cross Validation
         :param user_data_filters: List of data filters user passed in. User options over-ride any default.
         """
         # Set defaults on filters
@@ -94,18 +94,13 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
             labels = y
         data_plot.plot_class_hist(labels)
 
-    def evaluate_model(self, predicted_classes):
+    def evaluate_model(self):
         """
         Evaluate and plot performance of model
-        :param predicted_classes: classes predicted by label (as class codes)
         """
-        total_accuracy = self.get_accuracy(predicted_classes)
-        model_name = self.name
-
         # Get accuracy per class of transient
         class_accuracies = self.get_class_accuracies()
         class_counts = self.get_class_counts(class_accuracies.keys())
-
         self.compute_plot_class_accuracy(class_accuracies, class_counts)
         self.plot_confusion_matrix(normalize=True)
 

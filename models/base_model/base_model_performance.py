@@ -25,14 +25,6 @@ class BaseModelPerformance:
         # Divide each % by number of folds to get average accuracy
         return {c: acc / len(model_results) for c, acc in accuracy_per_class.items()}
 
-    def get_accuracy(self):
-        """
-        Returns overall accuracy of Naive Bayes classifier
-        """
-        perc_correct = get_percent_correct(self.combine_dfs())
-        total_accuracy = round(perc_correct * 100, 4)
-        return total_accuracy
-
     def get_class_counts(self, classes):
         """
         Gets the count of each existing class in this dataframe

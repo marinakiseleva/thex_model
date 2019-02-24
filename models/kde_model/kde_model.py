@@ -4,7 +4,7 @@ from models.kde_model.kde_test import KDEModelTest
 from models.kde_model.kde_performance import KDEPerformance
 
 
-class KDEModel(BaseModel, KDEModelTrain, KDEModelTest):
+class KDEModel(BaseModel, KDEModelTrain, KDEModelTest, KDEPerformance):
     """
     Model that classifies using unique Kernel Density Estimates for distributions of each feature, of each class. 
     """
@@ -19,6 +19,6 @@ class KDEModel(BaseModel, KDEModelTrain, KDEModelTest):
 
     def test_model(self):
         predicted_classes = self.test()
-        kdep = KDEPerformance(self)
-        kdep.plot_probability_metrics()
+        # kdep = KDEPerformance(self)
+        self.plot_probability_metrics()
         return predicted_classes
