@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from cycler import cycler
 from sklearn.metrics import confusion_matrix
 
-from thex_data.data_consts import code_cat, TARGET_LABEL
+from thex_data.data_consts import code_cat, TARGET_LABEL, ROOT_DIR
 
 FIG_WIDTH = 8
 FIG_HEIGHT = 6
@@ -14,6 +14,13 @@ class BaseModelVisualization:
     """
     Mixin Class for BaseModel performance visualization
     """
+
+    def save_plot(self, title):
+        replace_strs = ["\n", " ", ":", ".", ",", "/"]
+        for r in replace_strs:
+            title = title.replace(r, "_")
+        model_dir = self.name.replace(" ", "_")
+        plt.savefig(ROOT_DIR + "/output/" + model_dir + "/" + title)
 
     def plot_roc_curves(self):
         """
@@ -43,10 +50,12 @@ class BaseModelVisualization:
         ax.plot(x, x, "--", label="Baseline")  # baseline
         ax.set_xlim([0, 1])
         ax.set_ylim([0, 1])
-        ax.set_title("ROC Curves", fontsize=14)
+        title = "ROC Curves"
+        ax.set_title(title, fontsize=14)
         ax.set_ylabel('True Positive Rate', fontsize=12)
         ax.set_xlabel('False Positive Rate', fontsize=12)
         ax.legend(loc='best')
+        self.save_plot(title)
         plt.show()
 
     def plot_probability_metrics(self):
@@ -76,6 +85,7 @@ class BaseModelVisualization:
             self.plot_roc(x, pos_pdf, neg_pdf, ax[index, 2])
 
         plt.tight_layout()
+        self.save_plot("probability_metrics")
         plt.show()
 
     def plot_hists(self, pos_probs, neg_probs, ax, class_name):
@@ -210,6 +220,7 @@ class BaseModelVisualization:
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
         plt.tight_layout()
+        self.save_plot(title)
         plt.show()
 
     def plot_class_accuracy(self, plot_title, class_accuracies, class_counts=None):
@@ -241,4 +252,5 @@ class BaseModelVisualization:
         plt.yticks(list(np.linspace(0, 1, 11)), [
                    str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=12)
         plt.title(plot_title, fontsize=15)
+        self.save_plot(plot_title)
         plt.show()

@@ -35,7 +35,6 @@ def plot_feature_distribution(df, feature):
         col_num = 0
     plt.suptitle("Transient Type Distributions over " + feature)
     plt.xlabel(feature)
-    # plt.savefig("../output/feature_dist/" + feature)
     plt.show()
 
 
