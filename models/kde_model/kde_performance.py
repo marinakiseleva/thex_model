@@ -17,7 +17,7 @@ class KDEPerformance:
 
     def plot_probability_metrics(self):
         """
-        Plot ROC curves and distributions they are built on, for performance based on predictions, for each class
+        Plot ROC curves and distributions they are built on, for performance based on probabilities for each class
         :param test_data: Test data
         :param actual_classes: True labels for test set
         """

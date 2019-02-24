@@ -6,10 +6,11 @@ from thex_data.data_consts import drop_cols
 from thex_data.data_prep import get_train_test, get_source_target_data
 from thex_data.data_print import print_filters
 from thex_data import data_plot
-from models.base_model.base_model_performance import *
+from models.base_model.base_model_performance import BaseModelPerformance
+from models.base_model.base_model_plots import BaseModelVisualization
 
 
-class BaseModel(ABC):
+class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
     """
     Abstract Class representing base functionality of all models. Subclasses of models implement their own training and testing functions. 
     """
@@ -25,13 +26,13 @@ class BaseModel(ABC):
         # Set defaults on filters
         data_filters = {'num_runs': 1,
                         'test_on_train': False,
-                        'naive': False,
                         'top_classes': 10,
                         'one_all': None,
                         'data_split': 0.3,
                         'subsample': 200,
                         'transform_features': False,
                         'incl_redshift': False
+
                         }
         # Update filters with any passed-in filters
         for data_filter in user_data_filters.keys():
@@ -50,8 +51,8 @@ class BaseModel(ABC):
         self.visualize_data()
 
         self.train_model()
-        predictions = self.test_model()
-        self.evaluate_model(predictions)
+        self.predictions = self.test_model()
+        self.evaluate_model()
         return self
 
     @abstractmethod
@@ -98,11 +99,15 @@ class BaseModel(ABC):
         Evaluate and plot performance of model
         :param predicted_classes: classes predicted by label (as class codes)
         """
-        total_accuracy = get_accuracy(predicted_classes, self.y_test)
+        total_accuracy = self.get_accuracy(predicted_classes)
         model_name = self.name
-        compute_plot_class_accuracy(
-            predicted_classes, self.y_test, plot_title=model_name + " Accuracy, on Testing Data")
-        plot_confusion_matrix(self.y_test, predicted_classes, normalize=True)
+
+        # Get accuracy per class of transient
+        class_accuracies = self.get_class_accuracies()
+        class_counts = self.get_class_counts(class_accuracies.keys())
+
+        self.compute_plot_class_accuracy(class_accuracies, class_counts)
+        self.plot_confusion_matrix(normalize=True)
 
     def run_cross_validation(self, k, X, y, data_filters):
         """
@@ -122,12 +127,11 @@ class BaseModel(ABC):
 
             # Save model accuracy
             self.train_model()
-            predictions = self.test_model()
-            accuracies.append(get_class_accuracies(
-                combine_dfs(predictions, self.y_test)))
+            self.predictions = self.test_model()
+            accuracies.append(self.get_class_accuracies())
 
         # Get average accuracy per class (mapping)
-        avg_acc = aggregate_accuracies(accuracies, y)
+        avg_acc = self.aggregate_accuracies(accuracies, y)
         return avg_acc
 
     def run_model_cv(self, data_columns, k, data_filters):
@@ -139,7 +143,7 @@ class BaseModel(ABC):
         run_accuracies = []  # list of model accuracies from each run
         for index_run in range(data_filters['num_runs']):
             run_accuracies.append(self.run_cross_validation(k, X, y, data_filters))
-        avg_acc = aggregate_accuracies(run_accuracies, y)
+        avg_acc = self.aggregate_accuracies(run_accuracies, y)
         data_type = 'Training' if data_filters['test_on_train'] else 'Testing'
-        plot_class_accuracy(
+        self.plot_class_accuracy(
             avg_acc, plot_title=self.name + " Average Accuracy from " + str(data_filters['num_runs']) + " runs of " + str(k) + "-fold CV on " + data_type + " data")

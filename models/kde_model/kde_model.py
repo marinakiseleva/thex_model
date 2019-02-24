@@ -11,7 +11,7 @@ class KDEModel(BaseModel, KDEModelTrain, KDEModelTest):
 
     def __init__(self, cols=None, col_match=None, folds=None, **data_args):
         self.name = "KDE Model"
-        self.naive = data_args['naive']
+        self.naive = data_args['naive'] if 'naive' in data_args else False
         self.run_model(cols, col_match, folds, **data_args)
 
     def train_model(self):
