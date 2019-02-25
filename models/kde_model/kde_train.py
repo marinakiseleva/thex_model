@@ -32,11 +32,16 @@ class KDEModelTrain:
         priors = self.set_priors(data, classes)
         class_data = self.separate_classes(data, classes)
 
+        data_test = pd.concat([self.X_test, self.y_test], axis=1)
+        data_all = pd.concat([data, data_test], axis=0)
+        class_data_all = self.separate_classes(
+            data_all, list(data_all[TARGET_LABEL].unique()))
+
         summaries = {}
         for class_code, instances in class_data.items():
             if self.naive:
                 summaries[class_code] = self.get_naive_distributions(
-                    instances, code_cat[class_code])
+                    instances, class_data_all[class_code], code_cat[class_code])
             else:
                 # Do not assume feature independence. Create distribution over all
                 # features at once
@@ -106,10 +111,11 @@ class KDEModelTrain:
         grid.fit([[cv] for cv in data])
         return grid.best_params_['bandwidth']
 
-    def get_feature_distribution(self, data, ps, feature, class_name):
+    def get_feature_distribution(self, data, all_data, ps, feature, class_name):
         """
         Uses kernel density estimation to find the distribution of feature. Returns [distribution, parameters of distribution].
         :param data: values in Pandas Series of feature and class
+        :param all_data: used to plot KDE fit to all data to examine fit
         :param feature: Name of feature/column this data corresponds to
         :param class_name: Name of class this data corresponds to
         """
@@ -122,13 +128,17 @@ class KDEModelTrain:
 
         self.plot_dist_fit(data.values, kde, bw, feature,
                            "Kernel Distribution with bandwidth: %.6f\n for feature %s in class %s" % (bw, feature, class_name))
+        # Can also plot distribution as it fits to ALL data, training and testing
+        self.plot_dist_fit(all_data.values, kde, bw, feature,
+                           "Kernel Distribution with bandwidth: %.6f\n for feature %s in class %s, over ALL data" % (bw, feature, class_name))
 
         return kde
 
-    def get_naive_distributions(self, X_class, class_name=None):
+    def get_naive_distributions(self, X_class, all_X_class, class_name):
         """
         Estimate distribution of each feature in X_class. Return mapping of {feature : [distribution, parameters of distribution]}
         :param X_class: DataFrame of data of with target=class_name
+        :param all_X_class: same as above but with both training and testing; used to plot KDE fit to all data to examine fit
         :param class_name: Name of class this X_class corresponds to
         """
         class_summaries = {}
@@ -146,7 +156,7 @@ class KDEModelTrain:
 
         for feature in X_class:
             class_summaries[feature] = self.get_feature_distribution(
-                X_class[feature], ps, feature, class_name)
+                X_class[feature], all_X_class[feature], ps, feature, class_name, )
 
         return class_summaries
 
@@ -154,17 +164,19 @@ class KDEModelTrain:
         """
         Plot distribution fitted to feature
         """
-        # plt.ioff()
-        rcParams['figure.figsize'] = 6, 6
+        FIG_WIDTH = 8
+        FIG_HEIGHT = 6
         n_bins = 20
         range_vals = data.max() - data.min()
         x_line = np.linspace(data.min(),
                              data.max(), 1000)
         data_vector = np.matrix(x_line).T
+        # pdf = log probability densities
         pdf = kde.score_samples(data_vector)
-        fig, ax1 = plt.subplots()
+        fig, ax1 = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
 
-        ax1.hist(data, n_bins, fc='gray',  alpha=0.3)
+        # normalized by dividing counts by total # * bin width
+        ax1.hist(data, n_bins, fc='gray',  alpha=0.3, density=True)
         ax1.set_ylabel('Count', color='gray')
 
         ax2 = ax1.twinx()
