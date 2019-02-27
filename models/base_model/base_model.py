@@ -12,7 +12,7 @@ from models.base_model.base_model_plots import BaseModelVisualization
 
 class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
     """
-    Abstract Class representing base functionality of all models. Subclasses of models implement their own training and testing functions. 
+    Abstract Class representing base functionality of all models. Subclasses of models implement their own training and testing functions.
     """
 
     def run_model(self, cols=None, col_matches=None, folds=None, **user_data_filters):

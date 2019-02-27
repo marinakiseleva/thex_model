@@ -1,5 +1,5 @@
 """
-Connection between data manipulation and models: calls upon other functionalities that pull down data, filters it, and enhances features. 
+Connection between data manipulation and models: calls upon other functionalities that pull down data, filters it, and enhances features.
 """
 import sys
 from sklearn.model_selection import train_test_split
@@ -10,11 +10,11 @@ from .data_consts import TARGET_LABEL
 from .data_print import *
 from .data_init import collect_data
 from .data_clean import *
-
+from . import data_plot
 
 def get_data(col_list, **data_filters):
     """
-    Pull in data and filter based on different biases and corrections: group transient types, fitler to passed-in columns, keep only rows with at least 1 valid value, filter to most frequent classes, sub-sample each class to same number, and take difference between wavelengths to make new features 
+    Pull in data and filter based on different biases and corrections: group transient types, fitler to passed-in columns, keep only rows with at least 1 valid value, filter to most frequent classes, sub-sample each class to same number, and take difference between wavelengths to make new features
     :param data_columns: List of columns to filter data on
     :param **data_filters: Mapping of data filters to values passed in by user
     """
@@ -38,7 +38,7 @@ def get_data(col_list, **data_filters):
         sys.exit()
 
     print_class_counts(df)
-    return df
+    return df.reset_index(drop=True)
 
 
 def get_source_target_data(data_columns, **data_filters):
@@ -47,6 +47,9 @@ def get_source_target_data(data_columns, **data_filters):
     if data_filters['transform_features']:
         X = transform_features(X)
     y = data[[TARGET_LABEL]].astype(int).reset_index(drop=True)
+
+    data_plot.plot_feature_distribution(data, "redshift")
+
     return X, y
 
 

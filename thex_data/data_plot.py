@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from pylab import rcParams
-
+from sklearn.neighbors.kde import KernelDensity
+from scipy.stats import norm
 from .data_consts import code_cat, TARGET_LABEL, ROOT_DIR
 
 FIG_WIDTH = 8
@@ -18,25 +18,45 @@ def plot_feature_distribution(df, feature):
     Plots the distribution of each transient type in df over 'feature'
     """
 
-    unique_ttypes = list(df[TARGET_LABEL].unique())
+    unique_classes = list(df[TARGET_LABEL].unique())
 
-    fig, axs = plt.subplots(nrows=len(unique_ttypes), ncols=1, sharex=True,
-                            sharey=True, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
-    row_num = col_num = 0
-    # find min and max values of this feature
-    max_value = df[feature].max()
-    min_value = df[feature].min()
-    for ttype in unique_ttypes:
-        values = list(df.loc[(df[TARGET_LABEL] == ttype)
-                             & (df[feature].notnull())][feature])
-        axs[row_num].hist(values, range=(min_value, max_value), bins=10)
-        axs[row_num].set_title(code_cat[ttype])
-        row_num += 1
-        col_num = 0
-    plt.suptitle("Transient Type Distributions over " + feature)
+    f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
+    cm = plt.get_cmap('Accent')
+    NUM_COLORS = len(unique_classes)
+    ax.set_prop_cycle('color', [cm(1. * i / NUM_COLORS) for i in range(NUM_COLORS)])
+
+    for class_code in unique_classes:
+        values = df.loc[(df[TARGET_LABEL] == class_code)
+                             & (df[feature].notnull())][feature].values
+        vector_values = np.sort(np.matrix(values).T, axis=0)
+        kde = KernelDensity(bandwidth=0.1, kernel='gaussian', metric='euclidean')
+        kde = kde.fit(vector_values) # Fit KDE to values
+        pdf = kde.score_samples(vector_values) # Get PDF of values from KDE
+        ax.plot(vector_values, np.exp(pdf), label = code_cat[class_code])
+
+    # if feature == "redshift":
+    #     # Plot LSST-expected redshift distributions atop actual
+    #     plot_lsst_distribution(ax)
+
+    plt.title("Transient Type Distributions over " + feature)
     plt.xlabel(feature)
+    plt.ylabel("KDE PDF")
+    plt.xlim(left=0)
+    ax.legend(loc='best')
     plt.show()
 
+
+def plot_lsst_distribution(ax):
+    """
+    Plot LSST Redshift distribution per class. Hard-coded based on collected
+    expectations of redshift dists.
+    """
+    def plot_norm_class_dist(mu, sigma, label, ax):
+        x = np.linspace(0, 1, 100)
+        const = 1.0 / np.sqrt(2 * np.pi * (sigma**2))
+        y = const * np.exp(-((x - mu)**2) / (2.0 * (sigma**2)))
+        ax.plot(x, y, label = label)
+    plot_norm_class_dist(mu=0.45, sigma=0.1, label="LSST Ia", ax=ax)
 
 def count_classes(df):
     """

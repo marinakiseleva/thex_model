@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from pylab import rcParams
 from sklearn.neighbors.kde import KernelDensity
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import PredefinedSplit
@@ -162,7 +161,8 @@ class KDEModelTrain:
 
     def plot_dist_fit(self, data, kde, bandwidth, feature, title):
         """
-        Plot distribution fitted to feature
+        Plot distribution fitted to feature; note that score_samples returns
+        log probability densities, which need to be raised to e to plot
         """
         FIG_WIDTH = 8
         FIG_HEIGHT = 6
@@ -181,6 +181,7 @@ class KDEModelTrain:
 
         ax2 = ax1.twinx()
         ax2.set_ylabel('Kernel Density', color='blue')
+
         ax2.plot(x_line, np.exp(pdf), linewidth=3,
                  alpha=0.5, label='bw=%.2f' % bandwidth)
         ax1.set_xlabel(feature)

@@ -1,7 +1,7 @@
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
-from cycler import cycler
+# from cycler import cycler
 from sklearn.metrics import confusion_matrix
 
 from thex_data.data_consts import code_cat, TARGET_LABEL, ROOT_DIR
@@ -36,8 +36,8 @@ class BaseModelVisualization:
         for index, class_code in enumerate(unique_classes):
             pos_probs, neg_probs = self.get_split_probabilities(
                 self.X_test.copy(), y_test, class_code)
-            x, pos_pdf = self.get_pdf(pos_probs)
-            x, neg_pdf = self.get_pdf(neg_probs)
+            x, pos_pdf = self.get_normal_pdf(pos_probs)
+            x, neg_pdf = self.get_normal_pdf(neg_probs)
 
             FP_rates, TP_rates = self.get_fp_tp_rates(x, pos_pdf, neg_pdf)
 
@@ -109,8 +109,8 @@ class BaseModelVisualization:
         """
         Plots the probability distribution function values of probabilities on ax
         """
-        x, pos_pdf = self.get_pdf(pos_probs)
-        x, neg_pdf = self.get_pdf(neg_probs)
+        x, pos_pdf = self.get_normal_pdf(pos_probs)
+        x, neg_pdf = self.get_normal_pdf(neg_probs)
 
         def plot_pdf(x, y, ax, color):
             ax.plot(x, y, color, alpha=0.5)
@@ -125,7 +125,7 @@ class BaseModelVisualization:
         ax.legend(["Type " + class_name, "NOT Type " + class_name])
         return x, pos_pdf, neg_pdf
 
-    def get_pdf(self, probabilities):
+    def get_normal_pdf(self, probabilities):
         """
         Returns normal PDF values
         """
