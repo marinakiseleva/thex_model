@@ -13,7 +13,7 @@ data_plot contains helper functions to plot the data. This includes plotting the
 """
 
 
-def plot_feature_distribution(df, feature):
+def plot_feature_distribution(df, feature, logged = True):
     """
     Plots the distribution of each transient type in df over 'feature'
     """
@@ -21,7 +21,7 @@ def plot_feature_distribution(df, feature):
     unique_classes = list(df[TARGET_LABEL].unique())
 
     f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
-    cm = plt.get_cmap('Accent')
+    cm = plt.get_cmap('tab10')
     NUM_COLORS = len(unique_classes)
     ax.set_prop_cycle('color', [cm(1. * i / NUM_COLORS) for i in range(NUM_COLORS)])
 
@@ -32,15 +32,23 @@ def plot_feature_distribution(df, feature):
         kde = KernelDensity(bandwidth=0.1, kernel='gaussian', metric='euclidean')
         kde = kde.fit(vector_values) # Fit KDE to values
         pdf = kde.score_samples(vector_values) # Get PDF of values from KDE
-        ax.plot(vector_values, np.exp(pdf), label = code_cat[class_code])
+        # ax.plot(vector_values, np.exp(pdf), label = code_cat[class_code])
+
+        n, x, _ = ax.hist(vector_values, bins=np.linspace(0, .3, 50), alpha = 0.8,
+                  label = code_cat[class_code])
 
     # if feature == "redshift":
     #     # Plot LSST-expected redshift distributions atop actual
     #     plot_lsst_distribution(ax)
 
+    if logged:
+        plt.yscale('log', nonposy='clip')
+        ylabel = "Log Class Count"
+    else:
+        ylabel = "Class Count"
     plt.title("Transient Type Distributions over " + feature)
     plt.xlabel(feature)
-    plt.ylabel("KDE PDF")
+    plt.ylabel(ylabel)
     plt.xlim(left=0)
     ax.legend(loc='best')
     plt.show()
