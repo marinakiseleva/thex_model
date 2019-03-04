@@ -1,13 +1,13 @@
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
-# from cycler import cycler
+import pandas as pd
 from sklearn.metrics import confusion_matrix
 
 from thex_data.data_consts import code_cat, TARGET_LABEL, ROOT_DIR
 
-FIG_WIDTH = 8
-FIG_HEIGHT = 6
+FIG_WIDTH = 6
+FIG_HEIGHT = 4
 
 
 class BaseModelVisualization:
@@ -22,20 +22,48 @@ class BaseModelVisualization:
         model_dir = self.name.replace(" ", "_")
         plt.savefig(ROOT_DIR + "/output/" + model_dir + "/" + title)
 
+    def plot_probability_correctness(self):
+        """
+        Plots accuracy (y) vs. probability assigned to class (x)
+        """
+
+        X_accs = self.get_probability_matrix()
+        print(X_accs.dtypes)
+        # Add column of predicted class
+        # predictions = self.test_model()['predicted_class']
+        X_preds = pd.concat([X_accs, self.test_model()], axis=1)
+        print(list(X_preds))
+        print(X_preds.dtypes)
+        unique_classes = self.get_unique_test_classes()
+        for index, class_code in enumerate(unique_classes):
+
+            perc_ranges, perc_correct = self.get_corr_prob_ranges(
+                X_preds, class_code)
+
+            plt.bar(list(range(0, 10)), perc_correct)
+            plt.xlabel('Probability of ' + code_cat[class_code] + ' +/- 5%', fontsize=12)
+            plt.xlim([0, 1])
+            plt.ylabel('Accuracy', fontsize=12)
+            plt.yticks([0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75,
+                        0.85, 0.95], perc_ranges, fontsize=10, rotation=30)
+            plt.xticks(list(range(0, 10)), perc_ranges, fontsize=10, rotation=30)
+            plt.title('Accuracy of ' + code_cat[class_code] +
+                      ' Predictions by Probability Assigned', fontsize=15)
+            plt.show()
+
     def plot_roc_curves(self):
         """
         Plot ROC curves of each class on same plot
         """
-        y_test = self.y_test[TARGET_LABEL]
-        unique_classes = list(set(y_test))
+
+        unique_classes = self.get_unique_test_classes()
 
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
         cm = plt.get_cmap('gist_rainbow')
         NUM_COLORS = len(unique_classes)
         ax.set_prop_cycle('color', [cm(1. * i / NUM_COLORS) for i in range(NUM_COLORS)])
         for index, class_code in enumerate(unique_classes):
-            pos_probs, neg_probs = self.get_split_probabilities(
-                self.X_test.copy(), y_test, class_code)
+            pos_probs, neg_probs = self.get_split_probabilities(class_code)
             x, pos_pdf = self.get_normal_pdf(pos_probs)
             x, neg_pdf = self.get_normal_pdf(neg_probs)
 
@@ -64,15 +92,14 @@ class BaseModelVisualization:
         :param test_data: Test data
         :param actual_classes: True labels for test set
         """
-        y_test = self.y_test[TARGET_LABEL]
-        unique_classes = list(set(y_test))
+        unique_classes = self.get_unique_test_classes()
 
         f, ax = plt.subplots(len(unique_classes), 3,
                              figsize=(10, len(unique_classes) * 3), dpi=640)
 
         for index, class_code in enumerate(unique_classes):
             pos_probs, neg_probs = self.get_split_probabilities(
-                self.X_test.copy(), y_test, class_code)
+                class_code)
 
             class_name = code_cat[class_code]
             # Plot histogram of positive & negative probabilities

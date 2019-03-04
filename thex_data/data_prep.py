@@ -24,6 +24,8 @@ def get_data(col_list, **data_filters):
     df = filter_columns(df.copy(), col_list, data_filters['incl_redshift'])
     df.dropna(axis=0, inplace=True)
 
+    data_plot.plot_feature_distribution(df, "redshift")
+
     # Filter to most popular classes
     df = filter_top_classes(df, top=data_filters['top_classes'])
 
@@ -43,12 +45,14 @@ def get_data(col_list, **data_filters):
 
 def get_source_target_data(data_columns, **data_filters):
     data = get_data(col_list=data_columns, **data_filters)
+
+
     X = data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
     if data_filters['transform_features']:
         X = transform_features(X)
     y = data[[TARGET_LABEL]].astype(int).reset_index(drop=True)
 
-    data_plot.plot_feature_distribution(data, "redshift")
+
 
     return X, y
 

@@ -1,3 +1,4 @@
+import sys
 from models.base_model.base_model import BaseModel
 from models.base_model.base_model_performance import *
 from thex_data.data_consts import class_to_subclass as hierarchy
@@ -35,6 +36,10 @@ class HMCModel(BaseModel):
         prediction_codes = [cat_code[pred_class] for pred_class in predicted_classes]
 
         return prediction_codes
+
+    def get_class_probabilities(self, x):
+        print("\n\n need to implement calculate_class_probabilities for HMC Tree \n\n")
+        sys.exit(-1)
 
     def convert_target(self, class_codes):
         """

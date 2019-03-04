@@ -70,6 +70,13 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         """
         pass
 
+    @abstractmethod
+    def get_class_probabilities(self, x):
+        """
+        Get probability per class for this test point x
+        """
+        pass
+
     def get_model_data(self, col_list, **data_filters):
         """
         Collects data for model
@@ -98,7 +105,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         """
         Evaluate and plot performance of model
         """
-
+        self.plot_probability_correctness()
         self.plot_roc_curves()
         # Get accuracy per class of transient
         class_accuracies = self.get_class_accuracies()

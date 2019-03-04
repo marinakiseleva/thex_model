@@ -30,9 +30,6 @@ class KDEModelTest:
         """
         probabilities = self.calculate_class_probabilities(x)
         max_prob_class = max(probabilities, key=lambda k: probabilities[k])
-
-        # TODO: Get normalized probabilities of classes
-
         return max_prob_class
 
     def calculate_class_probabilities(self, x):

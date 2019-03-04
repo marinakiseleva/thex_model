@@ -14,29 +14,6 @@ class KDEPerformance:
     def __init__(self, model):
         self.model = model
 
-    def get_split_probabilities(self, X_test, y_test, class_code):
-        """
-        Get probability assigned to the actual class per row and return probabilities for positive examples (pos_probs) and negative examples (neg_probs)
-        """
-        unique_classes = list(set(y_test))
-        class_prob_sums = self.get_class_prob_sums(self.X_test.copy(), unique_classes)
-        for index, row in X_test.iterrows():
-            probabilities = self.calculate_class_probabilities(row)
-            prob = probabilities[class_code]
-
-            # Probability of this class for this row
-            X_test.loc[index, 'probability'] = prob
-
-            # Whether or not this data point IS this class
-            actual_class = y_test.iloc[index]
-            X_test.loc[index, 'is_class'] = True if (
-                actual_class == class_code) else False
-
-        pos_probs = X_test.loc[X_test.is_class == True]['probability']
-        neg_probs = X_test.loc[X_test.is_class == False]['probability']
-
-        return pos_probs, neg_probs
-
     def get_class_prob_sums(self, test_X, classes):
         """
         Get normalized probabilities and predictions -- normalizing over all predictions per class per sample

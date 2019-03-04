@@ -11,6 +11,73 @@ class BaseModelPerformance:
     Mixin Class for BaseModel performance metrics
     """
 
+    def get_corr_prob_ranges(self, X_accs, class_code):
+        """
+        Gets accuracy based on probability assigned to class for ranges of 5% from 0 to 100. Used to plot probability assigned vs probability of being correct
+        """
+        class_col = str(class_code)
+        percent_correct = []
+        percent_ranges = [0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]
+        for perc_range in percent_ranges:
+            # Range of probabilities: + or - 5 from perc_range
+            perc_range_min = perc_range - .05
+            perc_range_max = perc_range + .05
+
+            actual_in_range = X_accs.loc[(X_accs.actual_class == class_code) & (
+                X_accs[class_col] >= perc_range_min) & (X_accs[class_col] < perc_range_max)]
+
+            corr_pred_in_range = actual_in_range.loc[
+                actual_in_range.predicted_class == class_code]
+
+            if actual_in_range.shape[0] == 0:
+                percent_correct.append(0)
+            else:
+                perc_correct = corr_pred_in_range.shape[0] / actual_in_range.shape[0]
+                percent_correct.append(perc_correct)
+
+        for index, pr in enumerate(percent_ranges):
+            percent_ranges[index] = str(int(pr * 100)) + "%"
+        return percent_ranges, percent_correct
+
+    def get_probability_matrix(self, class_code=None):
+        """
+        Creates copy of X_test as DataFrame and includes probabilities and correctness of prediction
+        """
+        X_accuracy = self.X_test.copy()
+        if class_code is not None:
+            for index, row in X_accuracy.iterrows():
+                probabilities = self.get_class_probabilities(row)
+                prob = probabilities[class_code]
+
+                # Probability of this class for this row
+                X_accuracy.loc[index, 'probability'] = prob
+
+                # Whether or not this data point IS this class
+                actual_class = self.y_test.iloc[index][TARGET_LABEL]
+                X_accuracy.loc[index, 'is_class'] = True if (
+                    actual_class == class_code) else False
+        else:
+            """ Create matrix for all classes """
+            unique_classes = self.get_unique_test_classes()
+            for index, row in X_accuracy.iterrows():
+                probabilities = self.get_class_probabilities(row)
+                # Add each probability to dataframe
+                for c in unique_classes:
+                    X_accuracy.loc[index, str(c)] = probabilities[c]
+                actual_class = self.y_test.iloc[index][TARGET_LABEL]
+                X_accuracy.loc[index, "actual_class"] = int(actual_class)
+        return X_accuracy
+
+    def get_split_probabilities(self, class_code):
+        """
+        Get probability assigned to the actual class per row and return probabilities for positive examples (pos_probs) and negative examples (neg_probs)
+        """
+        X_accuracy = self.get_probability_matrix(class_code)
+        pos_probs = X_accuracy.loc[X_accuracy.is_class == True]['probability']
+        neg_probs = X_accuracy.loc[X_accuracy.is_class == False]['probability']
+
+        return pos_probs, neg_probs
+
     def aggregate_accuracies(self, model_results, y):
         """
         Aggregate accuracies from several runs. Returns mapping of classes to average accuracy.
@@ -24,6 +91,12 @@ class BaseModelPerformance:
                 accuracy_per_class[tclass] += class_accuracies[tclass]
         # Divide each % by number of folds to get average accuracy
         return {c: acc / len(model_results) for c, acc in accuracy_per_class.items()}
+
+    def get_unique_test_classes(self):
+        """
+        Gets list of unique classes in testing set
+        """
+        return list(set(self.y_test[TARGET_LABEL]))
 
     def get_class_counts(self, classes):
         """

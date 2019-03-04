@@ -20,5 +20,8 @@ class KDEModel(BaseModel, KDEModelTrain, KDEModelTest, KDEPerformance):
     def test_model(self):
         predicted_classes = self.test()
         # kdep = KDEPerformance(self)
-        self.plot_probability_metrics()
+        # self.plot_probability_metrics()
         return predicted_classes
+
+    def get_class_probabilities(self, x):
+        return self.calculate_class_probabilities(x)
