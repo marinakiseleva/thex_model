@@ -31,8 +31,7 @@ class BaseModelVisualization:
         X_accs = self.get_probability_matrix()
         # Add column of predicted class
         X_preds = pd.concat([X_accs, self.test_model()], axis=1)
-        unique_classes = self.get_unique_test_classes()
-        for index, class_code in enumerate(unique_classes):
+        for index, class_code in enumerate(self.get_unique_classes()):
             perc_ranges, perc_correct, count_ranges = self.get_corr_prob_ranges(
                 X_preds, class_code)
 
@@ -52,23 +51,22 @@ class BaseModelVisualization:
             self.add_bar_counts(x, perc_correct, count_ranges, ax)
             plt.show()
 
-    def plot_roc_curves(self):
+    def plot_roc_curves(self, rates=None, title=None):
         """
         Plot ROC curves of each class on same plot
         """
 
-        unique_classes = self.get_unique_test_classes()
+        unique_classes = self.get_unique_classes()
 
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         cm = plt.get_cmap('gist_rainbow')
         NUM_COLORS = len(unique_classes)
         ax.set_prop_cycle('color', [cm(1. * i / NUM_COLORS) for i in range(NUM_COLORS)])
         for index, class_code in enumerate(unique_classes):
-            pos_probs, neg_probs = self.get_split_probabilities(class_code)
-            x, pos_pdf = self.get_normal_pdf(pos_probs)
-            x, neg_pdf = self.get_normal_pdf(neg_probs)
-
-            FP_rates, TP_rates = self.get_fp_tp_rates(x, pos_pdf, neg_pdf)
+            if rates is None:
+                FP_rates, TP_rates = self.get_roc_curve(class_code)
+            else:
+                FP_rates, TP_rates = rates[class_code]
 
             # Calculate area under curve
             auc = np.sum(TP_rates) / 100  # 100= # of values for x
@@ -76,16 +74,28 @@ class BaseModelVisualization:
             # Plotting ROC curve, FP against TP
             ax.plot(FP_rates, TP_rates, label=label_text)
         ax.grid()
+        x = np.linspace(0, 1, num=100)
         ax.plot(x, x, "--", label="Baseline")  # baseline
         ax.set_xlim([0, 1])
         ax.set_ylim([0, 1])
-        title = "ROC Curves"
-        ax.set_title(title, fontsize=14)
+
+        plt_title = "ROC Curves" if title is None else title
+        ax.set_title(plt_title, fontsize=14)
         ax.set_ylabel('True Positive Rate', fontsize=12)
         ax.set_xlabel('False Positive Rate', fontsize=12)
         ax.legend(loc='best')
-        self.save_plot(title)
+        self.save_plot(plt_title)
         plt.show()
+
+    def get_roc_curve(self, class_code):
+        """
+        Returns false positive rates and true positive rates in order to plot ROC curve
+        """
+        pos_probs, neg_probs = self.get_split_probabilities(class_code)
+        x, pos_pdf = self.get_normal_pdf(pos_probs)
+        x, neg_pdf = self.get_normal_pdf(neg_probs)
+        FP_rates, TP_rates = self.get_fp_tp_rates(x, pos_pdf, neg_pdf)
+        return FP_rates, TP_rates
 
     def plot_probability_metrics(self):
         """
@@ -93,7 +103,7 @@ class BaseModelVisualization:
         :param test_data: Test data
         :param actual_classes: True labels for test set
         """
-        unique_classes = self.get_unique_test_classes()
+        unique_classes = self.get_unique_classes()
 
         f, ax = plt.subplots(len(unique_classes), 3,
                              figsize=(10, len(unique_classes) * 3), dpi=DPI)
@@ -251,7 +261,7 @@ class BaseModelVisualization:
         self.save_plot(title)
         plt.show()
 
-    def plot_class_accuracy(self, plot_title, class_accuracies, class_counts=None):
+    def plot_accuracies(self, class_accuracies, plot_title, class_counts=None):
         """
         Visualizes accuracy per class with bar graph
         """

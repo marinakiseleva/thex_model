@@ -12,6 +12,7 @@ from .data_init import collect_data
 from .data_clean import *
 from . import data_plot
 
+
 def get_data(col_list, **data_filters):
     """
     Pull in data and filter based on different biases and corrections: group transient types, fitler to passed-in columns, keep only rows with at least 1 valid value, filter to most frequent classes, sub-sample each class to same number, and take difference between wavelengths to make new features
@@ -24,7 +25,7 @@ def get_data(col_list, **data_filters):
     df = filter_columns(df.copy(), col_list, data_filters['incl_redshift'])
     df.dropna(axis=0, inplace=True)
 
-    data_plot.plot_feature_distribution(df, "redshift")
+    # data_plot.plot_feature_distribution(df, "redshift")
 
     # Filter to most popular classes
     df = filter_top_classes(df, top=data_filters['top_classes'])
@@ -46,13 +47,10 @@ def get_data(col_list, **data_filters):
 def get_source_target_data(data_columns, **data_filters):
     data = get_data(col_list=data_columns, **data_filters)
 
-
     X = data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
     if data_filters['transform_features']:
         X = transform_features(X)
     y = data[[TARGET_LABEL]].astype(int).reset_index(drop=True)
-
-
 
     return X, y
 

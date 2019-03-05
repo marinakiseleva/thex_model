@@ -119,8 +119,10 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         """
         Run k-fold cross validation
         """
-        kf = KFold(n_splits=k, shuffle=True, random_state=10)
+        kf = KFold(n_splits=k, shuffle=True)
         accuracies = []
+        unique_classes = self.get_unique_classes(y)
+        class_rocs = {class_code: [] for class_code in unique_classes}
         for train_index, test_index in kf.split(X):
             self.X_train, self.X_test = X.iloc[train_index].reset_index(
                 drop=True), X.iloc[test_index].reset_index(drop=True)
@@ -134,11 +136,16 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
             # Save model accuracy
             self.train_model()
             self.predictions = self.test_model()
+            for class_code in unique_classes:
+                FP_rates, TP_rates = self.get_roc_curve(class_code)
+                class_rocs[class_code].append([FP_rates, TP_rates])
+
             accuracies.append(self.get_class_accuracies())
 
         # Get average accuracy per class (mapping)
-        avg_acc = self.aggregate_accuracies(accuracies, y)
-        return avg_acc
+        avg_accs = self.aggregate_accuracies(accuracies, unique_classes)
+        avg_rocs = self.aggregate_rocs(class_rocs)
+        return avg_accs, avg_rocs
 
     def run_model_cv(self, data_columns, k, data_filters):
         """
@@ -146,12 +153,26 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         """
         X, y = get_source_target_data(data_columns, **data_filters)
         self.visualize_data(y)
-        run_accuracies = []  # list of model accuracies from each run
+
+        # Initialize metric collections over all runs
+        all_accuracies = []  # list of model accuracies from each run
+        unique_classes = self.get_unique_classes(y)
+        # true positive/false positive rates per class from each run
+        all_rocs = {class_code: [] for class_code in unique_classes}
+
         for index_run in range(data_filters['num_runs']):
-            run_accuracies.append(self.run_cross_validation(k, X, y, data_filters))
-        avg_acc = self.aggregate_accuracies(run_accuracies, y)
+            cur_acc, cur_rocs = self.run_cross_validation(k, X, y, data_filters)
+            all_accuracies.append(cur_acc)
+            for class_code in unique_classes:
+                rates = cur_rocs[class_code]  # rates = [FP, TP]
+                all_rocs[class_code].append([rates[0], rates[1]])
+
+        avg_accs = self.aggregate_accuracies(all_accuracies, unique_classes)
+        avg_rocs = self.aggregate_rocs(all_rocs)
+
         data_type = 'Training' if data_filters['test_on_train'] else 'Testing'
-        title = self.name + " Average Accuracy from " + \
-            str(data_filters['num_runs']) + " runs of " + \
+        info = " of " + self.name + " from " + str(data_filters['num_runs']) + " runs of " + \
             str(k) + "-fold CV on " + data_type + " data"
-        self.plot_class_accuracy(title, avg_acc)
+
+        self.plot_accuracies(avg_accs, "Accuracy" + info)
+        self.plot_roc_curves(avg_rocs, "ROCs" + info)

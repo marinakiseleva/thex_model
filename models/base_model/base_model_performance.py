@@ -61,7 +61,7 @@ class BaseModelPerformance:
                     actual_class == class_code) else False
         else:
             """ Create matrix for all classes """
-            unique_classes = self.get_unique_test_classes()
+            unique_classes = self.get_unique_classes()
             for index, row in X_accuracy.iterrows():
                 probabilities = self.get_class_probabilities(row)
                 # Add each probability to dataframe
@@ -78,28 +78,17 @@ class BaseModelPerformance:
         X_accuracy = self.get_probability_matrix(class_code)
         pos_probs = X_accuracy.loc[X_accuracy.is_class == True]['probability']
         neg_probs = X_accuracy.loc[X_accuracy.is_class == False]['probability']
-
         return pos_probs, neg_probs
 
-    def aggregate_accuracies(self, model_results, y):
-        """
-        Aggregate accuracies from several runs. Returns mapping of classes to average accuracy.
-        :param model_results: List of accuracies from 1 or more runs; each item in list is a mapping from get_class_accuracies
-        :param y: Testing labels 
-        """
-        accuracy_per_class = {c: 0 for c in y[TARGET_LABEL].unique().tolist()}
-        for class_accuracies in model_results:
-            # class_accuracies maps class to accuracy as %
-            for tclass in class_accuracies.keys():
-                accuracy_per_class[tclass] += class_accuracies[tclass]
-        # Divide each % by number of folds to get average accuracy
-        return {c: acc / len(model_results) for c, acc in accuracy_per_class.items()}
-
-    def get_unique_test_classes(self):
+    def get_unique_classes(self, df=None):
         """
         Gets list of unique classes in testing set
         """
-        return list(set(self.y_test[TARGET_LABEL]))
+
+        if df is not None:
+            return list(set(df[TARGET_LABEL]))
+        else:
+            return list(set(self.y_test[TARGET_LABEL]))
 
     def get_class_counts(self, classes):
         """
@@ -155,3 +144,49 @@ class BaseModelPerformance:
         df_compare['correct'] = df_compare.apply(
             lambda row: 1 if row[PRED_LABEL] == row[TARGET_LABEL] else 0, axis=1)
         return df_compare
+
+    ###########################
+    # Aggregation Methods for Cross Fold Validation
+    ###########################
+
+    def aggregate_accuracies(self, model_results, unique_classes):
+        """
+        Aggregate accuracies from several runs. Returns mapping of classes to average accuracy.
+        :param model_results: List of accuracies from 1 or more runs; each item in list is a mapping from get_class_accuracies
+        :param y: Testing labels 
+        """
+        accuracy_per_class = {c: 0 for c in unique_classes}
+        for class_accuracies in model_results:
+            # class_accuracies maps class to accuracy as %
+            for class_code in class_accuracies.keys():
+                accuracy_per_class[class_code] += class_accuracies[class_code]
+        # Divide each % by number of runs to get average accuracy
+        return {c: acc / len(model_results) for c, acc in accuracy_per_class.items()}
+
+    def aggregate_rocs(self, class_rocs):
+        """
+        Aggregates true positive & false positive rates in order to create averaged ROC curves over multiple folds/runs
+        :param class_rocs: Mapping of class to rates {class: [[FP_rates, TP_rates], [FP_rates, TP_rates], ...]} where TP_rates and FP_rates are lists of 100 elements each 
+        """
+
+        len_X = 100  # Determined when creating PDFs
+        for class_code in class_rocs.keys():
+            sum_FP = [0] * len_X
+            sum_TP = [0] * len_X
+            for set_of_rates in class_rocs[class_code]:
+                FP_rates = set_of_rates[0]
+                TP_rates = set_of_rates[1]
+                for index in range(len_X):
+                    sum_TP[index] += TP_rates[index]
+                    sum_FP[index] += FP_rates[index]
+
+            # Compute average by dividing over total number of comparisons
+            total = len(class_rocs[class_code])
+            avg_FPs = [0] * len_X
+            avg_TPs = [0] * len_X
+            for index in range(len_X):
+                avg_TPs[index] = sum_TP[index] / total
+                avg_FPs[index] = sum_FP[index] / total
+            # Reassign average TP and FP rates to this class
+            class_rocs[class_code] = [avg_FPs, avg_TPs]
+        return class_rocs
