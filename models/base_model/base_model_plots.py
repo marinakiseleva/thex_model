@@ -8,6 +8,7 @@ from thex_data.data_consts import code_cat, TARGET_LABEL, ROOT_DIR
 
 FIG_WIDTH = 6
 FIG_HEIGHT = 4
+DPI = 500
 
 
 class BaseModelVisualization:
@@ -28,19 +29,16 @@ class BaseModelVisualization:
         """
 
         X_accs = self.get_probability_matrix()
-        print(X_accs.dtypes)
         # Add column of predicted class
-        # predictions = self.test_model()['predicted_class']
         X_preds = pd.concat([X_accs, self.test_model()], axis=1)
-        print(list(X_preds))
-        print(X_preds.dtypes)
         unique_classes = self.get_unique_test_classes()
         for index, class_code in enumerate(unique_classes):
-
-            perc_ranges, perc_correct = self.get_corr_prob_ranges(
+            perc_ranges, perc_correct, count_ranges = self.get_corr_prob_ranges(
                 X_preds, class_code)
 
-            plt.bar(list(range(0, 10)), perc_correct)
+            f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+            x = list(range(0, 10))
+            ax.bar(x, perc_correct)
             plt.xlabel('Probability of ' + code_cat[class_code] + ' +/- 5%', fontsize=12)
             plt.xlim([0, 1])
             plt.ylabel('Accuracy', fontsize=12)
@@ -49,6 +47,9 @@ class BaseModelVisualization:
             plt.xticks(list(range(0, 10)), perc_ranges, fontsize=10, rotation=30)
             plt.title('Accuracy of ' + code_cat[class_code] +
                       ' Predictions by Probability Assigned', fontsize=15)
+
+            # Add total count of actual class for each range
+            self.add_bar_counts(x, perc_correct, count_ranges, ax)
             plt.show()
 
     def plot_roc_curves(self):
@@ -58,7 +59,7 @@ class BaseModelVisualization:
 
         unique_classes = self.get_unique_test_classes()
 
-        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
+        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         cm = plt.get_cmap('gist_rainbow')
         NUM_COLORS = len(unique_classes)
         ax.set_prop_cycle('color', [cm(1. * i / NUM_COLORS) for i in range(NUM_COLORS)])
@@ -95,7 +96,7 @@ class BaseModelVisualization:
         unique_classes = self.get_unique_test_classes()
 
         f, ax = plt.subplots(len(unique_classes), 3,
-                             figsize=(10, len(unique_classes) * 3), dpi=640)
+                             figsize=(10, len(unique_classes) * 3), dpi=DPI)
 
         for index, class_code in enumerate(unique_classes):
             pos_probs, neg_probs = self.get_split_probabilities(
@@ -229,7 +230,7 @@ class BaseModelVisualization:
         else:
             title = "Confusion Matrix (without normalization)"
 
-        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
+        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         plt.imshow(cm, interpolation='nearest', cmap=cmap)
         plt.title(title)
         plt.colorbar()
@@ -262,17 +263,10 @@ class BaseModelVisualization:
         # Class names will be assigned in same order as these indices
         class_indices = np.arange(len(class_accuracies.keys()))
 
-        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
+        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         ax.bar(class_indices, accuracies)
+        self.add_bar_counts(class_indices, accuracies, class_counts, ax)
 
-        if class_counts is not None:
-            cur_class = 0
-            for xy in zip(class_indices, accuracies):
-                # Get class count of current class_index
-                cur_count = class_counts[cur_class]
-                cur_class += 1
-                ax.annotate(str(cur_count) + " total", xy=xy,
-                            textcoords='data', ha='center', va='bottom', fontsize=12)
         plt.xlabel('Transient Class', fontsize=12)
         plt.ylabel('Accuracy', fontsize=12)
         plt.xticks(class_indices, class_names, fontsize=12, rotation=30)
@@ -281,3 +275,20 @@ class BaseModelVisualization:
         plt.title(plot_title, fontsize=15)
         self.save_plot(plot_title)
         plt.show()
+
+    #####################################
+    # Plotting Utils ####################
+    #####################################
+
+    def add_bar_counts(self, x, y, class_counts, ax):
+        """
+        Adds count to top of each bar in bar plot
+        """
+        if class_counts is not None:
+            class_index = 0
+            for xy in zip(x, y):
+                # Get class count of current class_index
+                class_count = str(class_counts[class_index])
+                ax.annotate(class_count + " total", xy=xy,
+                            textcoords='data', ha='center', va='bottom', fontsize=10, rotation=30)
+                class_index += 1

@@ -18,6 +18,7 @@ class BaseModelPerformance:
         class_col = str(class_code)
         percent_correct = []
         percent_ranges = [0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]
+        count_ranges = []  # Total correct count in each range
         for perc_range in percent_ranges:
             # Range of probabilities: + or - 5 from perc_range
             perc_range_min = perc_range - .05
@@ -31,13 +32,15 @@ class BaseModelPerformance:
 
             if actual_in_range.shape[0] == 0:
                 percent_correct.append(0)
+                count_ranges.append(0)
             else:
                 perc_correct = corr_pred_in_range.shape[0] / actual_in_range.shape[0]
                 percent_correct.append(perc_correct)
+                count_ranges.append(actual_in_range.shape[0])
 
         for index, pr in enumerate(percent_ranges):
             percent_ranges[index] = str(int(pr * 100)) + "%"
-        return percent_ranges, percent_correct
+        return percent_ranges, percent_correct, count_ranges
 
     def get_probability_matrix(self, class_code=None):
         """
