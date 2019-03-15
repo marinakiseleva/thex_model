@@ -9,6 +9,8 @@ from thex_data import data_plot
 from models.base_model.base_model_performance import BaseModelPerformance
 from models.base_model.base_model_plots import BaseModelVisualization
 
+from sklearn.decomposition import PCA
+
 
 class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
     """
@@ -46,10 +48,8 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
             return 0
 
         # Collect data filtered on these parameters
-        self.X_train, self.X_test, self.y_train, self.y_test = self.get_model_data(
-            col_list, **data_filters)
+        self.set_model_data(col_list, **data_filters)
         self.visualize_data()
-
         self.train_model()
         self.predictions = self.test_model()
         self.evaluate_model(data_filters['test_on_train'])
@@ -77,19 +77,41 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         """
         pass
 
-    def get_model_data(self, col_list, **data_filters):
+    def set_model_data(self, col_list, **data_filters):
         """
         Collects data for model
         :param col_list: List of columns to filter on
         :param test_on_train: Boolean to test on training data.
         :param user_data_filters: List of data filters user passed in.
         """
-        X_train, X_test, y_train, y_test = get_train_test(
+        self.X_train, self.X_test, self.y_train, self.y_test = get_train_test(
             col_list, **data_filters)
         if data_filters['test_on_train'] == True:
-            X_test = X_train.copy()
-            y_test = y_train.copy()
-        return X_train, X_test, y_train, y_test
+            self.X_test = X_train.copy()
+            self.y_test = y_train.copy()
+        # Apply PCA
+        self.X_train, self.X_test = self.apply_pca()
+
+    def apply_pca(self, k=5):
+        """
+        Compute PCA reductions on training then apply to both training and testing.
+        """
+        pca = PCA(n_components=k)
+        pca = pca.fit(self.X_train)  # Fit on training
+        reduced_training = pca.transform(self.X_train)
+        reduced_testing = pca.transform(self.X_test)
+        # print("\nPCA Analysis: Explained Variance Ratio")
+        # print(pca.explained_variance_ratio_)
+
+        def convert_to_df(data, k):
+            reduced_columns = []
+            for i in range(k):
+                reduced_columns.append("PC" + str(i + 1))
+            return pd.DataFrame(data=data, columns=reduced_columns)
+
+        reduced_training = convert_to_df(reduced_training, k)
+        reduced_testing = convert_to_df(reduced_testing, k)
+        return reduced_training, reduced_testing
 
     def visualize_data(self, y=None):
         """
@@ -112,7 +134,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         class_counts = self.get_class_counts(class_accuracies.keys())
         data_type = 'Training' if test_on_train else 'Testing'
         title = self.name + " Accuracy on " + data_type + " Data"
-        self.plot_class_accuracy(title, class_accuracies, class_counts)
+        self.plot_accuracies(class_accuracies, title, class_counts)
         self.plot_confusion_matrix(normalize=True)
 
     def run_cross_validation(self, k, X, y, data_filters):
@@ -132,6 +154,9 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
             if data_filters['test_on_train']:
                 self.X_test = self.X_train
                 self.y_test = self.y_train
+
+            # Apply PCA
+            self.X_train, self.X_test = self.apply_pca()
 
             # Save model accuracy
             self.train_model()

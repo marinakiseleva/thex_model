@@ -146,7 +146,7 @@ class BaseModelPerformance:
         return df_compare
 
     ###########################
-    # Aggregation Methods for Cross Fold Validation
+    # Aggregation Methods for Cross Fold Validation and Multiple Runs
     ###########################
 
     def aggregate_accuracies(self, model_results, unique_classes):
