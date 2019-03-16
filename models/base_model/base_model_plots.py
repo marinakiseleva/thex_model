@@ -36,19 +36,13 @@ class BaseModelVisualization:
                 X_preds, class_code)
 
             f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-            x = list(range(0, 10))
-            ax.bar(x, perc_correct)
+
+            ax = self.plot_bar_with_annotations(
+                axis=ax, x_vals=perc_ranges, y_vals=perc_correct, annotations=count_ranges)
             plt.xlabel('Probability of ' + code_cat[class_code] + ' +/- 5%', fontsize=12)
-            plt.xlim([0, 1])
             plt.ylabel('Accuracy', fontsize=12)
-            plt.yticks([0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75,
-                        0.85, 0.95], perc_ranges, fontsize=10, rotation=30)
-            plt.xticks(list(range(0, 10)), perc_ranges, fontsize=10, rotation=30)
             plt.title('Accuracy of ' + code_cat[class_code] +
                       ' Predictions by Probability Assigned', fontsize=15)
-
-            # Add total count of actual class for each range
-            self.add_bar_counts(x, perc_correct, count_ranges, ax)
             plt.show()
 
     def plot_roc_curves(self, rates=None, title=None):
@@ -271,17 +265,12 @@ class BaseModelVisualization:
         accuracies = [class_accuracies[c] for c in class_accuracies.keys()]
 
         # Class names will be assigned in same order as these indices
-        class_indices = np.arange(len(class_accuracies.keys()))
-
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-        ax.bar(class_indices, accuracies)
-        self.add_bar_counts(class_indices, accuracies, class_counts, ax)
+        ax = self.plot_bar_with_annotations(
+            axis=ax, x_vals=class_names, y_vals=accuracies, annotations=class_counts)
 
         plt.xlabel('Transient Class', fontsize=12)
         plt.ylabel('Accuracy', fontsize=12)
-        plt.xticks(class_indices, class_names, fontsize=12, rotation=30)
-        plt.yticks(list(np.linspace(0, 1, 11)), [
-                   str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=12)
         plt.title(plot_title, fontsize=15)
         self.save_plot(plot_title)
         plt.show()
@@ -289,6 +278,16 @@ class BaseModelVisualization:
     #####################################
     # Plotting Utils ####################
     #####################################
+    def plot_bar_with_annotations(self, axis, x_vals, y_vals, annotations):
+        """
+        Plots bar plot with annotations over each bar. Makes y-bar indices that map to percentages
+        """
+        x_indices = np.arange(len(y_vals))
+        axis.bar(x_indices, y_vals)
+        self.add_bar_counts(x_indices, y_vals, annotations, axis)
+        plt.yticks(list(np.linspace(0, 1, 11)), [
+                   str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=12)
+        plt.xticks(x_indices, x_vals, fontsize=12)
 
     def add_bar_counts(self, x, y, class_counts, ax):
         """
@@ -299,6 +298,6 @@ class BaseModelVisualization:
             for xy in zip(x, y):
                 # Get class count of current class_index
                 class_count = str(class_counts[class_index])
-                ax.annotate(class_count + " total", xy=xy,
-                            textcoords='data', ha='center', va='bottom', fontsize=10, rotation=30)
+                ax.annotate(str(class_count), xy=xy,
+                            textcoords='data', ha='center', va='bottom', fontsize=10)
                 class_index += 1
