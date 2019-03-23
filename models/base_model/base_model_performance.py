@@ -163,6 +163,40 @@ class BaseModelPerformance:
         # Divide each % by number of runs to get average accuracy
         return {c: acc / len(model_results) for c, acc in accuracy_per_class.items()}
 
+    def aggregate_prob_ranges(self, prob_ranges, k):
+        """
+        Aggregate probability & correctness per range in order to plot aggregated version over multiple folds/runs
+        :param prob_ranges: map of class_code : [percent_ranges, perc_correct, count_ranges]
+        perc_correct = list, % of samples in each range correctly predicted
+        count_ranges = list, # of samples in each range
+        """
+        # For each class
+        num_ranges = 10
+        totals_runs = len(prob_ranges.keys())
+        percent_ranges = []
+        for class_code in prob_ranges.keys():
+            avg_perc_correct = [0] * num_ranges
+            avg_count_in_range = [0] * num_ranges
+
+            # set_of_rates = [percent_ranges, perc_correct, count_ranges]
+            for set_of_rates in prob_ranges[class_code]:
+                percent_ranges = set_of_rates[0]  # Does NOT need to be averaged
+                perc_correct = set_of_rates[1]
+                count_ranges = set_of_rates[2]
+
+                for index in range(num_ranges):
+                    avg_perc_correct[index] += perc_correct[index]
+                    avg_count_in_range[index] += count_ranges[index]
+
+            # Average each perc/count per range
+            for index in range(num_ranges):
+                avg_perc_correct[index] = int(avg_perc_correct[index] / k)
+                avg_count_in_range[index] = int(avg_count_in_range[index] / k)
+
+            prob_ranges[class_code] = [percent_ranges,
+                                       avg_perc_correct, avg_count_in_range]
+        return prob_ranges
+
     def aggregate_rocs(self, class_rocs):
         """
         Aggregates true positive & false positive rates in order to create averaged ROC curves over multiple folds/runs
