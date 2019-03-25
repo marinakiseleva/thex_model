@@ -92,7 +92,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         # Apply PCA
         self.X_train, self.X_test = self.apply_pca()
 
-    def apply_pca(self, k=4):
+    def apply_pca(self, k=3):
         """
         Compute PCA reductions on training then apply to both training and testing.
         """
@@ -100,8 +100,8 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         pca = pca.fit(self.X_train)  # Fit on training
         reduced_training = pca.transform(self.X_train)
         reduced_testing = pca.transform(self.X_test)
-        print("\nPCA Analysis: Explained Variance Ratio")
-        print(pca.explained_variance_ratio_)
+        # print("\nPCA Analysis: Explained Variance Ratio")
+        # print(pca.explained_variance_ratio_)
 
         def convert_to_df(data, k):
             reduced_columns = []
@@ -146,7 +146,6 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         unique_classes = self.get_unique_classes(y)
         prob_ranges = {class_code: [] for class_code in unique_classes}
         class_rocs = {class_code: [] for class_code in unique_classes}
-        tempprob_ranges = {class_code: [] for class_code in unique_classes}
         for train_index, test_index in kf.split(X):
             self.X_train, self.X_test = X.iloc[train_index].reset_index(
                 drop=True), X.iloc[test_index].reset_index(drop=True)
@@ -175,8 +174,6 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
                 perc_ranges, perc_correct, count_ranges = self.get_corr_prob_ranges(
                     X_preds, class_code)
                 prob_ranges[class_code].append([perc_ranges, perc_correct, count_ranges])
-                tempprob_ranges[class_code] = [perc_ranges, perc_correct, count_ranges]
-            self.plot_probability_correctness(tempprob_ranges)
             accuracies.append(self.get_class_accuracies())
 
         # Get average accuracy per class (mapping)
@@ -217,4 +214,5 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
 
         self.plot_accuracies(avg_accs, "Accuracy" + info)
         self.plot_roc_curves(avg_rocs, "ROCs" + info)
-        self.plot_probability_correctness(avg_prob_ranges)
+        self.plot_probability_correctness(
+            avg_prob_ranges, "Accuracy vs Probability" + info)

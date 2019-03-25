@@ -170,7 +170,6 @@ class BaseModelPerformance:
         perc_correct = list, % of samples in each range correctly predicted
         count_ranges = list, # of samples in each range
         """
-        # For each class
         num_ranges = 10
         totals_runs = len(prob_ranges.keys())
         percent_ranges = []
@@ -190,7 +189,7 @@ class BaseModelPerformance:
 
             # Average each perc/count per range
             for index in range(num_ranges):
-                avg_perc_correct[index] = int(avg_perc_correct[index] / k)
+                avg_perc_correct[index] = float(avg_perc_correct[index] / k)
                 avg_count_in_range[index] = int(avg_count_in_range[index] / k)
 
             prob_ranges[class_code] = [percent_ranges,
