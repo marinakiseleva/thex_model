@@ -21,7 +21,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         """
         Collects data based on column parameters, trains, and tests model. Either cols or col_matches need to be passed in, otherwise all numeric columns are used.
         :param cols: Names of columns to filter on
-        :param col_matches: String by which columns will be selected. For example: AllWISE will use all AlLWISE columns.
+        :param col_matches: String by which columns will be selected. For example: AllWISE will use all AllWISE columns.
         :param folds: Number of folds if using k-fold Cross Validation
         :param user_data_filters: List of data filters user passed in. User options over-ride any default.
         """
@@ -171,15 +171,15 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
                 FP_rates, TP_rates = self.get_roc_curve(class_code)
                 class_rocs[class_code].append([FP_rates, TP_rates])
                 # Record probability vs accuracy
-                perc_ranges, perc_correct, count_ranges = self.get_corr_prob_ranges(
+                perc_ranges, corr_ranges, count_ranges = self.get_corr_prob_ranges(
                     X_preds, class_code)
-                prob_ranges[class_code].append([perc_ranges, perc_correct, count_ranges])
+                prob_ranges[class_code].append([perc_ranges, corr_ranges, count_ranges])
             accuracies.append(self.get_class_accuracies())
 
         # Get average accuracy per class (mapping)
         avg_accs = self.aggregate_accuracies(accuracies, unique_classes)
         avg_rocs = self.aggregate_rocs(class_rocs)
-        avg_prob_ranges = self.aggregate_prob_ranges(prob_ranges, k)
+        avg_prob_ranges = self.aggregate_prob_ranges_folds(prob_ranges)
         return avg_accs, avg_rocs, avg_prob_ranges
 
     def run_model_cv(self, data_columns, k, data_filters):
@@ -205,7 +205,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
 
         avg_accs = self.aggregate_accuracies(all_accuracies, unique_classes)
         avg_rocs = self.aggregate_rocs(all_rocs)
-        avg_prob_ranges = self.aggregate_prob_ranges(
+        avg_prob_ranges = self.aggregate_prob_ranges_runs(
             all_prob_ranges, data_filters['num_runs'])
 
         data_type = 'Training' if data_filters['test_on_train'] else 'Testing'

@@ -1,7 +1,6 @@
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
-import pylab as plt
 from textwrap import wrap
 import pandas as pd
 from sklearn.metrics import confusion_matrix
@@ -38,10 +37,8 @@ class BaseModelVisualization:
             if prob_ranges is None:
                 perc_ranges, perc_correct, count_ranges = self.get_corr_prob_ranges(
                     X_preds, class_code)
-                # avg_title = ""
             else:
                 perc_ranges, perc_correct, count_ranges = prob_ranges[class_code]
-                # avg_title = "Averaged "
 
             f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
 
@@ -49,12 +46,9 @@ class BaseModelVisualization:
                 axis=ax, x_vals=perc_ranges, y_vals=perc_correct, annotations=count_ranges)
             plt.xlabel('Probability of ' + code_cat[class_code] + ' +/- 5%', fontsize=12)
             plt.ylabel('Accuracy', fontsize=12)
-            # plt.rcParams["axes.titlesize"] = FIG_WIDTH
             title = "Accuracy vs Probability" if title is None else title
-            plot_title = title + ": " + str(code_cat[class_code])
-            # plt.title(title + ": " + str(code_cat[class_code]), fontsize=15)
             plt.title('\n'.join(wrap(title + ": " + str(code_cat[class_code]), 60)))
-            self.save_plot(plot_title)
+            self.save_plot(title + ": " + str(code_cat[class_code]))
             plt.show()
 
     def plot_roc_curves(self, rates=None, title=None):
@@ -86,7 +80,8 @@ class BaseModelVisualization:
         ax.set_ylim([0, 1])
 
         plt_title = "ROC Curves" if title is None else title
-        ax.set_title(plt_title, fontsize=14)
+        ax.set_title('\n'.join(wrap(plt_title, 60)))
+        # ax.set_title(plt_title, fontsize=14)
         ax.set_ylabel('True Positive Rate', fontsize=12)
         ax.set_xlabel('False Positive Rate', fontsize=12)
         ax.legend(loc='best')
@@ -283,7 +278,7 @@ class BaseModelVisualization:
 
         plt.xlabel('Transient Class', fontsize=12)
         plt.ylabel('Accuracy', fontsize=12)
-        plt.title(plot_title, fontsize=15)
+        plt.title('\n'.join(wrap(plot_title, 60)))
         self.save_plot(plot_title)
         plt.show()
 

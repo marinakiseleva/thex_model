@@ -13,30 +13,34 @@ Initializes data from initial pull. Filters down list of columns based on user-i
 def collect_cols(cols, col_matches):
     """
     Return all columns that contain at least one string in the list of col_matches or all columns in cols list
-    :param cols: Names of columns to filter on
-    :param col_matches: String by which columns will be selected. For example: AllWISE will use all AlLWISE columns.
+    :param cols: List of columns to filter on
+    :param col_matches: List of strings by which columns will be selected. For example: AllWISE will use all AlLWISE columns.
     """
     col_list = []
     if cols is not None:
+        if not isinstance(cols, list):
+            raise TypeError("cols in collect_cols must be a list.")
         col_list = cols
     else:
         # Make list of column/feature names; exlcude error columns
         all_cols = list(collect_data())
-        column_list = []
         if col_matches is not None:
+            if not isinstance(col_matches, list):
+                raise TypeError("col_matches in collect_cols must be a list.")
             for column in all_cols:
                 if any(match_value in column for match_value in col_matches):
-                    column_list.append(column)
+                    col_list.append(column)
         else:
-            # Use all columns in data set with numeric values
-            column_list = all_cols
+            col_list = all_cols
 
-        # Drop all non-numeric columns
-        column_list_numeric = []
-        for c in column_list:
-            if not any(col in c for col in drop_cols):
-                column_list_numeric.append(c)  # Keep only numeric columns
-
+    # Drop all non-numeric columns
+    column_list_numeric = []
+    for c in col_list:
+        if not any(col in c for col in drop_cols):
+            column_list_numeric.append(c)  # Keep only numeric columns
+    if 'redshift' in column_list_numeric:
+        raise ValueError(
+            "Do not include redshift in list of columns -- instead at it in through the flag.")
     return column_list_numeric
 
 
