@@ -42,8 +42,6 @@ def filter_columns(df, col_list, incl_redshift):
     col_list = col_list + [TARGET_LABEL]
     if incl_redshift:
         col_list.append('redshift')
-    if 'AllWISE_IsVar' in col_list:
-        col_list.remove('AllWISE_IsVar')
 
     # print_features_used(col_list)
     df = df[col_list]

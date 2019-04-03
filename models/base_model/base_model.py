@@ -92,7 +92,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         # Apply PCA
         self.X_train, self.X_test = self.apply_pca()
 
-    def apply_pca(self, k=3):
+    def apply_pca(self, k=5):
         """
         Compute PCA reductions on training then apply to both training and testing.
         """
@@ -179,7 +179,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         # Get average accuracy per class (mapping)
         avg_accs = self.aggregate_accuracies(accuracies, unique_classes)
         avg_rocs = self.aggregate_rocs(class_rocs)
-        avg_prob_ranges = self.aggregate_prob_ranges_folds(prob_ranges)
+        avg_prob_ranges = self.aggregate_prob_ranges(prob_ranges)
         return avg_accs, avg_rocs, avg_prob_ranges
 
     def run_model_cv(self, data_columns, k, data_filters):
@@ -187,6 +187,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         Split data into k-folds and perform k-fold cross validation
         """
         X, y = get_source_target_data(data_columns, **data_filters)
+        print(list(X))
         self.visualize_data(y)
 
         # Initialize metric collections over all runs
@@ -205,8 +206,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
 
         avg_accs = self.aggregate_accuracies(all_accuracies, unique_classes)
         avg_rocs = self.aggregate_rocs(all_rocs)
-        avg_prob_ranges = self.aggregate_prob_ranges_runs(
-            all_prob_ranges, data_filters['num_runs'])
+        avg_prob_ranges = self.aggregate_prob_ranges(all_prob_ranges)
 
         data_type = 'Training' if data_filters['test_on_train'] else 'Testing'
         info = " of " + self.name + " from " + str(data_filters['num_runs']) + " runs of " + \

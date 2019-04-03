@@ -40,6 +40,7 @@ class BaseModelPerformance:
 
         for index, pr in enumerate(percent_ranges):
             percent_ranges[index] = str(int(pr * 100)) + "%"
+
         return percent_ranges, corr_ranges, count_ranges
 
     def get_probability_matrix(self, class_code=None):
@@ -163,64 +164,28 @@ class BaseModelPerformance:
         # Divide each % by number of runs to get average accuracy
         return {c: acc / len(model_results) for c, acc in accuracy_per_class.items()}
 
-    def aggregate_prob_ranges_folds(self, prob_ranges):
-        """
-        Aggregate probability & correctness per range in order to plot aggregated version over multiple folds
-        :param prob_ranges: map of class_code : [percent_ranges, corr_ranges, count_ranges]
-        corr_ranges = list, num of samples in each range correctly predicted
-        count_ranges = list, # of samples in each range
-        """
-        num_ranges = 10
-        percent_ranges = []
-        for class_code in prob_ranges.keys():
-            total_count_in_range = [0] * num_ranges
-            total_corr_in_range = [0] * num_ranges
-            for set_of_rates in prob_ranges[class_code]:
-                percent_ranges = set_of_rates[0]  # stays same
-                corr_ranges = set_of_rates[1]
-                count_ranges = set_of_rates[2]
-                for index in range(num_ranges):
-                    total_count_in_range[index] += count_ranges[index]
-                    total_corr_in_range[index] += corr_ranges[index]
-
-            # Average each perc/count per range
-            avg_perc_correct = [0] * num_ranges
-            for index in range(num_ranges):
-                t = total_count_in_range[index]
-                if t > 0:
-                    avg_perc_correct[index] = (total_corr_in_range[index] / t)
-                else:
-                    avg_perc_correct[index] = 0
-            prob_ranges[class_code] = [percent_ranges,
-                                       avg_perc_correct, total_count_in_range]
-        return prob_ranges
-
-    def aggregate_prob_ranges_runs(self, prob_ranges, k):
+    def aggregate_prob_ranges(self, prob_ranges):
         """
         Aggregates prob ranges over multiple runs
-        :param prob_ranges: List of prob_ranges for multiple runs, in the format [percent_ranges, avg_perc_correct, total_count_in_range]
+        :param prob_ranges: List of prob_ranges for multiple runs, in the format [percent_ranges, corr_in_range, count_in_range]
         :param k: Number of runs to average over
         Return prob_ranges in same format, but averaged over runs
         """
         num_ranges = 10
         percent_ranges = []
         for class_code in prob_ranges.keys():
-            avg_accuracies = [0] * num_ranges
-            avg_counts = [0] * num_ranges
+            total_corr_in_range = [0] * num_ranges
+            total_count_in_range = [0] * num_ranges
             for set_of_rates in prob_ranges[class_code]:
                 percent_ranges = set_of_rates[0]  # stays same
-                perc_correct = set_of_rates[1]
-                total_count_in_range = set_of_rates[2]
+                corr_in_range = set_of_rates[1]
+                count_in_range = set_of_rates[2]
                 for index in range(num_ranges):
-                    avg_accuracies[index] += perc_correct[index]
-                    avg_counts[index] += total_count_in_range[index]
+                    total_corr_in_range[index] += corr_in_range[index]
+                    total_count_in_range[index] += count_in_range[index]
 
-            # Average over k runs
-            for index in range(num_ranges):
-                avg_accuracies[index] = avg_accuracies[index] / k
-                avg_counts[index] = avg_counts[index] / k
             prob_ranges[class_code] = [percent_ranges,
-                                       avg_accuracies, avg_counts]
+                                       total_corr_in_range, total_count_in_range]
         return prob_ranges
 
     def aggregate_rocs(self, class_rocs):

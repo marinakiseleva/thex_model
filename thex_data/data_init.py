@@ -61,6 +61,4 @@ def collect_data():
         else:
             df[column] = df_bytes[column]
 
-    # Filter on only confirmed claimed types
-    df = df.loc[df.is_confirmed_host == 1]
     return df

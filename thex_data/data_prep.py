@@ -21,6 +21,8 @@ def get_data(col_list, **data_filters):
     """
 
     df = collect_data()
+
+    df = group_by_tree(df)
     df = group_cts(df)
     df = filter_columns(df.copy(), col_list, data_filters['incl_redshift'])
     df.dropna(axis=0, inplace=True)
