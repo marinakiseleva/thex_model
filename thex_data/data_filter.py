@@ -17,6 +17,8 @@ def sub_sample(df, count, col_val):
     :param df: the dataframe to manipulate
     :param count: number to set all classes to; if class has less than this, then just leave it
     """
+    if count is None:
+        return df
     subsampled_df = pd.DataFrame()
     t_values = list(df[col_val].unique())
     # iterate through each claimed type group in dataset

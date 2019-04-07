@@ -57,8 +57,11 @@ class BaseModelVisualization:
                     p = corr / count_ranges[index]
                 perc_correct.append(p)
 
+            normalize = plt.Normalize(min(count_ranges), max(count_ranges))
+            colors = plt.cm.Blues(normalize(count_ranges))
+
             ax = self.plot_bar_with_annotations(
-                axis=ax, x_vals=perc_ranges, y_vals=perc_correct, annotations=count_ranges)
+                axis=ax, x_vals=perc_ranges, y_vals=perc_correct, annotations=count_ranges, bar_colors=colors)
             plt.xlabel('Probability of ' + code_cat[class_code] + ' +/- 5%', fontsize=12)
             plt.ylabel('Accuracy', fontsize=12)
             title = "Accuracy vs Probability" if title is None else title
@@ -79,6 +82,7 @@ class BaseModelVisualization:
         for index, class_code in enumerate(unique_classes):
             if rates is None:
                 FP_rates, TP_rates = self.get_roc_curve(class_code)
+
             else:
                 FP_rates, TP_rates = rates[class_code]
 
@@ -98,16 +102,6 @@ class BaseModelVisualization:
         ax.set_xlabel('False Positive Rate', fontsize=12)
         ax.legend(loc='best')
         self.display_and_save_plot(plt_title, ax)
-
-    def get_roc_curve(self, class_code):
-        """
-        Returns false positive rates and true positive rates in order to plot ROC curve
-        """
-        pos_probs, neg_probs = self.get_split_probabilities(class_code)
-        x, pos_pdf = self.get_normal_pdf(pos_probs)
-        x, neg_pdf = self.get_normal_pdf(neg_probs)
-        FP_rates, TP_rates = self.get_fp_tp_rates(x, pos_pdf, neg_pdf)
-        return FP_rates, TP_rates
 
     def plot_probability_metrics(self):
         """
@@ -172,45 +166,6 @@ class BaseModelVisualization:
         ax.set_title('Probability Distribution of ' + class_name, fontsize=15)
         ax.legend(["Type " + class_name, "NOT Type " + class_name])
         return x, pos_pdf, neg_pdf
-
-    def get_normal_pdf(self, probabilities):
-        """
-        Returns normal PDF values
-        """
-        samples = np.array(probabilities)
-        mean = np.mean(samples)
-        std = np.sqrt(np.var(samples))
-        x = np.linspace(0, 1, num=100)
-        # Fit normal distribution to mean and std of data
-        const = 1.0 / np.sqrt(2 * np.pi * (std**2))
-        y = const * np.exp(-((x - mean)**2) / (2.0 * (std**2)))
-        return x, y
-
-    def get_fp_tp_rates(self, x, pos_pdf, neg_pdf):
-        # Sum of all probabilities
-        total_class = np.sum(pos_pdf)
-        total_not_class = np.sum(neg_pdf)
-
-        area_TP = 0  # Total area
-        area_FP = 0  # Total area under incorrect curve
-
-        TP_rates = []  # True positive rates
-        FP_rates = []  # False positive rates
-        # For each data point in x
-        for i in range(len(x)):
-            if pos_pdf[i] > 0:
-                area_TP += pos_pdf[len(x) - 1 - i]
-                area_FP += neg_pdf[len(x) - 1 - i]
-            # Calculate FPR and TPR for threshold x
-            # Volume of false positives over total negatives
-            FPR = area_FP / total_not_class
-            # Volume of true positives over total positives
-            TPR = area_TP / total_class
-            TP_rates.append(TPR)
-            FP_rates.append(FPR)
-
-        # Plotting final ROC curve, FP against TP
-        return FP_rates, TP_rates
 
     def plot_roc(self, x, pos_pdf, neg_pdf, ax):
         """
@@ -285,17 +240,16 @@ class BaseModelVisualization:
         plt.xlabel('Transient Class', fontsize=12)
         plt.ylabel('Accuracy', fontsize=12)
         self.display_and_save_plot(plot_title, ax)
-        plt.show()
 
     #####################################
     # Plotting Utils ####################
     #####################################
-    def plot_bar_with_annotations(self, axis, x_vals, y_vals, annotations):
+    def plot_bar_with_annotations(self, axis, x_vals, y_vals, annotations, bar_colors=None):
         """
         Plots bar plot with annotations over each bar. Makes y-bar indices that map to percentages
         """
         x_indices = np.arange(len(y_vals))
-        axis.bar(x_indices, y_vals)
+        axis.bar(x_indices, y_vals, color=bar_colors)
         self.add_bar_counts(x_indices, y_vals, annotations, axis)
         plt.yticks(list(np.linspace(0, 1, 11)), [
                    str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=12)

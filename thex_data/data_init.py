@@ -32,6 +32,7 @@ def collect_cols(cols, col_matches):
                     col_list.append(column)
         else:
             col_list = all_cols
+            col_list.remove('redshift')
 
     # Drop all non-numeric columns
     column_list_numeric = []

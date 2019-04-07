@@ -3,6 +3,7 @@ Enhance features by scaling and changing them
 """
 import pandas as pd
 import numpy as np
+from thex_data.data_consts import mag_cols
 
 
 def transform_features(df):
@@ -38,10 +39,11 @@ def derive_diffs(df):
     for index, colname1 in enumerate(features):
         if index < len(features) - 1:
             colname2 = df.columns[index + 1]  # Get next column
-            val1 = df[colname1]
-            val2 = df[colname2]
-            new_col_name = colname2 + "_minus_" + colname1
-            df[new_col_name] = val2 - val1
+            if colname1 in mag_cols and colname2 in mag_cols:
+                val1 = df[colname1]
+                val2 = df[colname2]
+                new_col_name = colname2 + "_minus_" + colname1
+                df[new_col_name] = val2 - val1
 
     return df
 

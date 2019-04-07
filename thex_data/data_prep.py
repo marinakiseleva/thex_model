@@ -21,7 +21,6 @@ def get_data(col_list, **data_filters):
     """
 
     df = collect_data()
-
     df = group_by_tree(df)
     df = group_cts(df)
     df = filter_columns(df.copy(), col_list, data_filters['incl_redshift'])
@@ -43,12 +42,15 @@ def get_data(col_list, **data_filters):
         sys.exit()
 
     print_class_counts(df)
+
     return df.reset_index(drop=True)
 
 
 def get_source_target_data(data_columns, **data_filters):
+    """
+    Gets data split into source and target; but not yet split into training and testing
+    """
     data = get_data(col_list=data_columns, **data_filters)
-
     X = data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
     if data_filters['transform_features']:
         X = transform_features(X)

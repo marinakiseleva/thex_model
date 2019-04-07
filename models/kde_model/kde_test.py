@@ -34,7 +34,7 @@ class KDEModelTest:
 
     def calculate_class_probabilities(self, x):
         """
-        Calculates probability of each transient class (the keys of summaries map), for the test data point (x). Calculates probability by multiplying probability of each feature together. Returns map of class codes to probability.
+        Calculates probability of each transient class (the keys of summaries map), for the single test data point (x). Calculates probability by multiplying probability of each feature together. Returns map of class codes to probability.
         :param x: Single row of features as datapoint
         """
         probabilities = {}
@@ -53,13 +53,14 @@ class KDEModelTest:
             else:
                 # direct distribution
                 prob_density = np.exp(distribution.score_samples([x.values]))
-                probabilities[class_code] *= prob_density
+                # prob_density is array of just 1 value, for this 1 test point
+                probabilities[class_code] *= prob_density[0]
 
             # Factor in prior
             probabilities[class_code] *= self.priors[class_code]
 
         # Normalize probabilities, to sum to 1
         sum_probabilities = sum(probabilities.values())
-        probabilities = {k: v / sum_probabilities for k, v in probabilities.items()}
-
+        probabilities = {k: v / sum_probabilities if sum_probabilities >
+                         0 else 0 for k, v in probabilities.items()}
         return probabilities

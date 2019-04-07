@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, StratifiedKFold
 
 from thex_data.data_init import *
 from thex_data.data_consts import drop_cols
@@ -31,9 +31,10 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
                         'top_classes': 10,
                         'one_all': None,
                         'data_split': 0.3,
-                        'subsample': 200,
+                        'subsample': None,
                         'transform_features': False,
-                        'incl_redshift': False
+                        'incl_redshift': False,
+                        'pca': 3  # Number of principal components
 
                         }
         # Update filters with any passed-in filters
@@ -90,9 +91,9 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
             self.X_test = X_train.copy()
             self.y_test = y_train.copy()
         # Apply PCA
-        self.X_train, self.X_test = self.apply_pca()
+        self.X_train, self.X_test = self.apply_pca(data_filters['pca'])
 
-    def apply_pca(self, k=5):
+    def apply_pca(self, k):
         """
         Compute PCA reductions on training then apply to both training and testing.
         """
@@ -141,12 +142,12 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         """
         Run k-fold cross validation
         """
-        kf = KFold(n_splits=k, shuffle=True)
+        kf = StratifiedKFold(n_splits=k, shuffle=True)
         accuracies = []
         unique_classes = self.get_unique_classes(y)
         prob_ranges = {class_code: [] for class_code in unique_classes}
         class_rocs = {class_code: [] for class_code in unique_classes}
-        for train_index, test_index in kf.split(X):
+        for train_index, test_index in kf.split(X, y):
             self.X_train, self.X_test = X.iloc[train_index].reset_index(
                 drop=True), X.iloc[test_index].reset_index(drop=True)
             self.y_train, self.y_test = y.iloc[train_index].reset_index(
@@ -157,7 +158,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
                 self.y_test = self.y_train
 
             # Apply PCA
-            self.X_train, self.X_test = self.apply_pca()
+            self.X_train, self.X_test = self.apply_pca(data_filters['pca'])
 
             # Run model
             self.train_model()

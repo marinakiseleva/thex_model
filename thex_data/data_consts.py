@@ -7,7 +7,7 @@ All constant, global variables needed in THEx data program. Includes file of dat
 #***************************************************************
 # LOCAL_DATA_PATH to relative path of THEx FITS file, relative to root of
 # package: thex_model
-LOCAL_DATA_PATH = '/../../data/THEx-catalog.v0_0_3.fits'
+LOCAL_DATA_PATH = '/../../data/THEx-training-set.v0_0_1.fits'
 #***************************************************************
 
 
@@ -530,6 +530,33 @@ Columns with non-numeric values that are not used
 drop_cols = ['event', 'ra', 'dec', 'ra_deg', 'dec_deg', 'radec_err', 'host', 'host_ra', 'host_dec', 'ebv', 'host_ra_deg', 'host_dec_deg', 'host_dist', 'host_search_radius', 'is_confirmed_host', 'by_primary_cand',
              'by_transient', 'AllWISE_IsVar', 'HyperLEDA_objtype', 'HyperLEDA_type', 'HyperLEDA_bar', 'HyperLEDA_ring', 'HyperLEDA_multiple', 'HyperLEDA_compactness', 'HyperLEDA_agnclass', "Err",  "_e_",  "_ERR"]
 
+"""
+mag_cols : Columns corresponding to magntiude, which can be subtracted from one another to produce color
+"""
+mag_cols = ['GALEXAIS_FUV', 'GALEXAIS_NUV',
+            'GALEXAIS_FUV.b', 'GALEXAIS_e_FUV.b', 'GALEXAIS_NUV.b',
+            'GALEXAIS_e_NUV.b', 'GALEXAIS_FUV.a', 'GALEXAIS_e_FUV.a', 'GALEXAIS_NUV.a',
+            'GALEXAIS_e_NUV.a', 'GALEXAIS_FUV.4', 'GALEXAIS_e_FUV.4', 'GALEXAIS_NUV.4',
+            'GALEXAIS_e_NUV.4', 'GALEXAIS_FUV.6', 'GALEXAIS_e_FUV.6', 'GALEXAIS_NUV.6',
+            'GALEXAIS_e_NUV.6',
+            'AllWISE_W1mag', 'AllWISE_e_W1mag', 'AllWISE_W2mag', 'AllWISE_e_W2mag',
+            'AllWISE_W3mag', 'AllWISE_e_W3mag', 'AllWISE_W4mag', 'AllWISE_e_W4mag',
+            'PS1_gmag',
+            'PS1_gmagStd', 'PS1_b_gmag', 'PS1_B_gmag',
+            'PS1_gKmag',
+            'PS1_rmag',
+            'PS1_rmagStd', 'PS1_b_rmag', 'PS1_B_rmag',
+            'PS1_rKmag',
+            'PS1_imag',
+            'PS1_imagStd', 'PS1_b_imag', 'PS1_B_imag',
+            'PS1_iKmag',
+            'PS1_zmag',
+            'PS1_zmagStd', 'PS1_b_zmag', 'PS1_B_zmag',
+            'PS1_zKmag',
+            'PS1_ymag',
+            'PS1_ymagStd', 'PS1_b_ymag', 'PS1_B_ymag',
+            'PS1_yKmag'
+            ]
 
 """
 Parent : Children

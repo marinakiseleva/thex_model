@@ -191,4 +191,3 @@ class KDEModelTrain:
             title = title.replace(r, "_")
         plt.savefig(ROOT_DIR + "/output/kernel_fits/" + title)
         plt.close()
-        # plt.cla()
