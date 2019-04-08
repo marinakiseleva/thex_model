@@ -21,8 +21,7 @@ def get_data(col_list, **data_filters):
     """
 
     df = collect_data()
-    df = group_by_tree(df)
-    df = group_cts(df)
+    df = group_by_tree(df, data_filters['transform_labels'])
     df = filter_columns(df.copy(), col_list, data_filters['incl_redshift'])
     df.dropna(axis=0, inplace=True)
 
@@ -41,7 +40,7 @@ def get_data(col_list, **data_filters):
         print("\n\nNo data to run model on. Try changing data filters or limiting number of features. Note: Running on all columns will not work since no data spans all features.\n\n")
         sys.exit()
 
-    print_class_counts(df)
+    # print_class_counts(df)
 
     return df.reset_index(drop=True)
 
@@ -54,7 +53,11 @@ def get_source_target_data(data_columns, **data_filters):
     X = data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
     if data_filters['transform_features']:
         X = transform_features(X)
-    y = data[[TARGET_LABEL]].astype(int).reset_index(drop=True)
+
+    if data_filters['transform_labels']:
+        y = data[[TARGET_LABEL]].astype(int).reset_index(drop=True)
+    else:
+        y = data[[TARGET_LABEL]]
 
     return X, y
 

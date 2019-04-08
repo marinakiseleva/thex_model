@@ -33,6 +33,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
                         'data_split': 0.3,
                         'subsample': None,
                         'transform_features': False,
+                        'transform_labels': True,
                         'incl_redshift': False,
                         'pca': 3  # Number of principal components
 
@@ -188,8 +189,8 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         Split data into k-folds and perform k-fold cross validation
         """
         X, y = get_source_target_data(data_columns, **data_filters)
-        print(list(X))
-        self.visualize_data(y)
+        if data_filters['transform_labels']:
+            self.visualize_data(y)
 
         # Initialize metric collections over all runs
         all_accuracies = []  # list of model accuracies from each run

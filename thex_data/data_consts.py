@@ -563,16 +563,16 @@ Parent : Children
 Hierarchy used for HMC tree
 """
 class_to_subclass = {
-    "TTypes": ["I", "CC", "SLSN", "GRB", "Kilonova", "TDE"],
-    "I": ["I Pec", "Ia", "Ib", "Ic", "Ib/c"],
+    "TTypes": ["I", "CC", "SLSN", "GRB", "Kilonova", "TDE", "AGN", "Candidate", "GW", "Galaxy", "HII Region", "Impostor", "Minor Planet", "Nova", "Other", "PISN", "Star", "False", "Lensing"],
+    "I": ["I Pec", "Ia", "Ib", "Ic", "Ib/c", "nIa"],
     "I Pec": ["Ia Pec", "I-rapid", "I-faint"],
-    "Ia": ["Ia Pec", "Ia-HV"],
+    "Ia": ["Ia Pec", "Ia-HV", "Ia/b", "Ia/c"],
     "Ia Pec": ["Ia CSM", "Ia-91bg", "Ia-91T", "Ia-02cx",
                "Ia-00cx", "Ia-99aa", "Ia-09dc", "Ia-HV"],
     "CC": ["Ib", "Ic", "II"],
-    "Ib": ["Ibn", "Ib Pec"],
+    "Ib": ["Ibn", "Ib Pec", "Ia/c"],
     "Ib Pec": ["Ib-Ca"],
-    "Ic": ["Ic Pec"],
+    "Ic": ["Ic Pec", "Ia/c"],
     "Ic Pec": ["Ic BL", "Ic-lum"],
     "Ib/c": ["Ib/c Pec"],
     "II": ["II P", "II L", "IIn", "IIb", "IIc", "II Pec"],
@@ -585,7 +585,8 @@ class_to_subclass = {
     "SLSN": ["SLSN-I", "SLSN-II", "SLSN-R"],
     "GRB": ["LGRB", "SGRB"],
     "Kilonova": ["KilonovaCand"],
-    "TDE": ["TDE"]
+    "TDE": ["TDE", "MS + SMBH", "He + SMBH", "Planet + WD", "Low-mass TDE", "WD + IMBH"],
+    "Star": ["Variable Star"]
     # "TDE": ["CandidateTDE", "XrayTDE", "UVOptTDE"]
 
 

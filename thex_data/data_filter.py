@@ -47,8 +47,7 @@ def filter_columns(df, col_list, incl_redshift):
 
     # print_features_used(col_list)
     df = df[col_list]
-    # Convert transient class to number code
-    df[TARGET_LABEL] = df[TARGET_LABEL].apply(lambda x: int(cat_code[x]))
+
     return df
 
 
