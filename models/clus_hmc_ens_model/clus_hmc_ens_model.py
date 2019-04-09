@@ -1,3 +1,4 @@
+from collections import Counter
 import numpy as np
 import pandas as pd
 import sys
@@ -53,6 +54,7 @@ class CLUSHMCENS(BaseModel):
             if len(unique_values) > num_values:
                 min_val = min(unique_values)
                 max_val = max(unique_values)
+
                 unique_values = np.linspace(min_val, max_val, num_values)
             # Add each feature/value pair to dict
             for v in unique_values:
@@ -87,12 +89,11 @@ class CLUSHMCENS(BaseModel):
                 scores.append(self.get_variance(
                     labeled_samples, feature, value, label_set))
             # Save minimum-most variance among all classes
-            set_variance[pair] = min(scores)
+            set_variance[tuple(pair)] = min(scores)
 
         # Feature/value that reclusters data with minimum-most variance
         best_feature_val = min(set_variance, key=set_variance.get)
-        remaining_feature_value_pairs.remove(best_feature_val)
-
+        remaining_feature_value_pairs.remove(list(best_feature_val))
         # Split samples into those with feature/value and those without
         samples_greater, samples_less = self.split_samples(
             labeled_samples, best_feature_val[0], best_feature_val[1])
@@ -102,12 +103,12 @@ class CLUSHMCENS(BaseModel):
         if len(samples_greater) == 0:
             sample_greater = LeafNode(self.majority_class(labeled_samples))
         else:
-            sample_greater = train(
+            sample_greater = self.train(
                 samples_greater, remaining_feature_value_pairs, remaining_depth - 1)
         if len(samples_less) == 0:
             sample_less = LeafNode(self.majority_class(labeled_samples))
         else:
-            sample_less = train(
+            sample_less = self.train(
                 samples_less, remaining_feature_value_pairs, remaining_depth - 1)
 
         return InternalNode(best_feature_val,  sample_greater, sample_less)
@@ -116,7 +117,11 @@ class CLUSHMCENS(BaseModel):
         """
         Returns list of labels to iterate over in training
         """
-        return list(labeled_samples[TARGET_LABEL].unique())
+        label_counts = Counter(tuple(e) for e in labeled_samples[TARGET_LABEL].values)
+        unique_labels = []
+        for l in label_counts.keys():
+            unique_labels.append(list(l))
+        return unique_labels
 
     def get_class_data(self, labeled_samples):
         """
@@ -130,10 +135,17 @@ class CLUSHMCENS(BaseModel):
         Var(S) = sum_k (d(v_k, v)^2 / |S|)  where d is distance 
 
         """
+        # If there are no samples give default variance of 10 to discourage an
+        # empty split
+        if labeled_samples.shape[0] == 0:
+            return 10
+
         def get_set_variance(dataset):
             """
             Get variance of dataset based on classes 
             """
+            if dataset.shape[0] == 0:
+                return 10
             class_data = self.get_class_data(dataset)
             total_variance = 0
             mean_vector = self.get_mean_vector(class_data)
@@ -152,24 +164,31 @@ class CLUSHMCENS(BaseModel):
 
         # Filter samples to those with feature/value/label_set
         samples_greater, samples_less = self.split_samples(
-            labeled_samples, feature, value, label_set)
+            labeled_samples.copy(), feature, value, label_set)
 
         variance_samples_with = get_set_variance(samples_greater)
         variance_samples_without = get_set_variance(samples_less)
+
+        return variance_samples_with + variance_samples_without
 
     def is_unambiguous(self, labeled_samples):
         """
         Return True if all samples have the same label; otherwise False
         """
-        class_data = self.get_class_data(labeled_samples)
-        # If max and min are same in each column, there is only 1 unique row in
-        # the whole set
-        max_vals = pd.DataFrame(class_data.values.max(
-            0)[None, :], columns=class_data.columns)
-        min_vals = pd.DataFrame(class_data.values.min(
-            0)[None, :], columns=class_data.columns)
+        label_counts = Counter(tuple(e) for e in labeled_samples[TARGET_LABEL].values)
+        if len(list(label_counts.keys())) == 1:
+            return True
+        return False
 
-        return max_vals.equals(min_vals)
+        # class_data = self.get_class_data(labeled_samples)
+        # # If max and min are same in each column, there is only 1 unique row in
+        # # the whole set
+        # max_vals = pd.DataFrame(class_data.values.max(
+        #     0)[None, :], columns=class_data.columns)
+        # min_vals = pd.DataFrame(class_data.values.min(
+        #     0)[None, :], columns=class_data.columns)
+
+        # return max_vals.equals(min_vals)
 
     def split_samples(self, labeled_samples, feature, value, label_set=None):
         """
@@ -177,10 +196,12 @@ class CLUSHMCENS(BaseModel):
         """
         if label_set is not None:
             # Filter down to just this label
-            samples_greater = labeled_samples[labeled_samples[
-                feature] >= value and labeled_samples[TARGET_LABEL] == label_set]
-            samples_less = labeled_samples[labeled_samples[
-                feature] < value and labeled_samples[TARGET_LABEL] == label_set]
+            labeled_samples['targ_label'] = labeled_samples[TARGET_LABEL].apply(
+                lambda x: 1 if x == label_set else 0)
+            samples_greater = labeled_samples[(labeled_samples[
+                feature] >= value) & (labeled_samples['targ_label'] == 1)]
+            samples_less = labeled_samples[(labeled_samples[
+                feature] < value) & (labeled_samples['targ_label'] == 1)]
             return samples_greater, samples_less
 
         samples_greater = labeled_samples[labeled_samples[feature] >= value]
@@ -191,7 +212,10 @@ class CLUSHMCENS(BaseModel):
         """
         Get average class vector from samples
         """
+
+        # Convert Series to array of class vector (each row is a class vector)
         class_vectors_array = np.array(class_vectors.values.tolist())
+        # Get average row (class vector)
         avg_vector = np.mean(class_vectors_array, axis=0)
         return avg_vector[0]
 
@@ -206,35 +230,29 @@ class CLUSHMCENS(BaseModel):
             raise ValueError(
                 "Need to set up mapping between classes and weights in CLUS-HMC-ENS")
             exit(-1)
-        print("INSIDE WEIGHT VECTOR")
-        print("class vec")
-        print(v1)
-        print("mean vec")
-        print(v2)
-        print(self.class_weights)
-        print((np.dot(self.class_weights, (np.square(v1 - v2))))**(1 / 2))
         return (np.dot(self.class_weights, (np.square(v1 - v2))))**(1 / 2)
 
     def majority_class(self, labeled_samples):
         """
         Returns most frequent labels (as class vector)
         """
-        print('IN MAJOIRTY CLASS!!!!!!!!!!!\n')
-        # Split class vector into columns
-        class_data = pd.DataFrame(
-            labeled_samples[TARGET_LABEL].values.tolist(), columns=self.class_labels)
-        print(list(class_data))
+        label_counts = Counter(tuple(e) for e in labeled_samples[TARGET_LABEL].values)
 
-        # Get most frequent row
-        class_counts = (class_data.groupby(class_data.columns.tolist()
-                                           ).size().sort_values(ascending=False)).head(1)
-        majority_class_df = pd.DataFrame(class_counts).reset_index()
-
-        # Convert row back to list
-        majority_class_vector = majority_class_df[self.class_labels].values.tolist()[0]
-        print(majority_class_vector)
-
+        majority_class_vector = list(max(label_counts, key=label_counts.get))
         return majority_class_vector
+        # # Split class vector into columns
+        # class_data = pd.DataFrame(
+        #     labeled_samples[TARGET_LABEL].values.tolist(), columns=self.class_labels)
+        # print(list(class_data))
+
+        # # Get most frequent row
+        # class_counts = (class_data.groupby(class_data.columns.tolist()
+        #                                    ).size().sort_values(ascending=False)).head(1)
+        # majority_class_df = pd.DataFrame(class_counts).reset_index()
+
+        # # Convert row back to list
+        # majority_class_vector = majority_class_df[self.class_labels].values.tolist()[0]
+        # print(majority_class_vector)
 
     def test_model(self):
         print("\n\n need to implement test_model for CLUS-HMC-ENS \n")
