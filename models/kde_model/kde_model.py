@@ -9,10 +9,12 @@ class KDEModel(BaseModel, KDEModelTrain, KDEModelTest, KDEPerformance):
     Model that classifies using unique Kernel Density Estimates for distributions of each feature, of each class. 
     """
 
-    def __init__(self, cols=None, col_match=None, folds=None, **data_args):
+    def __init__(self, cols=None, col_matches=None, **data_args):
         self.name = "KDE Model"
         self.naive = data_args['naive'] if 'naive' in data_args else False
-        self.run_model(cols, col_match, folds, **data_args)
+        self.cols = cols
+        self.col_matches = col_matches
+        self.user_data_filters = data_args
 
     def train_model(self):
         self.summaries, self.priors = self.train()

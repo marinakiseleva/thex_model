@@ -85,7 +85,12 @@ def plot_class_hist(df):
     """
 
     class_counts = count_classes(df)
-    class_names = [code_cat[c] for c in class_counts.keys()]
+    class_names = []
+    for c in class_counts.keys():
+        if c in code_cat:
+            class_names.append(code_cat[c])
+        else:
+            class_names.append(str(c))
     class_indices = np.arange(len(class_names))
 
     f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)

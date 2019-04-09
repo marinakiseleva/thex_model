@@ -16,8 +16,9 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
     """
     Abstract Class representing base functionality of all models. Subclasses of models implement their own training and testing functions.
     """
+# , cols=None, col_matches=None, **user_data_filters
 
-    def run_model(self, cols=None, col_matches=None, folds=None, **user_data_filters):
+    def run_model(self):
         """
         Collects data based on column parameters, trains, and tests model. Either cols or col_matches need to be passed in, otherwise all numeric columns are used.
         :param cols: Names of columns to filter on
@@ -25,12 +26,17 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         :param folds: Number of folds if using k-fold Cross Validation
         :param user_data_filters: List of data filters user passed in. User options over-ride any default.
         """
+        cols = self.cols
+        col_matches = self.col_matches
+        user_data_filters = self.user_data_filters
+
         # Set defaults on filters
         data_filters = {'num_runs': 1,
                         'test_on_train': False,
+                        'folds': None,
+                        'data_split': 0.3,  # For single run
                         'top_classes': 10,
                         'one_all': None,
-                        'data_split': 0.3,
                         'subsample': None,
                         'transform_features': False,
                         'transform_labels': True,
@@ -45,8 +51,8 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
 
         col_list = collect_cols(cols, col_matches)
 
-        if isinstance(folds, int):
-            self.run_model_cv(col_list, folds, data_filters)
+        if data_filters['folds'] is not None:
+            self.run_model_cv(col_list,  data_filters)
             return 0
 
         # Collect data filtered on these parameters
@@ -184,10 +190,11 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         avg_prob_ranges = self.aggregate_prob_ranges(prob_ranges)
         return avg_accs, avg_rocs, avg_prob_ranges
 
-    def run_model_cv(self, data_columns, k, data_filters):
+    def run_model_cv(self, data_columns, data_filters):
         """
         Split data into k-folds and perform k-fold cross validation
         """
+        k = data_filters['folds']
         X, y = get_source_target_data(data_columns, **data_filters)
         if data_filters['transform_labels']:
             self.visualize_data(y)
