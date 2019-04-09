@@ -16,7 +16,6 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
     """
     Abstract Class representing base functionality of all models. Subclasses of models implement their own training and testing functions.
     """
-# , cols=None, col_matches=None, **user_data_filters
 
     def run_model(self):
         """

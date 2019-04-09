@@ -176,21 +176,12 @@ class CLUSHMCENS(BaseModel):
     def is_unambiguous(self, labeled_samples):
         """
         Return True if all samples have the same label; otherwise False
+        :param labeled_samples: DataFrame of all features and TARGET_LABEL
         """
         label_counts = Counter(tuple(e) for e in labeled_samples[TARGET_LABEL].values)
         if len(list(label_counts.keys())) == 1:
             return True
         return False
-
-        # class_data = self.get_class_data(labeled_samples)
-        # # If max and min are same in each column, there is only 1 unique row in
-        # # the whole set
-        # max_vals = pd.DataFrame(class_data.values.max(
-        #     0)[None, :], columns=class_data.columns)
-        # min_vals = pd.DataFrame(class_data.values.min(
-        #     0)[None, :], columns=class_data.columns)
-
-        # return max_vals.equals(min_vals)
 
     def split_samples(self, labeled_samples, feature, value, label_set=None):
         """
@@ -204,19 +195,22 @@ class CLUSHMCENS(BaseModel):
                 feature] >= value) & (labeled_samples['targ_label'] == 1)]
             samples_less = labeled_samples[(labeled_samples[
                 feature] < value) & (labeled_samples['targ_label'] == 1)]
+            samples_greater = samples_greater.drop('targ_label', axis=1)
+            samples_less = samples_less.drop('targ_label', axis=1)
             return samples_greater, samples_less
 
         samples_greater = labeled_samples[labeled_samples[feature] >= value]
         samples_less = labeled_samples[labeled_samples[feature] < value]
         return samples_greater, samples_less
 
-    def get_mean_vector(self, class_vectors):
+    def get_mean_vector(self, class_df):
         """
         Get average class vector from samples
+        :param class_df: DataFrame of TARGET_LABEL column only
         """
 
         # Convert Series to array of class vector (each row is a class vector)
-        class_vectors_array = np.array(class_vectors.values.tolist())
+        class_vectors_array = np.array(class_df.values.tolist())
         # Get average row (class vector)
         avg_vector = np.mean(class_vectors_array, axis=0)
         return avg_vector[0]
@@ -242,19 +236,6 @@ class CLUSHMCENS(BaseModel):
 
         majority_class_vector = list(max(label_counts, key=label_counts.get))
         return majority_class_vector
-        # # Split class vector into columns
-        # class_data = pd.DataFrame(
-        #     labeled_samples[TARGET_LABEL].values.tolist(), columns=self.class_labels)
-        # print(list(class_data))
-
-        # # Get most frequent row
-        # class_counts = (class_data.groupby(class_data.columns.tolist()
-        #                                    ).size().sort_values(ascending=False)).head(1)
-        # majority_class_df = pd.DataFrame(class_counts).reset_index()
-
-        # # Convert row back to list
-        # majority_class_vector = majority_class_df[self.class_labels].values.tolist()[0]
-        # print(majority_class_vector)
 
     def test_model(self):
         print("\n\n need to implement test_model for CLUS-HMC-ENS \n")
