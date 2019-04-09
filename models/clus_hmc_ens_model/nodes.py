@@ -6,16 +6,11 @@ class LeafNode:
 
 class InternalNode:
 
-    def __init__(self, feature_val_pair, sample_without, sample_with):
+    def __init__(self, feature_val_pair, sample_greater, sample_less):
         """
-        Initialize internal node with 2 children: sample_without is the child that does not have the feature/value pair, and sample_with does
+        Initialize internal node with 2 children: sample_greater is the child with values >= value for the feature, and sample_less is opposite.
         """
-        self.feature_val_pair = feature_val_pair
-        self.sample_without = sample_without
-        self.sample_with = sample_with
-
-    # def classify(self, features):
-    #     """
-    #     Return most likely label using features
-    #     """
-    #     return test(self, features)
+        self.feature = feature_val_pair[0]
+        self.feature_value = feature_val_pair[1]
+        self.sample_greater = sample_greater
+        self.sample_less = sample_less

@@ -18,6 +18,15 @@ class TestHMCENSLogic(unittest.TestCase):
         self.full_test_df = pd.DataFrame(
             [[4, 6, [1, 0, 1]], [1, 3, [0, 0, 1]], [8, 9, [0, 0, 1]]], columns=['feature1', 'feature2', TARGET_LABEL])
 
+    # def test_get_variance(self):
+    #     self.test_hmc_ens.class_weights = np.array([3, 0, 1])
+    #     v = self.test_hmc_ens.get_variance(self.full_test_df, 'feature1', 4.5)
+    #     print(v)
+    #     print(float(v))
+    #     self.assertEqual(v, 0)
+
+        # var greater than is 0, but variance less than is:
+
     def test_split_samples(self):
         # self, labeled_samples, feature, value, label_set=None
         samples_greater, samples_less = self.test_hmc_ens.split_samples(
@@ -27,19 +36,6 @@ class TestHMCENSLogic(unittest.TestCase):
             [[8, 9, [0, 0, 1]]], columns=['feature1', 'feature2', TARGET_LABEL]).reset_index(drop=True)
         actual_less = pd.DataFrame(
             [[4, 6, [1, 0, 1]], [1, 3, [0, 0, 1]]], columns=['feature1', 'feature2', TARGET_LABEL]).reset_index(drop=True)
-
-        self.assertTrue(actual_greater.equals(samples_greater.reset_index(drop=True)))
-        self.assertTrue(actual_less.equals(samples_less.reset_index(drop=True)))
-
-    def test_split_samples_with_label(self):
-        # self, labeled_samples, feature, value, label_set=None
-        samples_greater, samples_less = self.test_hmc_ens.split_samples(
-            self.full_test_df, 'feature1', 4.5, [0, 0, 1])
-
-        actual_greater = pd.DataFrame(
-            [[8, 9, [0, 0, 1]]], columns=['feature1', 'feature2', TARGET_LABEL]).reset_index(drop=True)
-        actual_less = pd.DataFrame(
-            [[1, 3, [0, 0, 1]]], columns=['feature1', 'feature2', TARGET_LABEL]).reset_index(drop=True)
 
         self.assertTrue(actual_greater.equals(samples_greater.reset_index(drop=True)))
         self.assertTrue(actual_less.equals(samples_less.reset_index(drop=True)))

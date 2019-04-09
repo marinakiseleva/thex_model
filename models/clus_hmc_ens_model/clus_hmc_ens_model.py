@@ -19,18 +19,28 @@ class CLUSHMCENS(BaseModel):
     def __init__(self, cols=None, col_matches=None, **data_args):
         self.name = "CLUS-HMC-ENS"
         data_args['transform_labels'] = False
+        data_args['hierarchical_model'] = True
         self.cols = cols
         self.col_matches = col_matches
         self.user_data_filters = data_args
+        # Save class labels to always access in same order
+        self.class_labels = list(cat_code.keys())
 
     def train_model(self):
         """
         Builds hierarchy and tree, and fits training data to it.
         """
-        # Convert labels to class vectors, with 1 meaning it has that class
-        self.class_labels = list(cat_code.keys())
+        labeled_samples, feature_value_pairs = self.setup_data()
+        self.root = self.train(labeled_samples, feature_value_pairs, remaining_depth=300)
+
+    def convert_class_vectors(self, df):
+        """
+        Convert labels of TARGET_LABEL column in passed-in DataFrame to class vectors
+        """
+        # Convert labels to class vectors, with 1 meaning it has that class, and 0
+        # does not
         rows_list = []
-        for df_index, row in self.y_train.iterrows():
+        for df_index, row in df.iterrows():
             class_vector = [0] * len(self.class_labels)
             cur_classes = convert_str_to_list(row[TARGET_LABEL])
             for class_index, c in enumerate(self.class_labels):
@@ -38,7 +48,16 @@ class CLUSHMCENS(BaseModel):
                     class_vector[class_index] = 1
             rows_list.append([class_vector])
         class_vectors = pd.DataFrame(rows_list, columns=[TARGET_LABEL])
+        return class_vectors
 
+    def setup_data(self):
+        """
+        Setup data parameters for model. Return
+        labeled_samples : features and TARGET_LABEL, which for each row has the
+        class_vector
+        feature_value_pairs : list of [f,v] pairs
+        """
+        class_vectors = self.convert_class_vectors(self.y_train)
         # Add labels to training data for complete dataset
         labeled_samples = pd.concat([self.X_train, class_vectors], axis=1)
 
@@ -61,12 +80,7 @@ class CLUSHMCENS(BaseModel):
             # Add each feature/value pair to dict
             for v in unique_values:
                 feature_value_pairs.append([f, v])
-
-        # labeled_samples: features and TARGET_LABEL, which for each row has the
-        # class_vector
-        # feature_value_pairs: list of [f,v] pairs
-        root = self.train(
-            labeled_samples, feature_value_pairs, remaining_depth=300)
+        return labeled_samples, feature_value_pairs
 
     def train(self, labeled_samples, remaining_feature_value_pairs, remaining_depth):
         """
@@ -79,22 +93,17 @@ class CLUSHMCENS(BaseModel):
             return LeafNode(self.majority_class(labeled_samples))
 
         # get majority votes over remaining feature/value pairs
-        set_variance = {}
-        current_variance = self.get_variance(labeled_samples, None, None, None)
-        labels = self.get_labels(labeled_samples)
+        fv_variance = {}
+        # current_variance = self.get_variance(labeled_samples, None, None, None)
         for pair in remaining_feature_value_pairs:
             feature = pair[0]
             value = pair[1]
-            scores = []  # List of scores for each label
-            for label_set in labels:
-                # Get variance of samples with (& without) this feature/value/label
-                scores.append(self.get_variance(
-                    labeled_samples, feature, value, label_set))
-            # Save minimum-most variance among all classes
-            set_variance[tuple(pair)] = min(scores)
+            # Get class variance of samples with (& without) this feature/value
+            var = self.get_variance(labeled_samples, feature, value)
+            fv_variance[tuple(pair)] = var
 
         # Feature/value that reclusters data with minimum-most variance
-        best_feature_val = min(set_variance, key=set_variance.get)
+        best_feature_val = min(fv_variance, key=fv_variance.get)
         remaining_feature_value_pairs.remove(list(best_feature_val))
         # Split samples into those with feature/value and those without
         samples_greater, samples_less = self.split_samples(
@@ -131,10 +140,10 @@ class CLUSHMCENS(BaseModel):
         """
         return labeled_samples[[TARGET_LABEL]]
 
-    def get_variance(self, labeled_samples, feature, value, label_set):
+    def get_variance(self, labeled_samples, feature, value):
         """
         Calculates variance of samples with this feature/value/label and samples without, and returns the sum of both. For each calculate:
-        Var(S) = sum_k (d(v_k, v)^2 / |S|)  where d is distance 
+        Var(S) = sum_k (d(v_k, v)^2 / |S|)  where d is distance
 
         """
         # If there are no samples give default variance of 10 to discourage an
@@ -144,7 +153,7 @@ class CLUSHMCENS(BaseModel):
 
         def get_set_variance(dataset):
             """
-            Get variance of dataset based on classes 
+            Get variance of dataset based on classes
             """
             if dataset.shape[0] == 0:
                 return 10
@@ -154,19 +163,17 @@ class CLUSHMCENS(BaseModel):
             for df_index, class_vector in class_data.iterrows():
                 total_variance += self.get_weighted_distance(
                     class_vector[TARGET_LABEL], mean_vector) ** 2
-            S = 0
-            for i in mean_vector:
-                S += i**2
+            S = len(mean_vector)
 
-            return total_variance / (S**(1 / 2))
+            return total_variance / (S)
 
-        if feature is None and value is None and label_set is None:
+        if feature is None and value is None:
             # Calculate variance among all labeled_samples
             return get_set_variance(labeled_samples)
 
-        # Filter samples to those with feature/value/label_set
+        # Filter samples to those with feature/value
         samples_greater, samples_less = self.split_samples(
-            labeled_samples.copy(), feature, value, label_set)
+            labeled_samples.copy(), feature, value)
 
         variance_samples_with = get_set_variance(samples_greater)
         variance_samples_without = get_set_variance(samples_less)
@@ -183,22 +190,10 @@ class CLUSHMCENS(BaseModel):
             return True
         return False
 
-    def split_samples(self, labeled_samples, feature, value, label_set=None):
+    def split_samples(self, labeled_samples, feature, value):
         """
-        Split samples into those with >= value (samples_greater) and samples < value (samples_less). 
+        Split samples into those with >= value (samples_greater) and samples < value (samples_less).
         """
-        if label_set is not None:
-            # Filter down to just this label
-            labeled_samples['targ_label'] = labeled_samples[TARGET_LABEL].apply(
-                lambda x: 1 if x == label_set else 0)
-            samples_greater = labeled_samples[(labeled_samples[
-                feature] >= value) & (labeled_samples['targ_label'] == 1)]
-            samples_less = labeled_samples[(labeled_samples[
-                feature] < value) & (labeled_samples['targ_label'] == 1)]
-            samples_greater = samples_greater.drop('targ_label', axis=1)
-            samples_less = samples_less.drop('targ_label', axis=1)
-            return samples_greater, samples_less
-
         samples_greater = labeled_samples[labeled_samples[feature] >= value]
         samples_less = labeled_samples[labeled_samples[feature] < value]
         return samples_greater, samples_less
@@ -216,7 +211,7 @@ class CLUSHMCENS(BaseModel):
         return avg_vector[0]
 
     def get_weighted_distance(self, v1, v2):
-        """ 
+        """
         Get weighted Euclidean distance of data between two vectors, using weight vector w
         d(v_1, v_2) = sqrt (sum_i w(c_i) dot (v_1,i - v_2,i)^2)   where v_k,i is ith component of class vector v_k and  w(c_i) is vector of weights for each class
         :param v1: class vector 1
@@ -233,13 +228,72 @@ class CLUSHMCENS(BaseModel):
         Returns most frequent labels (as class vector)
         """
         label_counts = Counter(tuple(e) for e in labeled_samples[TARGET_LABEL].values)
-
         majority_class_vector = list(max(label_counts, key=label_counts.get))
         return majority_class_vector
 
     def test_model(self):
-        print("\n\n need to implement test_model for CLUS-HMC-ENS \n")
-        sys.exit(-1)
+        """
+        Test model on self.y_train data.
+        """
+        predictions = []
+        for index, test_point in self.X_test.iterrows():
+            predicted_class = self.test_sample(self.root, test_point)
+            predictions.append([predicted_class])
+
+        self.predictions = pd.DataFrame(predictions, columns=['predicted_class'])
+        self.evaluate_model()
+
+        return self.predictions
+
+    def test_sample(self, node, testing_features):
+        if type(node) == LeafNode:
+            return node.guess
+
+        # Select child node based on feature value in test_point
+        test_value = testing_features[node.feature]
+        if node.feature_value >= test_value:
+            # Continue down to samples with this feature/value pair
+            return self.test_sample(node.sample_greater, testing_features)
+        else:
+            return self.test_sample(node.sample_less, testing_features)
+
+    def evaluate_model(self):
+        self.y_test_vectors = self.convert_class_vectors(self.y_test)
+        self.get_recall_scores()
+
+    def get_recall_scores(self):
+        """
+        Get recall of each class
+        """
+        class_recalls = {label: 0 for label in self.class_labels}
+        for class_index, class_name in enumerate(self.class_labels):
+            class_recalls[class_name] = self.get_class_recall(class_index)
+        for key in class_recalls.keys():
+            print(str(key) + " : " + str(round(class_recalls[key], 2)))
+
+    def get_class_recall(self, class_index):
+        """
+        Get recall of class passed in using actual and predicted class vectors. Recall is TP/TP+FN
+        """
+        row_count = self.y_test_vectors.shape[0]
+        TP = 0  # True positive count, predicted = actual = 1
+        FN = 0  # False negative count, predicted = 0, actual = 1
+        for index in range(row_count - 1):
+
+            predicted_classes = self.predictions.iloc[index]['predicted_class']
+            actual_classes = self.y_test_vectors.iloc[index][TARGET_LABEL]
+
+            actual_class = actual_classes[class_index]
+            predicted_class = predicted_classes[class_index]
+
+            if actual_class == 1:
+                if actual_class == predicted_class:
+                    TP += 1
+                elif actual_class != predicted_class:
+                    FN += 1
+        denominator = TP + FN
+        class_recall = TP / (TP + FN) if denominator > 0 else 0
+        return class_recall
 
     def get_class_probabilities(self, x):
         print("\n\n need to implement get_class_probabilities for CLUS-HMC-ENS \n")
