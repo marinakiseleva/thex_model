@@ -42,8 +42,11 @@ Contains the different classifiers explored/used in the project. Contains the Hi
 ### kde_model
 Model based n kernel density estimation of feature distributions. Can be run either 'naively' (assuming feature independence and creating distinct distributions per feature per class) or non-naively, which creates a single distribution over all features. 
 
-### tree_model
+### hmc_model
 Decisioning tree using the Hierarchical Multi-label Decisioing Tree from Vens, et al. 2008. 
+
+### clus_hmc_ens_model
+Decisioning tree using the Hierarchical Multi-label Decisioing Tree using bagging and variance based on class vector (CLUS-HMC-ENS) from Schietgat, Vens, Struyf, et al. 2010. 
 
 ## thex_data 
 Data pulling, cleansing, normalizing, preparation, and plotting. 
