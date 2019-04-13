@@ -50,6 +50,19 @@ class CLUSHMCENS(BaseModel):
         class_vectors = pd.DataFrame(rows_list, columns=[TARGET_LABEL])
         return class_vectors
 
+    def get_sample_weights(self, labeled_samples):
+        """
+        Get weight of each sample (1/# of samples in class) and save in list with same order as labeled_samples
+        :param labeled_samples: DataFrame of fetaures and TARGET_LABEL
+        """
+        label_counts = Counter(tuple(e) for e in labeled_samples[TARGET_LABEL].values)
+        sample_weights = []
+        for df_index, row in labeled_samples.iterrows():
+            class_vector = tuple(row[TARGET_LABEL])
+            class_count = label_counts[class_vector]
+            sample_weights.append(1 / class_count)
+        return sample_weights
+
     def setup_data(self):
         """
         Setup data parameters for model. Return
@@ -61,12 +74,15 @@ class CLUSHMCENS(BaseModel):
         # Add labels to training data for complete dataset
         labeled_samples = pd.concat([self.X_train, class_vectors], axis=1)
 
-        # Initialize weight vector
+        # Initialize weight vectors
         tree = init_tree()
         class_level = assign_levels(tree, {}, tree.root, 1)
         self.class_weights = [1 / class_level[c] for c in self.class_labels]
-        print(self.class_labels)
-        print(self.class_weights)
+
+        # Compute sample weights : Weigh each sample so that weights of samples in
+        # each class sum to 1
+        self.sample_weights = self.get_sample_weights(labeled_samples)
+
         # For each feature, find up to 10 random values to use as feature/value pairs
         feature_value_pairs = []
         unique_features = list(self.X_train)
@@ -76,7 +92,6 @@ class CLUSHMCENS(BaseModel):
             if len(unique_values) > num_values:
                 min_val = min(unique_values)
                 max_val = max(unique_values)
-
                 unique_values = np.linspace(min_val, max_val, num_values)
             # Add each feature/value pair to dict
             for v in unique_values:
@@ -126,43 +141,44 @@ class CLUSHMCENS(BaseModel):
 
         return InternalNode(best_feature_val,  sample_greater, sample_less)
 
+    def get_set_variance(self, labeled_samples):
+        """
+        Get variance of dataset based on classes. Based on paper, variance is sum of squared distances between each sample and mean vector. Returns 10 if set is empty in order to penalize tree splits where one side has no data.
+        :param labeled_samples: DataFrame of all features and TARGET_LABEL
+        """
+        if labeled_samples.shape[0] == 0:
+            return 10
+        class_data = labeled_samples[[TARGET_LABEL]]
+        total_variance = 0
+        mean_vector = self.get_mean_vector(class_data)
+        for df_index, class_vector in class_data.iterrows():
+            sample_weight = self.sample_weights[df_index]
+            d = self.get_weighted_distance(class_vector[TARGET_LABEL], mean_vector) ** 2
+            total_variance += d * sample_weight
+        num_samples = labeled_samples.shape[0]
+        return total_variance / num_samples
+
     def get_variance(self, labeled_samples, feature, value):
         """
         Calculates variance of samples with this feature/value/label and samples without, and returns the sum of both. For each calculate:
         Var(S) = sum_k (d(v_k, v)^2 / |S|)  where d is distance
-
+        :param labeled_samples: DataFrame of all features and TARGET_LABEL
         """
         # If there are no samples give default variance of 10 to discourage an
         # empty split
         if labeled_samples.shape[0] == 0:
             return 10
 
-        def get_set_variance(dataset):
-            """
-            Get variance of dataset based on classes
-            """
-            if dataset.shape[0] == 0:
-                return 10
-            class_data = dataset[[TARGET_LABEL]]
-            total_variance = 0
-            mean_vector = self.get_mean_vector(class_data)
-            for df_index, class_vector in class_data.iterrows():
-                total_variance += self.get_weighted_distance(
-                    class_vector[TARGET_LABEL], mean_vector) ** 2
-            S = len(mean_vector)
-
-            return total_variance / (S)
-
         if feature is None and value is None:
             # Calculate variance among all labeled_samples
-            return get_set_variance(labeled_samples)
+            return self.get_set_variance(labeled_samples)
 
         # Filter samples to those with feature/value
         samples_greater, samples_less = self.split_samples(
             labeled_samples.copy(), feature, value)
 
-        variance_samples_with = get_set_variance(samples_greater)
-        variance_samples_without = get_set_variance(samples_less)
+        variance_samples_with = self.get_set_variance(samples_greater)
+        variance_samples_without = self.get_set_variance(samples_less)
 
         return variance_samples_with + variance_samples_without
 
@@ -194,21 +210,21 @@ class CLUSHMCENS(BaseModel):
         class_vectors_array = np.array(class_df.values.tolist())
         # Get average row (class vector)
         avg_vector = np.mean(class_vectors_array, axis=0)
-        # return np.multiply(avg_vector[0], self.class_weights)
         return avg_vector[0]
 
-    def get_weighted_distance(self, v1, v2):
+    def get_weighted_distance(self, v, mean_v):
         """
         Get weighted Euclidean distance of data between two vectors, using weight vector w
         d(v_1, v_2) = sqrt (sum_i w(c_i) dot (v_1,i - v_2,i)^2)   where v_k,i is ith component of class vector v_k and  w(c_i) is vector of weights for each class
-        :param v1: class vector 1
-        :param v2: class vector 2
+        :param v: class vector
+        :param mean_v: mean class vector in set we are comparing against
         """
         if self.class_weights is None:
             raise ValueError(
                 "Need to set up mapping between classes and weights in CLUS-HMC-ENS")
             exit(-1)
-        return (np.dot(self.class_weights, (np.square(v1 - v2))))**(1 / 2)
+        dist = (np.dot(self.class_weights, (np.square(v - mean_v))))**(1 / 2)
+        return dist
 
     def majority_class(self, labeled_samples):
         """
@@ -216,22 +232,7 @@ class CLUSHMCENS(BaseModel):
         # v = [0.5, 0.9, 0.1] for example
         :param labeled_samples: DataFrame of all features and TARGET_LABEL
         """
-        # label_counts = Counter(tuple(e) for e in labeled_samples[TARGET_LABEL].values)
-        # majority_class_vector = list(max(label_counts, key=label_counts.get))
-
-        # majority_class_vector = self.get_mean_vector(labeled_samples[[TARGET_LABEL]])
-
-        class_counts = [0] * len(self.class_weights)
-        class_lists = labeled_samples[[TARGET_LABEL]].values.tolist()
-        for class_vector in class_lists:
-            for index, has_class in enumerate(class_vector[0]):
-                class_counts[index] += has_class  # will be 0 or 1
-
-        # Get mean by diving each class count by # of samples
-        for index, cc in enumerate(class_counts):
-            class_counts[index] = cc / len(class_lists)
-
-        return np.array(class_counts)
+        return self.get_mean_vector(labeled_samples[[TARGET_LABEL]])
 
     def test_model(self):
         """
