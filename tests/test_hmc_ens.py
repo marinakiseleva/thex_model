@@ -7,6 +7,12 @@ import numpy as np
 from models.clus_hmc_ens_model.clus_hmc_ens_model import *
 from thex_data.data_consts import TARGET_LABEL
 
+"""
+Run tests with:
+python -m unittest 
+
+"""
+
 
 class TestHMCENSLogic(unittest.TestCase):
 
@@ -56,9 +62,11 @@ class TestHMCENSLogic(unittest.TestCase):
         self.assertTrue(np.allclose(estimated, expected))
 
     def test_majority_class(self):
-        maj_class = self.test_hmc_ens.majority_class(self.test_df)
-        expected = [0, 0, 1]
-        self.assertEqual(maj_class, expected)
+        self.test_hmc_ens.class_weights = [1, 1, 1]
+        maj_class = self.test_hmc_ens.majority_class(self.full_test_df)
+        expected = [.33, 0, 1]
+        for index, v1 in enumerate(maj_class):
+            self.assertEqual(round(maj_class[index], 2), expected[index])
 
     def test_get_weighted_distance(self):
         # Test logic alone

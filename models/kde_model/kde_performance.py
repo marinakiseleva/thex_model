@@ -37,7 +37,6 @@ class KDEPerformance:
 
         for c in class_probs.keys():
             class_prob_sums[c] = sum(class_probs[c])
-        # print(class_prob_sums)
         return class_prob_sums
 
     def normalize_probabilities(self, probabilities, class_prob_sums):

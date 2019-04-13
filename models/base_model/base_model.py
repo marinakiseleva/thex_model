@@ -41,7 +41,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
                         'transform_features': False,
                         'transform_labels': True,
                         'incl_redshift': False,
-                        'pca': 3  # Number of principal components
+                        'pca': None  # Number of principal components
 
                         }
         # Update filters with any passed-in filters
@@ -99,7 +99,8 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
             self.X_test = X_train.copy()
             self.y_test = y_train.copy()
         # Apply PCA
-        self.X_train, self.X_test = self.apply_pca(data_filters['pca'])
+        if data_filters['pca'] is not None:
+            self.X_train, self.X_test = self.apply_pca(data_filters['pca'])
 
     def apply_pca(self, k):
         """
@@ -109,8 +110,8 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         pca = pca.fit(self.X_train)  # Fit on training
         reduced_training = pca.transform(self.X_train)
         reduced_testing = pca.transform(self.X_test)
-        # print("\nPCA Analysis: Explained Variance Ratio")
-        # print(pca.explained_variance_ratio_)
+        print("\nPCA Analysis: Explained Variance Ratio")
+        print(pca.explained_variance_ratio_)
 
         def convert_to_df(data, k):
             reduced_columns = []
@@ -166,7 +167,8 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
                 self.y_test = self.y_train
 
             # Apply PCA
-            self.X_train, self.X_test = self.apply_pca(data_filters['pca'])
+            if data_filters['pca'] is not None:
+                self.X_train, self.X_test = self.apply_pca(data_filters['pca'])
 
             # Run model
             self.train_model()

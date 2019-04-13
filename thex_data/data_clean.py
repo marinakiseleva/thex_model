@@ -55,18 +55,11 @@ def group_by_tree(df, transform_labels):
 
     for index, row in df.iterrows():
         orig_labels = convert_str_to_list(row['claimedtype'])
-        max_depth = 0
-        min_label = None
-        for label in orig_labels:
-            if label in groupings:
-                # Groups labels into mapped definitions, ie. 1c -> Ic
-                label = groupings[label]
 
-            if label in node_depths and node_depths[label] > max_depth:
-                max_depth = node_depths[label]
-                min_label = label
+        label = find_max_label(orig_labels, node_depths)
+        # label = find_min_label(orig_labels, node_depths)
 
-        df.at[index, 'claimedtype'] = min_label
+        df.at[index, 'claimedtype'] = label
 
     df[TARGET_LABEL] = df['claimedtype'].apply(
         lambda x: groupings[x] if x in groupings else None)
@@ -74,8 +67,42 @@ def group_by_tree(df, transform_labels):
 
     # Convert transient class to number code
     df[TARGET_LABEL] = df[TARGET_LABEL].apply(lambda x: int(cat_code[x]))
-
     return df
+
+
+def find_min_label(labels, node_depths):
+    """
+    Find label with minimal depth (highest in the tree, excluding root)
+    """
+    min_depth = 10
+    min_label = None
+    for label in labels:
+        if label in groupings:
+            # Groups labels into mapped definitions, ie. 1c -> Ic
+            label = groupings[label]
+
+        if label in node_depths and node_depths[label] < min_depth and label != 'TTypes':
+            min_depth = node_depths[label]
+            min_label = label
+    return min_label
+
+
+def find_max_label(labels, node_depths):
+    """
+    Find label with maximal depth (deepest in the tree)
+    """
+    max_depth = 0
+    max_label = None
+
+    for label in labels:
+        if label in groupings:
+            # Groups labels into mapped definitions, ie. 1c -> Ic
+            label = groupings[label]
+
+        if label in node_depths and node_depths[label] > max_depth:
+            max_depth = node_depths[label]
+            max_label = label
+    return max_label
 
 
 def fill_nulls(df):

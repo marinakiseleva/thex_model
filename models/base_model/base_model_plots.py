@@ -32,6 +32,13 @@ class BaseModelVisualization:
 
         plt.show()
 
+    def plot_example_output(self, X, y):
+        """
+        Plots example output of probability across transient types for sample
+        :param X: DataFrame of features with 1 row, for single sample
+        :param y: Corresponding label in DataFrame with TARGET_LABEL column
+        """
+
     def plot_probability_correctness(self, prob_ranges=None, title=None):
         """
         Plots accuracy (y) vs. probability assigned to class (x)

@@ -13,7 +13,7 @@ from models.clus_hmc_ens_model.nodes import *
 
 class CLUSHMCENS(BaseModel):
     """
-    Hierarchical Multi-Label Classifier based on predictive clustering tree (PCT) and using bagging. Implementation of CLUS-HMC-ENS outlined in Kocev, Dzeroski 2010.
+    Hierarchical Multi-Label Classifier based on predictive clustering tree (PCT) and using bagging. Implementation of CLUS-HMC-ENS outlined in Kocev, Dzeroski 2010. Splits using reduction in class-weighted variance.
     """
 
     def __init__(self, cols=None, col_matches=None, **data_args):
@@ -64,8 +64,9 @@ class CLUSHMCENS(BaseModel):
         # Initialize weight vector
         tree = init_tree()
         class_level = assign_levels(tree, {}, tree.root, 1)
-        self.class_weights = [class_level[c] for c in self.class_labels]
-
+        self.class_weights = [1 / class_level[c] for c in self.class_labels]
+        print(self.class_labels)
+        print(self.class_weights)
         # For each feature, find up to 10 random values to use as feature/value pairs
         feature_value_pairs = []
         unique_features = list(self.X_train)
@@ -89,7 +90,9 @@ class CLUSHMCENS(BaseModel):
         :param remaining_feature_value_pairs: list of feature/value pairs
         :param remaining_depth: # of levels tree is allowed to construct
         """
-        if remaining_depth == 0 or self.is_unambiguous(labeled_samples) or len(remaining_feature_value_pairs) == 0:
+        num_samples = labeled_samples.shape[0]
+        leaf_min = 5  # Minimum number of samples in a leaf
+        if remaining_depth == 0 or self.is_unambiguous(labeled_samples) or len(remaining_feature_value_pairs) == 0 or num_samples <= leaf_min:
             return LeafNode(self.majority_class(labeled_samples))
 
         # get majority votes over remaining feature/value pairs
@@ -102,7 +105,7 @@ class CLUSHMCENS(BaseModel):
             var = self.get_variance(labeled_samples, feature, value)
             fv_variance[tuple(pair)] = var
 
-        # Feature/value that reclusters data with minimum-most variance
+        # Split based on minimum variance
         best_feature_val = min(fv_variance, key=fv_variance.get)
         remaining_feature_value_pairs.remove(list(best_feature_val))
         # Split samples into those with feature/value and those without
@@ -110,7 +113,6 @@ class CLUSHMCENS(BaseModel):
             labeled_samples, best_feature_val[0], best_feature_val[1])
 
         # If split resulted in 0 samples -> return leaf node with best current guess
-
         if len(samples_greater) == 0:
             sample_greater = LeafNode(self.majority_class(labeled_samples))
         else:
@@ -123,22 +125,6 @@ class CLUSHMCENS(BaseModel):
                 samples_less, remaining_feature_value_pairs, remaining_depth - 1)
 
         return InternalNode(best_feature_val,  sample_greater, sample_less)
-
-    def get_labels(self, labeled_samples):
-        """
-        Returns list of labels to iterate over in training
-        """
-        label_counts = Counter(tuple(e) for e in labeled_samples[TARGET_LABEL].values)
-        unique_labels = []
-        for l in label_counts.keys():
-            unique_labels.append(list(l))
-        return unique_labels
-
-    def get_class_data(self, labeled_samples):
-        """
-        Drops all feature information, returning just class information for data
-        """
-        return labeled_samples[[TARGET_LABEL]]
 
     def get_variance(self, labeled_samples, feature, value):
         """
@@ -157,7 +143,7 @@ class CLUSHMCENS(BaseModel):
             """
             if dataset.shape[0] == 0:
                 return 10
-            class_data = self.get_class_data(dataset)
+            class_data = dataset[[TARGET_LABEL]]
             total_variance = 0
             mean_vector = self.get_mean_vector(class_data)
             for df_index, class_vector in class_data.iterrows():
@@ -208,6 +194,7 @@ class CLUSHMCENS(BaseModel):
         class_vectors_array = np.array(class_df.values.tolist())
         # Get average row (class vector)
         avg_vector = np.mean(class_vectors_array, axis=0)
+        # return np.multiply(avg_vector[0], self.class_weights)
         return avg_vector[0]
 
     def get_weighted_distance(self, v1, v2):
@@ -225,11 +212,26 @@ class CLUSHMCENS(BaseModel):
 
     def majority_class(self, labeled_samples):
         """
-        Returns most frequent labels (as class vector)
+        Paper says to use mean vector as majority class leaf assignment; each element in output vector is proportion of examples belonging to that class
+        # v = [0.5, 0.9, 0.1] for example
+        :param labeled_samples: DataFrame of all features and TARGET_LABEL
         """
-        label_counts = Counter(tuple(e) for e in labeled_samples[TARGET_LABEL].values)
-        majority_class_vector = list(max(label_counts, key=label_counts.get))
-        return majority_class_vector
+        # label_counts = Counter(tuple(e) for e in labeled_samples[TARGET_LABEL].values)
+        # majority_class_vector = list(max(label_counts, key=label_counts.get))
+
+        # majority_class_vector = self.get_mean_vector(labeled_samples[[TARGET_LABEL]])
+
+        class_counts = [0] * len(self.class_weights)
+        class_lists = labeled_samples[[TARGET_LABEL]].values.tolist()
+        for class_vector in class_lists:
+            for index, has_class in enumerate(class_vector[0]):
+                class_counts[index] += has_class  # will be 0 or 1
+
+        # Get mean by diving each class count by # of samples
+        for index, cc in enumerate(class_counts):
+            class_counts[index] = cc / len(class_lists)
+
+        return np.array(class_counts)
 
     def test_model(self):
         """
@@ -237,8 +239,8 @@ class CLUSHMCENS(BaseModel):
         """
         predictions = []
         for index, test_point in self.X_test.iterrows():
-            predicted_class = self.test_sample(self.root, test_point)
-            predictions.append([predicted_class])
+            predicted_class_vector = self.test_sample(self.root, test_point)
+            predictions.append([predicted_class_vector])
 
         self.predictions = pd.DataFrame(predictions, columns=['predicted_class'])
         self.evaluate_model()
@@ -258,6 +260,7 @@ class CLUSHMCENS(BaseModel):
             return self.test_sample(node.sample_less, testing_features)
 
     def evaluate_model(self):
+        # Convert actual labels to class vectors for comparison
         self.y_test_vectors = self.convert_class_vectors(self.y_test)
         self.get_recall_scores()
 
@@ -268,6 +271,7 @@ class CLUSHMCENS(BaseModel):
         class_recalls = {label: 0 for label in self.class_labels}
         for class_index, class_name in enumerate(self.class_labels):
             class_recalls[class_name] = self.get_class_recall(class_index)
+        print("\n\nRecall Performance\n")
         for key in class_recalls.keys():
             print(str(key) + " : " + str(round(class_recalls[key], 2)))
 
@@ -275,6 +279,7 @@ class CLUSHMCENS(BaseModel):
         """
         Get recall of class passed in using actual and predicted class vectors. Recall is TP/TP+FN
         """
+        threshold = 0.4
         row_count = self.y_test_vectors.shape[0]
         TP = 0  # True positive count, predicted = actual = 1
         FN = 0  # False negative count, predicted = 0, actual = 1
@@ -286,7 +291,7 @@ class CLUSHMCENS(BaseModel):
             actual_class = actual_classes[class_index]
             predicted_class = predicted_classes[class_index]
 
-            if actual_class == 1:
+            if actual_class >= threshold:
                 if actual_class == predicted_class:
                     TP += 1
                 elif actual_class != predicted_class:
