@@ -60,8 +60,9 @@ def one_all(df, keep_classes):
         return df
     class_codes = [cat_code[name] for name in keep_classes]
     one = df[df[TARGET_LABEL].isin(class_codes)]  # keep unique classes
-    rem = df.loc[~df[TARGET_LABEL].isin(class_codes)].copy()  # set to other
-    rem[TARGET_LABEL] = 100
+    # Set remaining classes to other
+    rem = df.loc[~df[TARGET_LABEL].isin(class_codes)].copy()
+    rem[TARGET_LABEL] = cat_code['Other']
     df = pd.concat([one, rem])
     return df
 
@@ -79,7 +80,9 @@ def get_popular_classes(df, top=5):
     return list(ttype_counts[TARGET_LABEL])
 
 
-def filter_top_classes(df, top=5):
+def filter_top_classes(df, top):
+    if top is None:
+        return df
     top_classes = get_popular_classes(df, top=top)
     return df.loc[df[TARGET_LABEL].isin(top_classes)]
 

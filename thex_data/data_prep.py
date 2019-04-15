@@ -25,7 +25,8 @@ def get_data(col_list, **data_filters):
     df = filter_columns(df.copy(), col_list, data_filters['incl_redshift'])
     df.dropna(axis=0, inplace=True)
 
-    # data_plot.plot_feature_distribution(df, "redshift")
+    # Plots Entire Feature Dist
+    data_plot.plot_feature_distribution(df, "redshift")
 
     # Filter to most popular classes
     df = filter_top_classes(df, top=data_filters['top_classes'])
@@ -40,7 +41,7 @@ def get_data(col_list, **data_filters):
         print("\n\nNo data to run model on. Try changing data filters or limiting number of features. Note: Running on all columns will not work since no data spans all features.\n\n")
         sys.exit()
 
-    # print_class_counts(df)
+    print_class_counts(df)
 
     return df.reset_index(drop=True)
 

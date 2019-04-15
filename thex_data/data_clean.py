@@ -11,6 +11,7 @@ from hmc import hmc
 
 
 def init_tree():
+    print("\n\nConstructing Class Hierarchy Tree...")
     hmc_hierarchy = hmc.ClassHierarchy("TTypes")
     for parent in hierarchy.keys():
         # hierarchy maps parents to children, so get all children

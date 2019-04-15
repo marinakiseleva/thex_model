@@ -5,6 +5,8 @@ import pandas as pd
 
 from thex_data.data_consts import TARGET_LABEL
 
+PRED_LABEL = 'predicted_class'
+
 
 class BaseModelPerformance:
     """
@@ -20,7 +22,6 @@ class BaseModelPerformance:
         percent_ranges: Ranges themselves
         """
         class_col = str(class_code)
-        # percent_correct = []
         percent_ranges = [0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]
         count_ranges = []  # Total count in each range
         corr_ranges = []  # Correctly predicted in each range
@@ -101,7 +102,10 @@ class BaseModelPerformance:
         std = np.sqrt(np.var(samples))
         x = np.linspace(0, 1, num=100)
         # Fit normal distribution to mean and std of data
-        const = 1.0 / np.sqrt(2 * np.pi * (std**2))
+        if std == 0:
+            const = 0
+        else:
+            const = 1.0 / np.sqrt(2 * np.pi * (std**2))
         y = const * np.exp(-((x - mean)**2) / (2.0 * (std**2)))
 
         return x, y
@@ -146,7 +150,7 @@ class BaseModelPerformance:
         """
         Gets the count of each existing class in this dataframe
         """
-        df = self.combine_dfs()
+        df = self.combine_pred_actual()
         class_counts = []
         for tclass in classes:
             # Get count of this class
@@ -154,35 +158,60 @@ class BaseModelPerformance:
             class_counts.append(class_count)
         return class_counts
 
-    def get_percent_correct(self, df_compare):
+    def get_class_precisions(self):
         """
-        Gets % of rows of dataframe that have correct column marked as 1. This column indicates if TARGET_LABEL == predicted_class
+        Get precision of each class separately
         """
-        count_correct = df_compare[df_compare.correct == 1].shape[0]
-        count_total = df_compare.shape[0]
-        perc_correct = count_correct / count_total
-        return perc_correct
-
-    def get_class_accuracies(self):
-        """
-        Get accuracy of each class separately
-        """
-        df = self.combine_dfs()
+        df = self.combine_pred_actual()
         class_codes = list(df[TARGET_LABEL].unique())
-        class_accuracies = {}
+        class_precisions = {}
         for class_code in class_codes:
-            # filter df on this class code
-            df_class = df[df[TARGET_LABEL] == class_code]
-            class_accuracies[class_code] = self.get_percent_correct(df_class)
-        return collections.OrderedDict(sorted(class_accuracies.items()))
+            class_precisions[class_code] = self.get_class_precision(df, class_code)
+        return collections.OrderedDict(sorted(class_precisions.items()))
 
-    def combine_dfs(self):
+    def get_class_precision(self, df_compare, class_code):
+        """
+        Gets # of samples predicted correctly out of all positive predictions: # true positives/ # true positives + # of false positives
+        """
+        true_positives = df_compare[
+            (df_compare[PRED_LABEL] == class_code) & (df_compare[TARGET_LABEL] == class_code)].shape[0]
+        false_positives = df_compare[
+            (df_compare[PRED_LABEL] == class_code) & (df_compare[TARGET_LABEL] != class_code)].shape[0]
+        total = true_positives + false_positives
+        if total == 0:
+            precision = 0
+        else:
+            precision = true_positives / total
+        return precision
+
+    def get_class_recalls(self):
+        """
+        Get accuracy (recall) of each class separately
+        """
+        df = self.combine_pred_actual()
+        class_codes = list(df[TARGET_LABEL].unique())
+        class_recalls = {}
+        for class_code in class_codes:
+            class_recalls[class_code] = self.get_class_recall(df, class_code)
+        return collections.OrderedDict(sorted(class_recalls.items()))
+
+    def get_class_recall(self, df_compare, class_code):
+        """
+        Gets recall of this class: # true positives/ # of actual positives
+        """
+        true_positives = df_compare[
+            (df_compare[PRED_LABEL] == class_code) & (df_compare[TARGET_LABEL] == class_code)].shape[0]
+        actual_positives = df_compare[df_compare[TARGET_LABEL] == class_code].shape[0]
+        recall = true_positives / actual_positives
+        return recall
+
+    def combine_pred_actual(self):
         """
         Combines predicted with actual classes in 1 DataFrame with new 'correct' column which has a 1 if the prediction matches the actual class, and 0 otherwise
         """
         predicted_classes = self.predictions
         actual_classes = self.y_test
-        PRED_LABEL = 'predicted_class'
+
         if type(predicted_classes) == list:
             predicted_classes = pd.DataFrame(predicted_classes, columns=[PRED_LABEL])
         if type(actual_classes) == list:
@@ -193,8 +222,7 @@ class BaseModelPerformance:
         actual_classes.reset_index(drop=True, inplace=True)
 
         df_compare = pd.concat([predicted_classes, actual_classes], axis=1)
-        df_compare['correct'] = df_compare.apply(
-            lambda row: 1 if row[PRED_LABEL] == row[TARGET_LABEL] else 0, axis=1)
+
         return df_compare
 
     ###########################
@@ -203,8 +231,8 @@ class BaseModelPerformance:
 
     def aggregate_accuracies(self, model_results, unique_classes):
         """
-        Aggregate accuracies from several runs. Returns mapping of classes to average accuracy.
-        :param model_results: List of accuracies from 1 or more runs; each item in list is a mapping from get_class_accuracies
+        Aggregate class accuracies from several runs. Returns mapping of classes to average accuracy.
+        :param model_results: List of accuracies from 1 or more runs; each item in list is a mapping from get_class_recalls
         :param y: Testing labels 
         """
         accuracy_per_class = {c: 0 for c in unique_classes}

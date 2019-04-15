@@ -7,8 +7,8 @@ All constant, global variables needed in THEx data program. Includes file of dat
 #***************************************************************
 # LOCAL_DATA_PATH to relative path of THEx FITS file, relative to root of
 # package: thex_model
-# LOCAL_DATA_PATH = '/../../data/THEx-training-set.v0_0_1.fits'
-LOCAL_DATA_PATH = '/../../data/THEx-catalog.v0_0_4.fits'
+LOCAL_DATA_PATH = '/../../data/THEx-training-set.v0_0_1.fits'
+# LOCAL_DATA_PATH = '/../../data/THEx-catalog.v0_0_4.fits'
 #***************************************************************
 
 
@@ -567,11 +567,11 @@ class_to_subclass = {
     "TTypes": ["I", "CC", "SLSN", "GRB", "Kilonova", "TDE", "AGN", "Candidate", "GW", "Galaxy", "HII Region", "Impostor", "Minor Planet", "Nova", "Other", "PISN", "Star", "False", "Lensing"],
     "I": ["I Pec", "Ia", "Ib", "Ic", "Ib/c", "nIa"],
     "I Pec": ["Ia Pec", "I-rapid", "I-faint"],
-    "Ia": ["Ia Pec", "Ia-HV", "Ia/b", "Ia/c"],
+    "Ia": ["Ia Pec", "Ia-HV", "Ia/b", "Ia/c", "Ia-02cx"],
     "Ia Pec": ["Ia CSM", "Ia-91bg", "Ia-91T", "Ia-02cx",
                "Ia-00cx", "Ia-99aa", "Ia-09dc", "Ia-HV"],
     "CC": ["Ib", "Ic", "II"],
-    "Ib": ["Ibn", "Ib Pec", "Ia/c"],
+    "Ib": ["Ibn", "Ib Pec"],
     "Ib Pec": ["Ib-Ca"],
     "Ic": ["Ic Pec", "Ia/c"],
     "Ic Pec": ["Ic BL", "Ic-lum"],

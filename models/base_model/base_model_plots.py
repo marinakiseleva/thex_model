@@ -230,7 +230,7 @@ class BaseModelVisualization:
         plt.xlabel('Predicted label')
         self.display_and_save_plot(title, ax)
 
-    def plot_accuracies(self, class_accuracies, plot_title, class_counts=None):
+    def plot_accuracies(self, class_accuracies, plot_title, class_counts=None, ylabel="Accuracy"):
         """
         Visualizes accuracy per class with bar graph
         """
@@ -245,7 +245,7 @@ class BaseModelVisualization:
             axis=ax, x_vals=class_names, y_vals=accuracies, annotations=class_counts)
 
         plt.xlabel('Transient Class', fontsize=12)
-        plt.ylabel('Accuracy', fontsize=12)
+        plt.ylabel(ylabel, fontsize=12)
         self.display_and_save_plot(plot_title, ax)
 
     #####################################

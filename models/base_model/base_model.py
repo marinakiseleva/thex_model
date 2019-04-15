@@ -4,7 +4,7 @@ from sklearn.model_selection import KFold, StratifiedKFold
 from thex_data.data_init import *
 from thex_data.data_consts import drop_cols
 from thex_data.data_prep import get_train_test, get_source_target_data
-from thex_data.data_print import print_filters
+from thex_data.data_print import *
 from thex_data import data_plot
 from models.base_model.base_model_performance import BaseModelPerformance
 from models.base_model.base_model_plots import BaseModelVisualization
@@ -35,7 +35,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
                         'folds': None,
                         'data_split': 0.3,  # For single run
                         'hierarchical_model': False,
-                        'top_classes': 10,
+                        'top_classes': None,
                         'one_all': None,
                         'subsample': None,
                         'transform_features': False,
@@ -50,7 +50,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         print_filters(data_filters)
 
         col_list = collect_cols(cols, col_matches)
-
+        print_features_used(col_list)
         if data_filters['folds'] is not None:
             self.run_model_cv(col_list,  data_filters)
             return 0
@@ -110,8 +110,8 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         pca = pca.fit(self.X_train)  # Fit on training
         reduced_training = pca.transform(self.X_train)
         reduced_testing = pca.transform(self.X_test)
-        print("\nPCA Analysis: Explained Variance Ratio")
-        print(pca.explained_variance_ratio_)
+        # print("\nPCA Analysis: Explained Variance Ratio")
+        # print(pca.explained_variance_ratio_)
 
         def convert_to_df(data, k):
             reduced_columns = []
@@ -137,14 +137,19 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         """
         Evaluate and plot performance of model
         """
-        self.plot_probability_correctness()
+        # self.plot_probability_correctness()
         self.plot_roc_curves()
         # Get accuracy per class of transient
-        class_accuracies = self.get_class_accuracies()
-        class_counts = self.get_class_counts(class_accuracies.keys())
+        class_recalls = self.get_class_recalls()
+        class_precisions = self.get_class_precisions()
+        class_counts = self.get_class_counts(class_recalls.keys())
         data_type = 'Training' if test_on_train else 'Testing'
-        title = self.name + " Accuracy on " + data_type + " Data"
-        self.plot_accuracies(class_accuracies, title, class_counts)
+        title = self.name + " Recall on " + data_type + " Data"
+        self.plot_accuracies(class_recalls, title, class_counts, ylabel="Recall")
+
+        class_counts = self.get_class_counts(class_precisions.keys())
+        title = self.name + " Precision on " + data_type + " Data"
+        self.plot_accuracies(class_precisions, title, class_counts, ylabel="Precision")
         self.plot_confusion_matrix(normalize=True)
 
     def run_cross_validation(self, k, X, y, data_filters):
@@ -152,7 +157,8 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         Run k-fold cross validation
         """
         kf = StratifiedKFold(n_splits=k, shuffle=True)
-        accuracies = []
+        recalls = []
+        precisions = []
         unique_classes = self.get_unique_classes(y)
         prob_ranges = {class_code: [] for class_code in unique_classes}
         class_rocs = {class_code: [] for class_code in unique_classes}
@@ -185,13 +191,15 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
                 perc_ranges, corr_ranges, count_ranges = self.get_corr_prob_ranges(
                     X_preds, class_code)
                 prob_ranges[class_code].append([perc_ranges, corr_ranges, count_ranges])
-            accuracies.append(self.get_class_accuracies())
+            recalls.append(self.get_class_recalls())
+            precisions.append(self.get_class_precisions())
 
         # Get average accuracy per class (mapping)
-        avg_accs = self.aggregate_accuracies(accuracies, unique_classes)
+        avg_recalls = self.aggregate_accuracies(recalls, unique_classes)
+        avg_precisions = self.aggregate_accuracies(precisions, unique_classes)
         avg_rocs = self.aggregate_rocs(class_rocs)
         avg_prob_ranges = self.aggregate_prob_ranges(prob_ranges)
-        return avg_accs, avg_rocs, avg_prob_ranges
+        return avg_recalls, avg_precisions, avg_rocs, avg_prob_ranges
 
     def run_model_cv(self, data_columns, data_filters):
         """
@@ -203,20 +211,23 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
             self.visualize_data(y)
 
         # Initialize metric collections over all runs
-        all_accuracies = []  # list of model accuracies from each run
+        class_recalls = []  # list of model accuracies/class recalls from each run
+        class_precisions = []  # precision of each class from each run
         unique_classes = self.get_unique_classes(y)
         # true positive/false positive rates per class from each run
         all_rocs = {class_code: [] for class_code in unique_classes}
         all_prob_ranges = {class_code: [] for class_code in unique_classes}
         for index_run in range(data_filters['num_runs']):
-            cur_acc, cur_rocs, cur_probs = self.run_cross_validation(
+            cur_recalls, cur_precisions, cur_rocs, cur_probs = self.run_cross_validation(
                 k, X, y, data_filters)
-            all_accuracies.append(cur_acc)
+            class_recalls.append(cur_recalls)
+            class_precisions.append(cur_precisions)
             for class_code in unique_classes:
                 all_rocs[class_code].append(cur_rocs[class_code])
                 all_prob_ranges[class_code].append(cur_probs[class_code])
 
-        avg_accs = self.aggregate_accuracies(all_accuracies, unique_classes)
+        avg_recalls = self.aggregate_accuracies(class_recalls, unique_classes)
+        avg_precisions = self.aggregate_accuracies(class_precisions, unique_classes)
         avg_rocs = self.aggregate_rocs(all_rocs)
         avg_prob_ranges = self.aggregate_prob_ranges(all_prob_ranges)
 
@@ -224,7 +235,8 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         info = " of " + self.name + " from " + str(data_filters['num_runs']) + " runs of " + \
             str(k) + "-fold CV on " + data_type + " data"
 
-        self.plot_accuracies(avg_accs, "Accuracy" + info)
+        self.plot_accuracies(avg_recalls, "Recall" + info, ylabel="Recall")
+        self.plot_accuracies(avg_precisions, "Precision" + info, ylabel="Precision")
         self.plot_roc_curves(avg_rocs, "ROCs" + info)
         self.plot_probability_correctness(
             avg_prob_ranges, "Accuracy vs Probability" + info)

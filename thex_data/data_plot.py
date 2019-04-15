@@ -43,9 +43,8 @@ def plot_feature_distribution(df, feature, logged=True):
 
     if logged:
         plt.yscale('log', nonposy='clip')
-        ylabel = "Log Class Count"
-    else:
-        ylabel = "Class Count"
+
+    ylabel = "Class Count"
     plt.title("Transient Type Distributions over " + feature)
     plt.xlabel(feature)
     plt.ylabel(ylabel)
@@ -106,5 +105,5 @@ def plot_class_hist(df):
     replace_strs = ["\n", " ", ":", ".", ",", "/"]
     for r in replace_strs:
         title = title.replace(r, "_")
-    plt.savefig(ROOT_DIR + "/output/classdistributions/" + title)
+    # plt.savefig(ROOT_DIR + "/output/classdistributions/" + title)
     plt.show()

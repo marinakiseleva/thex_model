@@ -35,7 +35,6 @@ def derive_diffs(df):
     :param df: DataFrame of features
     """
     features = list(df)
-    print(features)
     for index, colname1 in enumerate(features):
         if index < len(features) - 1:
             colname2 = df.columns[index + 1]  # Get next column
