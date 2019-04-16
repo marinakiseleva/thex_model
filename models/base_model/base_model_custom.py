@@ -3,7 +3,7 @@ import collections
 import numpy as np
 import pandas as pd
 
-from thex_data.data_consts import TARGET_LABEL, cat_code
+from thex_data.data_consts import TARGET_LABEL, cat_code, code_cat
 
 PRED_LABEL = 'predicted_class'
 
@@ -45,7 +45,16 @@ class BaseModelCustom:
                 str(X) + " samples with lowest probabilities for " + class_name
             self.plot_accuracies(class_counts, plot_title,
                                  class_counts=None, ylabel="Amount")
+            return smallest_probs_X
         # Get X smallest probability
-        get_dist_plot(4)
-        get_dist_plot(10)
-        get_dist_plot(50)
+        smallest_probs_X = get_dist_plot(50)
+
+        # Convert actual_class  predicted_class  to names
+        smallest_probs_X['actual_class_name'] = smallest_probs_X[
+            'actual_class'].apply(lambda x: code_cat[int(x)])
+        smallest_probs_X['predicted_class_name'] = smallest_probs_X[
+            'predicted_class'].apply(lambda x: code_cat[int(x)])
+
+        print("\nSamples with Lowest Probability of Ia")
+        print(smallest_probs_X[['actual_class_name',
+                                'predicted_class_name', 'probability']])
