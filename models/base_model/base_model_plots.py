@@ -32,7 +32,7 @@ class BaseModelVisualization:
 
         plt.show()
 
-    def plot_example_output(self, X, y):
+    # def plot_example_output(self, X, y):
         """
         Plots example output of probability across transient types for sample
         :param X: DataFrame of features with 1 row, for single sample

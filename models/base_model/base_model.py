@@ -137,7 +137,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         """
         Evaluate and plot performance of model
         """
-        # self.plot_probability_correctness()
+        self.plot_probability_correctness()
         self.plot_roc_curves()
         # Get accuracy per class of transient
         class_recalls = self.get_class_recalls()

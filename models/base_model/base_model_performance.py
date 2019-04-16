@@ -3,7 +3,7 @@ import collections
 import numpy as np
 import pandas as pd
 
-from thex_data.data_consts import TARGET_LABEL
+from thex_data.data_consts import TARGET_LABEL, code_cat
 
 PRED_LABEL = 'predicted_class'
 
@@ -179,9 +179,10 @@ class BaseModelPerformance:
             (df_compare[PRED_LABEL] == class_code) & (df_compare[TARGET_LABEL] != class_code)].shape[0]
         total = true_positives + false_positives
         if total == 0:
-            precision = 0
+            precision = 1
         else:
             precision = true_positives / total
+
         return precision
 
     def get_class_recalls(self):

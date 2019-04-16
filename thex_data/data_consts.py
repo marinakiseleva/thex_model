@@ -556,7 +556,11 @@ mag_cols = ['GALEXAIS_FUV', 'GALEXAIS_NUV',
             'PS1_zKmag',
             'PS1_ymag',
             'PS1_ymagStd', 'PS1_b_ymag', 'PS1_B_ymag',
-            'PS1_yKmag'
+            'PS1_yKmag',
+
+            'NED_GALEX_FUV', 'NED_GALEX_NUV', 'NED_2MASS_J', 'NED_2MASS_H', 'NED_2MASS_Ks', 'NED_SDSS_u', 'NED_SDSS_g', 'NED_SDSS_r', 'NED_SDSS_i', 'NED_SDSS_z',  'AllWISE_Jmag', 'AllWISE_Hmag', 'AllWISE_Kmag'
+
+
             ]
 
 """

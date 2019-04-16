@@ -28,7 +28,7 @@ class KDEModelTest:
         Get probability for each class; return class that has maximum probability.
         :param x: Single row of features as datapoint
         """
-        # threshold = .6
+        # threshold = .8
         probabilities = self.calculate_class_probabilities(x)
         max_prob_class = max(probabilities, key=probabilities.get)
         max_prob = max(probabilities.values())

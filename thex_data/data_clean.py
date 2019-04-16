@@ -42,7 +42,7 @@ def convert_str_to_list(input_string):
 
 def group_by_tree(df, transform_labels):
     """
-    Normalized claimed type (transient type) - assign lowest level in tree. If claimed type is not in map, it is removed. Only considers 1-1 mappings, does not use galaxies that have more than 1. Defines new TARGET_LABEL column. 
+    Normalized claimed type (transient type). If claimed type is not in map, it is removed. Only considers 1-1 mappings, does not use galaxies that have more than 1. Defines new TARGET_LABEL column. 
     :param df: DataFrame of values and labels. Must have column 'claimedtype' with transient type.
     :return df: Returns Pandas DataFrame with new column TARGET_LABEL, which has normalized transient type for each 
     """
