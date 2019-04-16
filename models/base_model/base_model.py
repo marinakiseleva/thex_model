@@ -8,11 +8,12 @@ from thex_data.data_print import *
 from thex_data import data_plot
 from models.base_model.base_model_performance import BaseModelPerformance
 from models.base_model.base_model_plots import BaseModelVisualization
+from models.base_model.base_model_custom import BaseModelCustom
 
 from sklearn.decomposition import PCA
 
 
-class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
+class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization, BaseModelCustom):
     """
     Abstract Class representing base functionality of all models. Subclasses of models implement their own training and testing functions.
     """
@@ -137,6 +138,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization):
         """
         Evaluate and plot performance of model
         """
+        self.get_rarest()
         self.plot_probability_correctness()
         self.plot_roc_curves()
         # Get accuracy per class of transient

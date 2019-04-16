@@ -42,14 +42,14 @@ class BaseModelVisualization:
     def plot_probability_correctness(self, prob_ranges=None, title=None):
         """
         Plots accuracy (y) vs. probability assigned to class (x)
-        :param prob_ranges: [percent_ranges, corr_ranges, count_ranges]
+        :param prob_ranges: [percent_ranges, corr_ranges, count_ranges] where each is list of length1 0, percent_ranges is the labels for the ranges, corr_ranges is the number correct in each range and count_ranges is the total count in each range 
         """
 
-        X_accs = self.get_probability_matrix()
-        # Add column of predicted class
-        X_preds = pd.concat([X_accs, self.test_model()], axis=1)
         for index, class_code in enumerate(self.get_unique_classes()):
             if prob_ranges is None:
+                X_accs = self.get_probability_matrix()
+                # Add column of predicted class
+                X_preds = pd.concat([X_accs, self.test_model()], axis=1)
                 perc_ranges, corr_ranges, count_ranges = self.get_corr_prob_ranges(
                     X_preds, class_code)
             else:

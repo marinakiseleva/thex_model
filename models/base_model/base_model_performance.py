@@ -61,6 +61,7 @@ class BaseModelPerformance:
                 actual_class = self.y_test.iloc[index][TARGET_LABEL]
                 X_accuracy.loc[index, 'is_class'] = True if (
                     actual_class == class_code) else False
+                X_accuracy.loc[index, "actual_class"] = int(actual_class)
         else:
             """ Create matrix for all classes """
             unique_classes = self.get_unique_classes()

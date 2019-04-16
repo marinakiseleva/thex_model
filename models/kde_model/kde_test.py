@@ -1,7 +1,7 @@
 from math import isnan
 import pandas as pd
 import numpy as np
-from thex_data.data_consts import cat_code
+from thex_data.data_consts import cat_code, code_cat
 """
 Logic for classifying testing data using the KDE Model
 """
@@ -28,14 +28,10 @@ class KDEModelTest:
         Get probability for each class; return class that has maximum probability.
         :param x: Single row of features as datapoint
         """
-        # threshold = .8
         probabilities = self.calculate_class_probabilities(x)
         max_prob_class = max(probabilities, key=probabilities.get)
         max_prob = max(probabilities.values())
-        # if max_prob > threshold:
         return max_prob_class
-        # else:
-        #     return cat_code['Other']
 
     def calculate_class_probabilities(self, x):
         """
