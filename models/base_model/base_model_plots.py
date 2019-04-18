@@ -5,7 +5,7 @@ from textwrap import wrap
 import pandas as pd
 from sklearn.metrics import confusion_matrix
 
-from thex_data.data_consts import code_cat, TARGET_LABEL, ROOT_DIR
+from thex_data.data_consts import code_cat, TARGET_LABEL, ROOT_DIR, cat_code
 
 FIG_WIDTH = 6
 FIG_HEIGHT = 4
@@ -32,45 +32,61 @@ class BaseModelVisualization:
 
         plt.show()
 
-    # def plot_example_output(self, X, y):
+    def plot_probability_precision(self, range_metrics, title=None):
         """
-        Plots example output of probability across transient types for sample
-        :param X: DataFrame of features with 1 row, for single sample
-        :param y: Corresponding label in DataFrame with TARGET_LABEL column
+        Plots precision of class (y) vs. probability assigned to class (x)
+        :param range_metrics: Map of classes to [percent_ranges, TP_ranges, AP_ranges, FP_ranges] 
         """
-
-    def plot_probability_correctness(self, prob_ranges=None, title=None):
-        """
-        Plots accuracy (y) vs. probability assigned to class (x)
-        :param prob_ranges: [percent_ranges, corr_ranges, count_ranges] where each is list of length1 0, percent_ranges is the labels for the ranges, corr_ranges is the number correct in each range and count_ranges is the total count in each range 
-        """
-
         for index, class_code in enumerate(self.get_unique_classes()):
-            if prob_ranges is None:
-                X_accs = self.get_probability_matrix()
-                # Add column of predicted class
-                X_preds = pd.concat([X_accs, self.test_model()], axis=1)
-                perc_ranges, corr_ranges, count_ranges = self.get_corr_prob_ranges(
-                    X_preds, class_code)
-            else:
-                perc_ranges, corr_ranges, count_ranges = prob_ranges[class_code]
+            perc_ranges, AP_ranges, TP_ranges, FP_ranges = range_metrics[class_code]
+            f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+
+            perc_correct = []
+            for index, TP in enumerate(TP_ranges):
+                p = 0
+                total_predicted = TP + FP_ranges[index]
+                if total_predicted != 0:
+                    # TP/(TP+FP)
+
+                    p = TP / (TP + FP_ranges[index])
+                perc_correct.append(p)
+
+            normalize = plt.Normalize(min(AP_ranges), max(AP_ranges))
+            colors = plt.cm.Blues(normalize(AP_ranges))
+
+            ax = self.plot_bar_with_annotations(
+                axis=ax, x_vals=perc_ranges, y_vals=perc_correct, annotations=AP_ranges, bar_colors=colors)
+            plt.xlabel('Probability of ' + code_cat[class_code] + ' +/- 5%', fontsize=12)
+            plt.ylabel('Precision', fontsize=12)
+            title = "Accuracy vs Probability" if title is None else title
+
+            self.display_and_save_plot(title + ": " + str(code_cat[class_code]), ax)
+
+    def plot_probability_completeness(self, range_metrics, title=None):
+        """
+        Plots recall of class (y) vs. probability assigned to class (x)
+        :param range_metrics: Map of classes to [percent_ranges, TP_ranges, AP_ranges, FP_ranges] 
+        """
+        for index, class_code in enumerate(self.get_unique_classes()):
+            perc_ranges, AP_ranges, TP_ranges, FP_ranges = range_metrics[class_code]
 
             f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
 
             perc_correct = []
-            for index, corr in enumerate(corr_ranges):
+            for index, corr in enumerate(TP_ranges):
                 p = 0
-                if count_ranges[index] != 0:
-                    p = corr / count_ranges[index]
+                if AP_ranges[index] != 0:
+                    # Correct predicitions / Actual count
+                    p = corr / AP_ranges[index]
                 perc_correct.append(p)
 
-            normalize = plt.Normalize(min(count_ranges), max(count_ranges))
-            colors = plt.cm.Blues(normalize(count_ranges))
+            normalize = plt.Normalize(min(AP_ranges), max(AP_ranges))
+            colors = plt.cm.Blues(normalize(AP_ranges))
 
             ax = self.plot_bar_with_annotations(
-                axis=ax, x_vals=perc_ranges, y_vals=perc_correct, annotations=count_ranges, bar_colors=colors)
+                axis=ax, x_vals=perc_ranges, y_vals=perc_correct, annotations=AP_ranges, bar_colors=colors)
             plt.xlabel('Probability of ' + code_cat[class_code] + ' +/- 5%', fontsize=12)
-            plt.ylabel('Accuracy', fontsize=12)
+            plt.ylabel('Recall', fontsize=12)
             title = "Accuracy vs Probability" if title is None else title
 
             self.display_and_save_plot(title + ": " + str(code_cat[class_code]), ax)
@@ -230,19 +246,19 @@ class BaseModelVisualization:
         plt.xlabel('Predicted label')
         self.display_and_save_plot(title, ax)
 
-    def plot_accuracies(self, class_accuracies, plot_title, class_counts=None, ylabel="Accuracy"):
+    def plot_performance(self, class_metrics, plot_title, class_counts=None, ylabel="Accuracy"):
         """
         Visualizes accuracy per class with bar graph
         """
 
         # Get class names and corresponding accuracies
-        class_names = [code_cat[c] for c in class_accuracies.keys()]
-        accuracies = [class_accuracies[c] for c in class_accuracies.keys()]
+        class_names = [code_cat[c] for c in class_metrics.keys()]
+        metrics = [class_metrics[c] for c in class_metrics.keys()]
 
         # Class names will be assigned in same order as these indices
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         ax = self.plot_bar_with_annotations(
-            axis=ax, x_vals=class_names, y_vals=accuracies, annotations=class_counts)
+            axis=ax, x_vals=class_names, y_vals=metrics, annotations=class_counts)
 
         plt.xlabel('Transient Class', fontsize=12)
         plt.ylabel(ylabel, fontsize=12)

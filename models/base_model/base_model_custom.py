@@ -1,11 +1,8 @@
-import itertools
-import collections
 import numpy as np
 import pandas as pd
-
+import matplotlib.pyplot as plt
 from thex_data.data_consts import TARGET_LABEL, cat_code, code_cat
-
-PRED_LABEL = 'predicted_class'
+from thex_data.data_init import collect_data
 
 FIG_WIDTH = 6
 FIG_HEIGHT = 4
@@ -16,6 +13,45 @@ class BaseModelCustom:
     """
     Mixin Class for BaseModel performance regarding very specific ideas
     """
+
+    def plot_samples(self, index):
+        X_row = self.X_test.iloc[[index]]
+        y_row = self.y_test.iloc[[index]]
+        self.plot_sample_distribution(X_row, y_row)
+
+    def plot_sample_distribution(self, X_row, y_row):
+        """
+        Plots probability across transient types for sample
+        :param X: DataFrame of features with 1 row, for single sample
+        :param y: Corresponding label in DataFrame with TARGET_LABEL column
+        """
+
+        unique_classes = self.get_unique_classes()
+
+        probabilities = self.get_class_probabilities(X_row.iloc[0])
+        probabilities_list = list(probabilities.values())
+
+        actual_class_name = code_cat[int(y_row[TARGET_LABEL])]
+
+        # Plot classes vs probabilities
+        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+        x_indices = np.arange(len(unique_classes))
+        barlist = ax.bar(x_indices, probabilities_list, color='blue')
+
+        class_names = [code_cat[c] for c in probabilities.keys()]
+        plt.xticks(x_indices, class_names, fontsize=12)
+
+        # Get index of bar with class_name == actual_class
+        for i in range(len(class_names)):
+            if class_names[i] == actual_class_name:
+                # Color correct bar in green
+                barlist[i].set_color('green')
+                break
+
+        plt.title('Probability Distribution for Example Galaxy')
+        plt.ylabel('Probability')
+        plt.xlabel('Transient Type')
+        plt.show()
 
     def get_rarest(self):
         """

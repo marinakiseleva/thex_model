@@ -3,9 +3,7 @@ import collections
 import numpy as np
 import pandas as pd
 
-from thex_data.data_consts import TARGET_LABEL, code_cat
-
-PRED_LABEL = 'predicted_class'
+from thex_data.data_consts import TARGET_LABEL, UNKNOWN_LABEL, PRED_LABEL, code_cat, cat_code
 
 
 class BaseModelPerformance:
@@ -13,49 +11,61 @@ class BaseModelPerformance:
     Mixin Class for BaseModel performance metrics
     """
 
-    def get_corr_prob_ranges(self, X_accs, class_code):
+    def get_metrics_by_ranges(self, X_accs, class_code):
         """
-        Gets accuracy based on probability assigned to class for ranges of 5% from 0 to 100. Used to plot probability assigned vs probability of being correct
-        Returns
-        count_ranges: Count of total in each range 
-        corr_ranges: Count of correctly predicted in each range
-        percent_ranges: Ranges themselves
+        Collects metrics, split by probability assigned to class for ranges of 10% from 0 to 100. Used to plot probability assigned vs completeness.
+        :param X_accs: self.get_probability_matrix() output concated with predictions
+        Returns [percent_ranges, AP_ranges, TP_ranges, FP_ranges] where
+        percent_ranges: Range value
+        AP_ranges: # of actual class_code in each range
+        TP_ranges: # of correctly predicted class_code in each range
+        FP_ranges: # of incorrectly predicted class_code in each range
         """
-        class_col = str(class_code)
+        class_code_str = str(class_code)
         percent_ranges = [0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]
-        count_ranges = []  # Total count in each range
-        corr_ranges = []  # Correctly predicted in each range
+        AP_ranges = []  # Total count in each range
+        TP_ranges = []  # Correctly predicted in each range
+        FP_ranges = []  # False positives in each range
         for perc_range in percent_ranges:
             # Range of probabilities: + or - 5 from perc_range
             perc_range_min = perc_range - .05
             perc_range_max = perc_range + .05
 
-            actual_in_range = X_accs.loc[(X_accs.actual_class == class_code) & (
-                X_accs[class_col] >= perc_range_min) & (X_accs[class_col] < perc_range_max)]
+            # Get all rows with probability of this class within range
+            X_in_range = X_accs.loc[(perc_range_min <= X_accs[class_code_str]) & (
+                X_accs[class_code_str] < perc_range_max)]
 
-            corr_pred_in_range = actual_in_range.loc[
-                actual_in_range.predicted_class == class_code]
+            AP = X_in_range.loc[(X_in_range.actual_class == class_code)]
+            # FP is pred == class_code and actual != pred
+            FP = X_in_range.loc[(X_in_range[PRED_LABEL] == class_code) & (
+                X_in_range[PRED_LABEL] != X_in_range.actual_class)]
+            TP = X_in_range.loc[(X_in_range[PRED_LABEL] == class_code) & (
+                X_in_range[PRED_LABEL] == X_in_range.actual_class)]
 
-            corr_ranges.append(corr_pred_in_range.shape[0])
-            count_ranges.append(actual_in_range.shape[0])
+            AP_ranges.append(AP.shape[0])
+            TP_ranges.append(TP.shape[0])
+            FP_ranges.append(FP.shape[0])
 
         for index, pr in enumerate(percent_ranges):
             percent_ranges[index] = str(int(pr * 100)) + "%"
 
-        return percent_ranges, corr_ranges, count_ranges
+        return [percent_ranges, AP_ranges, TP_ranges, FP_ranges]
 
     def get_probability_matrix(self, class_code=None):
         """
-        Creates copy of X_test as DataFrame and includes probabilities and correctness of prediction
+        Creates copy of X_test as DataFrame and includes probabilities and correctness of prediction. Without class_code it returns a DataFrame X_accuracy of the format:
+        class1  class2  ... classN      actual_class
+        .88        .1       .12             class2
+
         """
-        X_accuracy = self.X_test.copy()
+        X_accuracy = pd.DataFrame()
         if class_code is not None:
-            for index, row in X_accuracy.iterrows():
+            # Get probabilities for this class alone
+            for index, row in self.X_test.iterrows():
                 probabilities = self.get_class_probabilities(row)
-                prob = probabilities[class_code]
 
                 # Probability of this class for this row
-                X_accuracy.loc[index, 'probability'] = prob
+                X_accuracy.loc[index, 'probability'] = probabilities[class_code]
 
                 # Whether or not this data point IS this class
                 actual_class = self.y_test.iloc[index][TARGET_LABEL]
@@ -65,13 +75,14 @@ class BaseModelPerformance:
         else:
             """ Create matrix for all classes """
             unique_classes = self.get_unique_classes()
-            for index, row in X_accuracy.iterrows():
+            for index, row in self.X_test.iterrows():
                 probabilities = self.get_class_probabilities(row)
                 # Add each probability to dataframe
                 for c in unique_classes:
                     X_accuracy.loc[index, str(c)] = probabilities[c]
                 actual_class = self.y_test.iloc[index][TARGET_LABEL]
                 X_accuracy.loc[index, "actual_class"] = int(actual_class)
+
         return X_accuracy
 
     def get_split_probabilities(self, class_code):
@@ -141,11 +152,14 @@ class BaseModelPerformance:
         """
         Gets list of unique classes in testing set
         """
+        df_classes = df[
+            TARGET_LABEL] if df is not None else self.y_test[TARGET_LABEL]
+        unique_classes = set(df_classes)
 
-        if df is not None:
-            return list(set(df[TARGET_LABEL]))
-        else:
-            return list(set(self.y_test[TARGET_LABEL]))
+        # Add Unknown which is back-up assignment for samples with low probability
+        unique_classes.add(cat_code[UNKNOWN_LABEL])
+
+        return list(unique_classes)
 
     def get_class_counts(self, classes):
         """
@@ -159,53 +173,56 @@ class BaseModelPerformance:
             class_counts.append(class_count)
         return class_counts
 
-    def get_class_precisions(self):
+    def get_class_performance(self, class_codes):
         """
-        Get precision of each class separately
+        Record class performance by metrics that will later be used to compute precision and recall. Record: true positives, false positives, and # of Actual Positives, per class
         """
         df = self.combine_pred_actual()
-        class_codes = list(df[TARGET_LABEL].unique())
-        class_precisions = {}
+        class_metrics = {}
         for class_code in class_codes:
-            class_precisions[class_code] = self.get_class_precision(df, class_code)
-        return collections.OrderedDict(sorted(class_precisions.items()))
+            TP = df[(df[PRED_LABEL] == class_code) & (
+                df[TARGET_LABEL] == class_code)].shape[0]
+            FP = df[(df[PRED_LABEL] == class_code) & (
+                df[TARGET_LABEL] != class_code)].shape[0]
+            AP = df[df[TARGET_LABEL] == class_code].shape[0]
+            class_metrics[class_code] = [AP, TP, FP]
 
-    def get_class_precision(self, df_compare, class_code):
+        return class_metrics
+
+    def get_recall(self, metrics, unique_classes):
         """
-        Gets # of samples predicted correctly out of all positive predictions: # true positives/ # true positives + # of false positives
+        Computes recall per class based on passed-in metrics
+        :param metrics: Result of aggregate_metrics, {class1: [AP, TP, FP], ...}
+        :return: mapping of class code to recall
         """
-        true_positives = df_compare[
-            (df_compare[PRED_LABEL] == class_code) & (df_compare[TARGET_LABEL] == class_code)].shape[0]
-        false_positives = df_compare[
-            (df_compare[PRED_LABEL] == class_code) & (df_compare[TARGET_LABEL] != class_code)].shape[0]
-        total = true_positives + false_positives
-        if total == 0:
-            precision = 1
-        else:
-            precision = true_positives / total
+        recall = {}
+        for class_code in metrics.keys():
+            # Recall is TP/AP
+            AP = metrics[class_code][0]
+            TP = metrics[class_code][1]
+            if AP == 0:
+                recall[class_code] = 0
+            else:
+                recall[class_code] = TP / AP
+        return recall
+
+    def get_precision(self, metrics, unique_classes):
+        """
+        Computes precision per class based on passed-in metrics
+        :param metrics: Result of aggregate_metrics, {class1: [AP, TP, FP], class2: [AP, TP, FP], ...}
+        :return: mapping of class code to precision
+        """
+        precision = {}
+        for class_code in metrics.keys():
+            # Precision is TP/(# Positive Predicted) = TP/(TP+FP)
+            TP = metrics[class_code][1]
+            FP = metrics[class_code][2]
+            if (TP + FP) == 0:
+                precision[class_code] = 1
+            else:
+                precision[class_code] = TP / (TP + FP)
 
         return precision
-
-    def get_class_recalls(self):
-        """
-        Get accuracy (recall) of each class separately
-        """
-        df = self.combine_pred_actual()
-        class_codes = list(df[TARGET_LABEL].unique())
-        class_recalls = {}
-        for class_code in class_codes:
-            class_recalls[class_code] = self.get_class_recall(df, class_code)
-        return collections.OrderedDict(sorted(class_recalls.items()))
-
-    def get_class_recall(self, df_compare, class_code):
-        """
-        Gets recall of this class: # true positives/ # of actual positives
-        """
-        true_positives = df_compare[
-            (df_compare[PRED_LABEL] == class_code) & (df_compare[TARGET_LABEL] == class_code)].shape[0]
-        actual_positives = df_compare[df_compare[TARGET_LABEL] == class_code].shape[0]
-        recall = true_positives / actual_positives
-        return recall
 
     def combine_pred_actual(self):
         """
@@ -223,50 +240,51 @@ class BaseModelPerformance:
         predicted_classes.reset_index(drop=True, inplace=True)
         actual_classes.reset_index(drop=True, inplace=True)
 
-        df_compare = pd.concat([predicted_classes, actual_classes], axis=1)
-
-        return df_compare
+        return pd.concat([predicted_classes, actual_classes], axis=1)
 
     ###########################
     # Aggregation Methods for Cross Fold Validation and Multiple Runs
     ###########################
-
-    def aggregate_accuracies(self, model_results, unique_classes):
+    def aggregate_metrics(self, metrics, unique_classes):
         """
-        Aggregate class accuracies from several runs. Returns mapping of classes to average accuracy.
-        :param model_results: List of accuracies from 1 or more runs; each item in list is a mapping from get_class_recalls
-        :param y: Testing labels 
+        Aggregates metrics (list of outputs from get_class_performance) by summing the TP, FP, and AP for each class across the maps in the list
+        :param metrics: = [{class1 : [ranges, AP, TP, FP], class2: [ranges, AP, TP, FP], ...}, {}, ... ]
+        Returns summed results:
+        {class1: [ranges, AP, TP, FP], class2: [ranges, AP, TP, FP], ...}
         """
-        accuracy_per_class = {c: 0 for c in unique_classes}
-        for class_accuracies in model_results:
-            # class_accuracies maps class to accuracy as %
-            for class_code in class_accuracies.keys():
-                accuracy_per_class[class_code] += class_accuracies[class_code]
-        # Divide each % by number of runs to get average accuracy
-        return {c: acc / len(model_results) for c, acc in accuracy_per_class.items()}
+        summed_class_metrics = {cc: [0, 0, 0] for cc in unique_classes}
+        for metric in metrics:
+            for class_code in unique_classes:
+                [AP, TP, FP] = metric[class_code]
+                summed_class_metrics[class_code][0] += AP
+                summed_class_metrics[class_code][1] += TP
+                summed_class_metrics[class_code][2] += FP
 
-    def aggregate_prob_ranges(self, prob_ranges):
+        return summed_class_metrics
+
+    def aggregate_range_metrics(self, prob_ranges):
         """
         Aggregates prob ranges over multiple runs
-        :param prob_ranges: List of prob_ranges for multiple runs, in the format [percent_ranges, corr_in_range, count_in_range]
-        :param k: Number of runs to average over
-        Return prob_ranges in same format, but averaged over runs
+        :param prob_ranges: Mapping of classes to list of prob_ranges. in the format {class_code: [[percent_ranges,  AP_ranges, TP_ranges, FP_ranges] , ... ]  }
+        Return prob_ranges in same format, but summed over runs
         """
         num_ranges = 10
-        percent_ranges = []
+        ranges = []
         for class_code in prob_ranges.keys():
-            total_corr_in_range = [0] * num_ranges
-            total_count_in_range = [0] * num_ranges
+            total_AP = [0] * num_ranges
+            total_TP = [0] * num_ranges
+            total_FP = [0] * num_ranges
             for set_of_rates in prob_ranges[class_code]:
-                percent_ranges = set_of_rates[0]  # stays same
-                corr_in_range = set_of_rates[1]
-                count_in_range = set_of_rates[2]
+                ranges = set_of_rates[0]  # stays same
+                AP_ranges = set_of_rates[1]
+                TP_ranges = set_of_rates[2]
+                FP_ranges = set_of_rates[3]
                 for index in range(num_ranges):
-                    total_corr_in_range[index] += corr_in_range[index]
-                    total_count_in_range[index] += count_in_range[index]
+                    total_AP[index] += AP_ranges[index]
+                    total_TP[index] += TP_ranges[index]
+                    total_FP[index] += FP_ranges[index]
 
-            prob_ranges[class_code] = [percent_ranges,
-                                       total_corr_in_range, total_count_in_range]
+            prob_ranges[class_code] = [ranges, total_AP, total_TP, total_FP]
         return prob_ranges
 
     def aggregate_rocs(self, class_rocs):

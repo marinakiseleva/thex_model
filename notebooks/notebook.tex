@@ -1,0 +1,582 @@
+
+% Default to the notebook output style
+
+    
+
+
+% Inherit from the specified cell style.
+
+
+
+
+    
+\documentclass[11pt]{article}
+
+    
+    
+    \usepackage[T1]{fontenc}
+    % Nicer default font (+ math font) than Computer Modern for most use cases
+    \usepackage{mathpazo}
+
+    % Basic figure setup, for now with no caption control since it's done
+    % automatically by Pandoc (which extracts ![](path) syntax from Markdown).
+    \usepackage{graphicx}
+    % We will generate all images so they have a width \maxwidth. This means
+    % that they will get their normal width if they fit onto the page, but
+    % are scaled down if they would overflow the margins.
+    \makeatletter
+    \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth
+    \else\Gin@nat@width\fi}
+    \makeatother
+    \let\Oldincludegraphics\includegraphics
+    % Set max figure width to be 80% of text width, for now hardcoded.
+    \renewcommand{\includegraphics}[1]{\Oldincludegraphics[width=.8\maxwidth]{#1}}
+    % Ensure that by default, figures have no caption (until we provide a
+    % proper Figure object with a Caption API and a way to capture that
+    % in the conversion process - todo).
+    \usepackage{caption}
+    \DeclareCaptionLabelFormat{nolabel}{}
+    \captionsetup{labelformat=nolabel}
+
+    \usepackage{adjustbox} % Used to constrain images to a maximum size 
+    \usepackage{xcolor} % Allow colors to be defined
+    \usepackage{enumerate} % Needed for markdown enumerations to work
+    \usepackage{geometry} % Used to adjust the document margins
+    \usepackage{amsmath} % Equations
+    \usepackage{amssymb} % Equations
+    \usepackage{textcomp} % defines textquotesingle
+    % Hack from http://tex.stackexchange.com/a/47451/13684:
+    \AtBeginDocument{%
+        \def\PYZsq{\textquotesingle}% Upright quotes in Pygmentized code
+    }
+    \usepackage{upquote} % Upright quotes for verbatim code
+    \usepackage{eurosym} % defines \euro
+    \usepackage[mathletters]{ucs} % Extended unicode (utf-8) support
+    \usepackage[utf8x]{inputenc} % Allow utf-8 characters in the tex document
+    \usepackage{fancyvrb} % verbatim replacement that allows latex
+    \usepackage{grffile} % extends the file name processing of package graphics 
+                         % to support a larger range 
+    % The hyperref package gives us a pdf with properly built
+    % internal navigation ('pdf bookmarks' for the table of contents,
+    % internal cross-reference links, web links for URLs, etc.)
+    \usepackage{hyperref}
+    \usepackage{longtable} % longtable support required by pandoc >1.10
+    \usepackage{booktabs}  % table support for pandoc > 1.12.2
+    \usepackage[inline]{enumitem} % IRkernel/repr support (it uses the enumerate* environment)
+    \usepackage[normalem]{ulem} % ulem is needed to support strikethroughs (\sout)
+                                % normalem makes italics be italics, not underlines
+    
+
+    
+    
+    % Colors for the hyperref package
+    \definecolor{urlcolor}{rgb}{0,.145,.698}
+    \definecolor{linkcolor}{rgb}{.71,0.21,0.01}
+    \definecolor{citecolor}{rgb}{.12,.54,.11}
+
+    % ANSI colors
+    \definecolor{ansi-black}{HTML}{3E424D}
+    \definecolor{ansi-black-intense}{HTML}{282C36}
+    \definecolor{ansi-red}{HTML}{E75C58}
+    \definecolor{ansi-red-intense}{HTML}{B22B31}
+    \definecolor{ansi-green}{HTML}{00A250}
+    \definecolor{ansi-green-intense}{HTML}{007427}
+    \definecolor{ansi-yellow}{HTML}{DDB62B}
+    \definecolor{ansi-yellow-intense}{HTML}{B27D12}
+    \definecolor{ansi-blue}{HTML}{208FFB}
+    \definecolor{ansi-blue-intense}{HTML}{0065CA}
+    \definecolor{ansi-magenta}{HTML}{D160C4}
+    \definecolor{ansi-magenta-intense}{HTML}{A03196}
+    \definecolor{ansi-cyan}{HTML}{60C6C8}
+    \definecolor{ansi-cyan-intense}{HTML}{258F8F}
+    \definecolor{ansi-white}{HTML}{C5C1B4}
+    \definecolor{ansi-white-intense}{HTML}{A1A6B2}
+
+    % commands and environments needed by pandoc snippets
+    % extracted from the output of `pandoc -s`
+    \providecommand{\tightlist}{%
+      \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+    \DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+    % Add ',fontsize=\small' for more characters per line
+    \newenvironment{Shaded}{}{}
+    \newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{{#1}}}}
+    \newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{{#1}}}
+    \newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{{#1}}}}
+    \newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{{#1}}}
+    \newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{{#1}}}}
+    \newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{{#1}}}
+    \newcommand{\RegionMarkerTok}[1]{{#1}}
+    \newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{{#1}}}}
+    \newcommand{\NormalTok}[1]{{#1}}
+    
+    % Additional commands for more recent versions of Pandoc
+    \newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{{#1}}}
+    \newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.73,0.40,0.53}{{#1}}}
+    \newcommand{\ImportTok}[1]{{#1}}
+    \newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.73,0.13,0.13}{\textit{{#1}}}}
+    \newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{{#1}}}
+    \newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{{#1}}}}
+    \newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.40,0.40,0.40}{{#1}}}
+    \newcommand{\BuiltInTok}[1]{{#1}}
+    \newcommand{\ExtensionTok}[1]{{#1}}
+    \newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.74,0.48,0.00}{{#1}}}
+    \newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{{#1}}}
+    \newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    
+    
+    % Define a nice break command that doesn't care if a line doesn't already
+    % exist.
+    \def\br{\hspace*{\fill} \\* }
+    % Math Jax compatability definitions
+    \def\gt{>}
+    \def\lt{<}
+    % Document parameters
+    \title{LSST-like Experiment}
+    
+    
+    
+
+    % Pygments definitions
+    
+\makeatletter
+\def\PY@reset{\let\PY@it=\relax \let\PY@bf=\relax%
+    \let\PY@ul=\relax \let\PY@tc=\relax%
+    \let\PY@bc=\relax \let\PY@ff=\relax}
+\def\PY@tok#1{\csname PY@tok@#1\endcsname}
+\def\PY@toks#1+{\ifx\relax#1\empty\else%
+    \PY@tok{#1}\expandafter\PY@toks\fi}
+\def\PY@do#1{\PY@bc{\PY@tc{\PY@ul{%
+    \PY@it{\PY@bf{\PY@ff{#1}}}}}}}
+\def\PY#1#2{\PY@reset\PY@toks#1+\relax+\PY@do{#2}}
+
+\expandafter\def\csname PY@tok@w\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.73,0.73}{##1}}}
+\expandafter\def\csname PY@tok@c\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.74,0.48,0.00}{##1}}}
+\expandafter\def\csname PY@tok@k\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.69,0.00,0.25}{##1}}}
+\expandafter\def\csname PY@tok@o\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@ow\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@ne\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.82,0.25,0.23}{##1}}}
+\expandafter\def\csname PY@tok@nv\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@no\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nl\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@ni\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.60,0.60,0.60}{##1}}}
+\expandafter\def\csname PY@tok@na\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.49,0.56,0.16}{##1}}}
+\expandafter\def\csname PY@tok@nt\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@s\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sd\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@si\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@se\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sr\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@ss\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@sx\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@m\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@gh\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@gu\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.50,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@gd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gr\endcsname{\def\PY@tc##1{\textcolor[rgb]{1.00,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@ge\endcsname{\let\PY@it=\textit}
+\expandafter\def\csname PY@tok@gs\endcsname{\let\PY@bf=\textbf}
+\expandafter\def\csname PY@tok@gp\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@go\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.53,0.53}{##1}}}
+\expandafter\def\csname PY@tok@gt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.27,0.87}{##1}}}
+\expandafter\def\csname PY@tok@err\endcsname{\def\PY@bc##1{\setlength{\fboxsep}{0pt}\fcolorbox[rgb]{1.00,0.00,0.00}{1,1,1}{\strut ##1}}}
+\expandafter\def\csname PY@tok@kc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kd\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kr\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@bp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@fm\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@vc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@vg\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@vi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@vm\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@sa\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@dl\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@s2\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@s1\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@mb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@il\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mo\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@ch\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cm\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cpf\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@c1\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cs\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+
+\def\PYZbs{\char`\\}
+\def\PYZus{\char`\_}
+\def\PYZob{\char`\{}
+\def\PYZcb{\char`\}}
+\def\PYZca{\char`\^}
+\def\PYZam{\char`\&}
+\def\PYZlt{\char`\<}
+\def\PYZgt{\char`\>}
+\def\PYZsh{\char`\#}
+\def\PYZpc{\char`\%}
+\def\PYZdl{\char`\$}
+\def\PYZhy{\char`\-}
+\def\PYZsq{\char`\'}
+\def\PYZdq{\char`\"}
+\def\PYZti{\char`\~}
+% for compatibility with earlier versions
+\def\PYZat{@}
+\def\PYZlb{[}
+\def\PYZrb{]}
+\makeatother
+
+
+    % Exact colors from NB
+    \definecolor{incolor}{rgb}{0.0, 0.0, 0.5}
+    \definecolor{outcolor}{rgb}{0.545, 0.0, 0.0}
+
+
+
+    
+    % Prevent overflowing lines due to hard-to-break entities
+    \sloppy 
+    % Setup hyperref package
+    \hypersetup{
+      breaklinks=true,  % so long urls are correctly broken across lines
+      colorlinks=true,
+      urlcolor=urlcolor,
+      linkcolor=linkcolor,
+      citecolor=citecolor,
+      }
+    % Slightly bigger margins than the latex defaults
+    
+    \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+    
+    
+
+    \begin{document}
+    
+    
+    \maketitle
+    
+    
+
+    
+    Define data columns to pass into model
+
+    Call Kernel Density Estimate model with all above columns, including
+redshift. Will also transform features (convert spectra to colors) and
+apply PCA, reducing to 5 components. Final results are result of 10
+total runs.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}1}]:} \PY{n}{mag\PYZus{}cols} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}FUV}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}NUV}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} 
+                 \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}FUV.b}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}e\PYZus{}FUV.b}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}NUV.b}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}e\PYZus{}NUV.b}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}FUV.a}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}e\PYZus{}FUV.a}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}NUV.a}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}e\PYZus{}NUV.a}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}FUV.4}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}e\PYZus{}FUV.4}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}NUV.4}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} 
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}e\PYZus{}NUV.4}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}FUV.6}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}e\PYZus{}FUV.6}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}NUV.6}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} 
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}e\PYZus{}NUV.6}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}W1mag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}e\PYZus{}W1mag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}W2mag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}e\PYZus{}W2mag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+                   \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}W3mag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}e\PYZus{}W3mag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}W4mag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}e\PYZus{}W4mag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} 
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}gmag}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}gmagStd}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}b\PYZus{}gmag}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}B\PYZus{}gmag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}gKmag}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}rmag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}rmagStd}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}b\PYZus{}rmag}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}B\PYZus{}rmag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}rKmag}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}imag}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}imagStd}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}b\PYZus{}imag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}B\PYZus{}imag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}iKmag}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}zmag}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}zmagStd}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}b\PYZus{}zmag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}B\PYZus{}zmag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}zKmag}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}ymag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}ymagStd}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}b\PYZus{}ymag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}B\PYZus{}ymag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+                \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{PS1\PYZus{}yKmag}\PY{l+s+s1}{\PYZsq{}} 
+        \PY{p}{]}
+        
+        \PY{n}{flux\PYZus{}cols} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}Fflux}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}Nflux}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        
+        \PY{n}{external\PYZus{}cols} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}Jmag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}Hmag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}Kmag}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        
+        \PY{n}{source\PYZus{}size} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}Fima}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}Nima}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}Fr}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}Nr}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        
+        \PY{n}{quality\PYZus{}photometry}\PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}snr1}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}chi2W1}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}snr2}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}chi2W2}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}snr3}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}chi2W3}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}snr4}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}chi2W4}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AllWISE\PYZus{}chi2}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{extinction\PYZus{}rates}\PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}E\PYZus{}B\PYZhy{}V\PYZus{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}FUV\PYZus{}PS}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}NUV\PYZus{}PS}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}FUV\PYZus{}Y}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}NUV\PYZus{}Y}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}u}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}g}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}r}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}i}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}z}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}J}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}H}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}Ks}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}W1}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}W2}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}W3}\PY{l+s+s1}{\PYZsq{}} \PY{p}{,}
+        \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}W4}\PY{l+s+s1}{\PYZsq{}} \PY{p}{]}
+        
+        
+        
+        
+        \PY{n}{cols} \PY{o}{=} \PY{n}{mag\PYZus{}cols} \PY{o}{+} \PY{n}{flux\PYZus{}cols} \PY{o}{+} \PY{n}{external\PYZus{}cols} \PY{o}{+} \PY{n}{source\PYZus{}size} \PY{o}{+} \PY{n}{quality\PYZus{}photometry} \PY{o}{+} \PY{n}{extinction\PYZus{}rates}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}2}]:} \PY{k+kn}{from} \PY{n+nn}{models}\PY{n+nn}{.}\PY{n+nn}{kde\PYZus{}model}\PY{n+nn}{.}\PY{n+nn}{kde\PYZus{}model} \PY{k}{import} \PY{n}{KDEModel}
+        \PY{o}{\PYZpc{}}\PY{k}{matplotlib} inline 
+        
+        \PY{n}{kde} \PY{o}{=} \PY{n}{KDEModel}\PY{p}{(}
+                 \PY{n}{cols} \PY{o}{=} \PY{n}{cols}\PY{p}{,}
+        \PY{c+c1}{\PYZsh{}          folds = 3, }
+                 \PY{n}{transform\PYZus{}features} \PY{o}{=} \PY{k+kc}{True}\PY{p}{,}
+        \PY{c+c1}{\PYZsh{}          one\PYZus{}all = [\PYZsq{}TDE\PYZsq{}],}
+        \PY{c+c1}{\PYZsh{}          one\PYZus{}all = [\PYZsq{}Ib\PYZsq{}, \PYZsq{}Ic\PYZsq{}, \PYZsq{}II\PYZsq{}, \PYZsq{}Ib/c\PYZsq{}, \PYZsq{}Ic Pec\PYZsq{}, \PYZsq{}Ib Pec\PYZsq{}, \PYZsq{}Ibn\PYZsq{}],}
+                 \PY{n}{top\PYZus{}classes} \PY{o}{=} \PY{l+m+mi}{7}\PY{p}{,}
+                 \PY{n}{incl\PYZus{}redshift} \PY{o}{=} \PY{k+kc}{True}\PY{p}{,}
+                 \PY{n}{pca} \PY{o}{=} \PY{l+m+mi}{5}\PY{p}{,}
+                 \PY{n}{num\PYZus{}runs} \PY{o}{=} \PY{l+m+mi}{1}\PY{p}{,}
+                 \PY{n}{naive} \PY{o}{=} \PY{k+kc}{False}\PY{p}{,} \PY{c+c1}{\PYZsh{} False \PYZhy{}\PYZgt{} Multi\PYZhy{}dimensional kernel}
+                 \PY{p}{)}
+        \PY{n}{kde}\PY{o}{.}\PY{n}{run\PYZus{}model}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+
+Data Filters
+------------------
+num\_runs : 1
+test\_on\_train : False
+folds : None
+data\_split : 0.3
+hierarchical\_model : False
+top\_classes : 7
+one\_all : None
+subsample : None
+transform\_features : True
+transform\_labels : True
+incl\_redshift : True
+pca : 5
+naive : False
+
+Features
+------------------
+GALEXAIS\_FUV, GALEXAIS\_NUV, GALEXAIS\_FUV.b, GALEXAIS\_NUV.b, GALEXAIS\_FUV.a, GALEXAIS\_NUV.a, GALEXAIS\_FUV.4, GALEXAIS\_NUV.4, GALEXAIS\_FUV.6, GALEXAIS\_NUV.6, AllWISE\_W1mag, AllWISE\_W2mag, AllWISE\_W3mag, AllWISE\_W4mag, PS1\_gmag, PS1\_gmagStd, PS1\_b\_gmag, PS1\_B\_gmag, PS1\_gKmag, PS1\_rmag, PS1\_rmagStd, PS1\_b\_rmag, PS1\_B\_rmag, PS1\_rKmag, PS1\_imag, PS1\_imagStd, PS1\_b\_imag, PS1\_B\_imag, PS1\_iKmag, PS1\_zmag, PS1\_zmagStd, PS1\_b\_zmag, PS1\_B\_zmag, PS1\_zKmag, PS1\_ymag, PS1\_ymagStd, PS1\_b\_ymag, PS1\_B\_ymag, PS1\_yKmag, GALEXAIS\_Fflux, GALEXAIS\_Nflux, AllWISE\_Jmag, AllWISE\_Hmag, AllWISE\_Kmag, GALEXAIS\_Fima, GALEXAIS\_Nima, GALEXAIS\_Fr, GALEXAIS\_Nr, AllWISE\_snr1, AllWISE\_chi2W1, AllWISE\_snr2, AllWISE\_chi2W2, AllWISE\_snr3, AllWISE\_chi2W3, AllWISE\_snr4, AllWISE\_chi2W4, AllWISE\_chi2, GALEXAIS\_E\_B-V\_, MWExt\_FUV\_PS, MWExt\_NUV\_PS, MWExt\_FUV\_Y, MWExt\_NUV\_Y, MWExt\_u, MWExt\_g, MWExt\_r, MWExt\_i, MWExt\_z, MWExt\_J, MWExt\_H, MWExt\_Ks, MWExt\_W1, MWExt\_W2, MWExt\_W3, MWExt\_W4
+
+
+Constructing Class Hierarchy Tree{\ldots}
+Node: Ia Pec has already been assigned parent: I Pec
+Node: Ia-02cx has already been assigned parent: Ia
+Node: Ia-HV has already been assigned parent: Ia
+Node: Ib has already been assigned parent: I
+Node: Ic has already been assigned parent: I
+Node: Ia/c has already been assigned parent: Ia
+Node: II P-97D has already been assigned parent: II Pec
+Node: IIn P has already been assigned parent: II P
+Node: IIn L has already been assigned parent: II L
+Node: IIn Pec has already been assigned parent: II Pec
+Node: TDE has already been assigned parent: TTypes
+
+    \end{Verbatim}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+/Users/marina/research/astro\_research/code/thex\_model/thex\_data/data\_clean.py:70: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row\_indexer,col\_indexer] = value instead
+
+See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/indexing.html\#indexing-view-versus-copy
+  df[TARGET\_LABEL] = df[TARGET\_LABEL].apply(lambda x: int(cat\_code[x]))
+
+    \end{Verbatim}
+
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_2.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{Verbatim}[commandchars=\\\{\}]
+
+Counts per Class
+------------------ 
+Ia : 632
+II : 201
+II P : 69
+IIn : 40
+Ib : 29
+Ia Pec : 20
+Ia-91T : 19
+
+Total: 1010
+
+PCA Analysis: Explained Variance Ratio
+[0.50457501 0.13415509 0.11013964 0.04718124 0.03444932]
+
+    \end{Verbatim}
+
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_4.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_5.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{Verbatim}[commandchars=\\\{\}]
+
+Samples with Lowest Probability of Ia
+    actual\_class\_name predicted\_class\_name   probability
+277               IIn               Ia Pec  4.271383e-13
+47                 Ib                   Ib  1.955578e-07
+159                Ia                  IIn  5.022564e-06
+291                II               Ia Pec  2.072417e-05
+162                Ia               Ia Pec  2.092246e-05
+22             Ia-91T                  IIn  3.735383e-05
+255                II               Ia-91T  3.990354e-04
+233              II P                Other  4.627562e-04
+31                 Ia               Ia-91T  6.578436e-04
+56               II P               Ia-91T  6.755848e-04
+218                II               Ia-91T  1.023257e-03
+188                Ia                Other  1.220856e-03
+170              II P               Ia Pec  4.559035e-03
+281                II                   II  7.795060e-03
+17                 Ib                Other  1.174257e-02
+121                II                Other  1.429081e-02
+289                II                Other  1.639188e-02
+197               IIn                Other  1.869259e-02
+177                II                Other  1.869295e-02
+16                 II                Other  2.276074e-02
+33                 II                Other  2.306491e-02
+151                Ia                Other  2.353168e-02
+85                 II                Other  3.265724e-02
+184                Ia                  IIn  3.502469e-02
+65                 Ib                Other  4.654494e-02
+72                 Ib                Other  5.109327e-02
+265                II                Other  5.117060e-02
+107              II P                Other  5.386628e-02
+168                Ia                Other  5.434111e-02
+302              II P                Other  5.618112e-02
+160                Ia                Other  5.764328e-02
+225               IIn                Other  6.292803e-02
+290                II                Other  6.361121e-02
+30               II P                Other  6.507658e-02
+43                 Ia                Other  6.925790e-02
+285                II                Other  7.360222e-02
+57                 II                Other  7.522990e-02
+246               IIn                Other  7.554623e-02
+234                Ia                Other  7.610444e-02
+81                 II                Other  8.124865e-02
+12                 II                 II P  8.685800e-02
+123                Ia                Other  8.696305e-02
+195                Ia                Other  8.742585e-02
+28                IIn                Other  8.863570e-02
+154                Ia                Other  8.884090e-02
+224                Ia                Other  9.030812e-02
+74                 Ia               Ia-91T  9.172151e-02
+238                II                Other  9.358996e-02
+42                 Ia                Other  9.864020e-02
+200                Ia                Other  1.025416e-01
+
+    \end{Verbatim}
+
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_7.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_8.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_9.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_10.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_11.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_12.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_13.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_14.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_15.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_16.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_17.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}2}]:} <models.kde\_model.kde\_model.KDEModel at 0x1101cee48>
+\end{Verbatim}
+            
+
+    % Add a bibliography block to the postdoc
+    
+    
+    
+    \end{document}

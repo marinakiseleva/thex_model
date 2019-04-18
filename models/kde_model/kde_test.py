@@ -1,7 +1,7 @@
 from math import isnan
 import pandas as pd
 import numpy as np
-from thex_data.data_consts import cat_code, code_cat
+from thex_data.data_consts import cat_code, UNKNOWN_LABEL, PRED_LABEL
 """
 Logic for classifying testing data using the KDE Model
 """
@@ -18,9 +18,8 @@ class KDEModelTest:
         """
         predictions = []
         for index, row in self.X_test.iterrows():
-            max_class = self.test_sample(row)
-            predictions.append(max_class)
-        predicted_classes = pd.DataFrame(predictions, columns=['predicted_class'])
+            predictions.append(self.test_sample(row))
+        predicted_classes = pd.DataFrame(predictions, columns=[PRED_LABEL])
         return predicted_classes
 
     def test_sample(self, x):
@@ -30,7 +29,7 @@ class KDEModelTest:
         """
         probabilities = self.calculate_class_probabilities(x)
         max_prob_class = max(probabilities, key=probabilities.get)
-        max_prob = max(probabilities.values())
+
         return max_prob_class
 
     def calculate_class_probabilities(self, x):
@@ -64,4 +63,11 @@ class KDEModelTest:
         sum_probabilities = sum(probabilities.values())
         probabilities = {k: v / sum_probabilities if sum_probabilities >
                          0 else 0 for k, v in probabilities.items()}
+
+        # TEMPORARY APPROACH
+        # If probability < X% predict Unknown. Should make precision 100%
+        threshold = 0.6
+        unknown_prob = 1 if max(probabilities.values()) < threshold else 0
+        probabilities[cat_code[UNKNOWN_LABEL]] = unknown_prob
+
         return probabilities

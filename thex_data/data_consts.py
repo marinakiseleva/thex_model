@@ -19,6 +19,8 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
 DATA_PATH = ROOT_DIR + LOCAL_DATA_PATH
 
 TARGET_LABEL = 'transient_type'  # label of target
+UNKNOWN_LABEL = 'Unknown'
+PRED_LABEL = 'predicted_class'
 
 """
 cat_code
@@ -96,6 +98,7 @@ cat_code = {
     'Variable Star': 68,
     'WD + IMBH': 69,
     'nIa': 70,
+    'Unknown': 100,
     'TTypes': 200
 }
 

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from sklearn.model_selection import KFold, StratifiedKFold
 
 from thex_data.data_init import *
-from thex_data.data_consts import drop_cols
+from thex_data.data_consts import cat_code
 from thex_data.data_prep import get_train_test, get_source_target_data
 from thex_data.data_print import *
 from thex_data import data_plot
@@ -54,7 +54,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization, BaseModelCust
         print_features_used(col_list)
         if data_filters['folds'] is not None:
             self.run_model_cv(col_list,  data_filters)
-            return 0
+            return self
 
         # Collect data filtered on these parameters
         self.set_model_data(col_list, **data_filters)
@@ -111,8 +111,8 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization, BaseModelCust
         pca = pca.fit(self.X_train)  # Fit on training
         reduced_training = pca.transform(self.X_train)
         reduced_testing = pca.transform(self.X_test)
-        # print("\nPCA Analysis: Explained Variance Ratio")
-        # print(pca.explained_variance_ratio_)
+        print("\nPCA Analysis: Explained Variance Ratio")
+        print(pca.explained_variance_ratio_)
 
         def convert_to_df(data, k):
             reduced_columns = []
@@ -138,31 +138,37 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization, BaseModelCust
         """
         Evaluate and plot performance of model
         """
-        self.get_rarest()
-        self.plot_probability_correctness()
+        # self.plot_samples(1)
+        # self.get_rarest()
+        #  X_accs = self.get_probability_matrix()
+        # # Add column of predicted class
+        # X_preds = pd.concat([X_accs, self.test_model()], axis=1)
+        # perc_ranges, corr_ranges, count_ranges = self.get_recall_ranges(
+        #     X_preds, class_code)
+        # # self.plot_probability_completeness()
         self.plot_roc_curves()
         # Get accuracy per class of transient
-        class_recalls = self.get_class_recalls()
-        class_precisions = self.get_class_precisions()
-        class_counts = self.get_class_counts(class_recalls.keys())
-        data_type = 'Training' if test_on_train else 'Testing'
-        title = self.name + " Recall on " + data_type + " Data"
-        self.plot_accuracies(class_recalls, title, class_counts, ylabel="Recall")
+        # class_recalls = self.get_class_recalls()
+        # class_precisions = self.get_class_precisions()
+        # class_counts = self.get_class_counts(class_recalls.keys())
+        # data_type = 'Training' if test_on_train else 'Testing'
+        # title = self.name + " Recall on " + data_type + " Data"
+        # # self.plot_accuracies(class_recalls, title, class_counts, ylabel="Recall")
 
-        class_counts = self.get_class_counts(class_precisions.keys())
-        title = self.name + " Precision on " + data_type + " Data"
-        self.plot_accuracies(class_precisions, title, class_counts, ylabel="Precision")
-        self.plot_confusion_matrix(normalize=True)
+        # class_counts = self.get_class_counts(class_precisions.keys())
+        # title = self.name + " Precision on " + data_type + " Data"
+        # self.plot_accuracies(class_precisions, title, class_counts, ylabel="Precision")
+        # self.plot_confusion_matrix(normalize=True)
 
     def run_cross_validation(self, k, X, y, data_filters):
         """
         Run k-fold cross validation
         """
         kf = StratifiedKFold(n_splits=k, shuffle=True)
-        recalls = []
-        precisions = []
+        class_metrics = []  # List of maps from class to stats
         unique_classes = self.get_unique_classes(y)
-        prob_ranges = {class_code: [] for class_code in unique_classes}
+
+        range_metrics = {class_code: [] for class_code in unique_classes}
         class_rocs = {class_code: [] for class_code in unique_classes}
         for train_index, test_index in kf.split(X, y):
             self.X_train, self.X_test = X.iloc[train_index].reset_index(
@@ -183,25 +189,21 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization, BaseModelCust
             self.predictions = self.test_model()
 
             # Save model accuracy
-            X_preds = pd.concat(
-                [self.get_probability_matrix(), self.test_model()], axis=1)
             for class_code in unique_classes:
                 # Record ROC performance
                 FP_rates, TP_rates = self.get_roc_curve(class_code)
                 class_rocs[class_code].append([FP_rates, TP_rates])
                 # Record probability vs accuracy
-                perc_ranges, corr_ranges, count_ranges = self.get_corr_prob_ranges(
-                    X_preds, class_code)
-                prob_ranges[class_code].append([perc_ranges, corr_ranges, count_ranges])
-            recalls.append(self.get_class_recalls())
-            precisions.append(self.get_class_precisions())
+                X_preds = pd.concat(
+                    [self.get_probability_matrix(), self.test_model()], axis=1)
+                range_metrics[class_code].append(
+                    self.get_metrics_by_ranges(X_preds, class_code))
+            class_metrics.append(self.get_class_performance(unique_classes))
 
-        # Get average accuracy per class (mapping)
-        avg_recalls = self.aggregate_accuracies(recalls, unique_classes)
-        avg_precisions = self.aggregate_accuracies(precisions, unique_classes)
+        agg_metrics = self.aggregate_metrics(class_metrics, unique_classes)
         avg_rocs = self.aggregate_rocs(class_rocs)
-        avg_prob_ranges = self.aggregate_prob_ranges(prob_ranges)
-        return avg_recalls, avg_precisions, avg_rocs, avg_prob_ranges
+        agg_range_metrics = self.aggregate_range_metrics(range_metrics)
+        return agg_metrics, avg_rocs, agg_range_metrics
 
     def run_model_cv(self, data_columns, data_filters):
         """
@@ -213,32 +215,34 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization, BaseModelCust
             self.visualize_data(y)
 
         # Initialize metric collections over all runs
-        class_recalls = []  # list of model accuracies/class recalls from each run
-        class_precisions = []  # precision of each class from each run
+        class_metrics = []
         unique_classes = self.get_unique_classes(y)
-        # true positive/false positive rates per class from each run
         all_rocs = {class_code: [] for class_code in unique_classes}
-        all_prob_ranges = {class_code: [] for class_code in unique_classes}
+        class_range_metrics = {class_code: [] for class_code in unique_classes}
         for index_run in range(data_filters['num_runs']):
-            cur_recalls, cur_precisions, cur_rocs, cur_probs = self.run_cross_validation(
+            metrics, cur_rocs, ranged_metrics = self.run_cross_validation(
                 k, X, y, data_filters)
-            class_recalls.append(cur_recalls)
-            class_precisions.append(cur_precisions)
+            class_metrics.append(metrics)
             for class_code in unique_classes:
                 all_rocs[class_code].append(cur_rocs[class_code])
-                all_prob_ranges[class_code].append(cur_probs[class_code])
+                class_range_metrics[class_code].append(ranged_metrics[class_code])
 
-        avg_recalls = self.aggregate_accuracies(class_recalls, unique_classes)
-        avg_precisions = self.aggregate_accuracies(class_precisions, unique_classes)
+        avg_metrics = self.aggregate_metrics(class_metrics, unique_classes)
         avg_rocs = self.aggregate_rocs(all_rocs)
-        avg_prob_ranges = self.aggregate_prob_ranges(all_prob_ranges)
+        agg_range_metrics = self.aggregate_range_metrics(class_range_metrics)
+
+        class_recalls = self.get_recall(avg_metrics, unique_classes)
+        class_precisions = self.get_precision(avg_metrics, unique_classes)
+
+        self.plot_performance(class_recalls, "Recall", ylabel="Recall")
+        self.plot_performance(class_precisions, "Precision", ylabel="Precision")
 
         data_type = 'Training' if data_filters['test_on_train'] else 'Testing'
         info = " of " + self.name + " from " + str(data_filters['num_runs']) + " runs of " + \
             str(k) + "-fold CV on " + data_type + " data"
 
-        self.plot_accuracies(avg_recalls, "Recall" + info, ylabel="Recall")
-        self.plot_accuracies(avg_precisions, "Precision" + info, ylabel="Precision")
         self.plot_roc_curves(avg_rocs, "ROCs" + info)
-        self.plot_probability_correctness(
-            avg_prob_ranges, "Accuracy vs Probability" + info)
+        self.plot_probability_completeness(
+            agg_range_metrics, "Probability vs Recall" + info)
+        self.plot_probability_precision(
+            agg_range_metrics, "Probability vs Precision" + info)

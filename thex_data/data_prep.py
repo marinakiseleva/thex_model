@@ -23,16 +23,18 @@ def get_data(col_list, **data_filters):
     df = collect_data()
     df = group_by_tree(df, data_filters['transform_labels'])
     df = filter_columns(df.copy(), col_list, data_filters['incl_redshift'])
+
     df.dropna(axis=0, inplace=True)
 
     # Plots Entire Feature Dist
-    data_plot.plot_feature_distribution(df, "redshift")
-
-    # Filter to most popular classes
-    df = filter_top_classes(df, top=data_filters['top_classes'])
+    if data_filters['transform_labels']:
+        data_plot.plot_feature_distribution(df, "redshift")
 
     # Keep only some classes, and turn remaining to 'Other'
     df = one_all(df, data_filters['one_all'])
+
+    # Filter to most popular classes
+    df = filter_top_classes(df, top=data_filters['top_classes'])
 
     # Randomly subsample any over-represented classes down to 100
     df = sub_sample(df, count=data_filters['subsample'], col_val=TARGET_LABEL)
@@ -41,7 +43,8 @@ def get_data(col_list, **data_filters):
         print("\n\nNo data to run model on. Try changing data filters or limiting number of features. Note: Running on all columns will not work since no data spans all features.\n\n")
         sys.exit()
 
-    print_class_counts(df)
+    if data_filters['transform_labels']:
+        print_class_counts(df)
 
     return df.reset_index(drop=True)
 
