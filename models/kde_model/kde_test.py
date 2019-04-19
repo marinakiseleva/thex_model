@@ -64,10 +64,8 @@ class KDEModelTest:
         probabilities = {k: v / sum_probabilities if sum_probabilities >
                          0 else 0 for k, v in probabilities.items()}
 
-        # TEMPORARY APPROACH
-        # If probability < X% predict Unknown. Should make precision 100%
-        threshold = 0.6
-        unknown_prob = 1 if max(probabilities.values()) < threshold else 0
+        # If probability < X% predict Unknown. X corresponds to precision
+        unknown_prob = 1 if max(probabilities.values()) < self.threshold else 0
         probabilities[cat_code[UNKNOWN_LABEL]] = unknown_prob
 
         return probabilities

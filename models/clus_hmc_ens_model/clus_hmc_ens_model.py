@@ -152,9 +152,10 @@ class CLUSHMCENS(BaseModel):
         total_variance = 0
         mean_vector = self.get_mean_vector(class_data)
         for df_index, class_vector in class_data.iterrows():
-            sample_weight = self.sample_weights[df_index]
+            # Removed sample_weight logic since it over-emphasizes small classes.
+            # sample_weight = self.sample_weights[df_index]
             d = self.get_weighted_distance(class_vector[TARGET_LABEL], mean_vector) ** 2
-            total_variance += d * sample_weight
+            total_variance += d  # * sample_weight
         num_samples = labeled_samples.shape[0]
         return total_variance / num_samples
 

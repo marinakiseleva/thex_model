@@ -1,23 +1,21 @@
-from models.base_model.base_model import BaseModel
-from models.kde_model.kde_train import KDEModelTrain
-from models.kde_model.kde_test import KDEModelTest
 
 
-class KDEModel(BaseModel, KDEModelTrain, KDEModelTest):
+class KTreeModel(BaseModel):
     """
     Model that classifies using unique Kernel Density Estimates for distributions of each feature, of each class. 
     """
 
     def __init__(self, cols=None, col_matches=None, **data_args):
-        self.name = "KDE Model"
+        self.name = "K-Tree Model"
         self.naive = data_args['naive'] if 'naive' in data_args else False
-        self.prob_threshold = 0  # Used in calculate_probabilities; set larger value to increase precision
         self.cols = cols
         self.col_matches = col_matches
         self.user_data_filters = data_args
 
     def train_model(self):
-        self.summaries, self.priors = self.train()
+        """
+        Train K-trees, where K is the total number of classes in the data (at all levels of the hierarchy)
+        """
 
     def test_model(self):
         predicted_classes = self.test()

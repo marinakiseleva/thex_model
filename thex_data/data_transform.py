@@ -12,7 +12,6 @@ def transform_features(df):
     :param df: DataFrame of features
     """
     df = derive_diffs(df)
-    # df = derive_reciprocals(df)
     df = scale_data(df)
     return df
 
@@ -44,22 +43,4 @@ def derive_diffs(df):
                 new_col_name = colname2 + "_minus_" + colname1
                 df[new_col_name] = val2 - val1
 
-    return df
-
-
-def derive_reciprocals(df):
-    """
-    Compute reciprocals of each column, 1/x
-    """
-    for index, colname in enumerate(list(df)):
-        df[colname + "_reciprocal"] = df[colname] / 1
-    return df
-
-
-def derive_logs(df):
-    """
-    Compute log of each column
-    """
-    for index, colname in enumerate(list(df)):
-        df[colname + "_log"] = np.log(df[colname])
     return df

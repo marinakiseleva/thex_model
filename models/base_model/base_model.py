@@ -227,6 +227,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization, BaseModelCust
                 all_rocs[class_code].append(cur_rocs[class_code])
                 class_range_metrics[class_code].append(ranged_metrics[class_code])
 
+        # Evaluate Model
         avg_metrics = self.aggregate_metrics(class_metrics, unique_classes)
         avg_rocs = self.aggregate_rocs(all_rocs)
         agg_range_metrics = self.aggregate_range_metrics(class_range_metrics)
@@ -234,13 +235,13 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization, BaseModelCust
         class_recalls = self.get_recall(avg_metrics, unique_classes)
         class_precisions = self.get_precision(avg_metrics, unique_classes)
 
-        self.plot_performance(class_recalls, "Recall", ylabel="Recall")
-        self.plot_performance(class_precisions, "Precision", ylabel="Precision")
-
+        # Plot performance metrics
         data_type = 'Training' if data_filters['test_on_train'] else 'Testing'
         info = " of " + self.name + " from " + str(data_filters['num_runs']) + " runs of " + \
             str(k) + "-fold CV on " + data_type + " data"
 
+        # self.plot_performance(class_recalls, "Recall " + info, ylabel="Recall")
+        self.plot_performance(class_precisions, "Precision " + info, ylabel="Precision")
         self.plot_roc_curves(avg_rocs, "ROCs" + info)
         self.plot_probability_completeness(
             agg_range_metrics, "Probability vs Recall" + info)

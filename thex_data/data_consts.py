@@ -571,7 +571,7 @@ Parent : Children
 Hierarchy used for HMC tree
 """
 class_to_subclass = {
-    "TTypes": ["I", "CC", "SLSN", "GRB", "Kilonova", "TDE", "AGN", "Candidate", "GW", "Galaxy", "HII Region", "Impostor", "Minor Planet", "Nova", "Other", "PISN", "Star", "False", "Lensing"],
+    "TTypes": ["I", "CC", "SLSN", "GRB", "Kilonova", "TDE", "AGN", "Candidate", "GW", "Galaxy", "HII Region", "Impostor", "Minor Planet", "Nova", "Other", "PISN", "Star", "False", "Lensing", UNKNOWN_LABEL],
     "I": ["I Pec", "Ia", "Ib", "Ic", "Ib/c", "nIa"],
     "I Pec": ["Ia Pec", "I-rapid", "I-faint"],
     "Ia": ["Ia Pec", "Ia-HV", "Ia/b", "Ia/c", "Ia-02cx"],
