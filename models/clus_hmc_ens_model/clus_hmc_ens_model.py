@@ -3,9 +3,10 @@ import numpy as np
 import pandas as pd
 import sys
 
-from thex_data.data_clean import init_tree, assign_levels, convert_str_to_list
+from thex_data.data_clean import init_tree, assign_levels
 from thex_data.data_consts import class_to_subclass as hierarchy
 from thex_data.data_consts import TARGET_LABEL, cat_code
+from thex_data.data_transform import convert_class_vectors
 
 from models.base_model.base_model import BaseModel
 from models.clus_hmc_ens_model.nodes import *
@@ -33,23 +34,6 @@ class CLUSHMCENS(BaseModel):
         labeled_samples, feature_value_pairs = self.setup_data()
         self.root = self.train(labeled_samples, feature_value_pairs, remaining_depth=300)
 
-    def convert_class_vectors(self, df):
-        """
-        Convert labels of TARGET_LABEL column in passed-in DataFrame to class vectors
-        """
-        # Convert labels to class vectors, with 1 meaning it has that class, and 0
-        # does not
-        rows_list = []
-        for df_index, row in df.iterrows():
-            class_vector = [0] * len(self.class_labels)
-            cur_classes = convert_str_to_list(row[TARGET_LABEL])
-            for class_index, c in enumerate(self.class_labels):
-                if c in cur_classes:
-                    class_vector[class_index] = 1
-            rows_list.append([class_vector])
-        class_vectors = pd.DataFrame(rows_list, columns=[TARGET_LABEL])
-        return class_vectors
-
     def get_sample_weights(self, labeled_samples):
         """
         Get weight of each sample (1/# of samples in class) and save in list with same order as labeled_samples
@@ -70,7 +54,7 @@ class CLUSHMCENS(BaseModel):
         class_vector
         feature_value_pairs : list of [f,v] pairs
         """
-        class_vectors = self.convert_class_vectors(self.y_train)
+        class_vectors = convert_class_vectors(self.y_train, self.class_labels)
         # Add labels to training data for complete dataset
         labeled_samples = pd.concat([self.X_train, class_vectors], axis=1)
 
@@ -263,7 +247,7 @@ class CLUSHMCENS(BaseModel):
 
     def evaluate_model(self):
         # Convert actual labels to class vectors for comparison
-        self.y_test_vectors = self.convert_class_vectors(self.y_test)
+        self.y_test_vectors = convert_class_vectors(self.y_test, self.class_labels)
         self.get_recall_scores()
 
     def get_recall_scores(self):
