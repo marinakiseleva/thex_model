@@ -21,7 +21,6 @@ class KTreesModel(BaseModel):
         self.cols = cols
         self.col_matches = col_matches
         self.user_data_filters = data_args
-        self.class_labels = list(cat_code.keys())
 
     def relabel(self, class_index, class_vectors):
         """
@@ -59,7 +58,7 @@ class KTreesModel(BaseModel):
             # Create Tree
             print("Creating tree for " + class_name)
             clf = DecisionTreeClassifier(
-                criterion='gini', splitter='best', class_weight='balanced')
+                criterion='gini', splitter='best', min_samples_leaf=3, class_weight='balanced')
             clf.fit(self.X_train,  y_train_labels)
             label_predictions = clf.predict(self.X_test)
             self.ktrees[class_name] = clf
@@ -69,6 +68,7 @@ class KTreesModel(BaseModel):
     def test_model(self):
         """
         Get class prediction for each sample, from each Tree. Reconstruct class vectors for samples, with 1 if class was predicted and 0 otherwise.
+        :return m_predictions: Numpy Matrix with each row corresponding to sample, and each column the prediction for that class
         """
         num_samples = self.X_test.shape[0]
         default_response = np.matrix([0] * num_samples).T
@@ -93,6 +93,16 @@ class KTreesModel(BaseModel):
         class_recalls = self.get_recall_scores()
         self.plot_performance(class_recalls, "KTrees Recall",
                               class_counts=None, ylabel="Recall")
+
+        # Plot probability vs precision for each class
+        X_accs = self.get_mc_probability_matrix()
+        for class_index, class_name in enumerate(self.class_labels):
+            perc_ranges, AP, TOTAL = self.get_mc_metrics_by_ranges(
+                X_accs, class_name)
+            if self.ktrees[class_name] is not None:
+                acc = [AP[index] / T if T > 0 else 0 for index, T in enumerate(TOTAL)]
+                self.plot_probability_ranges(perc_ranges, acc,
+                                             'TP/Total', class_name, TOTAL)
 
     def get_recall_scores(self):
         """
@@ -134,4 +144,21 @@ class KTreesModel(BaseModel):
         return class_recall
 
     def get_class_probabilities(self, x):
-        return self.calculate_class_probabilities(x)
+        """
+        Calculates probability of each transient class for the single test data point (x). 
+        :param x: Single row of features 
+        :return: map from class_code to probabilities
+        """
+        probabilities = {}
+        for class_index, class_name in enumerate(self.class_labels):
+            tree = self.ktrees[class_name]
+            if tree is not None:
+                class_probabilities = tree.predict_proba([x.values])
+                # class_probabilities = [[prob class 0, prob class 1]]
+                class_probability = class_probabilities[0][1]
+            else:
+                class_probability = 0
+
+            probabilities[class_name] = class_probability
+
+        return probabilities

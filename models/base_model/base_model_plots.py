@@ -91,6 +91,20 @@ class BaseModelVisualization:
 
             self.display_and_save_plot(title + ": " + str(code_cat[class_code]), ax)
 
+    def plot_probability_ranges(self, perc_ranges, y_values, ylabel, class_name, color_ranges, title=None):
+        """
+        Plots probability assigned to class (x) vs passed-in metric of y_values
+        """
+        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+        normalize = plt.Normalize(min(color_ranges), max(color_ranges))
+        colors = plt.cm.Blues(normalize(color_ranges))
+        ax = self.plot_bar_with_annotations(
+            axis=ax, x_vals=perc_ranges, y_vals=y_values, annotations=color_ranges, bar_colors=colors)
+        plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
+        plt.ylabel(ylabel, fontsize=12)
+        title = "Probability Assigned vs. " + ylabel if title is None else title
+        self.display_and_save_plot(title + ": " + str(class_name), ax)
+
     def plot_roc_curves(self, rates=None, title=None):
         """
         Plot ROC curves of each class on same plot

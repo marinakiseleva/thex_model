@@ -7,13 +7,14 @@ from thex_data.data_prep import get_train_test, get_source_target_data
 from thex_data.data_print import *
 from thex_data import data_plot
 from models.base_model.base_model_performance import BaseModelPerformance
+from models.base_model.mc_base_model_performance import MCBaseModelPerformance
 from models.base_model.base_model_plots import BaseModelVisualization
 from models.base_model.base_model_custom import BaseModelCustom
 
 from sklearn.decomposition import PCA
 
 
-class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization, BaseModelCustom):
+class BaseModel(ABC, BaseModelPerformance, MCBaseModelPerformance, BaseModelVisualization, BaseModelCustom):
     """
     Abstract Class representing base functionality of all models. Subclasses of models implement their own training and testing functions.
     """
@@ -29,6 +30,8 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization, BaseModelCust
         cols = self.cols
         col_matches = self.col_matches
         user_data_filters = self.user_data_filters
+
+        self.class_labels = list(cat_code.keys())  # For multiclass
 
         # Set defaults on filters
         data_filters = {'num_runs': 1,
@@ -138,12 +141,13 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization, BaseModelCust
         """
         # self.plot_samples(1)
         # self.get_rarest()
-        #  X_accs = self.get_probability_matrix()
-        # # Add column of predicted class
+        # X_accs = self.get_probability_matrix()
+        # # # Add column of predicted class
         # X_preds = pd.concat([X_accs, self.test_model()], axis=1)
         # perc_ranges, corr_ranges, count_ranges = self.get_recall_ranges(
         #     X_preds, class_code)
-        # # self.plot_probability_completeness()
+        # self.plot_probability_completeness()
+
         self.plot_roc_curves()
         # Get accuracy per class of transient
         # class_recalls = self.get_class_recalls()

@@ -23,8 +23,6 @@ class CLUSHMCENS(BaseModel):
         self.cols = cols
         self.col_matches = col_matches
         self.user_data_filters = data_args
-        # Save class labels to always access in same order
-        self.class_labels = list(cat_code.keys())
 
     def train_model(self):
         """

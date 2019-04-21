@@ -36,6 +36,7 @@ class KDEModelTest:
         """
         Calculates probability of each transient class (the keys of summaries map), for the single test data point (x). Calculates probability by multiplying probability of each feature together. Returns map of class codes to probability.
         :param x: Single row of features as datapoint
+        :return: map from class_code to probabilities
         """
         probabilities = {}
         # Get probability density of each class, and add it to a running sum of
