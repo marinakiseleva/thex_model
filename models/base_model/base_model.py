@@ -35,7 +35,6 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization, BaseModelCust
                         'test_on_train': False,
                         'folds': None,
                         'data_split': 0.3,  # For single run
-                        'hierarchical_model': False,
                         'top_classes': None,
                         'one_all': None,
                         'subsample': None,
@@ -61,8 +60,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization, BaseModelCust
         self.visualize_data()
         self.train_model()
         self.predictions = self.test_model()
-        if data_filters['hierarchical_model'] == False:
-            self.evaluate_model(data_filters['test_on_train'])
+        self.evaluate_model(data_filters['test_on_train'])
         return self
 
     @abstractmethod

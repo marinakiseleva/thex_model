@@ -20,7 +20,6 @@ class CLUSHMCENS(BaseModel):
     def __init__(self, cols=None, col_matches=None, **data_args):
         self.name = "CLUS-HMC-ENS"
         data_args['transform_labels'] = False
-        data_args['hierarchical_model'] = True
         self.cols = cols
         self.col_matches = col_matches
         self.user_data_filters = data_args
