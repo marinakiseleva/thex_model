@@ -247,22 +247,25 @@ class CLUSHMCENS(BaseModel):
     def evaluate_model(self):
         # Convert actual labels to class vectors for comparison
         self.y_test_vectors = convert_class_vectors(self.y_test, self.class_labels)
-        self.get_recall_scores()
+        class_recalls = self.get_recall_scores()
+        self.plot_performance(class_recalls, "CLUS HMC Recall",
+                              ylabel="Recall")
 
     def get_recall_scores(self):
         """
         Get recall of each class
         """
-        class_recalls = {label: 0 for label in self.class_labels}
-        for class_index, class_name in enumerate(self.class_labels):
-            class_recalls[class_name] = self.get_class_recall(class_index)
+        class_recalls = {cat_code[label]: 0 for label in self.class_labels}
+        for class_index, class_code in enumerate(self.class_labels):
+            class_recalls[class_code] = self.get_class_recall(class_index)
         print("\n\nRecall Performance\n")
         for key in class_recalls.keys():
             print(str(key) + " : " + str(round(class_recalls[key], 2)))
+        return class_recalls
 
     def get_class_recall(self, class_index):
         """
-        Get recall of class passed in using actual and predicted class vectors. Recall is TP/TP+FN
+        Get recall of class at class_index in using actual and predicted class vectors. Recall is TP/TP+FN
         """
         threshold = 0.4
         row_count = self.y_test_vectors.shape[0]

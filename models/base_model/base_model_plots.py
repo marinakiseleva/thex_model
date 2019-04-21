@@ -249,6 +249,7 @@ class BaseModelVisualization:
     def plot_performance(self, class_metrics, plot_title, class_counts=None, ylabel="Accuracy"):
         """
         Visualizes accuracy per class with bar graph
+        :param class_metrics: Mapping from class codes to metric value. 
         """
 
         # Get class names and corresponding accuracies
@@ -259,7 +260,7 @@ class BaseModelVisualization:
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         ax = self.plot_bar_with_annotations(
             axis=ax, x_vals=class_names, y_vals=metrics, annotations=class_counts)
-
+        plt.xticks(rotation=-45)
         plt.xlabel('Transient Class', fontsize=12)
         plt.ylabel(ylabel, fontsize=12)
         self.display_and_save_plot(plot_title, ax)

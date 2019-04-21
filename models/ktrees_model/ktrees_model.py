@@ -85,29 +85,32 @@ class KTreesModel(BaseModel):
                 m_predictions = np.append(m_predictions, default_response, axis=1)
 
         self.predictions = pd.DataFrame(m_predictions)
-        # print(self.predictions)
-        print(self.predictions.shape)
         return m_predictions
 
     def evaluate_model(self, test_on_train):
         # Convert actual labels to class vectors for comparison
         self.y_test_vectors = convert_class_vectors(self.y_test, self.class_labels)
-        self.get_recall_scores()
+        class_recalls = self.get_recall_scores()
+        self.plot_performance(class_recalls, "KTrees Recall",
+                              class_counts=None, ylabel="Recall")
 
     def get_recall_scores(self):
         """
-        Get recall of each class
+        Get recall of each class; returns map of class code to recall
         """
-        class_recalls = {label: 0 for label in self.class_labels}
+        all_class_recalls = {label: 0 for label in self.class_labels}
         for class_index, class_name in enumerate(self.class_labels):
-            class_recalls[class_name] = self.get_class_recall(class_index)
-        print("\n\nRecall Performance\n")
-        for key in class_recalls.keys():
-            print(str(key) + " : " + str(round(class_recalls[key], 2)))
+            all_class_recalls[class_name] = self.get_class_recall(class_index)
+        class_recalls = {}
+        for class_name in all_class_recalls.keys():
+            if self.ktrees[class_name] is not None:
+                class_code = cat_code[class_name]
+                class_recalls[class_code] = all_class_recalls[class_name]
+        return class_recalls
 
     def get_class_recall(self, class_index):
         """
-        Get recall of class passed in using actual and predicted class vectors. Recall is TP/TP+FN
+        Get recall of single class, of class_index. Recall is TP/TP+FN.
         """
         threshold = 0.4
         row_count = self.y_test_vectors.shape[0]
