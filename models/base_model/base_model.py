@@ -1,17 +1,17 @@
 from abc import ABC, abstractmethod
-from sklearn.model_selection import KFold, StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
+from sklearn.decomposition import PCA
 
-from thex_data.data_init import *
 from thex_data.data_consts import cat_code
+from thex_data.data_init import collect_cols
+from thex_data import data_plot
 from thex_data.data_prep import get_train_test, get_source_target_data
 from thex_data.data_print import *
-from thex_data import data_plot
+
 from models.base_model.base_model_performance import BaseModelPerformance
 from models.base_model.mc_base_model_performance import MCBaseModelPerformance
 from models.base_model.base_model_plots import BaseModelVisualization
 from models.base_model.base_model_custom import BaseModelCustom
-
-from sklearn.decomposition import PCA
 
 
 class BaseModel(ABC, BaseModelPerformance, MCBaseModelPerformance, BaseModelVisualization, BaseModelCustom):

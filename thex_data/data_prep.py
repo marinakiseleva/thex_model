@@ -38,7 +38,7 @@ def get_data(col_list, **data_filters):
     df = filter_top_classes(df, top=data_filters['top_classes'])
 
     # Randomly subsample any over-represented classes down to 100
-    df = sub_sample(df, count=data_filters['subsample'], col_val=TARGET_LABEL)
+    df = sub_sample(df, count=data_filters['subsample'])
 
     if df.shape[0] == 0:
         print("\n\nNo data to run model on. Try changing data filters or limiting number of features. Note: Running on all columns will not work since no data spans all features.\n\n")

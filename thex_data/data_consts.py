@@ -1,7 +1,9 @@
+"""
+data_consts
+Constant data-based information needed in THEx data program. Includes file locations of data, mapping of transient types and codes, as well as program-specific column names and references.
+"""
+
 import os
-"""
-All constant, global variables needed in THEx data program. Includes file of data, mapping of transient types and codes, as well as the hard-coded column name of the claimed type that is used in the program (TARGET_LABEL). 
-"""
 
 
 #***************************************************************
@@ -18,13 +20,16 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
 # FITS file of transient/galaxy data
 DATA_PATH = ROOT_DIR + LOCAL_DATA_PATH
 
-TARGET_LABEL = 'transient_type'  # label of target
+# ORIG_TARGET_LABEL: Database defined column name; converted to TARGET_LABEL in project
+ORIG_TARGET_LABEL = 'claimedtype'
+# TARGET_LABEL: Program-designated label of target
+TARGET_LABEL = 'transient_type'
 UNKNOWN_LABEL = 'Unknown'
 PRED_LABEL = 'predicted_class'
 
 """
 cat_code
-transient type name : transient type class code
+{transient type name : transient type class code}
 Transient Type categories, mapped to codes (integer values).
 """
 cat_code = {
@@ -104,7 +109,7 @@ cat_code = {
 
 """
 code_cat
-transient type class code : transient type name 
+{transient type class code : transient type name }
 Transient Type codes mapped to categories.
 """
 code_cat = {v: k for k, v in cat_code.items()}
@@ -112,7 +117,7 @@ code_cat = {v: k for k, v in cat_code.items()}
 
 """ 
 groupings
-data values : transient type 
+{data values : transient type }
 The groupings below map specific transient types in the data set to claimed type groups. For example: nIa, Ia, Ia*, and Ia-HV all map to Ia.
 """
 groupings = {
@@ -433,7 +438,8 @@ groupings = {
 }
 
 """
-transient type : possible data values
+grouping_lists
+{transient type : possible data values}
 inverse of groupings
 """
 grouping_lists = {
@@ -529,13 +535,15 @@ grouping_lists = {
 }
 
 """
-Columns with non-numeric values that are not used
+drop_cols
+Columns with non-numeric values that are not used in analysis
 """
 drop_cols = ['event', 'ra', 'dec', 'ra_deg', 'dec_deg', 'radec_err', 'host', 'host_ra', 'host_dec', 'ebv', 'host_ra_deg', 'host_dec_deg', 'host_dist', 'host_search_radius', 'is_confirmed_host', 'by_primary_cand',
              'by_transient', 'AllWISE_IsVar', 'HyperLEDA_objtype', 'HyperLEDA_type', 'HyperLEDA_bar', 'HyperLEDA_ring', 'HyperLEDA_multiple', 'HyperLEDA_compactness', 'HyperLEDA_agnclass', "Err",  "_e_",  "_ERR"]
 
 """
-mag_cols : Columns corresponding to magntiude, which can be subtracted from one another to produce color
+mag_cols
+Column names corresponding to magntiude, which can be subtracted from one another to produce color
 """
 mag_cols = ['GALEXAIS_FUV', 'GALEXAIS_NUV',
             'GALEXAIS_FUV.b', 'GALEXAIS_e_FUV.b', 'GALEXAIS_NUV.b',
@@ -567,8 +575,9 @@ mag_cols = ['GALEXAIS_FUV', 'GALEXAIS_NUV',
             ]
 
 """
-Parent : Children
-Hierarchy used for HMC tree
+class_to_subclass
+{Parent : [Child1, child2, ...] }
+Hierarchy of transient types, used in hierarchical multilabel classifiers
 """
 class_to_subclass = {
     "TTypes": ["I", "CC", "SLSN", "GRB", "Kilonova", "TDE", "AGN", "Candidate", "GW", "Galaxy", "HII Region", "Impostor", "Minor Planet", "Nova", "Other", "PISN", "Star", "False", "Lensing", UNKNOWN_LABEL],
@@ -596,6 +605,4 @@ class_to_subclass = {
     "TDE": ["TDE", "MS + SMBH", "He + SMBH", "Planet + WD", "Low-mass TDE", "WD + IMBH"],
     "Star": ["Variable Star"]
     # "TDE": ["CandidateTDE", "XrayTDE", "UVOptTDE"]
-
-
 }

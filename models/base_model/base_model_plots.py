@@ -1,12 +1,11 @@
 import itertools
 from textwrap import wrap
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 
 from sklearn.metrics import confusion_matrix
 
-from thex_data.data_consts import code_cat, TARGET_LABEL, ROOT_DIR, cat_code
+from thex_data.data_consts import code_cat, ROOT_DIR
 
 FIG_WIDTH = 6
 FIG_HEIGHT = 4

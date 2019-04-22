@@ -1,9 +1,8 @@
 """
-Enhance features by scaling and changing them
+data_transform
+Enhance features by scaling and transforming them
 """
-import pandas as pd
-import numpy as np
-from thex_data.data_consts import mag_cols, TARGET_LABEL
+from thex_data.data_consts import mag_cols
 
 
 def transform_features(df):
@@ -19,6 +18,7 @@ def transform_features(df):
 def scale_data(df):
     """
     Scale each feature between 0 and 1 for consistent PCA
+    :param df: DataFrame of features
     """
     for index, colname in enumerate(list(df)):
         max_col = df[colname].max()

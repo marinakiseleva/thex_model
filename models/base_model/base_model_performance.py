@@ -1,9 +1,7 @@
-import itertools
-import collections
 import numpy as np
 import pandas as pd
 
-from thex_data.data_consts import TARGET_LABEL, UNKNOWN_LABEL, PRED_LABEL, code_cat, cat_code
+from thex_data.data_consts import TARGET_LABEL, UNKNOWN_LABEL, PRED_LABEL, cat_code
 
 
 class BaseModelPerformance:

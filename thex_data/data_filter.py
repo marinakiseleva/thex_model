@@ -1,5 +1,6 @@
 """
-The functions below involve filtering data down to normalize it
+data_filter
+Functionality for filtering data
  - sub_sample: sub sampling over-represented classes
  - one_all: Keep only certain classes unique and convert rest to 'Other', in order to attempt a pseudo one-vs-all classification
  - filter_columns: keeps only certain columns; feature selection
@@ -7,11 +8,12 @@ The functions below involve filtering data down to normalize it
 """
 
 import pandas as pd
+
 from .data_consts import cat_code, TARGET_LABEL
 from .data_print import *
 
 
-def sub_sample(df, count, col_val):
+def sub_sample(df, count):
     """
     Sub-samples over-represented class
     :param df: the dataframe to manipulate
@@ -20,15 +22,14 @@ def sub_sample(df, count, col_val):
     if count is None:
         return df
     subsampled_df = pd.DataFrame()
-    t_values = list(df[col_val].unique())
-    # iterate through each claimed type group in dataset
-    for ctg in t_values:
-        cur_ctg = df[df[col_val] == ctg]  # rows with this claimed type group
-        num_rows = cur_ctg.shape[0]  # number of rows
+    unique_classes = list(df[TARGET_LABEL].unique())
+    for class_code in unique_classes:
+        df_class = df[df[TARGET_LABEL] == class_code]
+        num_rows = df_class.shape[0]  # number of rows
         if num_rows > count:
             # Reduce to the count number
-            cur_ctg = cur_ctg.sample(n=count)
-        subsampled_df = pd.concat([subsampled_df, cur_ctg])
+            df_class = df_class.sample(n=count)
+        subsampled_df = pd.concat([subsampled_df, df_class])
 
     return subsampled_df
 
@@ -44,16 +45,15 @@ def filter_columns(df, col_list, incl_redshift):
     col_list = col_list + [TARGET_LABEL]
     if incl_redshift:
         col_list.append('redshift')
-
     # print_features_used(col_list)
     df = df[col_list]
-
     return df
 
 
 def one_all(df, keep_classes):
     """
     Convert all classes not in keep_classes to 'Other' 
+    :param df: DataFrame of features and TARGET_LABEL
     :param keep_classes: list of class NAMES to keep unique
     """
     if keep_classes is None:
@@ -70,26 +70,33 @@ def one_all(df, keep_classes):
 def get_popular_classes(df, top=5):
     """
     Gets most popular classes by frequency. Returns list of 'top' most popular class class codes
+    :param df: DataFrame of features and TARGET_LABEL
     :param top: # of classes to return
     """
-    ttype_counts = df.groupby(TARGET_LABEL).count()
-    ttype_counts['avg_count'] = ttype_counts.mean(axis=1)
-    ttype_counts = ttype_counts.sort_values(
+    class_counts = df.groupby(TARGET_LABEL).count()
+    class_counts['avg_count'] = class_counts.mean(axis=1)
+    class_counts = class_counts.sort_values(
         'avg_count', ascending=False).reset_index().head(top)
+    return list(class_counts[TARGET_LABEL])
 
-    return list(ttype_counts[TARGET_LABEL])
 
-
-def filter_top_classes(df, top):
-    if top is None:
+def filter_top_classes(df, X):
+    """
+    Keep X most frequent classes
+    :param df: DataFrame of features and TARGET_LABEL
+    :param X: Number of classes to keep
+    :return: DataFrame of original format, with only top X classes of data
+    """
+    if X is None:
         return df
-    top_classes = get_popular_classes(df, top=top)
+    top_classes = get_popular_classes(df, top=X)
     return df.loc[df[TARGET_LABEL].isin(top_classes)]
 
 
 def filter_data(df):
     """
     Filters DataFrame to keep only rows that have at least 1 valid value in the features
+    :param df: DataFrame of features and TARGET_LABEL
     """
     df = df.reset_index(drop=True)
     cols = list(df)

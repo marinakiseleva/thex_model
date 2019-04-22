@@ -1,11 +1,10 @@
+"""
+data_print
+Print useful information about data
+"""
 import pandas as pd
 
 from .data_consts import code_cat, TARGET_LABEL
-
-
-"""
-Print useful information about data
-"""
 
 
 def print_class_counts(df):

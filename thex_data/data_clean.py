@@ -1,14 +1,15 @@
 """
 data_clean:
- manages all functions that cleans and prepares the data before filtering
+Reassigns labels for data. convert_class_vectors creates a vector of Booleans for class presence like [0,0,0,0,1,0,1, ...], and remaining functionality is predominantly for assigning each sample a single class. 
 
 """
-
-from .data_consts import groupings, TARGET_LABEL, cat_code
-from .data_consts import class_to_subclass as hierarchy
 import numpy as np
 import pandas as pd
+
 from hmc import hmc
+
+from .data_consts import groupings, ORIG_TARGET_LABEL, TARGET_LABEL, cat_code
+from .data_consts import class_to_subclass as hierarchy
 
 
 def convert_class_vectors(df, class_labels):
@@ -62,11 +63,11 @@ def convert_str_to_list(input_string):
 def group_by_tree(df, transform_labels):
     """
     Normalized claimed type (transient type). If claimed type is not in map, it is removed. Only considers 1-1 mappings, does not use galaxies that have more than 1. Defines new TARGET_LABEL column. 
-    :param df: DataFrame of values and labels. Must have column 'claimedtype' with transient type.
+    :param df: DataFrame of values and labels. Must have column ORIG_TARGET_LABEL
     :return df: Returns Pandas DataFrame with new column TARGET_LABEL, which has normalized transient type for each 
     """
     if transform_labels == False:
-        df[TARGET_LABEL] = df['claimedtype']
+        df[TARGET_LABEL] = df[ORIG_TARGET_LABEL]
         df = df[~df[TARGET_LABEL].isnull()]
         return df
 
@@ -74,14 +75,14 @@ def group_by_tree(df, transform_labels):
     node_depths = assign_levels(tree, {}, tree.root, 1)
 
     for index, row in df.iterrows():
-        orig_labels = convert_str_to_list(row['claimedtype'])
+        orig_labels = convert_str_to_list(row[ORIG_TARGET_LABEL])
 
         label = find_max_label(orig_labels, node_depths)
         # label = find_min_label(orig_labels, node_depths)
 
-        df.at[index, 'claimedtype'] = label
+        df.at[index, ORIG_TARGET_LABEL] = label
 
-    df[TARGET_LABEL] = df['claimedtype'].apply(
+    df[TARGET_LABEL] = df[ORIG_TARGET_LABEL].apply(
         lambda x: groupings[x] if x in groupings else None)
     df = df[~df[TARGET_LABEL].isnull()]
 
