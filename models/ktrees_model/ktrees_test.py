@@ -12,13 +12,13 @@ class KTreesTest:
         :return m_predictions: Numpy Matrix with each row corresponding to sample, and each column the prediction for that class
         """
         num_samples = self.X_test.shape[0]
-        default_response = np.matrix([0] * num_samples).T
+        default_response = np.array([[0] * num_samples]).T
         m_predictions = np.zeros((num_samples, 0))
         for class_index, class_name in enumerate(self.class_labels):
             tree = self.ktrees[class_name]
             if tree is not None:
                 tree_predictions = tree.predict(self.X_test)
-                col_predictions = np.matrix(tree_predictions).T
+                col_predictions = np.array([tree_predictions]).T
                 # Add predictions as column to predictions across classes
                 m_predictions = np.append(m_predictions, col_predictions, axis=1)
             else:

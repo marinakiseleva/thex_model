@@ -32,10 +32,11 @@ class KTreesModel(BaseModel, KTreesTrain, KTreesTest):
         return self.test()
 
     def evaluate_model(self, test_on_train):
-        class_recalls = self.get_mc_recall_scores()
-        self.plot_performance(class_recalls, "KTrees Recall",
+        class_recalls, class_precisions = self.get_mc_metrics()
+        self.plot_performance(class_recalls, "K-Trees Recall",
                               class_counts=None, ylabel="Recall")
-
+        self.plot_performance(class_precisions, "K-Trees Precision",
+                              class_counts=None, ylabel="Precision")
         # Plot probability vs precision for each class
         X_accs = self.get_mc_probability_matrix()
         for class_index, class_name in enumerate(self.class_labels):

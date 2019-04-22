@@ -77,7 +77,8 @@ def count_classes(df):
     class_sizes = pd.DataFrame(df.groupby(TARGET_LABEL).size())
     class_counts = {}
     for class_code, row in class_sizes.iterrows():
-        class_counts[class_code] = int(row[0])
+        if class_code != '':
+            class_counts[class_code] = int(row[0])
     return class_counts
 
 
@@ -100,12 +101,14 @@ def plot_class_hist(df):
     f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
     plt.gcf().subplots_adjust(bottom=0.2)
     ax.bar(class_indices, list(class_counts.values()))
-    plt.xticks(class_indices, class_names, fontsize=12)
+    print(class_indices)
+    print(class_names)
+    plt.xticks(class_indices, class_names, fontsize=10)
     ax.set_xlabel('Class', fontsize=12)
 
     if num_classes > 20:
         plt.xticks(rotation=-90)
-    elif num_classes > 10:
+    elif num_classes > 5:
         plt.xticks(rotation=-45)
 
     ax.set_ylabel('Count', fontsize=12)

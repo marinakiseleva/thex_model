@@ -34,9 +34,11 @@ class CLUSHMCENS(BaseModel, CLUSHMCENSTrain, CLUSHMCENSTest):
         return self.test()
 
     def evaluate_model(self, test_on_train):
-        class_recalls = self.get_mc_recall_scores()
+        class_recalls, class_precisions = self.get_mc_metrics()
         self.plot_performance(class_recalls, "CLUS HMC ENS Recall",
                               class_counts=None, ylabel="Recall")
+        self.plot_performance(class_precisions, "CLUS HMC ENS Precision",
+                              class_counts=None, ylabel="Precision")
 
     def get_class_probabilities(self, x):
         print("\n\n need to implement get_class_probabilities for CLUS-HMC-ENS \n")

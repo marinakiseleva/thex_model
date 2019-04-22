@@ -1,5 +1,6 @@
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 
 from thex_data.data_consts import TARGET_LABEL
 from thex_data.data_clean import convert_class_vectors
@@ -39,6 +40,39 @@ class KTreesTrain:
             sample_weights.append(1 / class_count)
         return sample_weights
 
+    def get_best_model(self, X, y):
+        """
+        Use RandomizedSearchCV to compute best hyperparameters for the model, using passed in X and y
+        :return: Dictionary of tree parameters to best values {parameter: value}
+        """
+        # Create and fit training data to Tree
+        labeled_samples = pd.concat([X, y], axis=1)
+        sample_weights = self.get_sample_weights(labeled_samples)
+
+        criterion = ['entropy', 'gini']
+        splitter = ['best', 'random']
+        max_depth = [3, 4, 10, 50]
+        min_samples_split = [2, 4, 8, 0.01, 0.05, 0.1, 0.2]
+        min_samples_leaf = [1, 2, 3, 5, 0.2, 0.4]
+        min_weight_fraction_leaf = [0, 0.001, 0.01, 0.1, 0.2]
+
+        grid = {'criterion': criterion,
+                'splitter': splitter,
+                'max_depth': max_depth,
+                'min_samples_split': min_samples_split,
+                'min_samples_leaf': min_samples_leaf,
+                'min_weight_fraction_leaf': min_weight_fraction_leaf,
+                'max_features': [0.2, 0.4, 0.6, None],
+                'class_weight': ['balanced']
+                }
+
+        clf_optimize = GridSearchCV(
+            estimator=DecisionTreeClassifier(), param_grid=grid, scoring='brier_score_loss', cv=3, iid=True, n_jobs=8)
+
+        # Fit the random search model
+        clf_optimize.fit(X, y, sample_weight=sample_weights)
+        return clf_optimize.best_estimator_
+
     def train(self):
         """
         Train K-trees, where K is the total number of classes in the data (at all levels of the hierarchy)
@@ -60,12 +94,10 @@ class KTreesTrain:
                 self.ktrees[class_name] = None
                 continue
 
-            # Create and fit training data to Tree
-            clf = DecisionTreeClassifier(
-                criterion='gini', splitter='random', min_samples_split=2, min_samples_leaf=3, class_weight='balanced')
-            labeled_samples = pd.concat([self.X_train, y_train_labels], axis=1)
-            sample_weights = self.get_sample_weights(labeled_samples)
-            clf.fit(self.X_train,  y_train_labels, sample_weight=sample_weights)
+            print("\n\nGetting model for class " + class_name)
+            clf = self.get_best_model(self.X_train, y_train_labels)
+            print("Params for class " + class_name)
+            print(clf.get_params())
             self.ktrees[class_name] = clf
 
         return self.ktrees
