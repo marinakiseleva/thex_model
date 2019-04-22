@@ -7,7 +7,26 @@ data_clean:
 from .data_consts import groupings, TARGET_LABEL, cat_code
 from .data_consts import class_to_subclass as hierarchy
 import numpy as np
+import pandas as pd
 from hmc import hmc
+
+
+def convert_class_vectors(df, class_labels):
+    """
+    Convert labels of TARGET_LABEL column in passed-in DataFrame to class vectors
+    """
+    # Convert labels to class vectors, with 1 meaning it has that class, and 0
+    # does not
+    rows_list = []
+    for df_index, row in df.iterrows():
+        class_vector = [0] * len(class_labels)
+        cur_classes = convert_str_to_list(row[TARGET_LABEL])
+        for class_index, c in enumerate(class_labels):
+            if c in cur_classes:
+                class_vector[class_index] = 1
+        rows_list.append([class_vector])
+    class_vectors = pd.DataFrame(rows_list, columns=[TARGET_LABEL])
+    return class_vectors
 
 
 def init_tree():
@@ -73,7 +92,7 @@ def group_by_tree(df, transform_labels):
 
 def find_min_label(labels, node_depths):
     """
-    Find label with minimal depth (highest in the tree, excluding root)
+    Find label with minimal depth (highest in the tree, excluding root), ie. I, II, CC, etc.
     """
     min_depth = 10
     min_label = None
@@ -90,7 +109,7 @@ def find_min_label(labels, node_depths):
 
 def find_max_label(labels, node_depths):
     """
-    Find label with maximal depth (deepest in the tree)
+    Find label with maximal depth (deepest in the tree), ie. Ia Pec, IIb, etc.
     """
     max_depth = 0
     max_label = None

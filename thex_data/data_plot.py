@@ -1,16 +1,18 @@
+"""
+data_plot
+Functionality to plot data distributions and counts. This includes plotting the distribution of features, the distributions of transient types over redshift, and number of each transient type in dataset.
+"""
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 from sklearn.neighbors.kde import KernelDensity
-from scipy.stats import norm
+
 from .data_consts import code_cat, TARGET_LABEL, ROOT_DIR
 
 FIG_WIDTH = 8
 FIG_HEIGHT = 6
-
-"""
-data_plot contains helper functions to plot the data. This includes plotting the distribution of features, and the distributions of transient types over redshift.
-"""
 
 
 def plot_feature_distribution(df, feature, logged=True):
@@ -68,12 +70,14 @@ def plot_lsst_distribution(ax):
 
 def count_classes(df):
     """
-    Returns class codes and corresponding counts in DataFrame
+    Returns count of each distinct value in TARGET_LABEL of df
+    :param df: Pandas DataFrame with TARGET_LABEL column
+    :return class_counts: Map of {class_code : count, ...}
     """
     class_sizes = pd.DataFrame(df.groupby(TARGET_LABEL).size())
     class_counts = {}
     for class_code, row in class_sizes.iterrows():
-        class_counts[class_code] = row[0]
+        class_counts[class_code] = int(row[0])
     return class_counts
 
 
@@ -82,28 +86,30 @@ def plot_class_hist(df):
     Plots histogram of class sizes
     :param df: DataFrame with TARGET_LABEL column
     """
-
     class_counts = count_classes(df)
     class_names = []
+
     for c in class_counts.keys():
         if c in code_cat:
             class_names.append(code_cat[c])
         else:
             class_names.append(str(c))
-    class_indices = np.arange(len(class_names))
+    num_classes = len(class_names)
+    class_indices = np.arange(num_classes)
 
     f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
     plt.gcf().subplots_adjust(bottom=0.2)
     ax.bar(class_indices, list(class_counts.values()))
     plt.xticks(class_indices, class_names, fontsize=12)
-    plt.xlabel('Class', fontsize=12)
-    plt.ylabel('Number of Samples', fontsize=12)
-    title = "Distribution of Transient Types in Data Sample"
-    plt.title(title, fontsize=15)
+    ax.set_xlabel('Class', fontsize=12)
 
-    # Save to file
-    replace_strs = ["\n", " ", ":", ".", ",", "/"]
-    for r in replace_strs:
-        title = title.replace(r, "_")
-    # plt.savefig(ROOT_DIR + "/output/classdistributions/" + title)
+    if num_classes > 20:
+        plt.xticks(rotation=-90)
+    elif num_classes > 10:
+        plt.xticks(rotation=-45)
+
+    ax.set_ylabel('Count', fontsize=12)
+    # Force y-axis ticks to be Integers
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.title("Distribution of Transient Types in Data Sample", fontsize=15)
     plt.show()

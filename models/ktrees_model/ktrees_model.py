@@ -1,18 +1,15 @@
-
-from collections import Counter
-
 import pandas as pd
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 
 from models.base_model.base_model import BaseModel
 from thex_data.data_consts import TARGET_LABEL, cat_code, code_cat
-from thex_data.data_transform import convert_class_vectors
+from thex_data.data_clean import convert_class_vectors
 
 
 class KTreesModel(BaseModel):
     """
-    Model that classifies using unique Kernel Density Estimates for distributions of each feature, of each class. 
+    Model that consists of K-trees, where is K is total number of all unique class labels (at all levels of the hierarchy). Each sample is given a probability of each class, using each tree separately. Thus, an item could have 90% probability of I and 99% of Ia. 
     """
 
     def __init__(self, cols=None, col_matches=None, **data_args):
@@ -41,10 +38,8 @@ class KTreesModel(BaseModel):
     def get_sample_weights(self, labeled_samples):
         """
         Get weight of each sample (1/# of samples in class) and save in list with same order as labeled_samples
-        :param labeled_samples: DataFrame of fetaures and TARGET_LABEL
+        :param labeled_samples: DataFrame of features and TARGET_LABEL, where TARGET_LABEL values are 0 or 1
         """
-
-        # label_counts = Counter(tuple(e) for e in labeled_samples[TARGET_LABEL].values)
         classes = labeled_samples[TARGET_LABEL].unique()
         label_counts = {}
         for c in classes:
@@ -54,7 +49,6 @@ class KTreesModel(BaseModel):
         for df_index, row in labeled_samples.iterrows():
             class_count = label_counts[row[TARGET_LABEL]]
             sample_weights.append(1 / class_count)
-        print(label_counts)
         return sample_weights
 
     def train_model(self):
@@ -63,8 +57,6 @@ class KTreesModel(BaseModel):
         """
         # Convert class labels to class vectors
         y_train_vectors = convert_class_vectors(self.y_train, self.class_labels)
-        # labeled_samples = pd.concat([self.X_train, y_train_vectors], axis=1)
-        # sample_weights = self.get_sample_weights(labeled_samples)
 
         self.ktrees = {}
 
@@ -79,14 +71,13 @@ class KTreesModel(BaseModel):
                 # positive samples
                 self.ktrees[class_name] = None
                 continue
-            # Create Tree
-            print("Creating tree for " + class_name)
-            labeled_samples = pd.concat([self.X_train, y_train_labels], axis=1)
-            sample_weights = self.get_sample_weights(labeled_samples)
+
+            # Create and fit training data to Tree
             clf = DecisionTreeClassifier(
                 criterion='gini', splitter='random', min_samples_split=2, min_samples_leaf=3, class_weight='balanced')
+            labeled_samples = pd.concat([self.X_train, y_train_labels], axis=1)
+            sample_weights = self.get_sample_weights(labeled_samples)
             clf.fit(self.X_train,  y_train_labels, sample_weight=sample_weights)
-            label_predictions = clf.predict(self.X_test)
             self.ktrees[class_name] = clf
 
         return self.ktrees
@@ -110,13 +101,10 @@ class KTreesModel(BaseModel):
                 # Add column of 0s
                 m_predictions = np.append(m_predictions, default_response, axis=1)
 
-        self.predictions = pd.DataFrame(m_predictions)
         return m_predictions
 
     def evaluate_model(self, test_on_train):
-        # Convert actual labels to class vectors for comparison
-        self.y_test_vectors = convert_class_vectors(self.y_test, self.class_labels)
-        class_recalls = self.get_recall_scores()
+        class_recalls = self.get_mc_recall_scores()
         self.plot_performance(class_recalls, "KTrees Recall",
                               class_counts=None, ylabel="Recall")
 
@@ -129,45 +117,6 @@ class KTreesModel(BaseModel):
                 acc = [AP[index] / T if T > 0 else 0 for index, T in enumerate(TOTAL)]
                 self.plot_probability_ranges(perc_ranges, acc,
                                              'TP/Total', class_name, TOTAL)
-
-    def get_recall_scores(self):
-        """
-        Get recall of each class; returns map of class code to recall
-        """
-        all_class_recalls = {label: 0 for label in self.class_labels}
-        for class_index, class_name in enumerate(self.class_labels):
-            all_class_recalls[class_name] = self.get_class_recall(class_index)
-        class_recalls = {}
-        for class_name in all_class_recalls.keys():
-            if self.ktrees[class_name] is not None:
-                class_code = cat_code[class_name]
-                class_recalls[class_code] = all_class_recalls[class_name]
-        return class_recalls
-
-    def get_class_recall(self, class_index):
-        """
-        Get recall of single class, of class_index. Recall is TP/TP+FN.
-        """
-        threshold = 0.4
-        row_count = self.y_test_vectors.shape[0]
-        TP = 0  # True positive count, predicted = actual = 1
-        FN = 0  # False negative count, predicted = 0, actual = 1
-        for sample_index in range(row_count - 1):
-
-            # Compare this index of 2 class vectors
-            predicted_class = self.predictions[sample_index, class_index]
-
-            actual_classes = self.y_test_vectors.iloc[sample_index][TARGET_LABEL]
-            actual_class = actual_classes[class_index]
-
-            if actual_class >= threshold:
-                if actual_class == predicted_class:
-                    TP += 1
-                elif actual_class != predicted_class:
-                    FN += 1
-        denominator = TP + FN
-        class_recall = TP / (TP + FN) if denominator > 0 else 0
-        return class_recall
 
     def get_class_probabilities(self, x):
         """

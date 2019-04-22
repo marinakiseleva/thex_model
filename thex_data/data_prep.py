@@ -1,16 +1,17 @@
 """
-Connection between data manipulation and models: calls upon other functionalities that pull down data, filters it, and enhances features.
+data_prep
+Prepares data before running through a classifier. Contains functionality to pull down data, filter data, enhances features, and split into training and testing sets.
 """
 import sys
 from sklearn.model_selection import train_test_split
 
-from .data_transform import transform_features
-from .data_filter import *
-from .data_consts import TARGET_LABEL
-from .data_print import *
-from .data_init import collect_data
 from .data_clean import *
-from . import data_plot
+from .data_consts import TARGET_LABEL
+from .data_filter import *
+from .data_init import collect_data
+from .data_plot import *
+from .data_transform import transform_features
+from .data_print import *
 
 
 def get_data(col_list, **data_filters):
@@ -28,7 +29,7 @@ def get_data(col_list, **data_filters):
 
     # Plots Entire Feature Dist
     if data_filters['transform_labels']:
-        data_plot.plot_feature_distribution(df, "redshift")
+        plot_feature_distribution(df, "redshift")
 
     # Keep only some classes, and turn remaining to 'Other'
     df = one_all(df, data_filters['one_all'])

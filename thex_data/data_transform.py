@@ -4,7 +4,6 @@ Enhance features by scaling and changing them
 import pandas as pd
 import numpy as np
 from thex_data.data_consts import mag_cols, TARGET_LABEL
-from thex_data.data_clean import convert_str_to_list
 
 
 def transform_features(df):
@@ -45,21 +44,3 @@ def derive_diffs(df):
                 df[new_col_name] = val2 - val1
 
     return df
-
-
-def convert_class_vectors(df, class_labels):
-    """
-    Convert labels of TARGET_LABEL column in passed-in DataFrame to class vectors
-    """
-    # Convert labels to class vectors, with 1 meaning it has that class, and 0
-    # does not
-    rows_list = []
-    for df_index, row in df.iterrows():
-        class_vector = [0] * len(class_labels)
-        cur_classes = convert_str_to_list(row[TARGET_LABEL])
-        for class_index, c in enumerate(class_labels):
-            if c in cur_classes:
-                class_vector[class_index] = 1
-        rows_list.append([class_vector])
-    class_vectors = pd.DataFrame(rows_list, columns=[TARGET_LABEL])
-    return class_vectors
