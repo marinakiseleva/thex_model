@@ -81,6 +81,8 @@ def count_classes(df):
             class_counts[class_code] = int(row[0])
     return class_counts
 
+from matplotlib.ticker import FormatStrFormatter
+
 
 def plot_class_hist(df):
     """
@@ -101,18 +103,18 @@ def plot_class_hist(df):
     f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
     plt.gcf().subplots_adjust(bottom=0.2)
     ax.bar(class_indices, list(class_counts.values()))
-    print(class_indices)
-    print(class_names)
     plt.xticks(class_indices, class_names, fontsize=10)
-    ax.set_xlabel('Class', fontsize=12)
-
     if num_classes > 20:
         plt.xticks(rotation=-90)
     elif num_classes > 5:
         plt.xticks(rotation=-45)
 
+    if (max(class_counts.values()) - min(class_counts.values())) > 100:
+        ax.set_yscale('log')
+        ax.yaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
+        plt.tick_params(axis='y', which='minor')
+
+    ax.set_xlabel('Class', fontsize=12)
     ax.set_ylabel('Count', fontsize=12)
-    # Force y-axis ticks to be Integers
-    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
     plt.title("Distribution of Transient Types in Data Sample", fontsize=15)
     plt.show()

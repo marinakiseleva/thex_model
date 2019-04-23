@@ -2,6 +2,8 @@ from models.base_model.base_model import BaseModel
 from models.ktrees_model.ktrees_train import KTreesTrain
 from models.ktrees_model.ktrees_test import KTreesTest
 
+from thex_data.data_consts import cat_code
+
 
 class KTreesModel(BaseModel, KTreesTrain, KTreesTest):
     """
@@ -37,15 +39,24 @@ class KTreesModel(BaseModel, KTreesTrain, KTreesTest):
                               class_counts=None, ylabel="Recall")
         self.plot_performance(class_precisions, "K-Trees Precision",
                               class_counts=None, ylabel="Precision")
+
+        unique_classes = self.get_mc_unique_classes()
+        # Plot ROC curve
+        class_rocs = {cat_code[class_name]: [] for class_name in unique_classes}
+        for class_name in unique_classes:
+            # Record ROC performance
+            FP_rates, TP_rates = self.get_mc_roc_curve(class_name)
+            class_rocs[cat_code[class_name]] = [FP_rates, TP_rates]
+        self.plot_roc_curves(class_rocs, "ROC Curves")
+
         # Plot probability vs precision for each class
         X_accs = self.get_mc_probability_matrix()
-        for class_index, class_name in enumerate(self.class_labels):
+        for class_index, class_name in enumerate(unique_classes):
             perc_ranges, AP, TOTAL = self.get_mc_metrics_by_ranges(
                 X_accs, class_name)
-            if self.ktrees[class_name] is not None:
-                acc = [AP[index] / T if T > 0 else 0 for index, T in enumerate(TOTAL)]
-                self.plot_probability_ranges(perc_ranges, acc,
-                                             'TP/Total', class_name, TOTAL)
+            acc = [AP[index] / T if T > 0 else 0 for index, T in enumerate(TOTAL)]
+            self.plot_probability_ranges(perc_ranges, acc,
+                                         'TP/Total', class_name, TOTAL)
 
     def get_class_probabilities(self, x):
         """

@@ -1,5 +1,7 @@
 import pandas as pd
 
+from models.base_model.roc_logic import *
+from models.base_model.base_model_performance import BaseModelPerformance
 from thex_data.data_clean import convert_class_vectors, convert_str_to_list
 from thex_data.data_consts import *
 
@@ -56,15 +58,32 @@ class MCBaseModelPerformance:
             target_classes = y_test_vectors.iloc[index][TARGET_LABEL]
             # Add each probability to dataframe
             for class_index, class_name in enumerate(probabilities.keys()):
+                # Prediction is probability assigned to this class
                 X_accuracy.loc[index, class_name +
                                '_prediction'] = probabilities[class_name]
+                # Actual is 0 or 1 presence of this class
                 X_accuracy.loc[index, class_name +
                                '_actual'] = target_classes[class_index]
         return X_accuracy
 
+    def get_mc_roc_curve(self, class_name):
+        """
+        Returns false positive rates and true positive rates in order to plot ROC curve
+        """
+        X_accuracy = self.get_mc_probability_matrix()
+        pos_probs = X_accuracy.loc[X_accuracy[
+            class_name + '_actual'] == 1][class_name + '_prediction']
+        neg_probs = X_accuracy.loc[X_accuracy[
+            class_name + '_actual'] == 0][class_name + '_prediction']
+        x, pos_pdf = get_normal_pdf(pos_probs)
+        x, neg_pdf = get_normal_pdf(neg_probs)
+        FP_rates, TP_rates = get_fp_tp_rates(x, pos_pdf, neg_pdf)
+
+        return FP_rates, TP_rates
+
     def get_mc_unique_classes(self):
         """
-        Gets all unique classes based for HMC model. In HMC, we save class vectors, so we need to figure out all the unique subclasses from these vectors.
+        Gets all unique class names based for HMC model. In HMC, we save class vectors, so we need to figure out all the unique subclasses from these vectors.
         """
         unique_classes = []
         for index, row in self.y_test.iterrows():

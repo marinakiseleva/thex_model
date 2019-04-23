@@ -65,12 +65,22 @@ class KTreesTrain:
                 'max_features': [0.2, 0.4, 0.6, None],
                 'class_weight': ['balanced']
                 }
+        basic_grid = {'criterion': ['gini'],
+                      'splitter': ['best'],
+                      'max_depth': [100],
+                      'min_samples_split': [3],
+                      'min_samples_leaf': [2],
+                      'min_weight_fraction_leaf': [0, 0.001],
+                      'max_features': [None, 0.2],
+                      'class_weight': ['balanced']
+                      }
 
         clf_optimize = GridSearchCV(
-            estimator=DecisionTreeClassifier(), param_grid=grid, scoring='brier_score_loss', cv=3, iid=True, n_jobs=8)
+            estimator=DecisionTreeClassifier(), param_grid=basic_grid, scoring='brier_score_loss', cv=3, iid=True, n_jobs=8)
 
         # Fit the random search model
         clf_optimize.fit(X, y, sample_weight=sample_weights)
+        print("Tree brier_score_loss: " + str(clf_optimize.best_score_))
         return clf_optimize.best_estimator_
 
     def train(self):
@@ -93,11 +103,9 @@ class KTreesTrain:
                 # positive samples
                 self.ktrees[class_name] = None
                 continue
-
-            print("\n\nGetting model for class " + class_name)
+            print("Class " + class_name)
             clf = self.get_best_model(self.X_train, y_train_labels)
-            print("Params for class " + class_name)
-            print(clf.get_params())
+            # print(clf.get_params())
             self.ktrees[class_name] = clf
 
         return self.ktrees

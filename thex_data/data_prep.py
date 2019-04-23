@@ -37,6 +37,8 @@ def get_data(col_list, **data_filters):
     # Filter to most popular classes
     df = filter_top_classes(df, data_filters['top_classes'])
 
+    df = filter_class_size(df, data_filters['min_class_size'])
+
     # Randomly subsample any over-represented classes down to 100
     df = sub_sample(df, count=data_filters['subsample'])
 

@@ -44,6 +44,7 @@ class BaseModel(ABC, BaseModelPerformance, MCBaseModelPerformance, BaseModelVisu
                         'transform_features': False,
                         'transform_labels': True,
                         'incl_redshift': False,
+                        'min_class_size': 4,
                         'pca': None  # Number of principal components
 
                         }
@@ -139,27 +140,32 @@ class BaseModel(ABC, BaseModelPerformance, MCBaseModelPerformance, BaseModelVisu
         """
         Evaluate and plot performance of model
         """
+        unique_classes = self.get_unique_classes()
+        # data_type = 'Training' if test_on_train else 'Testing'
+        # info = self.name + " Recall on " + data_type + " Data"
+
         # self.plot_samples(1)
         # self.get_rarest()
-        # X_accs = self.get_probability_matrix()
-        # # # Add column of predicted class
-        # X_preds = pd.concat([X_accs, self.test_model()], axis=1)
-        # perc_ranges, corr_ranges, count_ranges = self.get_recall_ranges(
-        #     X_preds, class_code)
-        # self.plot_probability_completeness()
 
-        self.plot_roc_curves()
+        # class_metrics = self.get_metrics_by_ranges(X_preds, class_code)
+        # self.plot_probability_precision(class_metrics)
+        # self.plot_probability_completeness(class_metrics)
+
+        rates = {}
+        for index, class_code in enumerate(unique_classes):
+            FP_rates, TP_rates = self.get_roc_curve(class_code)
+            rates[class_code] = [FP_rates, TP_rates]
+        self.plot_roc_curves(rates, "ROC Curves")
+
         # Get accuracy per class of transient
-        # class_recalls = self.get_class_recalls()
-        # class_precisions = self.get_class_precisions()
-        # class_counts = self.get_class_counts(class_recalls.keys())
-        # data_type = 'Training' if test_on_train else 'Testing'
-        # title = self.name + " Recall on " + data_type + " Data"
-        # # self.plot_accuracies(class_recalls, title, class_counts, ylabel="Recall")
+        # class_recalls = self.get_recall(class_metrics, unique_classes)
+        # class_precisions = self.get_precision(class_metrics, unique_classes)
 
-        # class_counts = self.get_class_counts(class_precisions.keys())
-        # title = self.name + " Precision on " + data_type + " Data"
-        # self.plot_accuracies(class_precisions, title, class_counts, ylabel="Precision")
+        # self.plot_performance(class_recalls, self.name + " Recall",
+        #                       class_counts=None, ylabel="Recall")
+        # self.plot_performance(class_precisions, self.name + " Precision",
+        # class_counts = None, ylabel = "Precision")
+
         # self.plot_confusion_matrix(normalize=True)
 
     def run_cross_validation(self, k, X, y, data_filters):
@@ -242,7 +248,7 @@ class BaseModel(ABC, BaseModelPerformance, MCBaseModelPerformance, BaseModelVisu
         info = " of " + self.name + " from " + str(data_filters['num_runs']) + " runs of " + \
             str(k) + "-fold CV on " + data_type + " data"
 
-        # self.plot_performance(class_recalls, "Recall " + info, ylabel="Recall")
+        self.plot_performance(class_recalls, "Recall " + info, ylabel="Recall")
         self.plot_performance(class_precisions, "Precision " + info, ylabel="Precision")
         self.plot_roc_curves(avg_rocs, "ROCs" + info)
         self.plot_probability_completeness(

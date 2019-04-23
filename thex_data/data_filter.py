@@ -67,17 +67,16 @@ def one_all(df, keep_classes):
     return df
 
 
-def get_popular_classes(df, top=5):
+def get_class_counts(df):
     """
-    Gets most popular classes by frequency. Returns list of 'top' most popular class class codes
+    Returns Frame of class count
     :param df: DataFrame of features and TARGET_LABEL
-    :param top: # of classes to return
     """
     class_counts = df.groupby(TARGET_LABEL).count()
     class_counts['avg_count'] = class_counts.mean(axis=1)
     class_counts = class_counts.sort_values(
-        'avg_count', ascending=False).reset_index().head(top)
-    return list(class_counts[TARGET_LABEL])
+        'avg_count', ascending=False).reset_index()
+    return class_counts
 
 
 def filter_top_classes(df, X):
@@ -89,8 +88,22 @@ def filter_top_classes(df, X):
     """
     if X is None:
         return df
-    top_classes = get_popular_classes(df, top=X)
+    top_classes = get_class_counts(df).head(X)
+    top_classes = list(top_classes[TARGET_LABEL])
     return df.loc[df[TARGET_LABEL].isin(top_classes)]
+
+
+def filter_class_size(df, X):
+    """
+    Keep classes with at least X points
+    :param df: DataFrame of features and TARGET_LABEL
+    :param X: Number of classes to keep
+    :return: DataFrame of original format, with only top X classes of data
+    """
+    class_counts = get_class_counts(df)
+    min_classes = class_counts.loc[class_counts['avg_count'] > X]
+    min_classes = list(min_classes[TARGET_LABEL])
+    return df.loc[df[TARGET_LABEL].isin(min_classes)]
 
 
 def filter_data(df):

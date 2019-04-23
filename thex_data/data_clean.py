@@ -15,6 +15,7 @@ from .data_consts import class_to_subclass as hierarchy
 def convert_class_vectors(df, class_labels):
     """
     Convert labels of TARGET_LABEL column in passed-in DataFrame to class vectors
+    :return class_vectors: DataFrame with same number of rows as df, with only TARGET_LABEL column. Each row has a single vector in that columns, with the same length as class_labels, and where values are 0 or 1. 1 if it is that class, 0 otherwise.
     """
     # Convert labels to class vectors, with 1 meaning it has that class, and 0
     # does not

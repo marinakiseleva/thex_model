@@ -66,7 +66,7 @@ class KDEModelTest:
                          0 else 0 for k, v in probabilities.items()}
 
         # If probability < X% predict Unknown. X corresponds to precision
-        unknown_prob = 1 if max(probabilities.values()) < self.threshold else 0
+        unknown_prob = 1 if max(probabilities.values()) < self.prob_threshold else 0
         probabilities[cat_code[UNKNOWN_LABEL]] = unknown_prob
 
         return probabilities

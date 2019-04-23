@@ -35,7 +35,7 @@ class BaseModelVisualization:
     def plot_probability_precision(self, range_metrics, title=None):
         """
         Plots precision of class (y) vs. probability assigned to class (x)
-        :param range_metrics: Map of classes to [percent_ranges, TP_ranges, AP_ranges, FP_ranges] 
+        :param range_metrics: Map of classes to [percent_ranges, TP_ranges, AP_ranges, FP_ranges]
         """
         for index, class_code in enumerate(self.get_unique_classes()):
             perc_ranges, AP_ranges, TP_ranges, FP_ranges = range_metrics[class_code]
@@ -65,7 +65,7 @@ class BaseModelVisualization:
     def plot_probability_completeness(self, range_metrics, title=None):
         """
         Plots recall of class (y) vs. probability assigned to class (x)
-        :param range_metrics: Map of classes to [percent_ranges, TP_ranges, AP_ranges, FP_ranges] 
+        :param range_metrics: Map of classes to [percent_ranges, TP_ranges, AP_ranges, FP_ranges]
         """
         for index, class_code in enumerate(self.get_unique_classes()):
             perc_ranges, AP_ranges, TP_ranges, FP_ranges = range_metrics[class_code]
@@ -105,23 +105,19 @@ class BaseModelVisualization:
         title = "Probability Assigned vs. " + ylabel if title is None else title
         self.display_and_save_plot(title + ": " + str(class_name), ax)
 
-    def plot_roc_curves(self, rates=None, title=None):
+    def plot_roc_curves(self, rates, title=None):
         """
         Plot ROC curves of each class on same plot
         """
-
-        unique_classes = self.get_unique_classes()
+        if rates is None:
+            raise ValueError("plot_roc_curves, rates cannot be None")
 
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-        cm = plt.get_cmap('gist_rainbow')
-        NUM_COLORS = len(unique_classes)
+        cm = plt.get_cmap('tab20c')
+        NUM_COLORS = len(rates.keys())
         ax.set_prop_cycle('color', [cm(1. * i / NUM_COLORS) for i in range(NUM_COLORS)])
-        for index, class_code in enumerate(unique_classes):
-            if rates is None:
-                FP_rates, TP_rates = self.get_roc_curve(class_code)
-
-            else:
-                FP_rates, TP_rates = rates[class_code]
+        for index, class_code in enumerate(rates.keys()):
+            FP_rates, TP_rates = rates[class_code]
 
             # Calculate area under curve
             auc = np.sum(TP_rates) / 100  # 100= # of values for x
@@ -275,8 +271,8 @@ class BaseModelVisualization:
         ax = self.plot_bar_with_annotations(
             axis=ax, x_vals=class_names, y_vals=metrics, annotations=class_counts)
         plt.xticks(rotation=-45)
-        plt.xlabel('Transient Class', fontsize=12)
-        plt.ylabel(ylabel, fontsize=12)
+        plt.xlabel('Transient Class', fontsize=10)
+        plt.ylabel(ylabel, fontsize=10)
         self.display_and_save_plot(plot_title, ax)
 
     #####################################
