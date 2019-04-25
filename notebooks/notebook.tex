@@ -141,7 +141,7 @@
     \def\gt{>}
     \def\lt{<}
     % Document parameters
-    \title{LSST-like Experiment}
+    \title{K-Tree Py 3}
     
     
     
@@ -280,13 +280,6 @@
     
 
     
-    Define data columns to pass into model
-
-    Call Kernel Density Estimate model with all above columns, including
-redshift. Will also transform features (convert spectra to colors) and
-apply PCA, reducing to 5 components. Final results are result of 10
-total runs.
-
     \begin{Verbatim}[commandchars=\\\{\}]
 {\color{incolor}In [{\color{incolor}1}]:} \PY{n}{mag\PYZus{}cols} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}FUV}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}NUV}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} 
                  \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}FUV.b}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}e\PYZus{}FUV.b}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{GALEXAIS\PYZus{}NUV.b}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
@@ -350,29 +343,29 @@ total runs.
         \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MWExt\PYZus{}W4}\PY{l+s+s1}{\PYZsq{}} \PY{p}{]}
         
         
-        
-        
         \PY{n}{cols} \PY{o}{=} \PY{n}{mag\PYZus{}cols} \PY{o}{+} \PY{n}{flux\PYZus{}cols} \PY{o}{+} \PY{n}{external\PYZus{}cols} \PY{o}{+} \PY{n}{source\PYZus{}size} \PY{o}{+} \PY{n}{quality\PYZus{}photometry} \PY{o}{+} \PY{n}{extinction\PYZus{}rates}
 \end{Verbatim}
 
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}2}]:} \PY{k+kn}{from} \PY{n+nn}{models}\PY{n+nn}{.}\PY{n+nn}{kde\PYZus{}model}\PY{n+nn}{.}\PY{n+nn}{kde\PYZus{}model} \PY{k}{import} \PY{n}{KDEModel}
+{\color{incolor}In [{\color{incolor}4}]:} \PY{k+kn}{from} \PY{n+nn}{models}\PY{n+nn}{.}\PY{n+nn}{ktrees\PYZus{}model}\PY{n+nn}{.}\PY{n+nn}{ktrees\PYZus{}model} \PY{k}{import} \PY{n}{KTreesModel}
         \PY{o}{\PYZpc{}}\PY{k}{matplotlib} inline 
-        
-        \PY{n}{kde} \PY{o}{=} \PY{n}{KDEModel}\PY{p}{(}
-                 \PY{n}{cols} \PY{o}{=} \PY{n}{cols}\PY{p}{,}
-        \PY{c+c1}{\PYZsh{}          folds = 3, }
+        \PY{n}{ktree} \PY{o}{=} \PY{n}{KTreesModel}\PY{p}{(}
+        \PY{c+c1}{\PYZsh{}          cols = cols,}
+                 \PY{n}{col\PYZus{}matches} \PY{o}{=} \PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Firefly}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}\PY{p}{,}
                  \PY{n}{transform\PYZus{}features} \PY{o}{=} \PY{k+kc}{True}\PY{p}{,}
-        \PY{c+c1}{\PYZsh{}          one\PYZus{}all = [\PYZsq{}TDE\PYZsq{}],}
-        \PY{c+c1}{\PYZsh{}          one\PYZus{}all = [\PYZsq{}Ib\PYZsq{}, \PYZsq{}Ic\PYZsq{}, \PYZsq{}II\PYZsq{}, \PYZsq{}Ib/c\PYZsq{}, \PYZsq{}Ic Pec\PYZsq{}, \PYZsq{}Ib Pec\PYZsq{}, \PYZsq{}Ibn\PYZsq{}],}
-                 \PY{n}{top\PYZus{}classes} \PY{o}{=} \PY{l+m+mi}{7}\PY{p}{,}
-                 \PY{n}{incl\PYZus{}redshift} \PY{o}{=} \PY{k+kc}{True}\PY{p}{,}
-                 \PY{n}{pca} \PY{o}{=} \PY{l+m+mi}{5}\PY{p}{,}
+                 \PY{n}{incl\PYZus{}redshift} \PY{o}{=} \PY{k+kc}{False}\PY{p}{,}
                  \PY{n}{num\PYZus{}runs} \PY{o}{=} \PY{l+m+mi}{1}\PY{p}{,}
-                 \PY{n}{naive} \PY{o}{=} \PY{k+kc}{False}\PY{p}{,} \PY{c+c1}{\PYZsh{} False \PYZhy{}\PYZgt{} Multi\PYZhy{}dimensional kernel}
-                 \PY{p}{)}
-        \PY{n}{kde}\PY{o}{.}\PY{n}{run\PYZus{}model}\PY{p}{(}\PY{p}{)}
+                 \PY{n}{min\PYZus{}class\PYZus{}size} \PY{o}{=} \PY{l+m+mi}{6}\PY{p}{,}
+        \PY{c+c1}{\PYZsh{}          pca = 5,}
+        \PY{c+c1}{\PYZsh{}          subsample= 200,}
+        \PY{c+c1}{\PYZsh{}          top\PYZus{}classes = 5, }
+                 \PY{n}{naive} \PY{o}{=} \PY{k+kc}{False}\PY{p}{)}
+        \PY{n}{ktree}\PY{o}{.}\PY{n}{run\PYZus{}model}\PY{p}{(}\PY{p}{)}
+        
+        
+        \PY{k+kn}{import} \PY{n+nn}{warnings}
+        \PY{n}{warnings}\PY{o}{.}\PY{n}{filterwarnings}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{ignore}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
 \end{Verbatim}
 
 
@@ -384,196 +377,187 @@ num\_runs : 1
 test\_on\_train : False
 folds : None
 data\_split : 0.3
-hierarchical\_model : False
-top\_classes : 7
+top\_classes : None
 one\_all : None
 subsample : None
 transform\_features : True
-transform\_labels : True
-incl\_redshift : True
-pca : 5
+transform\_labels : False
+incl\_redshift : False
+min\_class\_size : 6
+pca : None
 naive : False
 
 Features
 ------------------
-GALEXAIS\_FUV, GALEXAIS\_NUV, GALEXAIS\_FUV.b, GALEXAIS\_NUV.b, GALEXAIS\_FUV.a, GALEXAIS\_NUV.a, GALEXAIS\_FUV.4, GALEXAIS\_NUV.4, GALEXAIS\_FUV.6, GALEXAIS\_NUV.6, AllWISE\_W1mag, AllWISE\_W2mag, AllWISE\_W3mag, AllWISE\_W4mag, PS1\_gmag, PS1\_gmagStd, PS1\_b\_gmag, PS1\_B\_gmag, PS1\_gKmag, PS1\_rmag, PS1\_rmagStd, PS1\_b\_rmag, PS1\_B\_rmag, PS1\_rKmag, PS1\_imag, PS1\_imagStd, PS1\_b\_imag, PS1\_B\_imag, PS1\_iKmag, PS1\_zmag, PS1\_zmagStd, PS1\_b\_zmag, PS1\_B\_zmag, PS1\_zKmag, PS1\_ymag, PS1\_ymagStd, PS1\_b\_ymag, PS1\_B\_ymag, PS1\_yKmag, GALEXAIS\_Fflux, GALEXAIS\_Nflux, AllWISE\_Jmag, AllWISE\_Hmag, AllWISE\_Kmag, GALEXAIS\_Fima, GALEXAIS\_Nima, GALEXAIS\_Fr, GALEXAIS\_Nr, AllWISE\_snr1, AllWISE\_chi2W1, AllWISE\_snr2, AllWISE\_chi2W2, AllWISE\_snr3, AllWISE\_chi2W3, AllWISE\_snr4, AllWISE\_chi2W4, AllWISE\_chi2, GALEXAIS\_E\_B-V\_, MWExt\_FUV\_PS, MWExt\_NUV\_PS, MWExt\_FUV\_Y, MWExt\_NUV\_Y, MWExt\_u, MWExt\_g, MWExt\_r, MWExt\_i, MWExt\_z, MWExt\_J, MWExt\_H, MWExt\_Ks, MWExt\_W1, MWExt\_W2, MWExt\_W3, MWExt\_W4
-
-
-Constructing Class Hierarchy Tree{\ldots}
-Node: Ia Pec has already been assigned parent: I Pec
-Node: Ia-02cx has already been assigned parent: Ia
-Node: Ia-HV has already been assigned parent: Ia
-Node: Ib has already been assigned parent: I
-Node: Ic has already been assigned parent: I
-Node: Ia/c has already been assigned parent: Ia
-Node: II P-97D has already been assigned parent: II Pec
-Node: IIn P has already been assigned parent: II P
-Node: IIn L has already been assigned parent: II L
-Node: IIn Pec has already been assigned parent: II Pec
-Node: TDE has already been assigned parent: TTypes
-
-    \end{Verbatim}
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-/Users/marina/research/astro\_research/code/thex\_model/thex\_data/data\_clean.py:70: SettingWithCopyWarning: 
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row\_indexer,col\_indexer] = value instead
-
-See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/indexing.html\#indexing-view-versus-copy
-  df[TARGET\_LABEL] = df[TARGET\_LABEL].apply(lambda x: int(cat\_code[x]))
+Firefly\_Chabrier\_MILES\_age\_lightW, Firefly\_Chabrier\_MILES\_metallicity\_lightW, Firefly\_Chabrier\_MILES\_stellar\_mass, Firefly\_Chabrier\_MILES\_spm\_EBV, Firefly\_Chabrier\_MILES\_nComponentsSSP, Firefly\_Salpeter\_MILES\_age\_lightW, Firefly\_Salpeter\_MILES\_metallicity\_lightW, Firefly\_Salpeter\_MILES\_stellar\_mass, Firefly\_Salpeter\_MILES\_spm\_EBV, Firefly\_Salpeter\_MILES\_nComponentsSSP, Firefly\_Kroupa\_MILES\_age\_lightW, Firefly\_Kroupa\_MILES\_metallicity\_lightW, Firefly\_Kroupa\_MILES\_stellar\_mass, Firefly\_Kroupa\_MILES\_spm\_EBV, Firefly\_Kroupa\_MILES\_nSSP
 
     \end{Verbatim}
 
     \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_2.png}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_1.png}
     \end{center}
     { \hspace*{\fill} \\}
     
     \begin{Verbatim}[commandchars=\\\{\}]
-
-Counts per Class
------------------- 
-Ia : 632
-II : 201
-II P : 69
-IIn : 40
-Ib : 29
-Ia Pec : 20
-Ia-91T : 19
-
-Total: 1010
-
-PCA Analysis: Explained Variance Ratio
-[0.50457501 0.13415509 0.11013964 0.04718124 0.03444932]
-
-    \end{Verbatim}
-
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_4.png}
-    \end{center}
-    { \hspace*{\fill} \\}
-    
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_5.png}
-    \end{center}
-    { \hspace*{\fill} \\}
-    
-    \begin{Verbatim}[commandchars=\\\{\}]
-
-Samples with Lowest Probability of Ia
-    actual\_class\_name predicted\_class\_name   probability
-277               IIn               Ia Pec  4.271383e-13
-47                 Ib                   Ib  1.955578e-07
-159                Ia                  IIn  5.022564e-06
-291                II               Ia Pec  2.072417e-05
-162                Ia               Ia Pec  2.092246e-05
-22             Ia-91T                  IIn  3.735383e-05
-255                II               Ia-91T  3.990354e-04
-233              II P                Other  4.627562e-04
-31                 Ia               Ia-91T  6.578436e-04
-56               II P               Ia-91T  6.755848e-04
-218                II               Ia-91T  1.023257e-03
-188                Ia                Other  1.220856e-03
-170              II P               Ia Pec  4.559035e-03
-281                II                   II  7.795060e-03
-17                 Ib                Other  1.174257e-02
-121                II                Other  1.429081e-02
-289                II                Other  1.639188e-02
-197               IIn                Other  1.869259e-02
-177                II                Other  1.869295e-02
-16                 II                Other  2.276074e-02
-33                 II                Other  2.306491e-02
-151                Ia                Other  2.353168e-02
-85                 II                Other  3.265724e-02
-184                Ia                  IIn  3.502469e-02
-65                 Ib                Other  4.654494e-02
-72                 Ib                Other  5.109327e-02
-265                II                Other  5.117060e-02
-107              II P                Other  5.386628e-02
-168                Ia                Other  5.434111e-02
-302              II P                Other  5.618112e-02
-160                Ia                Other  5.764328e-02
-225               IIn                Other  6.292803e-02
-290                II                Other  6.361121e-02
-30               II P                Other  6.507658e-02
-43                 Ia                Other  6.925790e-02
-285                II                Other  7.360222e-02
-57                 II                Other  7.522990e-02
-246               IIn                Other  7.554623e-02
-234                Ia                Other  7.610444e-02
-81                 II                Other  8.124865e-02
-12                 II                 II P  8.685800e-02
-123                Ia                Other  8.696305e-02
-195                Ia                Other  8.742585e-02
-28                IIn                Other  8.863570e-02
-154                Ia                Other  8.884090e-02
-224                Ia                Other  9.030812e-02
-74                 Ia               Ia-91T  9.172151e-02
-238                II                Other  9.358996e-02
-42                 Ia                Other  9.864020e-02
-200                Ia                Other  1.025416e-01
+Class CC
+Tree brier\_score\_loss: -0.2808621496845754
+Class GRB
+Tree brier\_score\_loss: -0.002572898799313894
+Class I
+Tree brier\_score\_loss: -0.3099073595932069
+Class I Pec
+Tree brier\_score\_loss: -0.03687821612349914
+Class II
+Tree brier\_score\_loss: -0.30945869145175586
+Class II P
+Tree brier\_score\_loss: -0.06989708404802744
+Class IIb
+Tree brier\_score\_loss: -0.018010291595197257
+Class IIn
+Tree brier\_score\_loss: -0.021869639794168096
+Class Ia
+Tree brier\_score\_loss: -0.27561865136974656
+Class Ia Pec
+Tree brier\_score\_loss: -0.03301712796587365
+Class Ia-91T
+Tree brier\_score\_loss: -0.01672384219554031
+Class Ia-91bg
+Tree brier\_score\_loss: -0.0042881346801591485
+Class Ia-HV
+Tree brier\_score\_loss: -0.002572898799313894
+Class Ib
+Tree brier\_score\_loss: -0.024871355060034305
+Class Ib/c
+Tree brier\_score\_loss: -0.030017152658662092
+Class Ic
+Tree brier\_score\_loss: -0.030445969125214408
+Class Ic BL
+Tree brier\_score\_loss: -0.002572898799313894
+Class Ic Pec
+Tree brier\_score\_loss: -0.003430528879699355
+Class LGRB
+Tree brier\_score\_loss: -0.003001715265866209
+Class TDE
+Tree brier\_score\_loss: -0.00686106346483705
+\{2: 0.35829662261380324, 5: 0.0, 10: 0.8018867924528302, 11: 0.058823529411764705, 14: 0.3318042813455658, 16: 0.061224489795918366, 20: 0.07692307692307693, 23: 0.0, 27: 0.7798165137614679, 29: 0.037037037037037035, 33: 0.0, 34: 0.3333333333333333, 36: 0.0, 39: 0.05555555555555555, 42: 0.047619047619047616, 45: 0.0, 46: 0.0, 47: 0.0, 52: 0.0, 67: 0.0\}
 
     \end{Verbatim}
 
     \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_7.png}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_3.png}
     \end{center}
     { \hspace*{\fill} \\}
     
     \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_8.png}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_4.png}
     \end{center}
     { \hspace*{\fill} \\}
     
     \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_9.png}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_5.png}
     \end{center}
     { \hspace*{\fill} \\}
     
     \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_10.png}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_6.png}
     \end{center}
     { \hspace*{\fill} \\}
     
     \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_11.png}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_7.png}
     \end{center}
     { \hspace*{\fill} \\}
     
     \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_12.png}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_8.png}
     \end{center}
     { \hspace*{\fill} \\}
     
     \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_13.png}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_9.png}
     \end{center}
     { \hspace*{\fill} \\}
     
     \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_14.png}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_10.png}
     \end{center}
     { \hspace*{\fill} \\}
     
     \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_15.png}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_11.png}
     \end{center}
     { \hspace*{\fill} \\}
     
     \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_16.png}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_12.png}
     \end{center}
     { \hspace*{\fill} \\}
     
     \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_17.png}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_13.png}
     \end{center}
     { \hspace*{\fill} \\}
     
-\begin{Verbatim}[commandchars=\\\{\}]
-{\color{outcolor}Out[{\color{outcolor}2}]:} <models.kde\_model.kde\_model.KDEModel at 0x1101cee48>
-\end{Verbatim}
-            
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_14.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_15.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_16.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_17.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_18.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_19.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_20.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_21.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_22.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_23.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_24.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_1_25.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
 
     % Add a bibliography block to the postdoc
     

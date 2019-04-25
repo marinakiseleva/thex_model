@@ -11,7 +11,7 @@ def transform_features(df):
     :param df: DataFrame of features
     """
     df = derive_diffs(df)
-    df = scale_data(df)
+    # df = scale_data(df)
     return df
 
 

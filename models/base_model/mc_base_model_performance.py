@@ -88,7 +88,8 @@ class MCBaseModelPerformance:
         unique_classes = []
         for index, row in self.y_test.iterrows():
             for label in convert_str_to_list(row[TARGET_LABEL]):
-                unique_classes.append(label)
+                if label != '':
+                    unique_classes.append(label)
         return list(set(unique_classes))
 
     def get_mc_metrics(self):

@@ -49,7 +49,7 @@ class KDEModelTest:
                     test_value = x[feature_name]
                     if test_value is not None and not isnan(test_value):
                         prob_density = np.exp(dist.score_samples([[test_value]]))
-                        # Multiply together probability of each feature
+                        # Multiply together probability density of each feature
                         probabilities[class_code] *= prob_density
             else:
                 # direct distribution

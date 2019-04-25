@@ -1,12 +1,13 @@
 import pandas as pd
-from sklearn.tree import DecisionTreeClassifier
+import numpy as np
+from sklearn.neighbors.kde import KernelDensity
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 
 from thex_data.data_consts import TARGET_LABEL
 from thex_data.data_clean import convert_class_vectors
 
 
-class KTreesTrain:
+class MCKDETrain:
     """
     Mixin for K-Trees model, training functionality
     """
@@ -42,48 +43,23 @@ class KTreesTrain:
 
     def get_best_model(self, X, y):
         """
-        Use RandomizedSearchCV to compute best hyperparameters for the model, using passed in X and y
-        :return: Dictionary of tree parameters to best values {parameter: value}
+        Get maximum likelihood estimated distribution by kernel density estimate of this class over all features
+        :return: best fitting KDE
         """
         # Create and fit training data to Tree
         labeled_samples = pd.concat([X, y], axis=1)
         sample_weights = self.get_sample_weights(labeled_samples)
 
-        criterion = ['entropy', 'gini']
-        splitter = ['best', 'random']
-        max_depth = [3, 4, 50]
-        min_samples_split = [2, 4, 8, 0.01, 0.05, 0.1, 0.2]
-        min_samples_leaf = [1, 2, 3, 5, 0.2, 0.4]
-        min_weight_fraction_leaf = [0, 0.001, 0.01, 0.1, 0.2]
-
-        grid = {'criterion': criterion,
-                'splitter': splitter,
-                'max_depth': max_depth,
-                'min_samples_split': min_samples_split,
-                'min_samples_leaf': min_samples_leaf,
-                'min_weight_fraction_leaf': min_weight_fraction_leaf,
-                'max_features': [0.2, 0.4, 0.6, None],
-                'class_weight': ['balanced']
-                }
-        basic_grid = {'criterion': ['gini'],
-                      'splitter': ['best'],
-                      'max_depth': [100],
-                      'min_samples_split': [3],
-                      'min_samples_leaf': [2],
-                      'min_weight_fraction_leaf': [0, 0.001],
-                      'max_features': [None, 0.2],
-                      'class_weight': ['balanced']
-                      }
-
-        clf_optimize = GridSearchCV(
-            estimator=DecisionTreeClassifier(), param_grid=grid, scoring='brier_score_loss', cv=3, n_jobs=8)
-
-        # Fit the random search model
+        # Create grid to search over bandwidth for
+        range_bws = np.linspace(0.01, 2, 100)
+        grid = {
+            'bandwidth': range_bws,
+            'kernel': ['gaussian'],
+            'metric': ['euclidean']
+        }
+        clf_optimize = GridSearchCV(KernelDensity(), grid, cv=3)
         clf_optimize.fit(X, y, sample_weight=sample_weights)
-
-        print("Tree brier_score_loss: " + str(clf_optimize.best_score_))
-
-        return clf_optimize
+        return clf_optimize.best_estimator_
 
     def train(self):
         """
@@ -92,7 +68,7 @@ class KTreesTrain:
         # Convert class labels to class vectors
         y_train_vectors = convert_class_vectors(self.y_train, self.class_labels)
 
-        self.ktrees = {}
+        self.kdes = {}
 
         # Create classifier for each class, present or not in sample
         for class_index, class_name in enumerate(self.class_labels):
@@ -103,12 +79,16 @@ class KTreesTrain:
             if positive_count < 5:
                 # Do not need to make tree for this class when there are less than X
                 # positive samples
-                self.ktrees[class_name] = None
+                self.kdes[class_name] = None
                 continue
-
-            clf = self.get_best_model(self.X_train, y_train_labels)
             print("Class " + class_name)
+            y_pos = y_train_labels.loc[y_train_labels[TARGET_LABEL] == 1]
+            y_neg = y_train_labels.loc[y_train_labels[TARGET_LABEL] == 0]
+            X_pos = self.X_train.loc[y_train_labels[TARGET_LABEL] == 1]
+            X_neg = self.X_train.loc[y_train_labels[TARGET_LABEL] == 0]
+            clf_pos = self.get_best_model(X_pos, y_pos)
+            clf_neg = self.get_best_model(X_neg, y_neg)
+            # print(clf.get_params())
+            self.kdes[class_name] = [clf_pos, clf_neg]
 
-            self.ktrees[class_name] = clf
-
-        return self.ktrees
+        return self.kdes

@@ -11,10 +11,12 @@ from thex_data.data_print import *
 from models.base_model.base_model_performance import BaseModelPerformance
 from models.base_model.mc_base_model_performance import MCBaseModelPerformance
 from models.base_model.base_model_plots import BaseModelVisualization
+from models.base_model.mc_base_model_plots import MCBaseModelVisualization
+
 from models.base_model.base_model_custom import BaseModelCustom
 
 
-class BaseModel(ABC, BaseModelPerformance, MCBaseModelPerformance, BaseModelVisualization, BaseModelCustom):
+class BaseModel(ABC, BaseModelPerformance, MCBaseModelPerformance, BaseModelVisualization, MCBaseModelVisualization, BaseModelCustom):
     """
     Abstract Class representing base functionality of all models. Subclasses of models implement their own training and testing functions.
     """
@@ -251,7 +253,7 @@ class BaseModel(ABC, BaseModelPerformance, MCBaseModelPerformance, BaseModelVisu
         self.plot_performance(class_recalls, "Recall " + info, ylabel="Recall")
         self.plot_performance(class_precisions, "Precision " + info, ylabel="Precision")
         self.plot_roc_curves(avg_rocs, "ROCs" + info)
-        self.plot_probability_completeness(
-            agg_range_metrics, "Probability vs Recall" + info)
+        # self.plot_probability_completeness(
+        #     agg_range_metrics, "Probability vs Recall" + info)
         self.plot_probability_precision(
             agg_range_metrics, "Probability vs Precision" + info)

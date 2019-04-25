@@ -104,10 +104,8 @@ def plot_class_hist(df):
     plt.gcf().subplots_adjust(bottom=0.2)
     ax.bar(class_indices, list(class_counts.values()))
     plt.xticks(class_indices, class_names, fontsize=10)
-    if num_classes > 20:
+    if num_classes > 5:
         plt.xticks(rotation=-90)
-    elif num_classes > 5:
-        plt.xticks(rotation=-45)
 
     if (max(class_counts.values()) - min(class_counts.values())) > 100:
         ax.set_yscale('log')
