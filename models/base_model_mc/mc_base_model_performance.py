@@ -67,28 +67,6 @@ class MCBaseModelPerformance:
                                '_actual'] = target_classes[class_index]
         return X_accuracy
 
-    # def get_all_class_rocs(self):
-    #     """
-    #     Gets ROC rates (TP, FP) for each sample in self.X_test/self.y_test
-    #     :return class_rates: Dictionary from class_name to [fpr, tpr]
-    #     """
-    #     class_probabilities = self.test_probabilities()
-    #     # y_test_vectors has TARGET_LABEL column, with each class vector of length
-    #     # self.class_labels
-    #     class_rates = {}
-    #     y_test_vectors = convert_class_vectors(self.y_test, self.class_labels)
-    #     for class_index, class_name in enumerate(self.class_labels):
-    #         # If there is a valid model for this class
-    #         get_class_roc
-    #         if models[class_name] is not None:
-    #             column = class_probabilities[:, class_index]
-    #             y_test_labels = self.relabel(class_index, y_test_vectors)
-
-    #             fpr, tpr, thresholds = roc_curve(
-    #                 y_true=y_test_labels, y_score=column, sample_weight=None, drop_intermediate=True)
-    #             class_rates[class_name] = [fpr, tpr]
-    #     return class_rates
-
     def get_mc_unique_classes(self, df=None):
         """
         Gets all unique class names based for HMC model. In HMC, we save class vectors, so we need to figure out all the unique subclasses from these vectors.

@@ -1,4 +1,5 @@
 from thex_data.data_clean import convert_class_vectors
+
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, auc
@@ -25,6 +26,7 @@ class MCBaseModelVisualization:
             if class_name in model_classes:
                 f, ax, tprs, aucs = roc_plots[class_name]
                 column = class_probabilities[:, class_index]
+                y_test_labels = self.relabel(class_index, y_test_vectors)
                 fpr, tpr, thresholds = roc_curve(
                     y_true=y_test_labels, y_score=column, sample_weight=None, drop_intermediate=True)
                 # Updates FPR and TPR to nbe on the range 0 to 1 (for plotting)

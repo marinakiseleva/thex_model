@@ -27,9 +27,6 @@ def get_data(col_list, **data_filters):
 
     df.dropna(axis=0, inplace=True)
 
-    # Plots Entire Feature Dist
-    # plot_feature_distribution(df,  "redshift", data_filters['transform_labels'])
-
     # Keep only some classes, and turn remaining to 'Other'
     df = one_all(df, data_filters['one_all'])
 

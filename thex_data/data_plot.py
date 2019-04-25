@@ -89,19 +89,19 @@ def count_classes(df):
 from matplotlib.ticker import FormatStrFormatter
 
 
-def plot_class_hist(df):
+def plot_class_hist(df, class_names=None):
     """
     Plots histogram of class sizes
     :param df: DataFrame with TARGET_LABEL column
     """
     class_counts = count_classes(df)
-    class_names = []
-
-    for c in class_counts.keys():
-        if c in code_cat:
-            class_names.append(code_cat[c])
-        else:
-            class_names.append(str(c))
+    if class_names is None:
+        class_names = []
+        for c in class_counts.keys():
+            if c in code_cat:
+                class_names.append(code_cat[c])
+            else:
+                class_names.append(str(c))
     num_classes = len(class_names)
     class_indices = np.arange(num_classes)
 

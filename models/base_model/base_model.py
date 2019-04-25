@@ -219,8 +219,7 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
         """
         k = data_filters['folds']
         X, y = get_source_target_data(data_columns, **data_filters)
-        if data_filters['transform_labels']:
-            self.visualize_data(y)
+        self.visualize_data(y)
 
         # Initialize metric collections over all runs
         class_metrics = []

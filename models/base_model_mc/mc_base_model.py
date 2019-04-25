@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import auc
 
-from thex_data import data_plot
+
 from thex_data.data_prep import get_source_target_data
-from thex_data.data_print import *
+from thex_data.data_plot import *
 
 from models.base_model.base_model import BaseModel
 from models.base_model_mc.mc_base_model_performance import MCBaseModelPerformance
@@ -36,11 +36,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         Evaluate and plot performance of model
         """
         class_recalls, class_precisions = self.get_mc_metrics()
-        # self.plot_performance(class_recalls, self.name + " Recall",
-        #                       class_counts=None, ylabel="Recall")
-        # self.plot_performance(class_precisions, self.name + " Precision",
-        #                       class_counts=None, ylabel="Precision")
-
         self.plot_mc_roc_curves(self.models)
 
         # Plot probability vs precision for each class
@@ -53,12 +48,24 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             self.plot_probability_ranges(perc_ranges, acc,
                                          'TP/Total', class_name, TOTAL)
 
+    def visualize_data(self, y=None):
+        """
+        Visualize distribution of data used to train and test
+        """
+        if y is None:
+            labels = pd.concat([self.y_train, self.y_test], axis=0)
+        else:
+            labels = y
+        class_names = list(y[TARGET_LABEL].unique())
+        plot_class_hist(labels, class_names)
+        # plot_feature_distribution(
+        #     df,  "redshift", data_filters['transform_labels'])
+
     def run_cross_validation(self, k, X, y, data_filters):
         """
         Run k-fold cross validation
         """
         kf = StratifiedKFold(n_splits=k, shuffle=True)
-
         model_classes = self.get_mc_unique_classes(df=y)
 
         roc_plots = {}
@@ -97,6 +104,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         k = data_filters['folds']
         X, y = get_source_target_data(data_columns, **data_filters)
+        self.visualize_data(y)
 
         # Initialize metric collections over all runs
         class_metrics = []
@@ -125,7 +133,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             ax.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
                             label=r'$\sigma$')
 
-            ax.set_title(class_name + " ROC Curve " + " over " + str(k) + "-folds")
+            ax.set_title(class_name + " ROC Curve " + "over " + str(k) + "-folds")
             ax.set_xlabel('False Positive Rate')
             ax.set_ylabel('True Positive Rate')
             ax.legend(loc="best")
