@@ -76,14 +76,17 @@ class KTreesTrain:
                       }
 
         clf_optimize = GridSearchCV(
-            estimator=DecisionTreeClassifier(), param_grid=grid, scoring='brier_score_loss', cv=3, n_jobs=8)
+            estimator=DecisionTreeClassifier(), param_grid=basic_grid, scoring='brier_score_loss', cv=3, n_jobs=8)
 
         # Fit the random search model
         clf_optimize.fit(X, y, sample_weight=sample_weights)
 
         print("Tree brier_score_loss: " + str(clf_optimize.best_score_))
+        clf = clf_optimize.best_estimator_
+        # for name, importance in zip(X.columns, clf.feature_importances_):
+        #     print(name, importance)
 
-        return clf_optimize
+        return clf
 
     def train(self):
         """
@@ -92,7 +95,7 @@ class KTreesTrain:
         # Convert class labels to class vectors
         y_train_vectors = convert_class_vectors(self.y_train, self.class_labels)
 
-        self.ktrees = {}
+        self.models = {}
 
         # Create classifier for each class, present or not in sample
         for class_index, class_name in enumerate(self.class_labels):
@@ -103,12 +106,12 @@ class KTreesTrain:
             if positive_count < 5:
                 # Do not need to make tree for this class when there are less than X
                 # positive samples
-                self.ktrees[class_name] = None
+                self.models[class_name] = None
                 continue
 
             clf = self.get_best_model(self.X_train, y_train_labels)
             print("Class " + class_name)
 
-            self.ktrees[class_name] = clf
+            self.models[class_name] = clf
 
-        return self.ktrees
+        return self.models

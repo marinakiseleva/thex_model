@@ -1,11 +1,11 @@
-from models.base_model.base_model import BaseModel
+from models.base_model_mc.mc_base_model import MCBaseModel
 from models.ktrees_model.ktrees_train import KTreesTrain
 from models.ktrees_model.ktrees_test import KTreesTest
 
 from thex_data.data_consts import cat_code
 
 
-class KTreesModel(BaseModel, KTreesTrain, KTreesTest):
+class KTreesModel(MCBaseModel, KTreesTrain, KTreesTest):
     """
     Model that consists of K-trees, where is K is total number of all unique class labels (at all levels of the hierarchy). Each sample is given a probability of each class, using each tree separately. Thus, an item could have 90% probability of I and 99% of Ia.
     """
@@ -34,23 +34,10 @@ class KTreesModel(BaseModel, KTreesTrain, KTreesTest):
         return self.test()
 
     def evaluate_model(self, test_on_train):
+        super(KTreesModel, self).evaluate_model(test_on_train)
 
-        self.plot_mc_roc_curves(self.ktrees)
-        class_recalls, class_precisions = self.get_mc_metrics()
-        self.plot_performance(class_recalls, "K-Trees Recall",
-                              class_counts=None, ylabel="Recall")
-        self.plot_performance(class_precisions, "K-Trees Precision",
-                              class_counts=None, ylabel="Precision")
-
-        # Plot probability vs precision for each class
-        X_accs = self.get_mc_probability_matrix()
-        unique_classes = self.get_mc_unique_classes()
-        for class_index, class_name in enumerate(unique_classes):
-            perc_ranges, AP, TOTAL = self.get_mc_metrics_by_ranges(
-                X_accs, class_name)
-            acc = [AP[index] / T if T > 0 else 0 for index, T in enumerate(TOTAL)]
-            self.plot_probability_ranges(perc_ranges, acc,
-                                         'TP/Total', class_name, TOTAL)
+    def get_all_class_probabilities(self):
+        return self.test_probabilities()
 
     def get_class_probabilities(self, x):
         """
@@ -60,7 +47,7 @@ class KTreesModel(BaseModel, KTreesTrain, KTreesTest):
         """
         probabilities = {}
         for class_index, class_name in enumerate(self.class_labels):
-            tree = self.ktrees[class_name]
+            tree = self.models[class_name]
             if tree is not None:
                 class_probabilities = tree.predict_proba([x.values])
                 # class_probabilities = [[prob class 0, prob class 1]]

@@ -29,6 +29,8 @@ class BaseModelPerformance:
             # Range of probabilities: + or - 5 from perc_range
             perc_range_min = perc_range - .05
             perc_range_max = perc_range + .05
+            if perc_range_max == 1:
+                perc_range_max += 1.01
 
             # Get all rows with probability of this class within range
             X_in_range = X_accs.loc[(perc_range_min <= X_accs[class_code_str]) & (

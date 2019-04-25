@@ -9,14 +9,12 @@ from thex_data.data_prep import get_train_test, get_source_target_data
 from thex_data.data_print import *
 
 from models.base_model.base_model_performance import BaseModelPerformance
-from models.base_model.mc_base_model_performance import MCBaseModelPerformance
 from models.base_model.base_model_plots import BaseModelVisualization
-from models.base_model.mc_base_model_plots import MCBaseModelVisualization
 
 from models.base_model.base_model_custom import BaseModelCustom
 
 
-class BaseModel(ABC, BaseModelPerformance, MCBaseModelPerformance, BaseModelVisualization, MCBaseModelVisualization, BaseModelCustom):
+class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCustom):
     """
     Abstract Class representing base functionality of all models. Subclasses of models implement their own training and testing functions.
     """

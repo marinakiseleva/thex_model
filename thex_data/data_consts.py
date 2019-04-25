@@ -9,8 +9,8 @@ import os
 #***************************************************************
 # LOCAL_DATA_PATH to relative path of THEx FITS file, relative to root of
 # package: thex_model
-LOCAL_DATA_PATH = '/../../data/THEx-training-set.v0_0_1.fits'
-# LOCAL_DATA_PATH = '/../../data/THEx-catalog.v0_0_4.fits'
+# LOCAL_DATA_PATH = '/../../data/THEx-training-set.v0_0_1.fits'
+LOCAL_DATA_PATH = '/../../data/THEx-catalog.v0_0_4.fits'
 #***************************************************************
 
 

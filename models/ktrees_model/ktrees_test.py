@@ -15,7 +15,7 @@ class KTreesTest:
         default_response = np.array([[0] * num_samples]).T
         m_predictions = np.zeros((num_samples, 0))
         for class_index, class_name in enumerate(self.class_labels):
-            tree = self.ktrees[class_name]
+            tree = self.models[class_name]
             if tree is not None:
                 tree_predictions = tree.predict(self.X_test)
                 col_predictions = np.array([tree_predictions]).T
@@ -36,7 +36,7 @@ class KTreesTest:
         default_response = np.array([[0] * num_samples]).T
         m_predictions = np.zeros((num_samples, 0))
         for class_index, class_name in enumerate(self.class_labels):
-            tree = self.ktrees[class_name]
+            tree = self.models[class_name]
             if tree is not None:
                 pos_predictions = tree.predict_proba(self.X_test)[:, 1]
                 col_predictions = np.array([pos_predictions]).T

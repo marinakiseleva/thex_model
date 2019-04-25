@@ -68,7 +68,7 @@ class MCKDETrain:
         # Convert class labels to class vectors
         y_train_vectors = convert_class_vectors(self.y_train, self.class_labels)
 
-        self.kdes = {}
+        self.models = {}
 
         # Create classifier for each class, present or not in sample
         for class_index, class_name in enumerate(self.class_labels):
@@ -79,16 +79,17 @@ class MCKDETrain:
             if positive_count < 5:
                 # Do not need to make tree for this class when there are less than X
                 # positive samples
-                self.kdes[class_name] = None
+                self.models[class_name] = None
                 continue
-            print("Class " + class_name)
+
             y_pos = y_train_labels.loc[y_train_labels[TARGET_LABEL] == 1]
             y_neg = y_train_labels.loc[y_train_labels[TARGET_LABEL] == 0]
             X_pos = self.X_train.loc[y_train_labels[TARGET_LABEL] == 1]
             X_neg = self.X_train.loc[y_train_labels[TARGET_LABEL] == 0]
+            print("Class " + class_name)
             clf_pos = self.get_best_model(X_pos, y_pos)
             clf_neg = self.get_best_model(X_neg, y_neg)
             # print(clf.get_params())
-            self.kdes[class_name] = [clf_pos, clf_neg]
+            self.models[class_name] = [clf_pos, clf_neg]
 
-        return self.kdes
+        return self.models

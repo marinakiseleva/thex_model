@@ -15,7 +15,7 @@ FIG_WIDTH = 8
 FIG_HEIGHT = 6
 
 
-def plot_feature_distribution(df, feature, logged=True):
+def plot_feature_distribution(df, feature, transformed, logged=False):
     """
     Plots the distribution of each transient type in df over 'feature'
     """
@@ -35,10 +35,15 @@ def plot_feature_distribution(df, feature, logged=True):
         kde = KernelDensity(bandwidth=0.1, kernel='gaussian', metric='euclidean')
         kde = kde.fit(vector_values)  # Fit KDE to values
         pdf = kde.score_samples(vector_values)  # Get PDF of values from KDE
-        # ax.plot(vector_values, np.exp(pdf), label = code_cat[class_code])
 
-        n, x, _ = ax.hist(vector_values, bins=np.linspace(0, max_value, 50), alpha=0.7,
-                          label=code_cat[class_code])
+        if transformed:
+            l = code_cat[class_code]
+        else:
+            l = class_code  # class code is actually name
+        n, x, _ = ax.hist(vector_values, bins=np.linspace(
+            0, max_value, 50), alpha=0.7, label=l)
+        # ax.plot(vector_values, np.exp(pdf), label = l)
+
     # if feature == "redshift":
     #     # Plot LSST-expected redshift distributions atop actual
     #     plot_lsst_distribution(ax)
