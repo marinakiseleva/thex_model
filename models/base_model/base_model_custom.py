@@ -1,11 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from thex_data.data_consts import TARGET_LABEL, cat_code, code_cat
-
-FIG_WIDTH = 6
-FIG_HEIGHT = 4
-DPI = 300
+from thex_data.data_consts import TARGET_LABEL, cat_code, code_cat, FIG_WIDTH, FIG_HEIGHT, DPI
 
 
 class BaseModelCustom:

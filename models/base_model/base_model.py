@@ -60,8 +60,8 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
             return self
 
         # Collect data filtered on these parameters
-        self.set_model_data(col_list, **data_filters)
-        self.visualize_data()
+        self.set_model_data(col_list, data_filters)
+        self.visualize_data(data_filters)
         self.train_model()
         self.predictions = self.test_model()
         self.evaluate_model(data_filters['test_on_train'])
@@ -89,12 +89,12 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
         """
         pass
 
-    def set_model_data(self, col_list, **data_filters):
+    def set_model_data(self, col_list, data_filters):
         """
         Collects data for model
         :param col_list: List of columns to filter on
         :param test_on_train: Boolean to test on training data.
-        :param user_data_filters: List of data filters user passed in.
+        :param data_filters: Dict of data filters user passed in.
         """
         self.X_train, self.X_test, self.y_train, self.y_test = get_train_test(
             col_list, **data_filters)
@@ -126,15 +126,15 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
         reduced_testing = convert_to_df(reduced_testing, k)
         return reduced_training, reduced_testing
 
-    def visualize_data(self, y=None):
+    def visualize_data(self, data_filters, y=None):
         """
         Visualize distribution of data used to train and test
+        :param data_filters: Subclass MCBaseModel utilizes this
+        :param y: DataFrame with TARGET_LABEL column
         """
         if y is None:
-            labels = pd.concat([self.y_train, self.y_test], axis=0)
-        else:
-            labels = y
-        data_plot.plot_class_hist(labels)
+            y = pd.concat([self.y_train, self.y_test], axis=0)
+        data_plot.plot_class_hist(y)
 
     def evaluate_model(self, test_on_train):
         """

@@ -65,18 +65,18 @@ class KTreesTrain:
                 'max_features': [0.2, 0.4, 0.6, None],
                 'class_weight': ['balanced']
                 }
-        basic_grid = {'criterion': ['gini'],
-                      'splitter': ['best'],
-                      'max_depth': [100],
-                      'min_samples_split': [3],
-                      'min_samples_leaf': [2],
-                      'min_weight_fraction_leaf': [0, 0.001],
-                      'max_features': [None, 0.2],
-                      'class_weight': ['balanced']
-                      }
+        # basic_grid = {'criterion': ['gini'],
+        #               'splitter': ['best'],
+        #               'max_depth': [100],
+        #               'min_samples_split': [3],
+        #               'min_samples_leaf': [2],
+        #               'min_weight_fraction_leaf': [0, 0.001],
+        #               'max_features': [None, 0.2],
+        #               'class_weight': ['balanced']
+        #               }
 
         clf_optimize = GridSearchCV(
-            estimator=DecisionTreeClassifier(), param_grid=basic_grid, scoring='brier_score_loss', cv=3, n_jobs=8)
+            estimator=DecisionTreeClassifier(), param_grid=grid, scoring='brier_score_loss', cv=3, iid=True, n_jobs=8)
 
         # Fit the random search model
         clf_optimize.fit(X, y, sample_weight=sample_weights)

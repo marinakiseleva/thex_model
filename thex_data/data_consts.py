@@ -5,6 +5,10 @@ Constant data-based information needed in THEx data program. Includes file locat
 
 import os
 
+# Plotting Specifications
+FIG_WIDTH = 6
+FIG_HEIGHT = 4
+DPI = 600
 
 #***************************************************************
 # LOCAL_DATA_PATH to relative path of THEx FITS file, relative to root of
@@ -26,6 +30,7 @@ ORIG_TARGET_LABEL = 'claimedtype'
 TARGET_LABEL = 'transient_type'
 UNKNOWN_LABEL = 'Unknown'
 PRED_LABEL = 'predicted_class'
+
 
 """
 cat_code

@@ -5,11 +5,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.metrics import confusion_matrix
 
-from thex_data.data_consts import code_cat, ROOT_DIR
-
-FIG_WIDTH = 6
-FIG_HEIGHT = 4
-DPI = 300
+from thex_data.data_consts import code_cat, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI
 
 
 class BaseModelVisualization:
@@ -17,16 +13,22 @@ class BaseModelVisualization:
     Mixin Class for BaseModel performance visualization
     """
 
+    def prep_file_name(self, text):
+        """
+        Remove unnecessary characters from text in order to save it as valid file name
+        """
+        replace_strs = ["\n", " ", ":", ".", ",", "/"]
+        for r in replace_strs:
+            text = text.replace(r, "_")
+        return text
+
     def display_and_save_plot(self, title, ax):
         if ax is None:
             plt.title('\n'.join(wrap(title, 60)))
         else:
             ax.set_title('\n'.join(wrap(title, 60)))
-
-        replace_strs = ["\n", " ", ":", ".", ",", "/"]
-        for r in replace_strs:
-            title = title.replace(r, "_")
-        model_dir = self.name.replace(" ", "_")
+        title = self.prep_file_name(title)
+        model_dir = self.prep_file_name(self.name)
         plt.tight_layout()
         plt.savefig(ROOT_DIR + "/output/" + model_dir + "/" + title)
 

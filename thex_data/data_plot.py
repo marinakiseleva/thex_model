@@ -9,25 +9,24 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from sklearn.neighbors.kde import KernelDensity
 
-from .data_consts import code_cat, TARGET_LABEL, ROOT_DIR
-
-FIG_WIDTH = 8
-FIG_HEIGHT = 6
+from .data_consts import code_cat, TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI
 
 
-def plot_feature_distribution(df, feature, transformed, logged=False):
+def plot_feature_distribution(df, feature, transformed=True, logged=False):
     """
     Plots the distribution of each transient type in df over 'feature'
+    :param df: DataFrame with both feature column and TARGET_LABEL column
+    :param feature: Name of feature to plot distribution over
+    :param transformed: If labels are not transformed, we do not call code_cat on them; they are already class names 
+
     """
 
     unique_classes = list(df[TARGET_LABEL].unique())
-
-    f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
+    f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
     cm = plt.get_cmap('tab20')
     NUM_COLORS = len(unique_classes)
     ax.set_prop_cycle('color', [cm(1. * i / NUM_COLORS) for i in range(NUM_COLORS)])
-    # max_value = df[feature].max()
-    max_value = 0.38
+    max_value = df[feature].max()
     for class_code in unique_classes:
         values = df.loc[(df[TARGET_LABEL] == class_code)
                         & (df[feature].notnull())][feature].values
@@ -42,6 +41,7 @@ def plot_feature_distribution(df, feature, transformed, logged=False):
             l = class_code  # class code is actually name
         n, x, _ = ax.hist(vector_values, bins=np.linspace(
             0, max_value, 50), alpha=0.7, label=l)
+
         # ax.plot(vector_values, np.exp(pdf), label = l)
 
     # if feature == "redshift":
@@ -105,7 +105,7 @@ def plot_class_hist(df, class_names=None):
     num_classes = len(class_names)
     class_indices = np.arange(num_classes)
 
-    f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=640)
+    f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
     plt.gcf().subplots_adjust(bottom=0.2)
     ax.bar(class_indices, list(class_counts.values()))
     plt.xticks(class_indices, class_names, fontsize=10)

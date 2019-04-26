@@ -4,18 +4,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import auc
 
-
+from thex_data.data_consts import ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI
 from thex_data.data_prep import get_source_target_data
 from thex_data.data_plot import *
 
 from models.base_model.base_model import BaseModel
 from models.base_model_mc.mc_base_model_performance import MCBaseModelPerformance
 from models.base_model_mc.mc_base_model_plots import MCBaseModelVisualization
-
-
-FIG_WIDTH = 6
-FIG_HEIGHT = 4
-DPI = 300
 
 
 class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
@@ -48,18 +43,19 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             self.plot_probability_ranges(perc_ranges, acc,
                                          'TP/Total', class_name, TOTAL)
 
-    def visualize_data(self, y=None):
+    def visualize_data(self, y=None, X=None):
         """
         Visualize distribution of data used to train and test
         """
         if y is None:
-            labels = pd.concat([self.y_train, self.y_test], axis=0)
-        else:
-            labels = y
+            y = pd.concat([self.y_train, self.y_test], axis=0)
         class_names = list(y[TARGET_LABEL].unique())
-        plot_class_hist(labels, class_names)
-        # plot_feature_distribution(
-        #     df,  "redshift", data_filters['transform_labels'])
+        if "" in class_names:
+            class_names.remove("")
+        plot_class_hist(y, class_names)
+        # pass in X and y combined
+        df = pd.concat([X, y], axis=1)
+        plot_feature_distribution(df, 'redshift', False)
 
     def run_cross_validation(self, k, X, y, data_filters):
         """
@@ -76,7 +72,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
         i = 1  # Fold count, for plotting labels
         for train_index, test_index in kf.split(X, y):
-            print("first fold")
             self.X_train, self.X_test = X.iloc[train_index].reset_index(
                 drop=True), X.iloc[test_index].reset_index(drop=True)
             self.y_train, self.y_test = y.iloc[train_index].reset_index(
@@ -104,7 +99,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         k = data_filters['folds']
         X, y = get_source_target_data(data_columns, **data_filters)
-        self.visualize_data(y)
+        self.visualize_data(y, X)
 
         # Initialize metric collections over all runs
         class_metrics = []
@@ -112,7 +107,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             roc_plots = self.run_cross_validation(k, X, y, data_filters)
 
         for class_name in roc_plots.keys():
-            f, ax, tprs, aucs = roc_plots[class_name]
+            fig, ax, tprs, aucs = roc_plots[class_name]
             #   Baseline
             ax.plot([0, 1], [0, 1], linestyle='--', lw=1.5, color='r',
                     label='Baseline', alpha=.8)
@@ -132,10 +127,14 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
             ax.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
                             label=r'$\sigma$')
-
-            ax.set_title(class_name + " ROC Curve " + "over " + str(k) + "-folds")
+            title = class_name + " ROC Curve " + "over " + str(k) + "-folds"
+            ax.set_title(title)
             ax.set_xlabel('False Positive Rate')
             ax.set_ylabel('True Positive Rate')
             ax.legend(loc="best")
+            extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+            file_name = ROOT_DIR + "/output/" + \
+                self.prep_file_name(self.name) + "/" + self.prep_file_name(title)
+            fig.savefig(file_name, bbox_inches=extent.expanded(1.3, 1.3))
 
         plt.show()

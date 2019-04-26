@@ -1,13 +1,9 @@
 from thex_data.data_clean import convert_class_vectors
-
+from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, auc
 from scipy import interp
-
-FIG_WIDTH = 6
-FIG_HEIGHT = 4
-DPI = 300
 
 
 class MCBaseModelVisualization:

@@ -57,7 +57,7 @@ class MCKDETrain:
             'kernel': ['gaussian'],
             'metric': ['euclidean']
         }
-        clf_optimize = GridSearchCV(KernelDensity(), grid, cv=3)
+        clf_optimize = GridSearchCV(KernelDensity(), grid, iid=True, cv=3, n_jobs=8)
         clf_optimize.fit(X, y, sample_weight=sample_weights)
         return clf_optimize.best_estimator_
 
@@ -86,7 +86,7 @@ class MCKDETrain:
             y_neg = y_train_labels.loc[y_train_labels[TARGET_LABEL] == 0]
             X_pos = self.X_train.loc[y_train_labels[TARGET_LABEL] == 1]
             X_neg = self.X_train.loc[y_train_labels[TARGET_LABEL] == 0]
-            print("Class " + class_name)
+            # print("Class " + class_name)
             clf_pos = self.get_best_model(X_pos, y_pos)
             clf_neg = self.get_best_model(X_neg, y_neg)
             # print(clf.get_params())
