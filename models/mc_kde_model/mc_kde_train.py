@@ -12,19 +12,6 @@ class MCKDETrain:
     Mixin for K-Trees model, training functionality
     """
 
-    def relabel(self, class_index, class_vectors):
-        """
-        Relabel samples such that if they have a 1 in their class vector for class_index, they will be relabeled as 1; otherwise 0. Relabels TARGET_LABEL column of class_vectors
-        :return: Pandas DataFrame with TARGET_LABEL column, filling with 1 if  class_vectors[TARGET_LABEL][class_index] is also 1, otherwise 0
-        """
-        labels = []
-        for df_index, row in class_vectors.iterrows():
-            class_vector = row[TARGET_LABEL]
-            p = 1 if class_vector[class_index] == 1 else 0
-            labels.append(p)
-        class_vectors = pd.DataFrame(labels, columns=[TARGET_LABEL])
-        return class_vectors
-
     def get_sample_weights(self, labeled_samples):
         """
         Get weight of each sample (1/# of samples in class) and save in list with same order as labeled_samples
@@ -68,11 +55,9 @@ class MCKDETrain:
         # Convert class labels to class vectors
         y_train_vectors = convert_class_vectors(self.y_train, self.class_labels)
 
-        self.models = {}
-
         # Create classifier for each class, present or not in sample
         for class_index, class_name in enumerate(self.class_labels):
-            # Labels for this tree
+                # Labels for this tree
             y_train_labels = self.relabel(class_index, y_train_vectors)
             positive_count = y_train_labels.loc[
                 y_train_labels[TARGET_LABEL] == 1].shape[0]

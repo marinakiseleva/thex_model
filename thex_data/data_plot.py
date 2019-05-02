@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from sklearn.neighbors.kde import KernelDensity
 
-from .data_consts import code_cat, TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI
+from .data_consts import code_cat, TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI, cat_code
 
 
 def plot_feature_distribution(df, feature, transformed=True, logged=False):
@@ -31,10 +31,6 @@ def plot_feature_distribution(df, feature, transformed=True, logged=False):
         values = df.loc[(df[TARGET_LABEL] == class_code)
                         & (df[feature].notnull())][feature].values
         vector_values = np.sort(np.matrix(values).T, axis=0)
-        kde = KernelDensity(bandwidth=0.1, kernel='gaussian', metric='euclidean')
-        kde = kde.fit(vector_values)  # Fit KDE to values
-        pdf = kde.score_samples(vector_values)  # Get PDF of values from KDE
-
         if transformed:
             l = code_cat[class_code]
         else:
@@ -42,6 +38,9 @@ def plot_feature_distribution(df, feature, transformed=True, logged=False):
         n, x, _ = ax.hist(vector_values, bins=np.linspace(
             0, max_value, 50), alpha=0.7, label=l)
 
+        # kde = KernelDensity(bandwidth=0.1, kernel='gaussian', metric='euclidean')
+        # kde = kde.fit(vector_values)  # Fit KDE to values
+        # pdf = kde.score_samples(vector_values)  # Get PDF of values from KDE
         # ax.plot(vector_values, np.exp(pdf), label = l)
 
     # if feature == "redshift":
@@ -52,11 +51,14 @@ def plot_feature_distribution(df, feature, transformed=True, logged=False):
         plt.yscale('log', nonposy='clip')
 
     ylabel = "Class Count"
-    plt.title("Transient Type Distributions over " + feature)
-    plt.xlabel(feature)
-    plt.ylabel(ylabel)
+    title = "Transient Type Distributions over " + feature
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.title(title, fontsize=12)
+    plt.xlabel(feature, fontsize=10)
+    plt.ylabel(ylabel, fontsize=10)
     plt.xlim(left=0, right=max_value)
     ax.legend(loc='best')
+    plt.savefig(ROOT_DIR + "/output/classdistributions/" + title)
     plt.show()
 
 
@@ -94,6 +96,7 @@ def plot_class_hist(df, class_names=None):
     Plots histogram of class sizes
     :param df: DataFrame with TARGET_LABEL column
     """
+
     class_counts = count_classes(df)
     if class_names is None:
         class_names = []
@@ -102,11 +105,13 @@ def plot_class_hist(df, class_names=None):
                 class_names.append(code_cat[c])
             else:
                 class_names.append(str(c))
+
     num_classes = len(class_names)
     class_indices = np.arange(num_classes)
 
-    f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+    f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT + 2), dpi=DPI)
     plt.gcf().subplots_adjust(bottom=0.2)
+
     ax.bar(class_indices, list(class_counts.values()))
     plt.xticks(class_indices, class_names, fontsize=10)
     if num_classes > 5:
@@ -117,7 +122,9 @@ def plot_class_hist(df, class_names=None):
         ax.yaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
         plt.tick_params(axis='y', which='minor')
 
-    ax.set_xlabel('Class', fontsize=12)
-    ax.set_ylabel('Count', fontsize=12)
-    plt.title("Distribution of Transient Types in Data Sample", fontsize=15)
+    plt.xlabel('Class', fontsize=10)
+    plt.ylabel('Count', fontsize=10)
+    title = "Distribution of Transient Types in Data Sample"
+    plt.title(title, fontsize=12)
+    plt.savefig(ROOT_DIR + "/output/classdistributions/" + title)
     plt.show()

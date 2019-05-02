@@ -12,6 +12,20 @@ from .data_consts import groupings, ORIG_TARGET_LABEL, TARGET_LABEL, cat_code
 from .data_consts import class_to_subclass as hierarchy
 
 
+def relabel(self, class_index, class_vectors):
+    """
+    Relabel samples such that if they have a 1 in their class vector for class_index, they will be relabeled as 1; otherwise 0. Relabels TARGET_LABEL column of class_vectors
+    :return: Pandas DataFrame with TARGET_LABEL column, filling with 1 if  class_vectors[TARGET_LABEL][class_index] is also 1, otherwise 0
+    """
+    labels = []
+    for df_index, row in class_vectors.iterrows():
+        class_vector = row[TARGET_LABEL]
+        p = 1 if class_vector[class_index] == 1 else 0
+        labels.append(p)
+    class_vectors = pd.DataFrame(labels, columns=[TARGET_LABEL])
+    return class_vectors
+
+
 def convert_class_vectors(df, class_labels):
     """
     Convert labels of TARGET_LABEL column in passed-in DataFrame to class vectors

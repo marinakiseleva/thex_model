@@ -27,11 +27,10 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
         :param folds: Number of folds if using k-fold Cross Validation
         :param user_data_filters: List of data filters user passed in. User options over-ride any default.
         """
+
         cols = self.cols
         col_matches = self.col_matches
         user_data_filters = self.user_data_filters
-
-        self.class_labels = list(cat_code.keys())  # For multiclass
 
         # Set defaults on filters
         data_filters = {'num_runs': 1,
@@ -48,6 +47,7 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
                         'pca': None  # Number of principal components
 
                         }
+
         # Update filters with any passed-in filters
         for data_filter in user_data_filters.keys():
             data_filters[data_filter] = user_data_filters[data_filter]

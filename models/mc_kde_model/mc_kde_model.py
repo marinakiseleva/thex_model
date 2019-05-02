@@ -19,11 +19,14 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
         self.cols = cols
         self.col_matches = col_matches
         self.user_data_filters = data_args
+        self.models = {}
 
     def train_model(self):
         """
         Train K-trees, where K is the total number of classes in the data (at all levels of the hierarchy)
         """
+        if self.class_labels is None:
+            self.class_labels = self.get_mc_unique_classes(self.y_train)
         return self.train()
 
     def test_model(self):
@@ -48,15 +51,12 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
         probabilities = {}
         num_classes = len(self.models)
         for class_index, class_name in enumerate(self.class_labels):
-            if self.models[class_name] is not None:
-                kde_pos = self.models[class_name][0]
-                kde_neg = self.models[class_name][1]
-                pos_prob_density = kde_pos.score_samples([x.values])
-                neg_prob_density = kde_neg.score_samples([x.values])
-                class_probability = pos_prob_density / \
-                    (pos_prob_density + neg_prob_density)
-            else:
-                class_probability = 0
+            kde_pos = self.models[class_name][0]
+            kde_neg = self.models[class_name][1]
+            pos_prob_density = kde_pos.score_samples([x.values])
+            neg_prob_density = kde_neg.score_samples([x.values])
+            class_probability = pos_prob_density / \
+                (pos_prob_density + neg_prob_density)
 
             probabilities[class_name] = class_probability
 

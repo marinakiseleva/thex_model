@@ -95,8 +95,6 @@ class KTreesTrain:
         # Convert class labels to class vectors
         y_train_vectors = convert_class_vectors(self.y_train, self.class_labels)
 
-        self.models = {}
-
         # Create classifier for each class, present or not in sample
         for class_index, class_name in enumerate(self.class_labels):
             # Labels for this tree

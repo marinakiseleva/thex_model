@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import auc
 
+from thex_data.data_clean import convert_str_to_list
 from thex_data.data_consts import ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI
 from thex_data.data_prep import get_source_target_data
 from thex_data.data_plot import *
@@ -18,6 +19,12 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
     Abstract Class representing base functionality of all multiclass models. Inherits from BaseModel, and uses Mixins from other classes. Subclasses of models must implement all BaseModel methods PLUS test_probabilities
     """
 
+    def run_model(self):
+        self.class_labels = self.user_data_filters[
+            'class_labels'] if 'class_labels' in self.user_data_filters.keys() else None
+
+        super(MCBaseModel, self).run_model()
+
     @abstractmethod
     def get_all_class_probabilities(self):
         """
@@ -30,42 +37,62 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         Evaluate and plot performance of model
         """
-        class_recalls, class_precisions = self.get_mc_metrics()
-        self.plot_mc_roc_curves(self.models)
+        # class_recalls, class_precisions = self.get_mc_metrics()
+        self.plot_mc_roc_curves()
 
         # Plot probability vs precision for each class
         X_accs = self.get_mc_probability_matrix()
-        unique_classes = self.get_mc_unique_classes()
-        for class_index, class_name in enumerate(unique_classes):
+        for class_name in self.class_labels:
             perc_ranges, AP, TOTAL = self.get_mc_metrics_by_ranges(
                 X_accs, class_name)
-            acc = [AP[index] / T if T > 0 else 0 for index, T in enumerate(TOTAL)]
-            self.plot_probability_ranges(perc_ranges, acc,
+            acc_ranges = [AP[index] / T if T > 0 else 0 for index, T in enumerate(TOTAL)]
+            self.plot_probability_ranges(perc_ranges, acc_ranges,
                                          'TP/Total', class_name, TOTAL)
 
-    def visualize_data(self, y=None, X=None):
+    def visualize_data(self, data_filters, y=None, X=None):
         """
         Visualize distribution of data used to train and test
         """
         if y is None:
             y = pd.concat([self.y_train, self.y_test], axis=0)
-        class_names = list(y[TARGET_LABEL].unique())
+
+        # Filter y to keep only rows with at least 1 class label in
+        # self.class_labels
+        keep_rows = []
+        indices = []
+        for df_index, row in y.iterrows():
+            list_classes = convert_str_to_list(row[TARGET_LABEL])
+            keep = False
+            for c in list_classes:
+                # Keep if at least one value in list is acceptable
+                if c in self.class_labels:
+                    keep = True
+            if keep:
+                keep_rows.append({TARGET_LABEL: row[TARGET_LABEL]})
+                indices.append(df_index)
+        self.y_filtered = pd.DataFrame(keep_rows).reset_index(drop=True)
+
+        class_names = list(self.y_filtered[TARGET_LABEL].unique())
         if "" in class_names:
             class_names.remove("")
-        plot_class_hist(y, class_names)
-        # pass in X and y combined
-        df = pd.concat([X, y], axis=1)
-        plot_feature_distribution(df, 'redshift', False)
+
+        plot_class_hist(self.y_filtered, class_names)
+
+        if X is not None:
+            # pass in X and y combined
+            X_filtered = X.iloc[indices].reset_index(drop=True)
+            df = pd.concat([X_filtered, self.y_filtered], axis=1)
+            features = list(df)
+            if 'redshift' in features:
+                plot_feature_distribution(df, 'redshift', False)
 
     def run_cross_validation(self, k, X, y, data_filters):
         """
         Run k-fold cross validation
         """
         kf = StratifiedKFold(n_splits=k, shuffle=True)
-        model_classes = self.get_mc_unique_classes(df=y)
-
         roc_plots = {}
-        for class_name in model_classes:
+        for class_name in self.class_labels:
             roc_fig, roc_ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
             # roc_plots[class_name] = [fig  ax   TPRS  AUCS]
             roc_plots[class_name] = [roc_fig, roc_ax, [], []]
@@ -89,7 +116,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             # self.test_model()
 
             # Save ROC curve for each class
-            roc_plots = self.save_roc_curve(i, roc_plots, model_classes)
+            roc_plots = self.save_roc_curve(i, roc_plots)
             i += 1
         return roc_plots
 
@@ -99,7 +126,11 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         k = data_filters['folds']
         X, y = get_source_target_data(data_columns, **data_filters)
-        self.visualize_data(y, X)
+        self.visualize_data(data_filters, y, X)
+
+        # Initialize self.class_labels if None
+        if self.class_labels is None:
+            self.class_labels = self.get_mc_unique_classes(y)
 
         # Initialize metric collections over all runs
         class_metrics = []

@@ -87,17 +87,15 @@ class MCBaseModelPerformance:
         """
         class_recalls = {}
         class_precisions = {}
-        unique_classes = self.get_mc_unique_classes()
         for class_index, class_name in enumerate(self.class_labels):
-            if class_name in unique_classes:
-                class_code = cat_code[class_name]
-                TP, FP, FN = self.get_mc_class_recall(class_index)
-                # Recall = TP/(TP+FN)
-                recall = TP / (TP + FN) if (TP + FN) > 0 else 0
-                # Precision = TP/(TP+FP)
-                precision = TP / (TP + FP) if (TP + FP) > 0 else 0
-                class_recalls[class_code] = recall
-                class_precisions[class_code] = precision
+            class_code = cat_code[class_name]
+            TP, FP, FN = self.get_mc_class_recall(class_index)
+            # Recall = TP/(TP+FN)
+            recall = TP / (TP + FN) if (TP + FN) > 0 else 0
+            # Precision = TP/(TP+FP)
+            precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+            class_recalls[class_code] = recall
+            class_precisions[class_code] = precision
 
         return class_recalls, class_precisions
 

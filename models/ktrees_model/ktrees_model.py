@@ -19,11 +19,14 @@ class KTreesModel(MCBaseModel, KTreesTrain, KTreesTest):
         self.cols = cols
         self.col_matches = col_matches
         self.user_data_filters = data_args
+        self.models = {}
 
     def train_model(self):
         """
         Train K-trees, where K is the total number of classes in the data (at all levels of the hierarchy)
         """
+        if self.class_labels is None:
+            self.class_labels = self.get_mc_unique_classes(self.y_train)
         return self.train()
 
     def test_model(self):
@@ -33,8 +36,8 @@ class KTreesModel(MCBaseModel, KTreesTrain, KTreesTest):
         """
         return self.test()
 
-    def evaluate_model(self, test_on_train):
-        super(KTreesModel, self).evaluate_model(test_on_train)
+    # def evaluate_model(self, test_on_train):
+    #     super(KTreesModel, self).evaluate_model(test_on_train)
 
     def get_all_class_probabilities(self):
         return self.test_probabilities()

@@ -16,6 +16,7 @@ class CLUSHMCENS(BaseModel, CLUSHMCENSTrain, CLUSHMCENSTest):
         self.cols = cols
         self.col_matches = col_matches
         self.user_data_filters = data_args
+        self.class_labels = None
 
     def train_model(self):
         """
