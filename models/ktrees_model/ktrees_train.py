@@ -76,13 +76,15 @@ class KTreesTrain:
         #               }
 
         clf_optimize = GridSearchCV(
-            estimator=DecisionTreeClassifier(), param_grid=grid, scoring='brier_score_loss', cv=3, iid=True, n_jobs=8)
+            estimator=DecisionTreeClassifier(), param_grid=grid, scoring='brier_score_loss', cv=3, iid=True, n_jobs=12)
 
         # Fit the random search model
         clf_optimize.fit(X, y, sample_weight=sample_weights)
 
         print("Tree brier_score_loss: " + str(clf_optimize.best_score_))
         clf = clf_optimize.best_estimator_
+        print("Best params ")
+        print(clf_optimize.best_params_)
         # for name, importance in zip(X.columns, clf.feature_importances_):
         #     print(name, importance)
 
@@ -106,9 +108,8 @@ class KTreesTrain:
                 # positive samples
                 self.models[class_name] = None
                 continue
-
-            clf = self.get_best_model(self.X_train, y_train_labels)
             print("Class " + class_name)
+            clf = self.get_best_model(self.X_train, y_train_labels)
 
             self.models[class_name] = clf
 

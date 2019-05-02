@@ -86,16 +86,11 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             if 'redshift' in features:
                 plot_feature_distribution(df, 'redshift', False)
 
-    def run_cross_validation(self, k, X, y, data_filters):
+    def run_cross_validation(self, k, X, y, roc_plots, data_filters):
         """
         Run k-fold cross validation
         """
         kf = StratifiedKFold(n_splits=k, shuffle=True)
-        roc_plots = {}
-        for class_name in self.class_labels:
-            roc_fig, roc_ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-            # roc_plots[class_name] = [fig  ax   TPRS  AUCS]
-            roc_plots[class_name] = [roc_fig, roc_ax, [], []]
 
         i = 1  # Fold count, for plotting labels
         for train_index, test_index in kf.split(X, y):
@@ -131,10 +126,13 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             self.class_labels = self.get_mc_unique_classes(y)
         self.visualize_data(data_filters, y, X)
 
-        # Initialize metric collections over all runs
-        class_metrics = []
+        roc_plots = {}
+        for class_name in self.class_labels:
+            roc_fig, roc_ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+            # roc_plots[class_name] = [fig  ax   TPRS  AUCS]
+            roc_plots[class_name] = [roc_fig, roc_ax, [], []]
         for index_run in range(data_filters['num_runs']):
-            roc_plots = self.run_cross_validation(k, X, y, data_filters)
+            roc_plots = self.run_cross_validation(k, X, y, roc_plots, data_filters)
 
         for class_name in roc_plots.keys():
             fig, ax, tprs, aucs = roc_plots[class_name]
