@@ -126,11 +126,10 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         k = data_filters['folds']
         X, y = get_source_target_data(data_columns, **data_filters)
-        self.visualize_data(data_filters, y, X)
-
         # Initialize self.class_labels if None
         if self.class_labels is None:
             self.class_labels = self.get_mc_unique_classes(y)
+        self.visualize_data(data_filters, y, X)
 
         # Initialize metric collections over all runs
         class_metrics = []
