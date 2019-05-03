@@ -72,11 +72,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                 indices.append(df_index)
         self.y_filtered = pd.DataFrame(keep_rows).reset_index(drop=True)
 
-        class_names = list(self.y_filtered[TARGET_LABEL].unique())
-        if "" in class_names:
-            class_names.remove("")
-
-        plot_class_hist(self.y_filtered, class_names)
+        plot_class_hist(self.y_filtered, True)
 
         if X is not None:
             # pass in X and y combined
@@ -132,10 +128,12 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             # roc_plots[class_name] = [fig  ax   TPRS  AUCS]
             roc_plots[class_name] = [roc_fig, roc_ax, [], []]
         for index_run in range(data_filters['num_runs']):
+            print("\n\nRun " + str(index_run))
             roc_plots = self.run_cross_validation(k, X, y, roc_plots, data_filters)
 
         for class_name in roc_plots.keys():
             fig, ax, tprs, aucs = roc_plots[class_name]
+
             #   Baseline
             ax.plot([0, 1], [0, 1], linestyle='--', lw=1.5, color='r',
                     label='Baseline', alpha=.8)

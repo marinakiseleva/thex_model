@@ -18,10 +18,14 @@ class CLUSHMCENSTest:
             predicted_class_vector = self.test_sample(self.root, test_point)
             v = np.array([list(predicted_class_vector)])
             m_predictions = np.append(m_predictions, v, axis=0)
-
         return m_predictions
 
     def test_sample(self, node, testing_features):
+        """
+        Run test sample through tree. Returns prediction vector, which is vector of probabilities across classes
+        :param node: Initially, the root node, and then recurses on nodes in the tree
+        :param testing_features: test point; its features as a row from the DataFrame
+        """
         if type(node) == LeafNode:
             return node.guess
 

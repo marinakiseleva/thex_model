@@ -175,6 +175,7 @@ class CLUSHMCENSTrain:
         class_vectors_array = np.array(class_df.values.tolist())
         # Get average row (class vector)
         avg_vector = np.mean(class_vectors_array, axis=0)
+
         return avg_vector[0]
 
     def get_weighted_distance(self, v, mean_v):

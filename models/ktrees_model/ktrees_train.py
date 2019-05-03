@@ -3,26 +3,13 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 
 from thex_data.data_consts import TARGET_LABEL
-from thex_data.data_clean import convert_class_vectors
+from thex_data.data_clean import convert_class_vectors, relabel
 
 
 class KTreesTrain:
     """
     Mixin for K-Trees model, training functionality
     """
-
-    def relabel(self, class_index, class_vectors):
-        """
-        Relabel samples such that if they have a 1 in their class vector for class_index, they will be relabeled as 1; otherwise 0. Relabels TARGET_LABEL column of class_vectors
-        :return: Pandas DataFrame with TARGET_LABEL column, filling with 1 if  class_vectors[TARGET_LABEL][class_index] is also 1, otherwise 0
-        """
-        labels = []
-        for df_index, row in class_vectors.iterrows():
-            class_vector = row[TARGET_LABEL]
-            p = 1 if class_vector[class_index] == 1 else 0
-            labels.append(p)
-        class_vectors = pd.DataFrame(labels, columns=[TARGET_LABEL])
-        return class_vectors
 
     def get_sample_weights(self, labeled_samples):
         """
@@ -51,10 +38,10 @@ class KTreesTrain:
 
         criterion = ['entropy', 'gini']
         splitter = ['best', 'random']
-        max_depth = [3, 4, 50]
-        min_samples_split = [2, 4, 8, 0.01, 0.05, 0.1, 0.2]
-        min_samples_leaf = [1, 2, 3, 5, 0.2, 0.4]
-        min_weight_fraction_leaf = [0, 0.001, 0.01, 0.1, 0.2]
+        max_depth = [50]
+        min_samples_split = [2, 4, 8, 0.05]
+        min_samples_leaf = [1, 3]
+        min_weight_fraction_leaf = [0, 0.001, 0.01]
 
         grid = {'criterion': criterion,
                 'splitter': splitter,
@@ -62,7 +49,7 @@ class KTreesTrain:
                 'min_samples_split': min_samples_split,
                 'min_samples_leaf': min_samples_leaf,
                 'min_weight_fraction_leaf': min_weight_fraction_leaf,
-                'max_features': [0.2, 0.4, 0.6, None],
+                'max_features': [0.3, None],
                 'class_weight': ['balanced']
                 }
         # basic_grid = {'criterion': ['gini'],
@@ -83,10 +70,11 @@ class KTreesTrain:
 
         print("Tree brier_score_loss: " + str(clf_optimize.best_score_))
         clf = clf_optimize.best_estimator_
-        print("Best params ")
+        print("Best params: ")
         print(clf_optimize.best_params_)
-        # for name, importance in zip(X.columns, clf.feature_importances_):
-        #     print(name, importance)
+        print("Feature importance: ")
+        print(sorted(zip(X.columns, clf.feature_importances_),
+                     key=lambda x: x[1], reverse=True)[0:5])
 
         return clf
 
@@ -100,7 +88,7 @@ class KTreesTrain:
         # Create classifier for each class, present or not in sample
         for class_index, class_name in enumerate(self.class_labels):
             # Labels for this tree
-            y_train_labels = self.relabel(class_index, y_train_vectors)
+            y_train_labels = relabel(class_index, y_train_vectors)
             positive_count = y_train_labels.loc[
                 y_train_labels[TARGET_LABEL] == 1].shape[0]
             if positive_count < 5:
@@ -108,7 +96,7 @@ class KTreesTrain:
                 # positive samples
                 self.models[class_name] = None
                 continue
-            print("Class " + class_name)
+            print("\nClass " + class_name)
             clf = self.get_best_model(self.X_train, y_train_labels)
 
             self.models[class_name] = clf

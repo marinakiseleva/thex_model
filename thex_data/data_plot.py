@@ -91,20 +91,20 @@ def count_classes(df):
 from matplotlib.ticker import FormatStrFormatter
 
 
-def plot_class_hist(df, class_names=None):
+def plot_class_hist(df, target_is_name=False):
     """
     Plots histogram of class sizes
     :param df: DataFrame with TARGET_LABEL column
+    :param target_is_name: Boolean to use keys in count_classes dictionary as class labels. Can be True if TARGET_LABEL contains real class names and not codes. 
     """
 
     class_counts = count_classes(df)
-    if class_names is None:
-        class_names = []
-        for c in class_counts.keys():
-            if c in code_cat:
-                class_names.append(code_cat[c])
-            else:
-                class_names.append(str(c))
+    class_names = []
+    for c in class_counts.keys():
+        if target_is_name:
+            class_names.append(str(c))
+        else:
+            class_names.append(code_cat[c])
 
     num_classes = len(class_names)
     class_indices = np.arange(num_classes)
@@ -116,14 +116,17 @@ def plot_class_hist(df, class_names=None):
     plt.xticks(class_indices, class_names, fontsize=10)
     if num_classes > 5:
         plt.xticks(rotation=-90)
+        plt.gcf().subplots_adjust(bottom=0.35)
 
     if (max(class_counts.values()) - min(class_counts.values())) > 100:
         ax.set_yscale('log')
         ax.yaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
         plt.tick_params(axis='y', which='minor')
 
-    plt.xlabel('Class', fontsize=10)
-    plt.ylabel('Count', fontsize=10)
+    ax.tick_params(axis='both', which='major', labelsize=8)
+    ax.tick_params(axis='both', which='minor', labelsize=7)
+    plt.xlabel('Class', fontsize=12)
+    plt.ylabel('Count', fontsize=12)
     title = "Distribution of Transient Types in Data Sample"
     plt.title(title, fontsize=12)
     plt.savefig(ROOT_DIR + "/output/classdistributions/" + title)

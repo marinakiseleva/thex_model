@@ -1,6 +1,10 @@
 class LeafNode:
 
     def __init__(self, guess):
+        """
+        Leaf node maintains a guess for this node, which is the predicted label for any sample in the Leaf. Each value in vector is the ratio of the predicted class out of the total number of samples in this leaf.
+        :param guess: prediction for leaf; average class vector, with each value as probability of class
+        """
         self.guess = guess
 
 

@@ -12,7 +12,7 @@ from .data_consts import groupings, ORIG_TARGET_LABEL, TARGET_LABEL, cat_code
 from .data_consts import class_to_subclass as hierarchy
 
 
-def relabel(self, class_index, class_vectors):
+def relabel(class_index, class_vectors):
     """
     Relabel samples such that if they have a 1 in their class vector for class_index, they will be relabeled as 1; otherwise 0. Relabels TARGET_LABEL column of class_vectors
     :return: Pandas DataFrame with TARGET_LABEL column, filling with 1 if  class_vectors[TARGET_LABEL][class_index] is also 1, otherwise 0
@@ -61,6 +61,9 @@ def init_tree():
 
 
 def assign_levels(tree, mapping, node, level):
+    """
+    Assigns level to each node based on level in hierarchical tree. The lower it is in the tree, the larger the level. The level at the root is 1.
+    """
     mapping[str(node)] = level
     for child in tree._get_children(node):
         assign_levels(tree, mapping, child, level + 1)

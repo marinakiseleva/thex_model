@@ -1,11 +1,11 @@
 import sys
 
-from models.base_model.base_model import BaseModel
+from models.base_model_mc.mc_base_model import MCBaseModel
 from models.clus_hmc_ens_model.clus_hmc_ens_train import CLUSHMCENSTrain
 from models.clus_hmc_ens_model.clus_hmc_ens_test import CLUSHMCENSTest
 
 
-class CLUSHMCENS(BaseModel, CLUSHMCENSTrain, CLUSHMCENSTest):
+class CLUSHMCENS(MCBaseModel, CLUSHMCENSTrain, CLUSHMCENSTest):
     """
     Hierarchical Multi-Label Classifier based on predictive clustering tree (PCT) and using bagging. Implementation of CLUS-HMC-ENS outlined in Kocev, Dzeroski 2010. Splits using reduction in class-weighted variance.
     """
@@ -16,7 +16,6 @@ class CLUSHMCENS(BaseModel, CLUSHMCENSTrain, CLUSHMCENSTest):
         self.cols = cols
         self.col_matches = col_matches
         self.user_data_filters = data_args
-        self.class_labels = None
 
     def train_model(self):
         """
@@ -34,12 +33,15 @@ class CLUSHMCENS(BaseModel, CLUSHMCENSTrain, CLUSHMCENSTest):
         """
         return self.test()
 
-    def evaluate_model(self, test_on_train):
-        class_recalls, class_precisions = self.get_mc_metrics()
-        self.plot_performance(class_recalls, "CLUS HMC ENS Recall",
-                              class_counts=None, ylabel="Recall")
-        self.plot_performance(class_precisions, "CLUS HMC ENS Precision",
-                              class_counts=None, ylabel="Precision")
+    def get_all_class_probabilities(self):
+        return self.test()
+
+    # def evaluate_model(self, test_on_train):
+    #     class_recalls, class_precisions = self.get_mc_metrics()
+    #     self.plot_performance(class_recalls, "CLUS HMC ENS Recall",
+    #                           class_counts=None, ylabel="Recall")
+    #     self.plot_performance(class_precisions, "CLUS HMC ENS Precision",
+    #                           class_counts=None, ylabel="Precision")
 
     def get_class_probabilities(self, x):
         print("\n\n need to implement get_class_probabilities for CLUS-HMC-ENS \n")

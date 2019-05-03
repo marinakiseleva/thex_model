@@ -49,11 +49,13 @@ def collect_data():
     """ 
     Sets up Data Object using data 
     """
-    # if '.npy' in DATA_PATH:
-    #     # Read in npy file
-    #     # np.load(DATA_PATH)
-    #     data = np.load(DATA_PATH).item()
-    #     print(data)
+    if '.npy' in DATA_PATH:
+        # Read in npy file
+        # np.load(DATA_PATH)
+        data = np.load(DATA_PATH)
+        print(type(data))
+        print(data.shape)
+        print(data)
     dat = Table.read(DATA_PATH, format='fits')
     df_bytes = dat.to_pandas()  # Convert to pandas dataframe
     df = pd.DataFrame()     # Init empty dataframe for converted types

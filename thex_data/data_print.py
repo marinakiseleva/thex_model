@@ -28,6 +28,7 @@ def print_priors(priors):
 
 def print_features_used(col_list):
     print("\nFeatures\n------------------")
+    print("Total: " + str(len(col_list)))
     out_list = col_list[0]
     for c in col_list[1:]:
         out_list += ", " + c
