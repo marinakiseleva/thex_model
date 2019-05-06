@@ -4,7 +4,7 @@ from sklearn.neighbors.kde import KernelDensity
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 
 from thex_data.data_consts import TARGET_LABEL
-from thex_data.data_clean import convert_class_vectors
+from thex_data.data_clean import convert_class_vectors, relabel
 
 
 class MCKDETrain:
@@ -58,7 +58,7 @@ class MCKDETrain:
         # Create classifier for each class, present or not in sample
         for class_index, class_name in enumerate(self.class_labels):
                 # Labels for this tree
-            y_train_labels = self.relabel(class_index, y_train_vectors)
+            y_train_labels = relabel(class_index, y_train_vectors)
             positive_count = y_train_labels.loc[
                 y_train_labels[TARGET_LABEL] == 1].shape[0]
             if positive_count < 5:

@@ -42,7 +42,6 @@ class CLUSHMCENSTrain:
         tree = init_tree()
         class_level = assign_levels(tree, {}, tree.root, 1)
         self.class_weights = [1 / class_level[c] for c in self.class_labels]
-
         # Compute sample weights : Weigh each sample so that weights of samples in
         # each class sum to 1
         self.sample_weights = self.get_sample_weights(labeled_samples)
@@ -50,7 +49,7 @@ class CLUSHMCENSTrain:
         # For each feature, find up to 10 random values to use as feature/value pairs
         feature_value_pairs = []
         unique_features = list(self.X_train)
-        num_values = 10
+        num_values = 20
         for f in unique_features:
             unique_values = list(labeled_samples[f].unique())
             if len(unique_values) > num_values:
@@ -70,7 +69,7 @@ class CLUSHMCENSTrain:
         :param remaining_depth: # of levels tree is allowed to construct
         """
         num_samples = labeled_samples.shape[0]
-        leaf_min = 5  # Minimum number of samples in a leaf
+        leaf_min = 2  # Minimum number of samples in a leaf
         if remaining_depth == 0 or self.is_unambiguous(labeled_samples) or len(remaining_feature_value_pairs) == 0 or num_samples <= leaf_min:
             return LeafNode(self.majority_class(labeled_samples))
 

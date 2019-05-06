@@ -60,6 +60,7 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
             return self
 
         # Collect data filtered on these parameters
+
         self.set_model_data(col_list, data_filters)
         self.visualize_data(data_filters)
         self.train_model()

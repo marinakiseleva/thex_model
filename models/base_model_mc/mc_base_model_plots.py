@@ -11,6 +11,37 @@ class MCBaseModelVisualization:
     Mixin Class for Multiclass BaseModel performance visualization
     """
 
+    def plot_mc_probability_precision(self, range_metrics, title=None):
+        """
+        Plots precision of class (y) vs. probability assigned to class (x)
+        :param range_metrics: Map of classes to [percent_ranges, AP_range_sums, TOTAL_range_sums]
+        """
+        for index, class_name in enumerate(range_metrics.keys()):
+            perc_ranges, AP_ranges, TOTAL_ranges = range_metrics[class_name]
+            f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+
+            perc_actual = []
+            annotations = []
+            for index, AP in enumerate(AP_ranges):
+                p = 0
+                total_predicted = TOTAL_ranges[index]
+                if total_predicted != 0:
+                    # (TP) / (TP+FP)
+                    p = AP / total_predicted
+                annotations.append(str(AP) + " / " + str(total_predicted))
+                perc_actual.append(p)
+
+            normalize = plt.Normalize(min(AP_ranges), max(AP_ranges))
+            colors = plt.cm.Blues(normalize(AP_ranges))
+
+            ax = self.plot_bar_with_annotations(
+                axis=ax, x_vals=perc_ranges, y_vals=perc_actual, annotations=annotations, bar_colors=colors)
+            plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
+            plt.ylabel('AP/Total', fontsize=12)
+            title = "Accuracy vs Probability" if title is None else title
+
+            self.display_and_save_plot(title + ": " + class_name, ax)
+
     def save_roc_curve(self, i, roc_plots):
         """ 
         Plot ROC curve for each class, but do not show. Plot to axis attached to class's plot (saved in roc_plots). Used to save many curves for multiple runs. 

@@ -14,10 +14,10 @@ class MCBaseModelPerformance:
     def get_mc_metrics_by_ranges(self, X_accs, class_name):
         """
         Collects metrics, split by probability assigned to class for ranges of 10% from 0 to 100. Used to plot probability assigned vs accuracy.
-        :param X_accs: self.get_probability_matrix() output concated with predictions
-        Returns [percent_ranges, AP_ranges, TOTAL_ranges] where
+        :param X_accs: self.get_probability_matrix() output
+        :return: [percent_ranges, AP_ranges, TOTAL_ranges] where
         percent_ranges: Range value
-        AP_ranges: # of actual class_name in each range
+        AP_ranges: # of actual class_name in each range; TP + FN
         TOTAL_ranges: Total in each range
         """
         percent_ranges = [0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]
@@ -123,3 +123,28 @@ class MCBaseModelPerformance:
             elif actual_class == 0 and predicted_class == 1:
                 FP += 1
         return [TP, FP, FN]
+
+    def aggregate_mc_metrics(self, metrics):
+        """
+        Aggregate output of get_mc_metrics_by_ranges over several folds/runs
+        :param metrics: Dictionary of class names to their ranged metrics, 
+         {class_name: [[percent_ranges, AP_ranges, TOTAL_ranges],...] , ...}
+        :return: Dictionary of class names to their SUMMED ranged metrics, 
+         {class_name: [percent_ranges, sum(AP_ranges), sum(TOTAL_ranges)] , ...}
+        """
+
+        output_metrics = {}
+        for class_name in metrics.keys():
+            list_metrics = metrics[class_name]
+            AP_range_sums = [0] * 10
+            TOTAL_range_sums = [0] * 10
+            for metric_response in list_metrics:
+                # metric_response =[percent_ranges, AP_ranges, TOTAL_ranges]
+                percent_ranges = metric_response[0]
+                AP_range = metric_response[1]
+                AP_range_sums = [sum(x) for x in zip(AP_range_sums, AP_range)]
+                TOTAL_range = metric_response[2]
+                TOTAL_range_sums = [sum(x) for x in zip(TOTAL_range_sums, TOTAL_range)]
+            output_metrics[class_name] = [
+                percent_ranges, AP_range_sums, TOTAL_range_sums]
+        return output_metrics

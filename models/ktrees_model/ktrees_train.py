@@ -70,11 +70,11 @@ class KTreesTrain:
 
         print("Tree brier_score_loss: " + str(clf_optimize.best_score_))
         clf = clf_optimize.best_estimator_
-        print("Best params: ")
-        print(clf_optimize.best_params_)
-        print("Feature importance: ")
-        print(sorted(zip(X.columns, clf.feature_importances_),
-                     key=lambda x: x[1], reverse=True)[0:5])
+        # print("Best params: ")
+        # print(clf_optimize.best_params_)
+        # print("Feature importance: ")
+        # print(sorted(zip(X.columns, clf.feature_importances_),
+        #              key=lambda x: x[1], reverse=True)[0:5])
 
         return clf
 

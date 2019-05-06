@@ -22,7 +22,8 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
     def run_model(self):
         self.class_labels = self.user_data_filters[
             'class_labels'] if 'class_labels' in self.user_data_filters.keys() else None
-
+        print('class labels')
+        print(self.class_labels)
         super(MCBaseModel, self).run_model()
 
     @abstractmethod
@@ -53,6 +54,9 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         Visualize distribution of data used to train and test
         """
+        if self.class_labels is None:
+            self.class_labels = self.get_mc_unique_classes(y)
+
         if y is None:
             y = pd.concat([self.y_train, self.y_test], axis=0)
 
@@ -82,7 +86,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             if 'redshift' in features:
                 plot_feature_distribution(df, 'redshift', False)
 
-    def run_cross_validation(self, k, X, y, roc_plots, data_filters):
+    def run_cross_validation(self, k, X, y, roc_plots, class_metrics, data_filters):
         """
         Run k-fold cross validation
         """
@@ -109,7 +113,13 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             # Save ROC curve for each class
             roc_plots = self.save_roc_curve(i, roc_plots)
             i += 1
-        return roc_plots
+
+            # Record metrics for prob vs. accuracy plots
+            X_accs = self.get_mc_probability_matrix()
+            for class_name in self.class_labels:
+                class_metrics[class_name].append(self.get_mc_metrics_by_ranges(
+                    X_accs, class_name))
+        return roc_plots, class_metrics
 
     def run_model_cv(self, data_columns, data_filters):
         """
@@ -123,13 +133,17 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         self.visualize_data(data_filters, y, X)
 
         roc_plots = {}
+        class_metrics = {}
         for class_name in self.class_labels:
             roc_fig, roc_ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
             # roc_plots[class_name] = [fig  ax   TPRS  AUCS]
             roc_plots[class_name] = [roc_fig, roc_ax, [], []]
+            class_metrics[class_name] = []
+
         for index_run in range(data_filters['num_runs']):
-            print("\n\nRun " + str(index_run))
-            roc_plots = self.run_cross_validation(k, X, y, roc_plots, data_filters)
+            print("\n\nRun " + str(index_run + 1))
+            roc_plots, class_metrics = self.run_cross_validation(
+                k, X, y, roc_plots, class_metrics, data_filters)
 
         for class_name in roc_plots.keys():
             fig, ax, tprs, aucs = roc_plots[class_name]
@@ -164,3 +178,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             fig.savefig(file_name, bbox_inches=extent.expanded(1.3, 1.3))
 
         plt.show()
+
+        aggregated_class_metrics = self.aggregate_mc_metrics(class_metrics)
+        self.plot_mc_probability_precision(aggregated_class_metrics)
