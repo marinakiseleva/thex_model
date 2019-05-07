@@ -1,18 +1,24 @@
 # THEx Background
-Source code contributing to the research of the Transient Host Exchange project (THEx) project at the University of Arizona. THEx aims to predict astronomical transients for the Large Synoptic Survey Telescope (LSST) before they occur, in order to expedite their follow up once detected by LSST, by predicting transients using host-galaxy information alone. 
+Source code contributing to the research of the Transient Host Exchange project (THEx) project at the University of Arizona. THEx aims to predict astronomical transients for the Large Synoptic Survey Telescope (LSST) before they occur, in order to expedite their follow up once detected by LSST, by predicting transients using host-galaxy information alone.
 
 
 # Set-Up
 Set up thex_model using Python virtualenv with the following commands (ensure that you have [HMC](https://github.com/marinakiseleva/hmc) downloaded into a neighboring directory called 'libraries'.)
 
 ```
+mkdir libraries
+cd libraries
+git clone https://github.com/marinakiseleva/hmc.git
+cd ..
+git clone https://github.com/marinakiseleva/thex_model.git
+
 mkdir environments
 virtualenv environments/thex_env
 source environments/thex_env/bin/activate
 cd libraries/hmc
 python setup.py install
 cd ../../thex_model
-pip install -r requirements.txt 
+pip install -r requirements.txt
 python setup.py develop
 python -m ipykernel install --user --name thexenv --display-name "THEx env (py3env)"
 
@@ -28,7 +34,7 @@ deactivate
 Please use the Jupyter Notebook [THEx Model Intro](notebooks/THEx%20Model%20Intro.ipynb) located in the notebooks directory to help you get started with running the models.
 
 # Dependencies
-Listed in requirements.txt and the following that needs to be separately installed in another directory. 
+Listed in requirements.txt and the following that needs to be separately installed in another directory.
 - [hmc](https://github.com/marinakiseleva/hmc) -- see above
 
 Do not pip install hmc. Download it from the link above and install it using setup.py. This is a forked and edited version, and only this version will work with our project.
@@ -40,18 +46,17 @@ This module is broken up into smaller modules that each provide different utilit
 Contains the different classifiers explored/used in the project. Contains the Hierarchical Decision Tree model and likelihood-driven model based on Kernel Density Estimates (KDEModel)
 
 ### kde_model
-Model based n kernel density estimation of feature distributions. Can be run either 'naively' (assuming feature independence and creating distinct distributions per feature per class) or non-naively, which creates a single distribution over all features. 
+Model based n kernel density estimation of feature distributions. Can be run either 'naively' (assuming feature independence and creating distinct distributions per feature per class) or non-naively, which creates a single distribution over all features.
 
 ### hmc_model
-Decisioning tree using the Hierarchical Multi-label Decisioing Tree from Vens, et al. 2008. 
+Decisioning tree using the Hierarchical Multi-label Decisioing Tree from Vens, et al. 2008.
 
 ### clus_hmc_ens_model
-Decisioning tree using the Hierarchical Multi-label Decisioing Tree using bagging and variance based on class vector (CLUS-HMC-ENS) from Schietgat, Vens, Struyf, et al. 2010. 
+Decisioning tree using the Hierarchical Multi-label Decisioing Tree using bagging and variance based on class vector (CLUS-HMC-ENS) from Schietgat, Vens, Struyf, et al. 2010.
 
-## thex_data 
-Data pulling, cleansing, normalizing, preparation, and plotting. 
+## thex_data
+Data pulling, cleansing, normalizing, preparation, and plotting.
 
 
 # Acknowledgments
 This project uses a [fork](https://github.com/marinakiseleva/hmc) of [HMC](https://github.com/davidwarshaw/hmc), available by the BSD 3-Clause "New" or "Revised" License.  
-

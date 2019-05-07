@@ -86,7 +86,7 @@ class KTreesTrain:
                 # positive samples
                 self.models[class_name] = None
                 continue
-            print("\nClass " + class_name)
+            # print("\nClass " + class_name)
             clf = self.get_best_model(self.X_train, y_train_labels)
 
             self.models[class_name] = clf
