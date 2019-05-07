@@ -6,15 +6,15 @@ Source code contributing to the research of the Transient Host Exchange project 
 1. Set up the following directory structure (assuming you have the data in the corresponding FITs file):
 ```
 thex_project
-└───thex_code
-│
+|
 └───data
 │   │   THEx-training-set.v0_0_1.fits
 ```
 2. Use the following commands to clone this repository and run the install script. The Jupyter Notebook interfaces will be automatically loaded.
 ```
-cd thex_code
+cd thex_project
 git clone https://github.com/marinakiseleva/thex_model.git
+cd thex_model
 sh install.sh
 ```
 
@@ -22,11 +22,13 @@ sh install.sh
 3. After installation, ensure the structure of the project looks like this:
 ```
 thex_project
-└───thex_code
-|    └───libraries
-|    └───environments
-|    └───thex_model
-│
+|
+└───thex_model
+|
+└───libraries
+|
+└───environments
+|
 └───data
 │   │   THEx-training-set.v0_0_1.fits
 ```
