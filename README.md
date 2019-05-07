@@ -41,8 +41,8 @@ Please use the Jupyter Notebook [THEx Model Intro](notebooks/THEx%20Model%20Intr
 
 # Dependencies
 This requires you have the following already installed:
-- Python 3.6 (make sure you have /usr/bin/python3)
-- virtualenv
+- Python 3.6
+- virtualenv (be sure virtualenv uses 3.6 by default)
 <!-- Listed in requirements.txt and the following that needs to be separately installed in another directory.
 - [hmc](https://github.com/marinakiseleva/hmc) -- see above
 

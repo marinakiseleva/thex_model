@@ -3,7 +3,7 @@ cd ..
 mkdir libraries
 mkdir environments
 
-virtualenv -p /usr/bin/python3 environments/thex_env
+virtualenv environments/thex_env
 source environments/thex_env/bin/activate
 
 
