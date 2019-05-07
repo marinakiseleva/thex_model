@@ -17,7 +17,7 @@ def plot_feature_distribution(df, feature, transformed=True, logged=False):
     Plots the distribution of each transient type in df over 'feature'
     :param df: DataFrame with both feature column and TARGET_LABEL column
     :param feature: Name of feature to plot distribution over
-    :param transformed: If labels are not transformed, we do not call code_cat on them; they are already class names 
+    :param transformed: If labels are not transformed, we do not call code_cat on them; they are already class names
 
     """
 
@@ -58,7 +58,7 @@ def plot_feature_distribution(df, feature, transformed=True, logged=False):
     plt.ylabel(ylabel, fontsize=10)
     plt.xlim(left=0, right=max_value)
     ax.legend(loc='best')
-    plt.savefig(ROOT_DIR + "/output/classdistributions/" + title)
+    plt.savefig(ROOT_DIR + "/output/" + title)
     plt.show()
 
 
@@ -95,7 +95,7 @@ def plot_class_hist(df, target_is_name=False):
     """
     Plots histogram of class sizes
     :param df: DataFrame with TARGET_LABEL column
-    :param target_is_name: Boolean to use keys in count_classes dictionary as class labels. Can be True if TARGET_LABEL contains real class names and not codes. 
+    :param target_is_name: Boolean to use keys in count_classes dictionary as class labels. Can be True if TARGET_LABEL contains real class names and not codes.
     """
 
     class_counts = count_classes(df)
@@ -129,5 +129,6 @@ def plot_class_hist(df, target_is_name=False):
     plt.ylabel('Count', fontsize=12)
     title = "Distribution of Transient Types in Data Sample"
     plt.title(title, fontsize=12)
-    plt.savefig(ROOT_DIR + "/output/classdistributions/" + title)
+
+    plt.savefig(ROOT_DIR + "/output/" + title)
     plt.show()

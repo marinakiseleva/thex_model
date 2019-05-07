@@ -1,3 +1,4 @@
+environments/
 dist/
 build/
 *.egg-info/

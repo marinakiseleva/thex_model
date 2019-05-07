@@ -28,9 +28,13 @@ class BaseModelVisualization:
         else:
             ax.set_title('\n'.join(wrap(title, 60)))
         title = self.prep_file_name(title)
-        model_dir = self.prep_file_name(self.name)
         plt.tight_layout()
-        plt.savefig(ROOT_DIR + "/output/" + model_dir + "/" + title)
+
+        file_dir = ROOT_DIR + "/output/" + self.prep_file_name(self.name)
+        if not os.path.exists(file_dir):
+            os.mkdir(file_dir)
+
+        plt.savefig(file_dir + "/" + title)
 
         plt.show()
 
@@ -261,7 +265,7 @@ class BaseModelVisualization:
     def plot_performance(self, class_metrics, plot_title, class_counts=None, ylabel="Accuracy"):
         """
         Visualizes accuracy per class with bar graph
-        :param class_metrics: Mapping from class codes to metric value. 
+        :param class_metrics: Mapping from class codes to metric value.
         """
 
         # Get class names and corresponding accuracies

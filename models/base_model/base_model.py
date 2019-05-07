@@ -1,8 +1,9 @@
+import os
 from abc import ABC, abstractmethod
 from sklearn.model_selection import StratifiedKFold
 from sklearn.decomposition import PCA
 
-from thex_data.data_consts import cat_code
+from thex_data.data_consts import cat_code, ROOT_DIR
 from thex_data.data_init import collect_cols
 from thex_data import data_plot
 from thex_data.data_prep import get_train_test, get_source_target_data
@@ -27,6 +28,11 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
         :param folds: Number of folds if using k-fold Cross Validation
         :param user_data_filters: List of data filters user passed in. User options over-ride any default.
         """
+
+        # create output directories
+        if not os.path.exists(ROOT_DIR + "/output"):
+            os.mkdir(ROOT_DIR + "/output")
+
 
         cols = self.cols
         col_matches = self.col_matches
