@@ -17,26 +17,6 @@ cd thex_code
 git clone https://github.com/marinakiseleva/thex_model.git
 sh install.sh
 ```
-<!-- Set up thex_model using Python virtualenv with the following commands (ensure that you have [HMC](https://github.com/marinakiseleva/hmc) downloaded into a neighboring directory called 'libraries'.)
-
-```
-mkdir libraries
-cd libraries
-git clone https://github.com/marinakiseleva/hmc.git
-python setup.py install
-cd ..
-git clone https://github.com/marinakiseleva/thex_model.git
-mkdir environments
-virtualenv environments/thex_env
-source environments/thex_env/bin/activate
-cd libraries/hmc
-python setup.py install
-cd ../../thex_model
-pip install -r requirements.txt
-python setup.py develop
-python -m ipykernel install --user --name thexenv --display-name "THEx env (py3env)"
-
-``` -->
 
 <!-- Update LOCAL_DATA_PATH in [thex_data/data_consts.py](thex_data/data_consts.py) with the path to data FITS file  (relative to thex_model root dir). It is best to follow this structure: -->
 3. After installation, ensure the structure of the project looks like this:

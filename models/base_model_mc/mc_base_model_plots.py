@@ -43,8 +43,8 @@ class MCBaseModelVisualization:
             self.display_and_save_plot(title + ": " + class_name, ax)
 
     def save_roc_curve(self, i, roc_plots):
-        """ 
-        Plot ROC curve for each class, but do not show. Plot to axis attached to class's plot (saved in roc_plots). Used to save many curves for multiple runs. 
+        """
+        Plot ROC curve for each class, but do not show. Plot to axis attached to class's plot (saved in roc_plots). Used to save many curves for multiple runs.
         :param i: Fold or iteration number
         :param roc_plots: Mapping of class_name to [figure, axis, true positive rates, aucs]. This function plots curve on corresponding axis using this dict.
         """
@@ -75,7 +75,7 @@ class MCBaseModelVisualization:
         return roc_plots
 
     def plot_mc_roc_curves(self):
-        """ 
+        """
         Plot using Sklearn ROC Curve logic
         """
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
@@ -100,5 +100,5 @@ class MCBaseModelVisualization:
         # ax.plot(x, x, "--", label="Baseline")  # baseline
         plt.plot([0, 1], [0, 1], 'k--', label="Baseline")
         plt.title('ROC curve')
-        plt.legend(loc='best')
+        plt.legend(loc='lower right')
         plt.show()
