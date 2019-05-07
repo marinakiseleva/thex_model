@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 from sklearn.model_selection import StratifiedKFold
 import matplotlib.pyplot as plt
@@ -171,8 +172,10 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             ax.set_ylabel('True Positive Rate')
             ax.legend(loc="best")
             extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
-            file_name = ROOT_DIR + "/output/" + \
-                self.prep_file_name(self.name) + "/" + self.prep_file_name(title)
+            file_dir = ROOT_DIR + "/output/" + self.prep_file_name(self.name)
+            if not os.path.exists(file_dir):
+                os.mkdir(file_dir)
+            file_name = file_dir + "/" + self.prep_file_name(title)
             fig.savefig(file_name, bbox_inches=extent.expanded(1.3, 1.3))
 
         plt.show()
