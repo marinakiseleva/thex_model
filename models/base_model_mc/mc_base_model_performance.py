@@ -147,4 +147,5 @@ class MCBaseModelPerformance:
                 TOTAL_range_sums = [sum(x) for x in zip(TOTAL_range_sums, TOTAL_range)]
             output_metrics[class_name] = [
                 percent_ranges, AP_range_sums, TOTAL_range_sums]
+
         return output_metrics

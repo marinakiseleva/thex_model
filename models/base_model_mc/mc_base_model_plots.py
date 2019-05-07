@@ -35,7 +35,7 @@ class MCBaseModelVisualization:
             colors = plt.cm.Blues(normalize(AP_ranges))
 
             ax = self.plot_bar_with_annotations(
-                axis=ax, x_vals=perc_ranges, y_vals=perc_actual, annotations=annotations, bar_colors=colors)
+                axis=ax, x_vals=perc_ranges, y_vals=perc_actual, annotations=TOTAL_ranges, bar_colors=colors)
             plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
             plt.ylabel('AP/Total', fontsize=12)
             title = "Accuracy vs Probability" if title is None else title
@@ -46,19 +46,24 @@ class MCBaseModelVisualization:
         """ 
         Plot ROC curve for each class, but do not show. Plot to axis attached to class's plot (saved in roc_plots). Used to save many curves for multiple runs. 
         :param i: Fold or iteration number
-        :param roc_plots: Mapping of class_name to [figure, axis, true positive rates, aucs]. This function add curve directly to corresponding axis using this dict.
+        :param roc_plots: Mapping of class_name to [figure, axis, true positive rates, aucs]. This function plots curve on corresponding axis using this dict.
         """
         mean_fpr = np.linspace(0, 1, 100)
+        # class_probabilities has row for each sample, and each column is
+        # probability of class, in order of self.class_labels
         class_probabilities = self.get_all_class_probabilities()
         y_test_vectors = convert_class_vectors(self.y_test, self.class_labels)
         for class_index, class_name in enumerate(self.class_labels):
             f, ax, tprs, aucs = roc_plots[class_name]
+            # column is the probability of each sample for this class_name
             column = class_probabilities[:, class_index]
             y_test_labels = np.transpose(relabel(class_index, y_test_vectors)[
                                          [TARGET_LABEL]].values)[0]
+
             fpr, tpr, thresholds = roc_curve(
-                y_true=y_test_labels, y_score=column, sample_weight=None, drop_intermediate=True)
-            # Updates FPR and TPR to nbe on the range 0 to 1 (for plotting)
+                y_true=y_test_labels, y_score=column, drop_intermediate=False)
+
+            # Updates FPR and TPR to be on the range 0 to 1 (for plotting)
             # Python directly alters list objects within dict.
             tprs.append(interp(mean_fpr, fpr, tpr))
             tprs[-1][0] = 0.0  # Start curve at 0,0
@@ -78,7 +83,6 @@ class MCBaseModelVisualization:
         # sample, and a column for each class probability, in order of valid
         # self.class_labels
         class_probabilities = self.get_all_class_probabilities()
-
         # y_test_vectors has TARGET_LABEL column, with each class vector of length
         # self.class_labels
         y_test_vectors = convert_class_vectors(self.y_test, self.class_labels)

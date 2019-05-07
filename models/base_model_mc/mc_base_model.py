@@ -22,14 +22,12 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
     def run_model(self):
         self.class_labels = self.user_data_filters[
             'class_labels'] if 'class_labels' in self.user_data_filters.keys() else None
-        print('class labels')
-        print(self.class_labels)
         super(MCBaseModel, self).run_model()
 
     @abstractmethod
     def get_all_class_probabilities(self):
         """
-        Get class probability for each sample, for each class. 
+        Get class probability for each sample, for each class.
         :return: Numpy Matrix with each row corresponding to sample, and each column the probability of that class
         """
         pass

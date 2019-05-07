@@ -22,7 +22,7 @@ class CLUSHMCENSTest:
 
     def test_sample(self, node, testing_features):
         """
-        Run test sample through tree. Returns prediction vector, which is vector of probabilities across classes
+        Run test sample through tree. Returns prediction vector, which is vector of probabilities across classes, in order of self.class_labels
         :param node: Initially, the root node, and then recurses on nodes in the tree
         :param testing_features: test point; its features as a row from the DataFrame
         """

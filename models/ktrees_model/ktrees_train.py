@@ -52,24 +52,14 @@ class KTreesTrain:
                 'max_features': [0.3, None],
                 'class_weight': ['balanced']
                 }
-        # basic_grid = {'criterion': ['gini'],
-        #               'splitter': ['best'],
-        #               'max_depth': [100],
-        #               'min_samples_split': [3],
-        #               'min_samples_leaf': [2],
-        #               'min_weight_fraction_leaf': [0, 0.001],
-        #               'max_features': [None, 0.2],
-        #               'class_weight': ['balanced']
-        #               }
-
         clf_optimize = GridSearchCV(
             estimator=DecisionTreeClassifier(), param_grid=grid, scoring='brier_score_loss', cv=3, iid=True, n_jobs=12)
 
         # Fit the random search model
         clf_optimize.fit(X, y, sample_weight=sample_weights)
-
-        print("Tree brier_score_loss: " + str(clf_optimize.best_score_))
         clf = clf_optimize.best_estimator_
+
+        # print("Tree brier_score_loss: " + str(clf_optimize.best_score_))
         # print("Best params: ")
         # print(clf_optimize.best_params_)
         # print("Feature importance: ")

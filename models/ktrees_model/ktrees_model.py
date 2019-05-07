@@ -36,9 +36,6 @@ class KTreesModel(MCBaseModel, KTreesTrain, KTreesTest):
         """
         return self.test()
 
-    # def evaluate_model(self, test_on_train):
-    #     super(KTreesModel, self).evaluate_model(test_on_train)
-
     def get_all_class_probabilities(self):
         return self.test_probabilities()
 

@@ -21,6 +21,9 @@ class CLUSHMCENS(MCBaseModel, CLUSHMCENSTrain, CLUSHMCENSTest):
         """
         Builds hierarchy and tree, and fits training data to it.
         """
+        if self.class_labels is None:
+            self.class_labels = self.get_mc_unique_classes(self.y_train)
+
         labeled_samples, feature_value_pairs = self.setup_data()
         print("\n\nDone setting up data... ")
         self.root = self.train(labeled_samples, feature_value_pairs, remaining_depth=300)
@@ -36,13 +39,13 @@ class CLUSHMCENS(MCBaseModel, CLUSHMCENSTrain, CLUSHMCENSTest):
     def get_all_class_probabilities(self):
         return self.test()
 
-    # def evaluate_model(self, test_on_train):
-    #     class_recalls, class_precisions = self.get_mc_metrics()
-    #     self.plot_performance(class_recalls, "CLUS HMC ENS Recall",
-    #                           class_counts=None, ylabel="Recall")
-    #     self.plot_performance(class_precisions, "CLUS HMC ENS Precision",
-    #                           class_counts=None, ylabel="Precision")
-
     def get_class_probabilities(self, x):
-        print("\n\n need to implement get_class_probabilities for CLUS-HMC-ENS \n")
-        sys.exit(-1)
+        """
+        Returns map of class name to probability. 
+        """
+        # probs is vector of probabilities in same order as self.class_labels
+        probs = self.test_sample(self.root, x)
+        class_probabilities = {}
+        for class_name, probability in zip(self.class_labels, probs):
+            class_probabilities[class_name] = probability
+        return class_probabilities
