@@ -49,7 +49,7 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
                         'transform_features': False,
                         'transform_labels': True,
                         'incl_redshift': False,
-                        'min_class_size': 4,
+                        'min_class_size': 6,
                         'pca': None  # Number of principal components
 
                         }

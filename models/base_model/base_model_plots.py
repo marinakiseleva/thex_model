@@ -1,3 +1,4 @@
+import os
 import itertools
 from textwrap import wrap
 import numpy as np
