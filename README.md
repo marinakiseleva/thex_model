@@ -9,9 +9,9 @@ Set up thex_model using Python virtualenv with the following commands (ensure th
 mkdir libraries
 cd libraries
 git clone https://github.com/marinakiseleva/hmc.git
+python setup.py install
 cd ..
 git clone https://github.com/marinakiseleva/thex_model.git
-
 mkdir environments
 virtualenv environments/thex_env
 source environments/thex_env/bin/activate
