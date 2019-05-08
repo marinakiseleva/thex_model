@@ -81,11 +81,11 @@ class KTreesTrain:
             y_train_labels = relabel(class_index, y_train_vectors)
             positive_count = y_train_labels.loc[
                 y_train_labels[TARGET_LABEL] == 1].shape[0]
-            if positive_count < 5:
+            if positive_count < 1:
                 # Do not need to make tree for this class when there are less than X
                 # positive samples
                 self.models[class_name] = None
-                continue
+                raise ValueError("Not enough positive samples to create a classifier. You should increase min_class_size. ")
             # print("\nClass " + class_name)
             clf = self.get_best_model(self.X_train, y_train_labels)
 
