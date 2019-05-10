@@ -73,22 +73,23 @@ class KTreesTrain:
         Train K-trees, where K is the total number of classes in the data (at all levels of the hierarchy)
         """
         # Convert class labels to class vectors
-        y_train_vectors = convert_class_vectors(self.y_train, self.class_labels)
+        y_train_vectors = convert_class_vectors(
+            self.y_train, self.class_labels, self.test_level)
 
         # Create classifier for each class, present or not in sample
+        valid_classes = []
         for class_index, class_name in enumerate(self.class_labels):
-            # Labels for this tree
+            # Relabel for this tree
             y_train_labels = relabel(class_index, y_train_vectors)
             positive_count = y_train_labels.loc[
                 y_train_labels[TARGET_LABEL] == 1].shape[0]
             if positive_count < 1:
-                # Do not need to make tree for this class when there are less than X
-                # positive samples
-                self.models[class_name] = None
-                raise ValueError("Not enough positive samples to create a classifier. You should increase min_class_size. ")
-            # print("\nClass " + class_name)
+                print("No model for " + class_name)
+                continue
+            valid_classes.append(class_name)
             clf = self.get_best_model(self.X_train, y_train_labels)
-
             self.models[class_name] = clf
 
+        # Update class labels to only have classes for which we built models
+        self.class_labels = valid_classes
         return self.models

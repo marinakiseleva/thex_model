@@ -5,10 +5,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import auc
 
-from thex_data.data_clean import convert_str_to_list
+from thex_data.data_clean import *
 from thex_data.data_consts import ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI
 from thex_data.data_prep import get_source_target_data
 from thex_data.data_plot import *
+from thex_data.data_consts import class_to_subclass as hierarchy
+
 
 from models.base_model.base_model import BaseModel
 from models.base_model_mc.mc_base_model_performance import MCBaseModelPerformance
@@ -24,6 +26,11 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         Set custom attributes for Multiclass classifiers: test_level (level of class hierarchy over which to get probabilities, for MCKDEModel), and class_labels (specific classes to run model on)
         """
+        for parent in hierarchy.keys():
+            hierarchy[parent].append("Undefined_" + parent)
+        self.tree = init_tree(hierarchy)
+        self.class_levels = assign_levels(self.tree, {}, self.tree.root, 1)
+
         self.test_level = self.user_data_filters[
             'test_level'] if 'test_level' in self.user_data_filters.keys() else None
         self.class_labels = self.user_data_filters[
@@ -126,7 +133,18 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         return roc_plots, class_metrics
 
     def set_class_labels(self, y):
-        self.class_labels = self.get_mc_unique_classes(y)
+        if self.test_level is not None:
+            # Overwrites set_class_labels. Gets all class labels on self.test_level,
+            # including 'Undefined' classes of parent level.
+            self.class_labels = []
+            for class_name in self.get_mc_unique_classes(y):
+                class_level = self.class_levels[class_name]
+                if class_level == self.test_level:
+                    self.class_labels.append(class_name)
+                elif class_level == self.test_level - 1:
+                    self.class_labels.append("Undefined_" + class_name)
+        else:
+            self.class_labels = self.get_mc_unique_classes(y)
 
     def run_model_cv(self, data_columns, data_filters):
         """
