@@ -57,7 +57,7 @@ def plot_feature_distribution(df, feature, transformed=True, logged=False):
     plt.xlabel(feature, fontsize=10)
     plt.ylabel(ylabel, fontsize=10)
     plt.xlim(left=0, right=max_value)
-    ax.legend(loc='best')
+    ax.legend(loc='best',  prop={'size': 6})
     plt.savefig(ROOT_DIR + "/output/" + title)
     plt.show()
 

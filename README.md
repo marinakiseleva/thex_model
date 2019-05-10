@@ -37,7 +37,7 @@ deactivate
 ```
 
 # Running
-Please use the Jupyter Notebook [THEx Model Intro](notebooks/THEx%20Model%20Intro.ipynb) located in the notebooks directory to help you get started with running the models.
+Please use the Jupyter Notebook [THEx Model Intro](notebooks/THEx%20Model%20Intro.ipynb) located in the notebooks directory to help you get started with running the models. Be sure to use notebooks that are in 'THEx env (py3env)'.
 
 # Dependencies
 This requires you have the following already installed:

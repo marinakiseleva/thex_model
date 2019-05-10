@@ -9,7 +9,7 @@ import pandas as pd
 from hmc import hmc
 
 from .data_consts import groupings, ORIG_TARGET_LABEL, TARGET_LABEL, cat_code
-from .data_consts import class_to_subclass as hierarchy
+from .data_consts import class_to_subclass as full_class_hierarchy
 
 
 def relabel(class_index, class_vectors):
@@ -26,10 +26,12 @@ def relabel(class_index, class_vectors):
     return class_vectors
 
 
-def convert_class_vectors(df, class_labels):
+def convert_class_vectors(df, class_labels, level=False):
     """
     Convert labels of TARGET_LABEL column in passed-in DataFrame to class vectors
+    :param level: Boolean to assign labels based on level. If sample does not have a class on this level, it is assigned the parent undefined class. 
     :return class_vectors: DataFrame with same number of rows as df, with only TARGET_LABEL column. Each row has a single vector in that columns, with the same length as class_labels, and where values are 0 or 1. 1 if it is that class, 0 otherwise.
+
     """
     # Convert labels to class vectors, with 1 meaning it has that class, and 0
     # does not
@@ -37,17 +39,26 @@ def convert_class_vectors(df, class_labels):
     for df_index, row in df.iterrows():
         class_vector = [0] * len(class_labels)
         cur_classes = convert_str_to_list(row[TARGET_LABEL])
+        has_level_class = False
         for class_index, c in enumerate(class_labels):
             if c in cur_classes:
                 class_vector[class_index] = 1
+                has_level_class = True
+        if level and has_level_class == False:
+            # Assign parent's undefined class .
+            for class_index, c in enumerate(class_labels):
+                if 'Undefined' in c and c[10:] in cur_classes:
+                    class_vector[class_index] = 1
+
         rows_list.append([class_vector])
     class_vectors = pd.DataFrame(rows_list, columns=[TARGET_LABEL])
     return class_vectors
 
 
-def init_tree():
+def init_tree(class_hierarchy=None):
     print("\n\nConstructing Class Hierarchy Tree...")
     hmc_hierarchy = hmc.ClassHierarchy("TTypes")
+    hierarchy = full_class_hierarchy if class_hierarchy is None else class_hierarchy
     for parent in hierarchy.keys():
         # hierarchy maps parents to children, so get all children
         list_children = hierarchy[parent]
@@ -62,7 +73,7 @@ def init_tree():
 
 def assign_levels(tree, mapping, node, level):
     """
-    Assigns level to each node based on level in hierarchical tree. The lower it is in the tree, the larger the level. The level at the root is 1.
+    Assigns level to each node based on level in hierarchical tree. The lower it is in the tree, the larger the level. The level at the root is 1. Returns mapping of class name to level.
     """
     mapping[str(node)] = level
     for child in tree._get_children(node):
