@@ -50,23 +50,20 @@ class MCKDETrain:
 
     def train(self):
         """
-        Train K-trees, where K is the total number of classes in the data (at all levels of the hierarchy)
+        Create KDE for each class
         """
         # Convert class labels to class vectors
-        y_train_vectors = convert_class_vectors(self.y_train, self.class_labels)
+        y_train_vectors = convert_class_vectors(self.y_train, self.class_labels, True)
 
         # Create classifier for each class, present or not in sample
+        valid_classes = []
         for class_index, class_name in enumerate(self.class_labels):
-                # Labels for this tree
             y_train_labels = relabel(class_index, y_train_vectors)
             positive_count = y_train_labels.loc[
                 y_train_labels[TARGET_LABEL] == 1].shape[0]
-            if positive_count < 5:
-                # Do not need to make tree for this class when there are less than X
-                # positive samples
-                self.models[class_name] = None
+            if positive_count < 1:
                 continue
-
+            valid_classes.append(class_name)
             y_pos = y_train_labels.loc[y_train_labels[TARGET_LABEL] == 1]
             y_neg = y_train_labels.loc[y_train_labels[TARGET_LABEL] == 0]
             X_pos = self.X_train.loc[y_train_labels[TARGET_LABEL] == 1]
@@ -77,4 +74,6 @@ class MCKDETrain:
             # print(clf.get_params())
             self.models[class_name] = [clf_pos, clf_neg]
 
+        # Update class labels to only have classes for which we built models
+        self.class_labels = valid_classes
         return self.models

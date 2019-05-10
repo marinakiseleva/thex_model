@@ -3,6 +3,8 @@ from models.mc_kde_model.mc_kde_train import MCKDETrain
 from models.mc_kde_model.mc_kde_test import MCKDETest
 
 from thex_data.data_consts import cat_code
+from thex_data.data_consts import class_to_subclass as hierarchy
+from thex_data.data_clean import *
 
 
 class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
@@ -21,12 +23,32 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
         self.user_data_filters = data_args
         self.models = {}
 
+        for parent in hierarchy.keys():
+            hierarchy[parent].append("Undefined_" + parent)
+        self.tree = init_tree(hierarchy)
+        self.class_levels = assign_levels(self.tree, {}, self.tree.root, 1)
+
+        self.test_level = 3
+
+    def set_class_labels(self, y):
+        """
+        Overwrites set_class_labels. Gets all class labels on self.test_level, and undefined on this level
+        """
+        self.class_labels = []
+        for class_name in self.get_mc_unique_classes(y):
+            class_level = self.class_levels[class_name]
+            if class_level == self.test_level:
+                self.class_labels.append(class_name)
+            elif class_level == self.test_level - 1:
+                self.class_labels.append("Undefined_" + class_name)
+        print(self.class_labels)
+
     def train_model(self):
         """
         Train K-trees, where K is the total number of classes in the data (at all levels of the hierarchy)
         """
         if self.class_labels is None:
-            self.class_labels = self.get_mc_unique_classes(self.y_train)
+            self.set_class_labels(self.y_train)
         return self.train()
 
     def test_model(self):

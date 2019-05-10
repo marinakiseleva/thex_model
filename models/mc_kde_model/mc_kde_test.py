@@ -31,20 +31,13 @@ class MCKDETest:
         :return m_predictions: Numpy Matrix with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels
         """
         # Initialize all probabilites
-
         class_densities = {}
+        norm = np.zeros(self.X_test.shape[0])
         for class_index, class_name in enumerate(self.class_labels):
             kde = self.models[class_name][0]  # Positive Model
             class_densities[class_name] = np.exp(
                 kde.score_samples(self.X_test.values))
-
-        # Compute normalization, the denominator
-        norm_classes = self.get_norm_classes()
-        norm = np.zeros(self.X_test.shape[0])
-        for class_name in class_densities.keys():
-            # Sum over all normalizations
-            if class_name in norm_classes:
-                norm = np.add(norm, class_densities[class_name])
+            norm = np.add(norm, class_densities[class_name])
 
         # Divide each probability by norm
         probabilities = np.zeros((self.X_test.shape[0], 0))
@@ -55,9 +48,3 @@ class MCKDETest:
             probabilities = np.append(probabilities, probs, axis=1)
 
         return probabilities
-
-    def get_norm_classes(self):
-        """
-        Get classes to normalize over (the sum of these class probabilities will be in the denominator of Bayes Theorem). By default, it will go over all classes. 
-        """
-        return self.class_labels

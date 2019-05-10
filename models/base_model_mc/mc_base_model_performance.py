@@ -132,7 +132,7 @@ class MCBaseModelPerformance:
         :return: Dictionary of class names to their SUMMED ranged metrics, 
          {class_name: [percent_ranges, sum(AP_ranges), sum(TOTAL_ranges)] , ...}
         """
-
+        percent_ranges = [0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]
         output_metrics = {}
         for class_name in metrics.keys():
             list_metrics = metrics[class_name]
@@ -140,11 +140,11 @@ class MCBaseModelPerformance:
             TOTAL_range_sums = [0] * 10
             for metric_response in list_metrics:
                 # metric_response =[percent_ranges, AP_ranges, TOTAL_ranges]
-                percent_ranges = metric_response[0]
                 AP_range = metric_response[1]
                 AP_range_sums = [sum(x) for x in zip(AP_range_sums, AP_range)]
                 TOTAL_range = metric_response[2]
                 TOTAL_range_sums = [sum(x) for x in zip(TOTAL_range_sums, TOTAL_range)]
+
             output_metrics[class_name] = [
                 percent_ranges, AP_range_sums, TOTAL_range_sums]
 

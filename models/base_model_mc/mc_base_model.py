@@ -54,7 +54,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         Visualize distribution of data used to train and test
         """
         if self.class_labels is None:
-            self.class_labels = self.get_mc_unique_classes(y)
+            self.set_class_labels(y)
 
         if y is None:
             y = pd.concat([self.y_train, self.y_test], axis=0)
@@ -120,6 +120,9 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                     X_accs, class_name))
         return roc_plots, class_metrics
 
+    def set_class_labels(self, y):
+        self.class_labels = self.get_mc_unique_classes(y)
+
     def run_model_cv(self, data_columns, data_filters):
         """
         Split data into k-folds and perform k-fold cross validation
@@ -128,7 +131,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         X, y = get_source_target_data(data_columns, **data_filters)
         # Initialize self.class_labels if None
         if self.class_labels is None:
-            self.class_labels = self.get_mc_unique_classes(y)
+            self.set_class_labels(y)
         self.visualize_data(data_filters, y, X)
 
         roc_plots = {}
@@ -144,7 +147,10 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             roc_plots, class_metrics = self.run_cross_validation(
                 k, X, y, roc_plots, class_metrics, data_filters)
 
-        for class_name in roc_plots.keys():
+        for class_name in self.class_labels:
+            if class_name not in roc_plots.keys():
+                print("Not plotting " + class_name)
+                continue
             fig, ax, tprs, aucs = roc_plots[class_name]
 
             #   Baseline
