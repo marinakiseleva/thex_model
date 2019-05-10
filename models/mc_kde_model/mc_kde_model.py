@@ -9,7 +9,7 @@ from thex_data.data_clean import *
 
 class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
     """
-    Model that consists of K-trees, where is K is total number of all unique class labels (at all levels of the hierarchy). Each sample is given a probability of each class, using each tree separately. Thus, an item could have 90% probability of I and 99% of Ia. 
+    Multiclass Kernel Density Estimate (KDE) model. Creates KDE for each class, and computes probability by normalizing over class at same level in class hierarchy. 
     """
 
     def __init__(self, cols=None, col_matches=None, **data_args):
@@ -17,7 +17,7 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
         # do not use default label transformations; instead we will do it manually
         # in this class
         data_args['transform_labels'] = False
-        # model will predict multiple classes per sample
+
         self.cols = cols
         self.col_matches = col_matches
         self.user_data_filters = data_args
@@ -28,11 +28,9 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
         self.tree = init_tree(hierarchy)
         self.class_levels = assign_levels(self.tree, {}, self.tree.root, 1)
 
-        self.test_level = 3
-
     def set_class_labels(self, y):
         """
-        Overwrites set_class_labels. Gets all class labels on self.test_level, and undefined on this level
+        Overwrites set_class_labels. Gets all class labels on self.test_level, including 'Undefined' classes of parent level. 
         """
         self.class_labels = []
         for class_name in self.get_mc_unique_classes(y):
@@ -41,7 +39,6 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
                 self.class_labels.append(class_name)
             elif class_level == self.test_level - 1:
                 self.class_labels.append("Undefined_" + class_name)
-        print(self.class_labels)
 
     def train_model(self):
         """
@@ -53,7 +50,7 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
 
     def test_model(self):
         """
-        Get class prediction for each sample, from each Tree. Reconstruct class vectors for samples, with 1 if class was predicted and 0 otherwise.
+        Get class prediction for each sample.
         :return m_predictions: Numpy Matrix with each row corresponding to sample, and each column the prediction for that class
         """
         return self.test()

@@ -52,7 +52,8 @@ class MCBaseModelVisualization:
         # class_probabilities has row for each sample, and each column is
         # probability of class, in order of self.class_labels
         class_probabilities = self.get_all_class_probabilities()
-        y_test_vectors = convert_class_vectors(self.y_test, self.class_labels)
+        y_test_vectors = convert_class_vectors(
+            self.y_test, self.class_labels, self.test_level)
         for class_index, class_name in enumerate(self.class_labels):
             f, ax, tprs, aucs = roc_plots[class_name]
             # column is the probability of each sample for this class_name
@@ -85,7 +86,8 @@ class MCBaseModelVisualization:
         class_probabilities = self.get_all_class_probabilities()
         # y_test_vectors has TARGET_LABEL column, with each class vector of length
         # self.class_labels
-        y_test_vectors = convert_class_vectors(self.y_test, self.class_labels)
+        y_test_vectors = convert_class_vectors(
+            self.y_test, self.class_labels, self.test_level)
         for class_index, class_name in enumerate(self.class_labels):
             # If there is a valid model for this class
             column = class_probabilities[:, class_index]

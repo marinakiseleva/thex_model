@@ -21,6 +21,11 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
     """
 
     def run_model(self):
+        """
+        Set custom attributes for Multiclass classifiers: test_level (level of class hierarchy over which to get probabilities, for MCKDEModel), and class_labels (specific classes to run model on)
+        """
+        self.test_level = self.user_data_filters[
+            'test_level'] if 'test_level' in self.user_data_filters.keys() else None
         self.class_labels = self.user_data_filters[
             'class_labels'] if 'class_labels' in self.user_data_filters.keys() else None
         super(MCBaseModel, self).run_model()
@@ -68,7 +73,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             keep = False
             for c in list_classes:
                 # Keep if at least one value in list is acceptable
-                if c in self.class_labels:
+                if c in self.class_labels or "Undefined_" + c in self.class_labels:
                     keep = True
             if keep:
                 keep_rows.append({TARGET_LABEL: row[TARGET_LABEL]})
@@ -148,11 +153,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                 k, X, y, roc_plots, class_metrics, data_filters)
 
         for class_name in self.class_labels:
-            if class_name not in roc_plots.keys():
-                print("Not plotting " + class_name)
-                continue
             fig, ax, tprs, aucs = roc_plots[class_name]
-
             #   Baseline
             ax.plot([0, 1], [0, 1], linestyle='--', lw=1.5, color='r',
                     label='Baseline', alpha=.8)

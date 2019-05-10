@@ -9,7 +9,7 @@ from thex_data.data_clean import convert_class_vectors, relabel
 
 class MCKDETrain:
     """
-    Mixin for K-Trees model, training functionality
+    Training Mixin for Multiclass Kernel Density Estimate model. 
     """
 
     def get_sample_weights(self, labeled_samples):
@@ -53,8 +53,8 @@ class MCKDETrain:
         Create KDE for each class
         """
         # Convert class labels to class vectors
-        y_train_vectors = convert_class_vectors(self.y_train, self.class_labels, True)
-
+        y_train_vectors = convert_class_vectors(
+            self.y_train, self.class_labels, self.test_level)
         # Create classifier for each class, present or not in sample
         valid_classes = []
         for class_index, class_name in enumerate(self.class_labels):
@@ -62,16 +62,15 @@ class MCKDETrain:
             positive_count = y_train_labels.loc[
                 y_train_labels[TARGET_LABEL] == 1].shape[0]
             if positive_count < 1:
+                print("No model for " + class_name)
                 continue
             valid_classes.append(class_name)
             y_pos = y_train_labels.loc[y_train_labels[TARGET_LABEL] == 1]
             y_neg = y_train_labels.loc[y_train_labels[TARGET_LABEL] == 0]
             X_pos = self.X_train.loc[y_train_labels[TARGET_LABEL] == 1]
             X_neg = self.X_train.loc[y_train_labels[TARGET_LABEL] == 0]
-            # print("Class " + class_name)
             clf_pos = self.get_best_model(X_pos, y_pos)
             clf_neg = self.get_best_model(X_neg, y_neg)
-            # print(clf.get_params())
             self.models[class_name] = [clf_pos, clf_neg]
 
         # Update class labels to only have classes for which we built models

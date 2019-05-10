@@ -26,10 +26,11 @@ def relabel(class_index, class_vectors):
     return class_vectors
 
 
-def convert_class_vectors(df, class_labels, level=False):
+def convert_class_vectors(df, class_labels, level=None):
     """
-    Convert labels of TARGET_LABEL column in passed-in DataFrame to class vectors
-    :param level: Boolean to assign labels based on level. If sample does not have a class on this level, it is assigned the parent undefined class. 
+    Convert labels of TARGET_LABEL column in passed-in DataFrame to class vectors. If level is passed, class is assigned to the parent's Undefined group if it does not have a subclass. For example Ia becomes Undefined_Ia if the sample is not a subtype of Ia. 
+    :param class_labels: Class names to consider. 
+    :param level: self.test_level; If sample does not have a class on this level, it is assigned the parent undefined class. 
     :return class_vectors: DataFrame with same number of rows as df, with only TARGET_LABEL column. Each row has a single vector in that columns, with the same length as class_labels, and where values are 0 or 1. 1 if it is that class, 0 otherwise.
 
     """
@@ -44,7 +45,7 @@ def convert_class_vectors(df, class_labels, level=False):
             if c in cur_classes:
                 class_vector[class_index] = 1
                 has_level_class = True
-        if level and has_level_class == False:
+        if level is not None and has_level_class == False:
             # Assign parent's undefined class .
             for class_index, c in enumerate(class_labels):
                 if 'Undefined' in c and c[10:] in cur_classes:

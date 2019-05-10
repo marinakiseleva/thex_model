@@ -26,13 +26,12 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
         :param cols: Names of columns to filter on
         :param col_matches: String by which columns will be selected. For example: AllWISE will use all AllWISE columns.
         :param folds: Number of folds if using k-fold Cross Validation
-        :param user_data_filters: List of data filters user passed in. User options over-ride any default.
+        :param user_data_filters: Map of data filters user passed in. User options over-ride any default.
         """
 
         # create output directories
         if not os.path.exists(ROOT_DIR + "/output"):
             os.mkdir(ROOT_DIR + "/output")
-
 
         cols = self.cols
         col_matches = self.col_matches
@@ -51,7 +50,6 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
                         'incl_redshift': False,
                         'min_class_size': 6,
                         'pca': None  # Number of principal components
-
                         }
 
         # Update filters with any passed-in filters
