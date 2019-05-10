@@ -8,7 +8,7 @@ class MCKDETest:
 
     def test(self):
         """
-        Get class prediction for each sample, from each Tree. Reconstruct class vectors for samples, with 1 if class was predicted and 0 otherwise.
+        Get class prediction for each sample.
         :return m_predictions: Numpy Matrix with each row corresponding to sample, and each column the prediction for that class
         """
         num_samples = self.X_test.shape[0]
@@ -27,16 +27,37 @@ class MCKDETest:
 
     def test_probabilities(self):
         """
-        Get class probability for each sample, from each Tree. Reconstruct class vectors for samples, with 1 if class was predicted and 0 otherwise.
-        :return m_predictions: Numpy Matrix with each row corresponding to sample, and each column the probability of that class
+        Get class probability for each sample.
+        :return m_predictions: Numpy Matrix with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels
         """
-        num_samples = self.X_test.shape[0]
-        m_predictions = np.zeros((num_samples, 0))
+        # Initialize all probabilites
+
+        class_densities = {}
         for class_index, class_name in enumerate(self.class_labels):
             kde = self.models[class_name][0]  # Positive Model
-            pos_probabilities = np.exp(kde.score_samples(self.X_test.values))
-            probs = np.array([pos_probabilities]).T
-            # Add probabilities of positive as column to predictions across classes
-            m_predictions = np.append(m_predictions, probs, axis=1)
+            class_densities[class_name] = np.exp(
+                kde.score_samples(self.X_test.values))
 
-        return m_predictions
+        # Compute normalization, the denominator
+        norm_classes = self.get_norm_classes()
+        norm = np.zeros(self.X_test.shape[0])
+        for class_name in class_densities.keys():
+            # Sum over all normalizations
+            if class_name in norm_classes:
+                norm = np.add(norm, class_densities[class_name])
+
+        # Divide each probability by norm
+        probabilities = np.zeros((self.X_test.shape[0], 0))
+        for class_name in class_densities.keys():
+            p = np.divide(class_densities[class_name], norm)
+            probs = np.array([p]).T
+            # Add probabilities as column
+            probabilities = np.append(probabilities, probs, axis=1)
+
+        return probabilities
+
+    def get_norm_classes(self):
+        """
+        Get classes to normalize over (the sum of these class probabilities will be in the denominator of Bayes Theorem). By default, it will go over all classes. 
+        """
+        return self.class_labels

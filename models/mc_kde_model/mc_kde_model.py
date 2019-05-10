@@ -39,9 +39,6 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
     def get_all_class_probabilities(self):
         return self.test_probabilities()
 
-    # def evaluate_model(self, test_on_train):
-    #     super(MCKDEModel, self).evaluate_model(test_on_train)
-
     def get_class_probabilities(self, x):
         """
         Calculates probability of each transient class for the single test data point (x). 
