@@ -14,7 +14,7 @@ class MCKDETest:
         class_densities = {}
         norm = np.zeros(self.X_test.shape[0])
         for class_index, class_name in enumerate(self.class_labels):
-            kde = self.models[class_name][0]  # Positive Model
+            kde = self.models[class_name]  # Model
             class_densities[class_name] = np.exp(
                 kde.score_samples(self.X_test.values))
             norm = np.add(norm, class_densities[class_name])
@@ -39,7 +39,7 @@ class MCKDETest:
         class_densities = {}
         norm = np.zeros(self.X_test.shape[0])
         for class_index, class_name in enumerate(self.class_labels):
-            kde = self.models[class_name][0]  # Positive Model
+            kde = self.models[class_name]  # Model
             class_densities[class_name] = np.exp(
                 kde.score_samples(self.X_test.values))
             norm = np.add(norm, class_densities[class_name])

@@ -60,7 +60,6 @@ class MCBaseModelVisualization:
             column = class_probabilities[:, class_index]
             y_test_labels = np.transpose(relabel(class_index, y_test_vectors)[
                                          [TARGET_LABEL]].values)[0]
-
             fpr, tpr, thresholds = roc_curve(
                 y_true=y_test_labels, y_score=column, drop_intermediate=False)
 

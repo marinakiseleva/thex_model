@@ -2,6 +2,8 @@ from models.base_model_mc.mc_base_model import MCBaseModel
 from models.mc_kde_model.mc_kde_train import MCKDETrain
 from models.mc_kde_model.mc_kde_test import MCKDETest
 
+import numpy as np
+
 
 class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
     """
@@ -25,6 +27,8 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
         """
         if self.class_labels is None:
             self.set_class_labels(self.y_train)
+        print("Classes:\n------------------\n")
+        print(self.class_labels)
         return self.train()
 
     def test_model(self):
@@ -43,16 +47,10 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
         :param x: Single row of features 
         :return: map from class_code to probabilities
         """
-        probabilities = {}
-        num_classes = len(self.models)
+        densities = {}
         for class_index, class_name in enumerate(self.class_labels):
-            kde_pos = self.models[class_name][0]
-            kde_neg = self.models[class_name][1]
-            pos_prob_density = kde_pos.score_samples([x.values])
-            neg_prob_density = kde_neg.score_samples([x.values])
-            class_probability = pos_prob_density / \
-                (pos_prob_density + neg_prob_density)
-
-            probabilities[class_name] = class_probability
-
+            model = self.models[class_name]
+            densities[class_name] = np.exp(model.score_samples([x.values]))
+        sum_densities = sum(densities.values())
+        probabilities = {k: v / sum_densities for k, v in densities.items()}
         return probabilities

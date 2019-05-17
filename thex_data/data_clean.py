@@ -8,7 +8,7 @@ import pandas as pd
 
 from hmc import hmc
 
-from .data_consts import groupings, ORIG_TARGET_LABEL, TARGET_LABEL, cat_code
+from .data_consts import groupings, ORIG_TARGET_LABEL, TARGET_LABEL, cat_code, UNDEF_CLASS
 from .data_consts import class_to_subclass as full_class_hierarchy
 
 
@@ -48,7 +48,7 @@ def convert_class_vectors(df, class_labels, level=None):
         if level is not None and has_level_class == False:
             # Assign parent's undefined class .
             for class_index, c in enumerate(class_labels):
-                if 'Undefined' in c and c[10:] in cur_classes:
+                if UNDEF_CLASS in c and c[len(UNDEF_CLASS):] in cur_classes:
                     class_vector[class_index] = 1
 
         rows_list.append([class_vector])

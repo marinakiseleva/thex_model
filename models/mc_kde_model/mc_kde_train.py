@@ -61,17 +61,13 @@ class MCKDETrain:
             y_train_labels = relabel(class_index, y_train_vectors)
             positive_count = y_train_labels.loc[
                 y_train_labels[TARGET_LABEL] == 1].shape[0]
-            if positive_count < 1:
+            if positive_count < 3:
                 print("No model for " + class_name)
                 continue
             valid_classes.append(class_name)
             y_pos = y_train_labels.loc[y_train_labels[TARGET_LABEL] == 1]
-            y_neg = y_train_labels.loc[y_train_labels[TARGET_LABEL] == 0]
             X_pos = self.X_train.loc[y_train_labels[TARGET_LABEL] == 1]
-            X_neg = self.X_train.loc[y_train_labels[TARGET_LABEL] == 0]
-            clf_pos = self.get_best_model(X_pos, y_pos)
-            clf_neg = self.get_best_model(X_neg, y_neg)
-            self.models[class_name] = [clf_pos, clf_neg]
+            self.models[class_name] = self.get_best_model(X_pos, y_pos)
 
         # Update class labels to only have classes for which we built models
         self.class_labels = valid_classes

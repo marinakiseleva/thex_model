@@ -2,7 +2,7 @@ import pandas as pd
 from astropy.table import Table
 import numpy as np
 
-from thex_data.data_consts import DATA_PATH, drop_cols
+from thex_data.data_consts import DATA_PATH, drop_cols, ORIG_TARGET_LABEL
 
 
 """
@@ -33,29 +33,23 @@ def collect_cols(cols, col_matches):
         else:
             col_list = all_cols
             col_list.remove('redshift')
+            col_list.remove(ORIG_TARGET_LABEL)
 
     # Drop all non-numeric columns
-    column_list_numeric = []
+    column_list_numeric = set()
     for c in col_list:
         if not any(col in c for col in drop_cols):
-            column_list_numeric.append(c)  # Keep only numeric columns
+            column_list_numeric.add(c)  # Keep only numeric columns
     if 'redshift' in column_list_numeric:
         raise ValueError(
-            "Do not include redshift in list of columns -- instead at it in through the flag.")
-    return column_list_numeric
+            "Do not include redshift in list of columns -- instead set it through the flag.")
+    return list(column_list_numeric)
 
 
 def collect_data():
     """ 
     Sets up Data Object using data 
     """
-    if '.npy' in DATA_PATH:
-        # Read in npy file
-        # np.load(DATA_PATH)
-        data = np.load(DATA_PATH)
-        print(type(data))
-        print(data.shape)
-        print(data)
     dat = Table.read(DATA_PATH, format='fits')
     df_bytes = dat.to_pandas()  # Convert to pandas dataframe
     df = pd.DataFrame()     # Init empty dataframe for converted types

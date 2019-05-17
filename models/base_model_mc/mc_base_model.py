@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.metrics import auc
 
 from thex_data.data_clean import *
-from thex_data.data_consts import ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI
+from thex_data.data_consts import ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI, UNDEF_CLASS
 from thex_data.data_prep import get_source_target_data
 from thex_data.data_plot import *
 from thex_data.data_consts import class_to_subclass as hierarchy
@@ -27,7 +27,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         Set custom attributes for Multiclass classifiers: test_level (level of class hierarchy over which to get probabilities, for MCKDEModel), and class_labels (specific classes to run model on)
         """
         for parent in hierarchy.keys():
-            hierarchy[parent].append("Undefined_" + parent)
+            hierarchy[parent].append(UNDEF_CLASS + parent)
         self.tree = init_tree(hierarchy)
         self.class_levels = assign_levels(self.tree, {}, self.tree.root, 1)
 
@@ -80,7 +80,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             keep = False
             for c in list_classes:
                 # Keep if at least one value in list is acceptable
-                if c in self.class_labels or "Undefined_" + c in self.class_labels:
+                if c in self.class_labels or UNDEF_CLASS + c in self.class_labels:
                     keep = True
             if keep:
                 keep_rows.append({TARGET_LABEL: row[TARGET_LABEL]})
@@ -142,7 +142,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                 if class_level == self.test_level:
                     self.class_labels.append(class_name)
                 elif class_level == self.test_level - 1:
-                    self.class_labels.append("Undefined_" + class_name)
+                    self.class_labels.append(UNDEF_CLASS + class_name)
         else:
             self.class_labels = self.get_mc_unique_classes(y)
 
@@ -191,6 +191,8 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
             ax.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
                             label=r'$\sigma$')
+            if UNDEF_CLASS in class_name:
+                class_name = class_name[len(UNDEF_CLASS):]
             title = class_name + " ROC Curve " + "over " + str(k) + "-folds"
             ax.set_title(title)
             ax.set_xlabel('False Positive Rate')

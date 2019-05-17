@@ -14,8 +14,9 @@ DPI = 600
 # LOCAL_DATA_PATH to relative path of THEx FITS file, relative to root of
 # package: thex_model
 
-# GALEX/WISE/PANSTARRS Version 1
-LOCAL_DATA_PATH = '/../../data/THEx-training-set.v0_0_1.fits'
+# GALEX/WISE/PANSTARRS Versions 1, 2
+# LOCAL_DATA_PATH = '/../../data/THEx-training-set.v0_0_1.fits'
+LOCAL_DATA_PATH = '/../../data/THEx-training-set-v0_0_2.fits'
 
 # GALEX/WISE/PANSTARRS Version 2
 # LOCAL_DATA_PATH = '/../../data/THEx-training-set-v0_0_2.npy'
@@ -37,6 +38,7 @@ ORIG_TARGET_LABEL = 'claimedtype'
 TARGET_LABEL = 'transient_type'
 UNKNOWN_LABEL = 'Unknown'
 PRED_LABEL = 'predicted_class'
+UNDEF_CLASS = 'Undefined_'
 
 
 """
@@ -551,7 +553,7 @@ drop_cols
 Columns with non-numeric values that are not used in analysis
 """
 drop_cols = ['event', 'ra', 'dec', 'ra_deg', 'dec_deg', 'radec_err', 'host', 'host_ra', 'host_dec', 'ebv', 'host_ra_deg', 'host_dec_deg', 'host_dist', 'host_search_radius', 'is_confirmed_host', 'by_primary_cand',
-             'by_transient', 'AllWISE_IsVar', 'HyperLEDA_objtype', 'HyperLEDA_type', 'HyperLEDA_bar', 'HyperLEDA_ring', 'HyperLEDA_multiple', 'HyperLEDA_compactness', 'HyperLEDA_agnclass', "Err",  "_e_",  "_ERR"]
+             'by_transient', 'AllWISE_IsVar', 'HyperLEDA_objtype', 'HyperLEDA_type', 'HyperLEDA_bar', 'HyperLEDA_ring', 'HyperLEDA_multiple', 'HyperLEDA_compactness', 'HyperLEDA_agnclass', "Err",  "_e_",  "_ERR", "_ecr"]
 
 """
 mag_cols
