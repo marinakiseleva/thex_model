@@ -50,7 +50,7 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
         densities = {}
         for class_index, class_name in enumerate(self.class_labels):
             model = self.models[class_name]
-            densities[class_name] = np.exp(model.score_samples([x.values]))
+            densities[class_name] = np.exp(model.score_samples([x.values]))[0]
         sum_densities = sum(densities.values())
         probabilities = {k: v / sum_densities for k, v in densities.items()}
         return probabilities
