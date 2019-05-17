@@ -17,7 +17,7 @@ python -m unittest
 """
 
 
-class TestBaseModelLogic(unittest.TestCase):
+class TestKDEModelLogic(unittest.TestCase):
 
     def setUp(self):
         self.test_kdemodel = KDEModel()  # Test instance
