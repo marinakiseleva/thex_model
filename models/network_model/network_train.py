@@ -28,7 +28,7 @@ class NetworkTrain:
         Create series of SubNetworks connecting layers of class hierarchy
         """
         # Convert class labels to class vectors
-        y_train_vectors = convert_class_vectors(
+        y = convert_class_vectors(
             self.y_train, self.class_labels, self.test_level)
 
         classes = self.get_classes_by_level(self.class_labels)
@@ -36,6 +36,6 @@ class NetworkTrain:
             cur_level_classes = classes[level]
 
             net = SubNetwork(level, cur_level_classes, self.X_train,
-                             self.y_train, self.class_labels)
+                             y, self.class_labels)
 
         return self.models
