@@ -10,11 +10,9 @@ class CLUSHMCENS(MCBaseModel, CLUSHMCENSTrain, CLUSHMCENSTest):
     Hierarchical Multi-Label Classifier based on predictive clustering tree (PCT) and using bagging. Implementation of CLUS-HMC-ENS outlined in Kocev, Dzeroski 2010. Splits using reduction in class-weighted variance.
     """
 
-    def __init__(self, cols=None, col_matches=None, **data_args):
+    def __init__(self, **data_args):
         self.name = "CLUS-HMC-ENS"
         data_args['transform_labels'] = False
-        self.cols = cols
-        self.col_matches = col_matches
         self.user_data_filters = data_args
 
     def train_model(self):

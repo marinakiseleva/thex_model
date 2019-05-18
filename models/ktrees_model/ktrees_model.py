@@ -10,14 +10,11 @@ class KTreesModel(MCBaseModel, KTreesTrain, KTreesTest):
     Model that consists of K-trees, where is K is total number of all unique class labels (at all levels of the hierarchy). Each sample is given a probability of each class, using each tree separately. Thus, an item could have 90% probability of I and 99% of Ia.
     """
 
-    def __init__(self, cols=None, col_matches=None, **data_args):
+    def __init__(self, **data_args):
         self.name = "K-Trees Model"
         # do not use default label transformations; instead we will do it manually
-        # in this class
+        # in this class; model will predict multiple classes per sample
         data_args['transform_labels'] = False
-        # model will predict multiple classes per sample
-        self.cols = cols
-        self.col_matches = col_matches
         self.user_data_filters = data_args
         self.models = {}
 

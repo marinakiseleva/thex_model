@@ -83,12 +83,14 @@ class KTreesTrain:
             y_train_labels = relabel(class_index, y_train_vectors)
             positive_count = y_train_labels.loc[
                 y_train_labels[TARGET_LABEL] == 1].shape[0]
-            if positive_count < 1:
+            if positive_count < 3:
                 print("No model for " + class_name)
                 continue
-            valid_classes.append(class_name)
+
+            print("\nClass: " + class_name)
             clf = self.get_best_model(self.X_train, y_train_labels)
             self.models[class_name] = clf
+            valid_classes.append(class_name)
 
         # Update class labels to only have classes for which we built models
         self.class_labels = valid_classes

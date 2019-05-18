@@ -10,14 +10,11 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
     Multiclass Kernel Density Estimate (KDE) model. Creates KDE for each class, and computes probability by normalizing over class at same level in class hierarchy. 
     """
 
-    def __init__(self, cols=None, col_matches=None, **data_args):
+    def __init__(self, **data_args):
         self.name = "Multiclass KDE Model"
         # do not use default label transformations; instead we will do it manually
         # in this class
         data_args['transform_labels'] = False
-
-        self.cols = cols
-        self.col_matches = col_matches
         self.user_data_filters = data_args
         self.models = {}
 

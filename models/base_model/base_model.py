@@ -22,25 +22,20 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
 
     def run_model(self):
         """
-        Collects data based on column parameters, trains, and tests model. Either cols or col_matches need to be passed in, otherwise all numeric columns are used.
-        :param cols: Names of columns to filter on
-        :param col_matches: String by which columns will be selected. For example: AllWISE will use all AllWISE columns.
-        :param folds: Number of folds if using k-fold Cross Validation
-        :param user_data_filters: Map of data filters user passed in. User options over-ride any default.
+        Collects data based on column parameters, trains, and tests model. 
         """
 
         # create output directories
         if not os.path.exists(ROOT_DIR + "/output"):
             os.mkdir(ROOT_DIR + "/output")
 
-        cols = self.cols
-        col_matches = self.col_matches
-        user_data_filters = self.user_data_filters
-
         # Set defaults on filters
-        data_filters = {'num_runs': 1,
+        data_filters = {'cols': None,  # Names of columns to filter on; default is all numeric cols
+                        'col_matches': None,  # String by which columns will be selected. For example: AllWISE
+                        # will use all AllWISE columns.
+                        'num_runs': 1,
                         'test_on_train': False,
-                        'folds': None,
+                        'folds': None,  # Number of folds if using k-fold Cross Validation
                         'data_split': 0.3,  # For single run
                         'top_classes': None,
                         'one_all': None,
@@ -52,19 +47,19 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
                         'pca': None  # Number of principal components
                         }
 
-        # Update filters with any passed-in filters
-        for data_filter in user_data_filters.keys():
-            data_filters[data_filter] = user_data_filters[data_filter]
+        # Update filters with any passed-in filters (from self.user_data_filters)
+        for data_filter in self.user_data_filters.keys():
+            data_filters[data_filter] = self.user_data_filters[data_filter]
         print_filters(data_filters)
 
-        col_list = collect_cols(cols, col_matches)
+        col_list = collect_cols(data_filters['cols'], data_filters['col_matches'])
         print_features_used(col_list)
+
         if data_filters['folds'] is not None:
             self.run_model_cv(col_list,  data_filters)
             return self
 
         # Collect data filtered on these parameters
-
         self.set_model_data(col_list, data_filters)
         self.visualize_data(data_filters)
         self.train_model()
