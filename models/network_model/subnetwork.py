@@ -4,13 +4,13 @@ from keras.layers import Dense
 import numpy as np
 import pandas as pd
 
-from thex_data.data_consts import TARGET_LABEL
+from thex_data.data_consts import TARGET_LABEL, class_to_subclass
 from thex_data.data_clean import convert_class_vectors
 
 
 class SubNetwork:
 
-    def __init__(self, level, classes, X, y, class_labels):
+    def __init__(self, classes, X, y, class_labels):
         """
         Neural network with first layer of length input_length, last layer of output_length, where each output node corresponds to a class in classes
         :param level: Integer corresponding to this network's class hierarchy level of data
@@ -19,13 +19,12 @@ class SubNetwork:
         :param X: Features and values for each sample, same order as y
         :param class_labels: Class names in order of the class vectors in y
         """
-        self.class_level = level
         self.input_length = len(list(X))
         self.output_length = len(classes)
-        self.level_classes = classes
+        # Use class_labels and Undefined parent class as classes
+        self.classes = classes
 
-        print("Initialzing SubNetwork at class hierarcy level " +
-              str(self.class_level) + "  for classes " + str(self.level_classes))
+        print("Initialzing SubNetwork   for classes " + str(self.classes))
         print("All class labels: " + str(class_labels))
         print("input length: " + str(self.input_length))
         print("output length: " + str(self.output_length))
@@ -60,27 +59,30 @@ class SubNetwork:
 
         sample_weights = self.get_sample_weights(X, y)
 
-        # Convert labels to one-hot encoding (which is what Keras expects)
+        # Convert numeric labels to one-hot encoding (which is what Keras expects)
         y = to_categorical(y.values)
+        print(X.values)
+        print("\n\n labels")
+        print(y)
         model.fit(X.values, y, batch_size=4, epochs=20,
                   sample_weight=sample_weights)
         return model
 
     def init_data(self, X, y, class_labels):
 
-        # Assign training data to this network, if it is on the correct level
+        # Assign training data to this network
         keep_indices = []
         labels = []
         for df_index, row in y.iterrows():
             class_vector = row[TARGET_LABEL]
             added = False
             for class_index, class_name in enumerate(class_labels):
-                if class_name in self.level_classes and class_vector[class_index] == 1:
-                    # if added == True:
-                    #     print("Sample was already assigned " + str(self.level_classes[
-                    # labels[-1]]) + " and now it also wants " + str(class_name))
+                if class_name in self.classes and class_vector[class_index] == 1:
+                    if added == True:
+                        print("Sample was already assigned " + str(self.classes[
+                            labels[-1]]) + " and now it also wants " + str(class_name))
                     added = True
-                    labels.append(self.level_classes.index(class_name))
+                    labels.append(self.classes.index(class_name))
                     keep_indices.append(df_index)
 
         # Filter X and y to have data at this level alone

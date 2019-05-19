@@ -134,7 +134,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
     def set_class_labels(self, y):
         if self.test_level is not None:
-            # Overwrites set_class_labels. Gets all class labels on self.test_level,
+            # Gets all class labels on self.test_level,
             # including 'Undefined' classes of parent level.
             self.class_labels = []
             for class_name in self.get_mc_unique_classes(y):

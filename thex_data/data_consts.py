@@ -596,7 +596,7 @@ Hierarchy of transient types, used in hierarchical multilabel classifiers
 class_to_subclass = {
     "TTypes": ["I", "CC", "SLSN", "GRB", "Kilonova", "TDE", "AGN", "Candidate", "GW", "Galaxy", "HII Region", "Impostor", "Minor Planet", "Nova", "Other", "PISN", "Star", "False", "Lensing", UNKNOWN_LABEL],
     "I": ["I Pec", "Ia", "Ib", "Ic", "Ib/c", "nIa"],
-    "I Pec": ["Ia Pec", "I-rapid", "I-faint"],
+    "I Pec": ["I-rapid", "I-faint"],  # removed Ia Pec
     "Ia": ["Ia Pec", "Ia-HV", "Ia/b", "Ia/c", "Ia-02cx"],
     "Ia Pec": ["Ia CSM", "Ia-91bg", "Ia-91T", "Ia-02cx",
                "Ia-00cx", "Ia-99aa", "Ia-09dc", "Ia-HV"],
