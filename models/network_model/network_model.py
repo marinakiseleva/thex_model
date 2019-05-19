@@ -14,7 +14,7 @@ class NetworkModel(MCBaseModel, NetworkTrain, NetworkTest):
         self.name = "Neural Network Model"
         data_args['transform_labels'] = False
         self.user_data_filters = data_args
-        self.models = {}
+        self.networks = {}
 
     def train_model(self):
         """
@@ -39,4 +39,6 @@ class NetworkModel(MCBaseModel, NetworkTrain, NetworkTest):
         :param x: Single row of features 
         :return: map from class_code to probabilities
         """
-        raise ValueError("get_class_probabilities not implemented")
+        # Start from root (of class hierarchy) network
+        print("Tree root ")
+        print(self.tree.root)

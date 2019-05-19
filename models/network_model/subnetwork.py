@@ -56,6 +56,6 @@ class SubNetwork:
 
         # Convert numeric labels to one-hot encoding (which is what Keras expects)
         y = to_categorical(y.values)
-        model.fit(X.values, y, batch_size=4, epochs=20,
+        model.fit(X.values, y, batch_size=1, epochs=2,
                   sample_weight=sample_weights)
         return model
