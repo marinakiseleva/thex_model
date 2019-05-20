@@ -42,7 +42,7 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
         """
         Calculates probability of each transient class for the single test data point (x). 
         :param x: Single row of features 
-        :return: map from class_code to probabilities
+        :return: map from class_name to probabilities
         """
         densities = {}
         for class_index, class_name in enumerate(self.class_labels):
