@@ -52,18 +52,21 @@ Do not pip install hmc. Download it from the link above and install it using set
 This module is broken up into smaller modules that each provide different utilities and are described below.
 
 ## models
-Contains the different classifiers explored/used in the project.
+Contains the different classifiers explored/used in the project. Each multiclass classifier below attempts to assign the probability of every class, for each sample.
 
 ### mc_kde_model
-Multiclass Kernel Density Estimate (KDE) model. Can be run either 'naively' (assuming feature independence and creating distinct distributions per feature per class) or non-naively, which creates a single distribution over all features. The 'mc' implies Multiclass, which functions by creating a class vector of 0s and 1s for each sample, and creating separate KDEs for each class.
+Multiclass Kernel Density Estimate (KDE) model, which creates a single distribution over all features for each transient class. The 'mc' implies Multiclass since a separate KDE is created for each class, and probabilities are determined by normalizing over the probability densities of all classes at the same level of the hierarchy. 
 <!-- ### hmc_model
 Decisioning tree using the Hierarchical Multi-label Decisioing Tree from Vens, et al. 2008. -->
 
 ### clus_hmc_ens_model
-Decisioning tree using the Hierarchical Multi-label Decisioing Tree using bagging and variance based on class vector (CLUS-HMC-ENS) from Schietgat, Vens, Struyf, et al. 2010. Uses class vectors similar to MC KDE.
+Decisioning tree using the Hierarchical Multi-label Decisioing Tree using variance based on class hierarchy (CLUS-HMC-ENS) from Schietgat, Vens, Struyf, et al. 2010. 
 
 ### ktrees_model
-Multiclass model with an ensemble of decision trees. Creates decision tree for each class, minimizing the Brier score. A probability is assigned for each class, for each sample independently.
+Multiclass model with an ensemble of decision trees. Creates decision tree for each class, minimizing the Brier score. 
+
+### network_model
+Series of Neural Networks, for each group of comparable transient classes. Starting at the root of the transient class hierarchy, the first neural network assigns probabilities to each class. We recurse on the subclasses of the class with the maximum probability, and repeat until we reach a class which has no subclasses. 
 
 ## thex_data
 Data pulling, cleansing, normalizing, preparation, and plotting.
