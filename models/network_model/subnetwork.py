@@ -22,9 +22,6 @@ class SubNetwork:
         self.classes = classes
 
         print("Initialzing SubNetwork for classes " + str(self.classes))
-        print("input length: " + str(self.input_length))
-        print("output length: " + str(self.output_length))
-
         self.network = self.init_network(X, y)
 
     def get_sample_weights(self, X, y):
@@ -56,6 +53,6 @@ class SubNetwork:
 
         # Convert numeric labels to one-hot encoding (which is what Keras expects)
         y = to_categorical(y.values)
-        model.fit(X.values, y, batch_size=1, epochs=2,
+        model.fit(X.values, y, batch_size=1, verbose=0, epochs=24,
                   sample_weight=sample_weights)
         return model

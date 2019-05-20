@@ -81,7 +81,6 @@ class NetworkTrain:
         """
         Create series of SubNetworks connecting layers of class hierarchy
         """
-        class_labels = []
         for parent_class, subclasses in class_to_subclass.items():
             class_level = self.class_levels[parent_class]
 
@@ -95,7 +94,5 @@ class NetworkTrain:
             X, y = self.get_subnet_data(self.X_train, self.y_train, subnet_classes)
 
             self.networks[parent_class] = SubNetwork(subnet_classes, X, y)
-            class_labels += subnet_classes
-        self.class_labels = class_labels
 
         return self.networks

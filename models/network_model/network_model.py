@@ -1,9 +1,9 @@
 import numpy as np
-
+import pandas as pd
 from models.base_model_mc.mc_base_model import MCBaseModel
 from models.network_model.network_train import NetworkTrain
 
-from thex_data.data_consts import cat_code
+from thex_data.data_consts import cat_code, class_to_subclass
 
 
 class NetworkModel(MCBaseModel, NetworkTrain):
@@ -16,6 +16,16 @@ class NetworkModel(MCBaseModel, NetworkTrain):
         data_args['transform_labels'] = False
         self.user_data_filters = data_args
         self.networks = {}
+
+    def set_class_labels(self, y):
+        class_labels = []
+        for parent_class, subclasses in class_to_subclass.items():
+            class_level = self.class_levels[parent_class]
+            subnet_classes = self.get_subnet_classes(
+                subclasses, y, class_level + 1)
+            if len(subnet_classes) > 1:
+                class_labels += subnet_classes
+        self.class_labels = list(set(class_labels))
 
     def train_model(self):
         """
@@ -36,27 +46,31 @@ class NetworkModel(MCBaseModel, NetworkTrain):
         Get class probability for each sample in self.X_test
         :return probabilities: Numpy Matrix with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels
         """
-        print("all class labels are")
-        print(self.class_labels)
-        # Start from root (of class hierarchy) network
-        root_subnet = self.networks[self.tree.root]
         predictions = []
         for df_index, x in self.X_test.iterrows():
-            prob_map = {c: 0 for c in self.class_labels}
             prob_map = self.get_class_probabilities(
-                np.array([x.values]), root_subnet, prob_map)
+                np.array([x.values]), "root", None)
+            probabilites = list(prob_map.values())
             predictions.append(list(prob_map.values()))
-        print("Final output")
-        print(np.array(predictions))
+
         return np.array(predictions)
 
-    def get_class_probabilities(self, x, subnet, probabilities):
+    def get_class_probabilities(self, x, subnet="root", probabilities=None):
         """
         Calculates probability of each transient class for the single test data point (x). 
         :param x: Single row of features 
         :param subnet: Current SubNetwork to run test point through. Start at root.
         :return: map from class_names to probabilities
         """
+        # Set defaults for initial run.
+        if subnet == "root":
+            # Start from root (of class hierarchy) network
+            subnet = self.networks[self.tree.root]
+        if probabilities is None:
+            probabilities = {c: 0 for c in self.class_labels}
+
+        if isinstance(x, pd.Series):
+            x = np.array([x.values])
 
         predictions = subnet.network.predict(x=x,  batch_size=1, verbose=0)
         predictions = list(predictions[0])
