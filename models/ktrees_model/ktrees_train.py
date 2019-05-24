@@ -30,25 +30,18 @@ class KTreesTrain:
     def get_best_model(self, X, y):
         """
         Use RandomizedSearchCV to compute best hyperparameters for the model, using passed in X and y
-        :return: Dictionary of tree parameters to best values {parameter: value}
+        :return: Tree with parameters corresponding to best performance, already fit to data
         """
-        # Create and fit training data to Tree
+        # Get weight of each sample by its class frequency
         labeled_samples = pd.concat([X, y], axis=1)
         sample_weights = self.get_sample_weights(labeled_samples)
 
-        criterion = ['entropy', 'gini']
-        splitter = ['best', 'random']
-        max_depth = [50]
-        min_samples_split = [2, 4, 8, 0.05]
-        min_samples_leaf = [1, 3]
-        min_weight_fraction_leaf = [0, 0.001, 0.01]
-
-        grid = {'criterion': criterion,
-                'splitter': splitter,
-                'max_depth': max_depth,
-                'min_samples_split': min_samples_split,
-                'min_samples_leaf': min_samples_leaf,
-                'min_weight_fraction_leaf': min_weight_fraction_leaf,
+        grid = {'criterion': ['entropy', 'gini'],
+                'splitter': ['best', 'random'],
+                'max_depth': [50],
+                'min_samples_split': [2, 4, 8, 0.05],
+                'min_samples_leaf': [1, 3],
+                'min_weight_fraction_leaf': [0, 0.001, 0.01],
                 'max_features': [0.3, None],
                 'class_weight': ['balanced']
                 }
@@ -87,7 +80,7 @@ class KTreesTrain:
                 print("No model for " + class_name)
                 continue
 
-            print("\nClass: " + class_name)
+            # print("\nClass: " + class_name)
             clf = self.get_best_model(self.X_train, y_train_labels)
             self.models[class_name] = clf
             valid_classes.append(class_name)
