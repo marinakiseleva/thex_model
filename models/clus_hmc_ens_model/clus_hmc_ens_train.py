@@ -34,7 +34,8 @@ class CLUSHMCENSTrain:
         class_vector
         feature_value_pairs : list of [f,v] pairs
         """
-        class_vectors = convert_class_vectors(self.y_train, self.class_labels)
+        class_vectors = convert_class_vectors(
+            self.y_train, self.class_labels, self.class_levels)
         # Add labels to training data for complete dataset
         labeled_samples = pd.concat([self.X_train, class_vectors], axis=1)
 

@@ -54,7 +54,7 @@ class MCKDETrain:
         """
         # Convert class labels to class vectors
         y_train_vectors = convert_class_vectors(
-            self.y_train, self.class_labels, self.test_level)
+            self.y_train, self.class_labels, self.class_levels, self.test_level)
         # Create classifier for each class, present or not in sample
         valid_classes = []
         for class_index, class_name in enumerate(self.class_labels):
