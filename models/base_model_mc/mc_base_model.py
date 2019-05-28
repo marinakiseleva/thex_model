@@ -191,8 +191,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
             ax.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
                             label=r'$\sigma$')
-            if UNDEF_CLASS in class_name:
-                class_name = class_name[len(UNDEF_CLASS):]
             title = class_name + " ROC Curve " + "over " + str(k) + "-folds"
             ax.set_title(title)
             ax.set_xlabel('False Positive Rate')

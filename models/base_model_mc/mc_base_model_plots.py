@@ -11,7 +11,7 @@ class MCBaseModelVisualization:
     Mixin Class for Multiclass BaseModel performance visualization
     """
 
-    def plot_mc_probability_precision(self, range_metrics, title=None):
+    def plot_mc_probability_precision(self, range_metrics):
         """
         Plots precision of class (y) vs. probability assigned to class (x)
         :param range_metrics: Map of classes to [percent_ranges, AP_range_sums, TOTAL_range_sums]
@@ -38,9 +38,7 @@ class MCBaseModelVisualization:
                 axis=ax, x_vals=perc_ranges, y_vals=perc_actual, annotations=TOTAL_ranges, bar_colors=colors)
             plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
             plt.ylabel('AP/Total', fontsize=12)
-            title = "Accuracy vs Probability" if title is None else title
-
-            self.display_and_save_plot(title + ": " + class_name, ax)
+            self.display_and_save_plot("Accuracy vs Probability: " + class_name, ax)
 
     def save_roc_curve(self, i, roc_plots):
         """
@@ -53,15 +51,15 @@ class MCBaseModelVisualization:
         # probability of class, in order of self.class_labels
         class_probabilities = self.get_all_class_probabilities()
         y_test_vectors = convert_class_vectors(
-            self.y_test, self.class_labels, self.test_level)
+            self.y_test, self.class_labels, self.class_levels, self.test_level)
         for class_index, class_name in enumerate(self.class_labels):
             f, ax, tprs, aucs = roc_plots[class_name]
-            # column is the probability of each sample for this class_name
-            column = class_probabilities[:, class_index]
-            y_test_labels = np.transpose(relabel(class_index, y_test_vectors)[
-                                         [TARGET_LABEL]].values)[0]
+            # preds: probability of each sample for this class_name
+            preds = class_probabilities[:, class_index]
+            labels = relabel(class_index, y_test_vectors)
+            actual = np.transpose(labels[[TARGET_LABEL]].values)[0]
             fpr, tpr, thresholds = roc_curve(
-                y_true=y_test_labels, y_score=column, drop_intermediate=False)
+                y_true=actual, y_score=preds, drop_intermediate=False)
 
             # Updates FPR and TPR to be on the range 0 to 1 (for plotting)
             # Python directly alters list objects within dict.

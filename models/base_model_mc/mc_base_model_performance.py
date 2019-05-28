@@ -53,7 +53,8 @@ class MCBaseModelPerformance:
         ...
         """
         X_accuracy = pd.DataFrame()
-        y_test_vectors = convert_class_vectors(self.y_test, self.class_labels)
+        y_test_vectors = convert_class_vectors(
+            self.y_test, self.class_labels, self.class_levels)
         for index, row in self.X_test.iterrows():
             probabilities = self.get_class_probabilities(row)
             target_classes = y_test_vectors.iloc[index][TARGET_LABEL]
@@ -104,7 +105,8 @@ class MCBaseModelPerformance:
         Records total number of true positives (TP), false positives (FP), and false negatives (FN) for this class across all y_test data
         :return: [TP, FP, FN]
         """
-        y_test_vectors = convert_class_vectors(self.y_test, self.class_labels)
+        y_test_vectors = convert_class_vectors(
+            self.y_test, self.class_labels, self.class_levels)
         row_count = y_test_vectors.shape[0]
         TP = 0  # True positive count
         FN = 0  # False negative count
