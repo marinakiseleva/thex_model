@@ -10,7 +10,10 @@ class NetworkTrain:
 
     def get_labels_at_depth(self, y, depth, parent_class):
         """
-        Get all unique labels in the dataset y that are at depth. If a sample has no label at this depth but it is the parent, the parent category is returned (to be used later as Undefined)
+        Get all unique labels in the dataset y that are at this depth, with this parent_class. If a sample has no label at this depth but it is the parent, the parent category is returned (to be used later as Undefined)
+        :param y: DataFrame of class vectors
+        :param depth: Tree depth of classes we are considering
+        :param parent_class: parent class of all relevant classes
         """
         unique_classes = []
         for index, row in y.iterrows():
@@ -33,7 +36,7 @@ class NetworkTrain:
         :param depth: Tree depth of classes we are considering
         """
         # Because all classes passed in have the same parent, we only need to look
-        # at the parent of this first one
+        # at the parent of this first one to add Undefined Parent class
         child_class = classes[0]
         for parent_class, subclasses in class_to_subclass.items():
             if child_class in subclasses:
@@ -87,8 +90,8 @@ class NetworkTrain:
             subnet_classes = self.get_subnet_classes(
                 subclasses, self.y_train, class_level + 1)
             if len(subnet_classes) <= 1:
-                print("Do not need network for " + parent_class +
-                      " since it has no subclasses in dataset.")
+                # print("Do not need network for " + parent_class +
+                #       " since it has no subclasses in dataset.")
                 continue
 
             X, y = self.get_subnet_data(self.X_train, self.y_train, subnet_classes)

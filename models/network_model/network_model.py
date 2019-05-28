@@ -23,8 +23,8 @@ class NetworkModel(MCBaseModel, NetworkTrain):
             class_level = self.class_levels[parent_class]
             subnet_classes = self.get_subnet_classes(
                 subclasses, y, class_level + 1)
-            if len(subnet_classes) > 1:
-                class_labels += subnet_classes
+            class_labels += subnet_classes
+
         self.class_labels = list(set(class_labels))
 
     def train_model(self):
@@ -32,7 +32,8 @@ class NetworkModel(MCBaseModel, NetworkTrain):
         Train K-trees, where K is the total number of classes in the data (at all levels of the hierarchy)
         """
         if self.class_labels is None:
-            self.class_labels = self.get_mc_unique_classes(self.y_train)
+            self.class_labels = self.set_class_labels(self.y_train)
+
         return self.train()
 
     def test_model(self):

@@ -1,32 +1,38 @@
+import math
+import random
+import numpy as np
+import pandas as pd
+from sklearn.utils.class_weight import compute_class_weight
+from sklearn.model_selection import GridSearchCV
 from keras.utils import to_categorical
 from keras.models import Sequential
 from keras.layers import Dense
 from keras import optimizers
 from keras.callbacks import EarlyStopping
-
-import numpy as np
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.utils.class_weight import compute_class_weight
-
 from keras.wrappers.scikit_learn import KerasClassifier
-from sklearn.model_selection import GridSearchCV
+
 
 from thex_data.data_consts import TARGET_LABEL, class_to_subclass
 from thex_data.data_clean import convert_class_vectors
 
 
-def create_model(learn_rate=0.1, momentum=0.1, decay=0.1, nesterov=False, input_length=1, output_length=1):
+def create_model(learn_rate=0.1, momentum=0.1, decay=0.1, nesterov=False, layer_sizes=[48, 16], input_length=1, output_length=1):
+
     model = Sequential()
-    model.add(Dense(48, input_dim=input_length, activation='relu'))
-    # model.add(Dense(24, activation='relu'))
-    model.add(Dense(16, activation='relu'))
+    # Add fully connected layers
+    model.add(Dense(layer_sizes[0], input_dim=input_length, activation='relu'))
+    if len(layer_sizes) > 2:
+        # Add more layers, as specified
+        for layer_size in layer_sizes[1:-1]:
+            model.add(Dense(layer_size, activation='relu'))
+    model.add(Dense(layer_sizes[-1], activation='relu'))
     model.add(Dense(output_length, activation='softmax'))
 
     sgd = optimizers.SGD(lr=learn_rate, momentum=momentum,
                          decay=decay, nesterov=nesterov)
     model.compile(loss='categorical_crossentropy',
-                  optimizer=sgd, metrics=['accuracy', 'categorical_accuracy'])
+                  optimizer=sgd,
+                  metrics=['accuracy', 'categorical_accuracy'])
     return model
 
 
@@ -36,8 +42,8 @@ class SubNetwork:
         """
         Neural network with first layer of length input_length, last layer of output_length, where each output node corresponds to a class in classes
         :param classes: List of classes this network runs on; each label in y coresponds to index in this list
-        :param y: DataFrame of labels for these classes
         :param X: DataFrame of features for these classes
+        :param y: DataFrame of labels for these classes, as values
         """
         self.input_length = len(list(X))
         self.output_length = len(classes)
@@ -66,79 +72,95 @@ class SubNetwork:
 
         # Initialize hyperparameters
         # SGD
-        learning_rate = 0.001
-        momentum = 0.5  # direction of the next step with the knowledge of the previous steps
-        decay = 0.01  # regularization weight lambda
-        # NN
-        epochs = 500
-        batch_size = 24
+        # learning_rate = 0.001
+        # momentum = 0.5  # direction of the next step with the knowledge of the previous steps
+        # decay = 0.01  # regularization weight lambda
 
         # Create NN
-        model = Sequential()
-        model.add(Dense(48, input_dim=self.input_length, activation='relu'))
-        model.add(Dense(16, activation='relu'))
-        model.add(Dense(self.output_length, activation='softmax'))
-        sgd = optimizers.SGD(lr=learning_rate, momentum=momentum,
-                             decay=decay, nesterov=True)
-        model.compile(loss='categorical_crossentropy',
-                      optimizer=sgd, metrics=['accuracy', 'categorical_accuracy'])
+        # model = Sequential()
+        # model.add(Dense(48, input_dim=self.input_length, activation='relu'))
+        # model.add(Dense(16, activation='relu'))
+        # model.add(Dense(self.output_length, activation='softmax'))
+        # sgd = optimizers.SGD(lr=learning_rate, momentum=momentum,
+        #                      decay=decay, nesterov=True)
+        # model.compile(loss='categorical_crossentropy',
+        #               optimizer=sgd, metrics=['accuracy', 'categorical_accuracy'])
 
-        # Split data into Training and Validation
-        x_train, x_valid, y_train, y_valid = train_test_split(
-            X, y, test_size=0.25, shuffle=True)
-        val_sample_weights = self.get_sample_weights(x_valid, y_valid)
-        train_sample_weights = self.get_sample_weights(x_train, y_train)
+        sample_weights = self.get_sample_weights(X, y)
 
         # Convert numeric labels to one-hot encoding (which is what Keras expects)
-        y_train_codes = to_categorical(y_train.values)
-        y_val_codes = to_categorical(y_valid.values)
+        y_vectors = to_categorical(y)
+
+        validation_count = math.ceil(X.shape[0] * 0.25)
+        validation_indices = random.sample(range(X.shape[0]), validation_count)
+
+        # Split data into Training and Validation
+        x_valid = X[X.index.isin(validation_indices)].values
+        y_valid = np.take(y_vectors, validation_indices, axis=0)
+        val_sample_weights = np.take(sample_weights, validation_indices, axis=0)
+        x_train = X[~X.index.isin(validation_indices)].values
+        y_train = np.delete(y_vectors, validation_indices, axis=0)
+        train_sample_weights = np.delete(sample_weights, validation_indices, axis=0)
 
         # Assign class weights
         class_indices = list(range(len(self.classes)))
         class_weights = compute_class_weight(
             class_weight='balanced', classes=class_indices, y=y[TARGET_LABEL].values)
-        d_class_weights = dict(enumerate(class_weights))
 
-        es = EarlyStopping(monitor='val_loss',  mode='min', verbose=1,
-                           patience=20)
-        model.fit(x_train.values, y_train_codes, batch_size=batch_size, verbose=0, epochs=epochs, sample_weight=train_sample_weights,
-                  validation_data=(x_valid.values, y_val_codes, val_sample_weights), callbacks=[es])
-        # # , class_weight=d_class_weights)  # , callbacks=[es]
-        metrics = model.evaluate(x_valid.values, y_val_codes)
-        print("Model metrics on valiation set: ")
-        print(model.metrics_names)
-        print(metrics)
-        # model = self.get_best_model(X, y, batch_size, epochs)
+        es = EarlyStopping(monitor='val_loss',  mode='auto', verbose=0,
+                           patience=20, restore_best_weights=True)
+        # NN hyperparameters
+        epochs = 500
+        batch_size = 24
+        model = self.get_best_model(X, y_vectors, sample_weights, batch_size, epochs)
+
+        model.fit(x_train,
+                  y_train,
+                  batch_size=batch_size,
+                  verbose=0,
+                  epochs=epochs,
+                  sample_weight=train_sample_weights,
+                  validation_data=(x_valid, y_valid, val_sample_weights),
+                  # class_weight=dict(enumerate(class_weights)),
+                  callbacks=[es]
+                  )
+
+        metrics = model.evaluate(x_valid, y_valid)
+        print("Valiation " +
+              str(model.metrics_names[2]) + " : " + str(round(metrics[2], 4)))
+
         return model
 
-    def get_best_model(self, X, y, batch_size, epochs):
-        # Grid search
-        learn_rates = [0.0001, 0.001, 0.01, 0.1, 0.2]
-        momentums = [0.0, 0.2, 0.5, 0.7, 0.9]  # usually between 0.5 to 0.9
-        decays = [0.0,  0.2,  0.6]
+    def get_best_model(self, X, y_vectors, sample_weights, batch_size, epochs):
 
-        first_layer_size = [40, 80, 120]
-        second_layer_size = [20, 34, 60]
+        param_grid = {'learn_rate': [0.001],  # , 0.01, 0.1],
+                      'momentum': [0.5],  # , 0.7, 0.9]  # usually between 0.5 to 0.9,
+                      'decay': [0.0,  0.2,  0.6],
+                      'nesterov': [True, False],
+                      'layer_sizes': [[48, 16]],  # , [48, 32, 16], [64, 38, 24, 12]],
+                      'input_length': [self.input_length],
+                      'output_length': [self.output_length]}
 
-        # Best: 0.678211 using {'decay': 0.2, 'input_length': 484, 'learn_rate': 0.01, 'momentum': 0.7, 'nesterov': False, 'output_length': 2}
-        # Best: 0.895062 using {'decay': 0.0, 'input_length': 484, 'learn_rate':
-        # 0.0001, 'momentum': 0.2, 'nesterov': True, 'output_length': 5}
-        param_grid = dict(learn_rate=learn_rates,
-                          momentum=momentums, decay=decays, nesterov=[True, False],
-                          output_length=[self.output_length], input_length=[self.input_length])
+        grid_model = KerasClassifier(build_fn=create_model,
+                                     epochs=epochs,
+                                     batch_size=batch_size,
+                                     verbose=0)
 
-        grid_model = KerasClassifier(build_fn=create_model, epochs=epochs,
-                                     batch_size=batch_size, verbose=1)
         grid = GridSearchCV(estimator=grid_model,
-                            param_grid=param_grid, n_jobs=-1, verbose=1, cv=3)
+                            param_grid=param_grid,
+                            n_jobs=-1,
+                            verbose=0,
+                            cv=3)
+        grid.fit(X.values,
+                 y_vectors,
+                 sample_weight=sample_weights)
 
-        # sample_weight=train_sample_weights,
-        es = EarlyStopping(monitor='val_loss',  mode='min', verbose=1,
-                           patience=20)
-        y_onehot = to_categorical(y.values)
-        sample_weights = self.get_sample_weights(X, y)
-        grid.fit(X.values, y_onehot, sample_weight=sample_weights, callbacks=[es])
-        print("\nBest model params")
-        print("Best: %f using %s" % (grid.best_score_, grid.best_params_))
+        m = create_model(learn_rate=grid.best_params_['learn_rate'],
+                         momentum=grid.best_params_['momentum'],
+                         decay=grid.best_params_['decay'],
+                         nesterov=grid.best_params_['nesterov'],
+                         layer_sizes=grid.best_params_['layer_sizes'],
+                         input_length=grid.best_params_['input_length'],
+                         output_length=grid.best_params_['output_length'])
 
-        return grid.best_estimator_
+        return m
