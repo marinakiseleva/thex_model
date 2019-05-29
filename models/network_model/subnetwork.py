@@ -49,7 +49,6 @@ class SubNetwork:
         self.output_length = len(classes)
         self.classes = classes
 
-        print("\n\nInitialzing SubNetwork for classes " + str(self.classes))
         self.network = self.init_network(X, y)
 
     def get_sample_weights(self, X, y):
@@ -70,22 +69,6 @@ class SubNetwork:
 
     def init_network(self, X, y):
 
-        # Initialize hyperparameters
-        # SGD
-        # learning_rate = 0.001
-        # momentum = 0.5  # direction of the next step with the knowledge of the previous steps
-        # decay = 0.01  # regularization weight lambda
-
-        # Create NN
-        # model = Sequential()
-        # model.add(Dense(48, input_dim=self.input_length, activation='relu'))
-        # model.add(Dense(16, activation='relu'))
-        # model.add(Dense(self.output_length, activation='softmax'))
-        # sgd = optimizers.SGD(lr=learning_rate, momentum=momentum,
-        #                      decay=decay, nesterov=True)
-        # model.compile(loss='categorical_crossentropy',
-        #               optimizer=sgd, metrics=['accuracy', 'categorical_accuracy'])
-
         sample_weights = self.get_sample_weights(X, y)
 
         # Convert numeric labels to one-hot encoding (which is what Keras expects)
@@ -95,6 +78,8 @@ class SubNetwork:
         validation_indices = random.sample(range(X.shape[0]), validation_count)
 
         # Split data into Training and Validation
+        # TODO: update weights so they are computed separately for training and
+        # validation, otherwise training weights will be skewed.
         x_valid = X[X.index.isin(validation_indices)].values
         y_valid = np.take(y_vectors, validation_indices, axis=0)
         val_sample_weights = np.take(sample_weights, validation_indices, axis=0)

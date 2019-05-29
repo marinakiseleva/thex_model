@@ -8,56 +8,39 @@ from models.network_model.subnetwork import SubNetwork
 
 class NetworkTrain:
 
-    def get_labels_at_depth(self, y, depth, parent_class):
+    def get_subnet_classes(self, child_classes, y, parent_class):
         """
-        Get all unique labels in the dataset y that are at this depth, with this parent_class. If a sample has no label at this depth but it is the parent, the parent category is returned (to be used later as Undefined)
-        :param y: DataFrame of class vectors
-        :param depth: Tree depth of classes we are considering
-        :param parent_class: parent class of all relevant classes
+        Select classes by:
+            1. add classes that exist in data and in child_classes
+            2. add Undefined_parent class if a row contains no child classes, but does contain parent AND other rows also contain children. 
+
+        :param classes: child classes
+        :param parent_class: parent_class of classes we are considering
+        :return: list of class names for this subnet; can be empty.
         """
+        # 1. add classes that exist in data and in child_classes
         unique_classes = []
+        add_undefined_parent = False  # Record undef parent labels
         for index, row in y.iterrows():
             labels = convert_str_to_list(row[TARGET_LABEL])
-            has_level_class = False
-            for label in labels:
-                if label != '' and self.class_levels[label] == depth:
-                    unique_classes.append(label)
-                    has_level_class = True
-            if has_level_class == False:
-                for label in labels:
-                    if label == parent_class:
-                        unique_classes.append(label)
+            unique_classes += list(set(child_classes).intersection(labels))
+            if len(unique_classes) == 0 and parent_class in labels:
+                add_undefined_parent = True
 
-        return list(set(unique_classes))
+        """ 2. add Undefined_parent class if at least 1 row contained no child classes and another contained children (otherwise there is nothing to compare against)"""
+        if len(unique_classes) >= 1 and add_undefined_parent:
+            unique_classes.append(UNDEF_CLASS + parent_class)
 
-    def get_subnet_classes(self, classes, y, depth):
-        """
-        Get list of class names that exist both in list of classes and in the data y
-        :param depth: Tree depth of classes we are considering
-        """
-        # Because all classes passed in have the same parent, we only need to look
-        # at the parent of this first one to add Undefined Parent class
-        child_class = classes[0]
-        for parent_class, subclasses in class_to_subclass.items():
-            if child_class in subclasses:
-                undefined_parent = UNDEF_CLASS + parent_class
-                parent = parent_class
-                break
-        # Only keep classes which exist in data
-        unique_classes = self.get_labels_at_depth(y, depth, parent)
-        target_classes = list(set(unique_classes).intersection(classes))
-        if parent in unique_classes:
-            target_classes.append(undefined_parent)
-
-        return target_classes
+        return (list(set(unique_classes)))
 
     def get_subnet_data(self, X, y, class_labels):
         """
         Filter features (X) and labels (y) to only include those rows that have a class within class_labels
         :param class_labels: List of classes (single class name, like the children in class_to_subclass)
+        :return: X filtered down to same rows as y, which is filtered to only those samples that contain a class in class_labels. And relabeled as the index of the class in the list class_labels (need numeric label for later processing)
         """
-        keep_indices = []
-        labels = []
+        keep_indices = []  # Indices to keep in X
+        labels = []  # Corresponding relabeled y
         for df_index, row in y.iterrows():
             cur_classes = convert_str_to_list(row[TARGET_LABEL])
             has_level_class = False
@@ -88,12 +71,13 @@ class NetworkTrain:
             class_level = self.class_levels[parent_class]
 
             subnet_classes = self.get_subnet_classes(
-                subclasses, self.y_train, class_level + 1)
+                subclasses, self.y_train, parent_class)
             if len(subnet_classes) <= 1:
                 # print("Do not need network for " + parent_class +
                 #       " since it has no subclasses in dataset.")
                 continue
 
+            print("\n\nInitialzing SubNetwork for classes " + str(subnet_classes))
             X, y = self.get_subnet_data(self.X_train, self.y_train, subnet_classes)
 
             self.networks[parent_class] = SubNetwork(subnet_classes, X, y)

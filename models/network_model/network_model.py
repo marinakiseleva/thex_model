@@ -22,10 +22,8 @@ class NetworkModel(MCBaseModel, NetworkTrain):
         for parent_class, subclasses in class_to_subclass.items():
             class_level = self.class_levels[parent_class]
             subnet_classes = self.get_subnet_classes(
-                subclasses, y, class_level + 1)
+                subclasses, y, parent_class)
             class_labels += subnet_classes
-
-        self.class_labels = list(set(class_labels))
 
     def train_model(self):
         """
@@ -33,7 +31,6 @@ class NetworkModel(MCBaseModel, NetworkTrain):
         """
         if self.class_labels is None:
             self.class_labels = self.set_class_labels(self.y_train)
-
         return self.train()
 
     def test_model(self):
@@ -58,7 +55,7 @@ class NetworkModel(MCBaseModel, NetworkTrain):
 
     def get_class_probabilities(self, x, subnet="root", probabilities=None):
         """
-        Calculates probability of each transient class for the single test data point (x). 
+        Calculates probability of each transient class for the single test data point (x). Recurse over levels of the hierarchy, computing conditional probability of each class. If a class has no siblings, it is assigned the probability of its parent (since it has no subnet)
         :param x: Single row of features 
         :param subnet: Current SubNetwork to run test point through. Start at root.
         :return: map from class_names to probabilities
@@ -75,6 +72,8 @@ class NetworkModel(MCBaseModel, NetworkTrain):
 
         predictions = subnet.network.predict(x=x,  batch_size=1, verbose=0)
         predictions = list(predictions[0])
+
+        # TODO: drop max prob stuff and find conditional probability for all children
         max_class_index = predictions.index(max(predictions))
         max_prob_class = subnet.classes[max_class_index]
 
