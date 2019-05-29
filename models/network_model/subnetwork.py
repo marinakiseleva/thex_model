@@ -48,7 +48,6 @@ class SubNetwork:
         self.input_length = len(list(X))
         self.output_length = len(classes)
         self.classes = classes
-
         self.network = self.init_network(X, y)
 
     def get_sample_weights(self, X, y):
@@ -68,12 +67,18 @@ class SubNetwork:
         return np.array(sample_weights)
 
     def init_network(self, X, y):
+        """
+        Create Keras Neural Network for this set of data. Use sample weights and grid search to create optimal network.
+        :param X: DataFrame of features
+        :param y: DataFrame of numeric labels, each number corresponding to index in self.classes
+        """
 
         sample_weights = self.get_sample_weights(X, y)
 
         # Convert numeric labels to one-hot encoding (which is what Keras expects)
         y_vectors = to_categorical(y)
 
+        # Select indices by which to split training & validation
         validation_count = math.ceil(X.shape[0] * 0.25)
         validation_indices = random.sample(range(X.shape[0]), validation_count)
 
@@ -88,9 +93,9 @@ class SubNetwork:
         train_sample_weights = np.delete(sample_weights, validation_indices, axis=0)
 
         # Assign class weights
-        class_indices = list(range(len(self.classes)))
-        class_weights = compute_class_weight(
-            class_weight='balanced', classes=class_indices, y=y[TARGET_LABEL].values)
+        # class_indices = list(range(len(self.classes)))
+        # class_weights = compute_class_weight(
+        #     class_weight='balanced', classes=class_indices, y=y[TARGET_LABEL].values)
 
         es = EarlyStopping(monitor='val_loss',  mode='auto', verbose=0,
                            patience=20, restore_best_weights=True)
@@ -102,7 +107,7 @@ class SubNetwork:
         model.fit(x_train,
                   y_train,
                   batch_size=batch_size,
-                  verbose=0,
+                  verbose=1,
                   epochs=epochs,
                   sample_weight=train_sample_weights,
                   validation_data=(x_valid, y_valid, val_sample_weights),
@@ -118,11 +123,11 @@ class SubNetwork:
 
     def get_best_model(self, X, y_vectors, sample_weights, batch_size, epochs):
 
-        param_grid = {'learn_rate': [0.001],  # , 0.01, 0.1],
-                      'momentum': [0.5],  # , 0.7, 0.9]  # usually between 0.5 to 0.9,
-                      'decay': [0.0,  0.2,  0.6],
+        param_grid = {'learn_rate': [0.001, 0.01, 0.1],
+                      'momentum': [0.5, 0.7, 0.9],  # usually between 0.5 to 0.9,
+                      'decay': [0.0, 0.2, 0.6],
                       'nesterov': [True, False],
-                      'layer_sizes': [[48, 16]],  # , [48, 32, 16], [64, 38, 24, 12]],
+                      'layer_sizes': [[48, 16], [48, 32, 16], [64, 38, 24, 12]],
                       'input_length': [self.input_length],
                       'output_length': [self.output_length]}
 
