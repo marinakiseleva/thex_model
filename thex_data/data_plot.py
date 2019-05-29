@@ -122,7 +122,7 @@ def plot_class_hist(df, target_is_name=False):
         ax.set_yscale('log')
         ax.yaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
         plt.tick_params(axis='y', which='minor')
-
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
     ax.tick_params(axis='both', which='major', labelsize=8)
     ax.tick_params(axis='both', which='minor', labelsize=7)
     plt.xlabel('Class', fontsize=12)
