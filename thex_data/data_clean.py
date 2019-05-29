@@ -28,32 +28,26 @@ def relabel(class_index, class_vectors):
 
 def convert_class_vectors(df, class_labels, class_levels, level=None):
     """
-    Convert labels of TARGET_LABEL column in passed-in DataFrame to class vectors. Class is assigned to the parent's Undefined group if it does not have a subclass. For example Ia becomes Undefined_Ia if the sample is not a subtype of Ia. 
-    :param class_labels: Class names to consider. 
+    Convert labels of TARGET_LABEL column (list of class names) in passed-in DataFrame to class vectors. Class is assigned to the parent's Undefined group if it does not have a subclass. For example Ia becomes Undefined_Ia if the sample is not a subtype of Ia. 
+    :param class_labels: Class names in order of their presence in the class vectors. 
     :param class_levels: Mapping from class name to level, to determine if sample is undefined class type
     :param level: Currently not used - NEED TO DROP.
     :return class_vectors: DataFrame with same number of rows as df, with only TARGET_LABEL column. Each row has a single vector in that columns, with the same length as class_labels, and where values are 0 or 1. 1 if it is that class, 0 otherwise.
 
     """
-    # Convert labels to class vectors, with 1 meaning it has that class, and 0
-    # does not
+    # Convert labels to 0/1 class vectors in order of class_labels
     rows_list = []
     for df_index, row in df.iterrows():
         class_vector = [0] * len(class_labels)
         cur_classes = convert_str_to_list(row[TARGET_LABEL])
         has_class_level = False
         max_depth = 0
-
         for class_index, c in enumerate(class_labels):
             if c in cur_classes:
                 class_vector[class_index] = 1
                 has_level_class = True
                 max_depth = max(class_levels[c], max_depth)
-        if level is not None and has_level_class == False:
-            # Assign parent's undefined class .
-            for class_index, c in enumerate(class_labels):
-                if UNDEF_CLASS in c and c[len(UNDEF_CLASS):] in cur_classes:
-                    class_vector[class_index] = 1
+
         # Assign undefined class, if it has no subclass
         for class_index, c in enumerate(class_labels):
             if UNDEF_CLASS in c and c[len(UNDEF_CLASS):] in cur_classes:
@@ -61,6 +55,11 @@ def convert_class_vectors(df, class_labels, class_levels, level=None):
                 if class_levels[class_name] + 1 > max_depth:
                     class_vector[class_index] = 1
 
+        if level is not None and has_level_class == False:
+            # Assign parent's undefined class .
+            for class_index, c in enumerate(class_labels):
+                if UNDEF_CLASS in c and c[len(UNDEF_CLASS):] in cur_classes:
+                    class_vector[class_index] = 1
         rows_list.append([class_vector])
     class_vectors = pd.DataFrame(rows_list, columns=[TARGET_LABEL])
     return class_vectors
