@@ -107,7 +107,7 @@ class SubNetwork:
         model.fit(x_train,
                   y_train,
                   batch_size=batch_size,
-                  verbose=1,
+                  verbose=0,
                   epochs=epochs,
                   sample_weight=train_sample_weights,
                   validation_data=(x_valid, y_valid, val_sample_weights),
@@ -123,11 +123,12 @@ class SubNetwork:
 
     def get_best_model(self, X, y_vectors, sample_weights, batch_size, epochs):
 
-        param_grid = {'learn_rate': [0.001, 0.01, 0.1],
-                      'momentum': [0.5, 0.7, 0.9],  # usually between 0.5 to 0.9,
-                      'decay': [0.0, 0.2, 0.6],
-                      'nesterov': [True, False],
-                      'layer_sizes': [[48, 16], [48, 32, 16], [64, 38, 24, 12]],
+        param_grid = {'learn_rate': [0.001, 0.01],  # , 0.1
+                      'momentum': [0.5, 0.7],  # , 0.9, usually between 0.5 to 0.9,
+                      'decay': [0.2, 0.6],  # 0.0, 0.6
+                      'nesterov': [True],  # False
+                      # [64, 38, 24, 12],
+                      'layer_sizes': [[48, 16], [82, 44, 20], [48, 32, 16]],
                       'input_length': [self.input_length],
                       'output_length': [self.output_length]}
 
