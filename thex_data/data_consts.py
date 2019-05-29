@@ -17,7 +17,7 @@ DPI = 600
 # GALEX/WISE/PANSTARRS Versions 1, 2
 # LOCAL_DATA_PATH = '/../../data/THEx-training-set.v0_0_1.fits'
 LOCAL_DATA_PATH = '/../../data/THEx-training-set-v0_0_2.fits'
-
+# LOCAL_DATA_PATH = '/../../data/test_data.fits'
 # GALEX/WISE/PANSTARRS Version 2
 # LOCAL_DATA_PATH = '/../../data/THEx-training-set-v0_0_2.npy'
 
@@ -600,7 +600,7 @@ class_to_subclass = {
     "Ia": ["Ia Pec", "Ia-HV", "Ia/b", "Ia/c", "Ia-02cx"],
     "Ia Pec": ["Ia CSM", "Ia-91bg", "Ia-91T", "Ia-02cx",
                "Ia-00cx", "Ia-99aa", "Ia-09dc", "Ia-HV"],
-    "CC": ["Ib", "Ic", "II"],
+    "CC": ["II"],  # "Ib", "Ic",
     "Ib": ["Ibn", "Ib Pec"],
     "Ib Pec": ["Ib-Ca"],
     "Ic": ["Ic Pec", "Ia/c"],
