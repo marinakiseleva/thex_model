@@ -24,6 +24,7 @@ class NetworkModel(MCBaseModel, NetworkTrain):
             subnet_classes = self.get_subnet_classes(
                 subclasses, y, parent_class)
             class_labels += subnet_classes
+        self.class_labels = class_labels
 
     def train_model(self):
         """
@@ -48,14 +49,42 @@ class NetworkModel(MCBaseModel, NetworkTrain):
         for df_index, x in self.X_test.iterrows():
             prob_map = self.get_class_probabilities(
                 np.array([x.values]), "root", None)
+            # Fill undefined values
+            prob_map = self.inherit_probabilities(prob_map)
             probabilites = list(prob_map.values())
             predictions.append(list(prob_map.values()))
 
         return np.array(predictions)
 
+    def inherit_probabilities(self, probabilities):
+        """
+        If a class has no siblings, assign it the probability of its parent (since it has no subnet). 
+        """
+        # 1. Collect all classes across all networks
+        net_classes = []
+        for net in self.networks.values():
+            net_classes += net.classes
+
+        # 2. Find all class names that are not in any network
+        missing_classes = set(net_classes) ^ set(self.class_labels)
+
+        # 3. Fill this missing class probs w/ parent probs
+        for class_name in missing_classes:
+            probabilities[class_name] = probabilities[self.get_parent(class_name)]
+
+        return probabilities
+
+    def get_parent(self, class_name):
+        """
+        Get parent class name of this class in tree
+        """
+        for parent_class, subclasses in class_to_subclass.items():
+            if class_name in subclasses:
+                return parent_class
+
     def get_class_probabilities(self, x, subnet="root", probabilities=None):
         """
-        Calculates probability of each transient class for the single test data point (x). Recurse over levels of the hierarchy, computing conditional probability of each class. If a class has no siblings, it is assigned the probability of its parent (since it has no subnet)
+        Calculates probability of each transient class for the single test data point (x). Recurse over levels of the hierarchy, computing conditional probability of each class. 
         :param x: Single row of features 
         :param subnet: Current SubNetwork to run test point through. Start at root.
         :return: map from class_names to probabilities
@@ -73,17 +102,17 @@ class NetworkModel(MCBaseModel, NetworkTrain):
         predictions = subnet.network.predict(x=x,  batch_size=1, verbose=0)
         predictions = list(predictions[0])
 
-        # TODO: drop max prob stuff and find conditional probability for all children
-        max_class_index = predictions.index(max(predictions))
-        max_prob_class = subnet.classes[max_class_index]
-
         # Update probabilities
         for pred_index, pred_class_prob in enumerate(predictions):
             pred_class_name = subnet.classes[pred_index]
+            """ Multiply this class probability by its parents to get conditional probability. If no parent exists, just assign this probability (top of tree). """
+            parent_class = self.get_parent(pred_class_name)
+            if parent_class in probabilities:
+                pred_class_prob *= probabilities[parent_class]
             probabilities[pred_class_name] = pred_class_prob
 
-        if max_prob_class in self.networks:
-            next_net = self.networks[max_prob_class]
-            return self.get_class_probabilities(x, next_net, probabilities)
-        else:
-            return probabilities
+        for next_class in subnet.classes:
+            if next_class in self.networks:
+                probabilities = self.get_class_probabilities(
+                    x, self.networks[next_class], probabilities)
+        return probabilities
