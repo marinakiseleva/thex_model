@@ -24,7 +24,10 @@ class NetworkModel(MCBaseModel, NetworkTrain):
             subnet_classes = self.get_subnet_classes(
                 subclasses, y, parent_class)
             class_labels += subnet_classes
+
         self.class_labels = list(set(class_labels))
+        print("\n Class labels:")
+        print(self.class_labels)
 
     def train_model(self):
         """
@@ -69,9 +72,17 @@ class NetworkModel(MCBaseModel, NetworkTrain):
         # 2. Find all class names that are not in any network
         missing_classes = set(net_classes) ^ set(self.class_labels)
 
-        # 3. Fill this missing class probs w/ parent probs
+        # 3. Fill these missing class probs w/ parent probs
+        def get_parent_prob(class_name):
+            """
+            Recurse up through tree, getting parent prob until we find a valid one. For example, there may only be CC, II, II P in CC so we need to inherit the probability of CC. 
+            """
+            if self.get_parent(class_name) in probabilities:
+                return probabilities[self.get_parent(class_name)]
+            else:
+                return get_parent_prob(self.get_parent(class_name))
         for class_name in missing_classes:
-            probabilities[class_name] = probabilities[self.get_parent(class_name)]
+            probabilities[class_name] = get_parent_prob(class_name)
 
         return probabilities
 

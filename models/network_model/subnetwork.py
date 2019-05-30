@@ -98,7 +98,7 @@ class SubNetwork:
         #     class_weight='balanced', classes=class_indices, y=y[TARGET_LABEL].values)
 
         es = EarlyStopping(monitor='val_loss',  mode='auto', verbose=0,
-                           patience=20, restore_best_weights=True)
+                           patience=30, restore_best_weights=True)
         # NN hyperparameters
         epochs = 500
         batch_size = 24
@@ -123,12 +123,13 @@ class SubNetwork:
 
     def get_best_model(self, X, y_vectors, sample_weights, batch_size, epochs):
 
-        param_grid = {'learn_rate': [0.001, 0.01],  # , 0.1
-                      'momentum': [0.5, 0.7],  # , 0.9, usually between 0.5 to 0.9,
-                      'decay': [0.2, 0.6],  # 0.0, 0.6
+        param_grid = {'learn_rate': [0.001],  # , 0.01 , 0.1
+                      # [0.5, 0.7, 0.9],  # usually between 0.5 to 0.9,
+                      'momentum': [0.7],
+                      'decay': [0.2],  # , 0.6
                       'nesterov': [True],  # False
                       # [64, 38, 24, 12],
-                      'layer_sizes': [[48, 16], [82, 44, 20], [48, 32, 16]],
+                      'layer_sizes': [[48, 16]],  # , [64, 44, 20], [48, 32, 16]],
                       'input_length': [self.input_length],
                       'output_length': [self.output_length]}
 

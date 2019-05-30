@@ -30,7 +30,6 @@ class NetworkTrain:
         """ 2. add Undefined_parent class if at least 1 row contained no child classes and another contained children (otherwise there is nothing to compare against)"""
         if len(unique_classes) >= 1 and add_undefined_parent:
             unique_classes.append(UNDEF_CLASS + parent_class)
-
         return (list(set(unique_classes)))
 
     def get_subnet_data(self, X, y, class_labels):
@@ -78,6 +77,7 @@ class NetworkTrain:
                 continue
 
             print("\n\nInitialzing SubNetwork for classes " + str(subnet_classes))
+
             X, y = self.get_subnet_data(self.X_train, self.y_train, subnet_classes)
 
             self.networks[parent_class] = SubNetwork(subnet_classes, X, y)
