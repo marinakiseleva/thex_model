@@ -75,10 +75,9 @@ class NetworkTrain:
                 # print("Do not need network for " + parent_class +
                 #       " since it has no subclasses in dataset.")
                 continue
-
-            print("\n\nInitialzing SubNetwork for classes " + str(subnet_classes))
-
             X, y = self.get_subnet_data(self.X_train, self.y_train, subnet_classes)
+            print("\n\nInitialzing SubNetwork for classes " +
+                  str(subnet_classes) + " with " + str(X.shape[0]) + " of samples")
 
             self.networks[parent_class] = SubNetwork(subnet_classes, X, y)
 

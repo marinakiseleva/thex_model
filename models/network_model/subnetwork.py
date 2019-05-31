@@ -79,15 +79,10 @@ class SubNetwork:
             X, y, test_size=0.33, random_state=42)
         weights_train = self.get_sample_weights(x_train, y_train)
         weights_valid = self.get_sample_weights(x_valid, y_valid)
-        # Convert numeric labels to one-hot encoding (which is what Keras expects)
-        y_train = to_categorical(y_train)
-        y_valid = to_categorical(y_valid)
+        # Convert numeric labels to one-hot encoding (which is what Keras fit expects)
+        y_train = to_categorical(y=y_train, num_classes=len(self.classes))
+        y_valid = to_categorical(y=y_valid, num_classes=len(self.classes))
 
-        es = EarlyStopping(monitor='val_loss',
-                           mode='auto',
-                           verbose=0,
-                           patience=30,
-                           restore_best_weights=True)
         # NN hyperparameters
         epochs = 500
         batch_size = 24
@@ -103,6 +98,11 @@ class SubNetwork:
         # class_indices = list(range(len(self.classes)))
         # class_weights = compute_class_weight(
         #     class_weight='balanced', classes=class_indices, y=y[TARGET_LABEL].values)
+        es = EarlyStopping(monitor='val_loss',
+                           mode='auto',
+                           verbose=0,
+                           patience=30,
+                           restore_best_weights=True)
         model.fit(x_train.values,
                   y_train,
                   batch_size=batch_size,
@@ -122,12 +122,12 @@ class SubNetwork:
 
     def get_best_model(self, batch_size, epochs, x_valid, y_valid, val_sample_weights, x_train, y_train, train_sample_weights):
 
-        param_grid = {'learn_rate': [0.001],  # 0.00001, 0.0001,   , 0.01 , 0.1
-                      'momentum': [0.5],  # usually between 0.5 to 0.9
-                      'decay': [0.2, 0.6],  # , 0.6
-                      'nesterov': [True],  # False
+        param_grid = {'learn_rate': [0.00001, 0.001, 0.01],
+                      'momentum': [0.5, 0.9],  # usually between 0.5-0.9
+                      'decay': [0.2, 0.6],
+                      'nesterov': [True, False],
                       # [64, 38, 24, 12],[66, 16], [88, 64, 22, 16],
-                      'layer_sizes': [[88, 64, 16]],
+                      'layer_sizes': [[66, 16], [88, 64, 16], [64, 38, 24, 12]],
                       'input_length': [self.input_length],
                       'output_length': [self.output_length]}
 

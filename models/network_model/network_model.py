@@ -51,40 +51,23 @@ class NetworkModel(MCBaseModel, NetworkTrain):
         predictions = []
         for df_index, x in self.X_test.iterrows():
             prob_map = self.get_class_probabilities(
-                np.array([x.values]), "root", None)
-
-            # Fill undefined values
-            prob_map = self.inherit_probabilities(prob_map)
+                np.array([x.values]))
+            # Convert to list - order is find because map was created with
+            # self.class_labels
             probabilites = list(prob_map.values())
             predictions.append(list(prob_map.values()))
-
         return np.array(predictions)
 
-    def inherit_probabilities(self, probabilities):
+    def get_parent_prob(self, class_name, probabilities):
         """
-        If a class has no siblings, assign it the probability of its parent (since it has no subnet).
+        Recurse up through tree, getting parent prob until we find a valid one. For example, there may only be CC, II, II P in CC so we need to inherit the probability of CC.
         """
-        # 1. Collect all classes across all networks
-        net_classes = []
-        for net in self.networks.values():
-            net_classes += net.classes
-
-        # 2. Find all class names that are not in any network
-        missing_classes = set(net_classes) ^ set(self.class_labels)
-
-        # 3. Fill these missing class probs w/ parent probs
-        def get_parent_prob(class_name):
-            """
-            Recurse up through tree, getting parent prob until we find a valid one. For example, there may only be CC, II, II P in CC so we need to inherit the probability of CC. 
-            """
-            if self.get_parent(class_name) in probabilities:
-                return probabilities[self.get_parent(class_name)]
-            else:
-                return get_parent_prob(self.get_parent(class_name))
-        for class_name in missing_classes:
-            probabilities[class_name] = get_parent_prob(class_name)
-
-        return probabilities
+        if class_name == "TTypes":
+            return 1
+        elif self.get_parent(class_name) in probabilities:
+            return probabilities[self.get_parent(class_name)]
+        else:
+            return self.get_parent_prob(self.get_parent(class_name), probabilities)
 
     def get_parent(self, class_name):
         """
@@ -94,37 +77,31 @@ class NetworkModel(MCBaseModel, NetworkTrain):
             if class_name in subclasses:
                 return parent_class
 
-    def get_class_probabilities(self, x, subnet="root", probabilities=None):
+    def get_class_probabilities(self, x):
         """
-        Calculates probability of each transient class for the single test data point (x). Recurse over levels of the hierarchy, computing conditional probability of each class.
+        Calculates probability of each transient class for the single test data point (x). Compute conditional probability of each class.
         :param x: Single row of features
-        :param subnet: Current SubNetwork to run test point through. Start at root.
         :return: map from class_names to probabilities
         """
-        # Set defaults for initial run.
-        if subnet == "root":
-            # Start from root (of class hierarchy) network
-            subnet = self.networks[self.tree.root]
-        if probabilities is None:
-            probabilities = {c: 0 for c in self.class_labels}
 
         if isinstance(x, pd.Series):
             x = np.array([x.values])
 
-        predictions = subnet.network.predict(x=x,  batch_size=1, verbose=0)
-        predictions = list(predictions[0])
+        """Default each probability to 1, so that when we compute conditional probabilities, childrent inherit parent probs when there is no comparison"""
+        probabilities = {c: 1 for c in self.class_labels}
 
-        # Update probabilities
-        for pred_index, pred_class_prob in enumerate(predictions):
-            pred_class_name = subnet.classes[pred_index]
-            """ Multiply this class probability by its parents to get conditional probability. If no parent exists, just assign this probability (top of tree). """
-            parent_class = self.get_parent(pred_class_name)
-            if parent_class in probabilities:
-                pred_class_prob *= probabilities[parent_class]
-            probabilities[pred_class_name] = pred_class_prob
+        # Step 1 - Get probability of each class, by net
+        for parent_class, subnet in self.networks.items():
+            predictions = subnet.network.predict(x=x,  batch_size=1)
+            predictions = list(predictions[0])
+            for pred_index, pred_class_prob in enumerate(predictions):
+                pred_class_name = subnet.classes[pred_index]
+                probabilities[pred_class_name] = pred_class_prob
 
-        for next_class in subnet.classes:
-            if next_class in self.networks:
-                probabilities = self.get_class_probabilities(
-                    x, self.networks[next_class], probabilities)
+        # Step 2 - Compute conditional probabilities
+        for current_level in range(max(self.class_levels.values())):
+            for class_name, probability in probabilities.items():
+                if self.class_levels[class_name] == current_level:
+                    probabilities[
+                        class_name] *= self.get_parent_prob(class_name, probabilities)
         return probabilities
