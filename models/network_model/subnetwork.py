@@ -2,8 +2,10 @@ import math
 import random
 import numpy as np
 import pandas as pd
+
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
 from keras.utils import to_categorical
 from keras.models import Sequential
 from keras.layers import Dense
@@ -72,64 +74,60 @@ class SubNetwork:
         :param X: DataFrame of features
         :param y: DataFrame of numeric labels, each number corresponding to index in self.classes
         """
-
-        sample_weights = self.get_sample_weights(X, y)
-
-        # Convert numeric labels to one-hot encoding (which is what Keras expects)
-        y_vectors = to_categorical(y)
-
-        # Select indices by which to split training & validation
-        validation_count = math.ceil(X.shape[0] * 0.25)
-        validation_indices = random.sample(range(X.shape[0]), validation_count)
-
         # Split data into Training and Validation
-        # TODO: update weights so they are computed separately for training and
-        # validation, otherwise training weights will be skewed.
-        x_valid = X[X.index.isin(validation_indices)].values
-        y_valid = np.take(y_vectors, validation_indices, axis=0)
-        val_sample_weights = np.take(sample_weights, validation_indices, axis=0)
-        x_train = X[~X.index.isin(validation_indices)].values
-        y_train = np.delete(y_vectors, validation_indices, axis=0)
-        train_sample_weights = np.delete(sample_weights, validation_indices, axis=0)
+        x_train, x_valid, y_train, y_valid = train_test_split(
+            X, y, test_size=0.33, random_state=42)
+        weights_train = self.get_sample_weights(x_train, y_train)
+        weights_valid = self.get_sample_weights(x_valid, y_valid)
+        # Convert numeric labels to one-hot encoding (which is what Keras expects)
+        y_train = to_categorical(y_train)
+        y_valid = to_categorical(y_valid)
 
+        es = EarlyStopping(monitor='val_loss',
+                           mode='auto',
+                           verbose=0,
+                           patience=30,
+                           restore_best_weights=True)
+        # NN hyperparameters
+        epochs = 500
+        batch_size = 24
+        model = self.get_best_model(batch_size=batch_size,
+                                    epochs=epochs,
+                                    x_valid=x_valid.values,
+                                    y_valid=y_valid,
+                                    val_sample_weights=weights_valid,
+                                    x_train=x_train.values,
+                                    y_train=y_train,
+                                    train_sample_weights=weights_train)
         # Assign class weights
         # class_indices = list(range(len(self.classes)))
         # class_weights = compute_class_weight(
         #     class_weight='balanced', classes=class_indices, y=y[TARGET_LABEL].values)
-
-        es = EarlyStopping(monitor='val_loss',  mode='auto', verbose=0,
-                           patience=30, restore_best_weights=True)
-        # NN hyperparameters
-        epochs = 500
-        batch_size = 24
-        model = self.get_best_model(X, y_vectors, sample_weights, batch_size, epochs)
-
-        model.fit(x_train,
+        model.fit(x_train.values,
                   y_train,
                   batch_size=batch_size,
                   verbose=0,
                   epochs=epochs,
-                  sample_weight=train_sample_weights,
-                  validation_data=(x_valid, y_valid, val_sample_weights),
+                  sample_weight=weights_train,
+                  validation_data=(x_valid.values, y_valid, weights_valid),
                   # class_weight=dict(enumerate(class_weights)),
                   callbacks=[es]
                   )
 
-        metrics = model.evaluate(x_valid, y_valid)
+        metrics = model.evaluate(x_valid.values, y_valid)
         print("Valiation " +
               str(model.metrics_names[2]) + " : " + str(round(metrics[2], 4)))
 
         return model
 
-    def get_best_model(self, X, y_vectors, sample_weights, batch_size, epochs):
+    def get_best_model(self, batch_size, epochs, x_valid, y_valid, val_sample_weights, x_train, y_train, train_sample_weights):
 
-        param_grid = {'learn_rate': [0.001],  # , 0.01 , 0.1
-                      # [0.5, 0.7, 0.9],  # usually between 0.5 to 0.9,
-                      'momentum': [0.7],
-                      'decay': [0.2],  # , 0.6
+        param_grid = {'learn_rate': [0.001],  # 0.00001, 0.0001,   , 0.01 , 0.1
+                      'momentum': [0.5],  # usually between 0.5 to 0.9
+                      'decay': [0.2, 0.6],  # , 0.6
                       'nesterov': [True],  # False
-                      # [64, 38, 24, 12],
-                      'layer_sizes': [[48, 16]],  # , [64, 44, 20], [48, 32, 16]],
+                      # [64, 38, 24, 12],[66, 16], [88, 64, 22, 16],
+                      'layer_sizes': [[88, 64, 16]],
                       'input_length': [self.input_length],
                       'output_length': [self.output_length]}
 
@@ -137,15 +135,26 @@ class SubNetwork:
                                      epochs=epochs,
                                      batch_size=batch_size,
                                      verbose=0)
+        early_stop = EarlyStopping(
+            monitor='val_loss', mode='auto', min_delta=0.001, patience=50, verbose=0, restore_best_weights=True)
 
+        keras_fit_params = {
+            'callbacks': [early_stop],
+            'epochs': epochs,
+            'batch_size': batch_size,
+            'validation_data': (x_valid, y_valid, val_sample_weights),
+            'verbose': 0
+        }
         grid = GridSearchCV(estimator=grid_model,
                             param_grid=param_grid,
+                            fit_params=keras_fit_params,
                             n_jobs=-1,
                             verbose=0,
                             cv=3)
-        grid.fit(X.values,
-                 y_vectors,
-                 sample_weight=sample_weights)
+
+        grid.fit(x_train,
+                 y_train,
+                 sample_weight=train_sample_weights)
 
         m = create_model(learn_rate=grid.best_params_['learn_rate'],
                          momentum=grid.best_params_['momentum'],
@@ -154,5 +163,7 @@ class SubNetwork:
                          layer_sizes=grid.best_params_['layer_sizes'],
                          input_length=grid.best_params_['input_length'],
                          output_length=grid.best_params_['output_length'])
+        print("Best model parameters")
+        print(grid.best_params_)
 
         return m
