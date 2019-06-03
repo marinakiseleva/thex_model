@@ -90,7 +90,7 @@ class NetworkModel(MCBaseModel, NetworkTrain):
         """Default each probability to 1, so that when we compute conditional probabilities, childrent inherit parent probs when there is no comparison"""
         probabilities = {c: 1 for c in self.class_labels}
 
-        # Step 1 - Get probability of each class, by net
+        # Step 1 - Get probability of each class
         for parent_class, subnet in self.networks.items():
             predictions = subnet.network.predict(x=x,  batch_size=1)
             predictions = list(predictions[0])
