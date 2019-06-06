@@ -34,8 +34,8 @@ class MCKDETrain:
         :return: best fitting KDE
         """
         # Create and fit training data to Tree
-        labeled_samples = pd.concat([X, y], axis=1)
-        sample_weights = self.get_sample_weights(labeled_samples)
+        # labeled_samples = pd.concat([X, y], axis=1)
+        # sample_weights = self.get_sample_weights(labeled_samples)
 
         # Create grid to search over bandwidth for
         range_bws = np.linspace(0.01, 2, 100)
@@ -44,8 +44,9 @@ class MCKDETrain:
             'kernel': ['gaussian'],
             'metric': ['euclidean']
         }
-        clf_optimize = GridSearchCV(KernelDensity(), grid, iid=True, cv=3, n_jobs=8)
-        clf_optimize.fit(X, y, sample_weight=sample_weights)
+        clf_optimize = GridSearchCV(KernelDensity(), grid, iid=False, cv=3, n_jobs=-1)
+        clf_optimize.fit(X)  # , y, sample_weight=sample_weights
+
         return clf_optimize.best_estimator_
 
     def train(self):
