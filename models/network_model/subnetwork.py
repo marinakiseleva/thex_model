@@ -1,8 +1,3 @@
-import math
-import random
-import numpy as np
-import pandas as pd
-
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
@@ -13,9 +8,8 @@ from keras import optimizers
 from keras.callbacks import EarlyStopping
 from keras.wrappers.scikit_learn import KerasClassifier
 
-
-from thex_data.data_consts import TARGET_LABEL, class_to_subclass
-from thex_data.data_clean import convert_class_vectors
+from thex_data.data_consts import TARGET_LABEL
+from models.conditional_model.classifier import SubClassifier
 
 
 def create_model(layer_sizes=[48, 16], input_length=1, output_length=1):
@@ -38,7 +32,7 @@ def create_model(layer_sizes=[48, 16], input_length=1, output_length=1):
     return model
 
 
-class SubNetwork:
+class SubNetwork(SubClassifier):
 
     def __init__(self, classes, X, y):
         """
@@ -49,26 +43,12 @@ class SubNetwork:
         """
         self.input_length = len(list(X))
         self.output_length = len(classes)
-        self.classes = classes
-        self.network = self.init_network(X, y)
+        super(SubNetwork, self).__init__(classes, X, y)
 
-    def get_sample_weights(self, X, y):
-        """
-        Get weight of each sample (1/# of samples in class)
-        """
-        labeled_samples = pd.concat([X, y], axis=1)
-        classes = labeled_samples[TARGET_LABEL].unique()
-        label_counts = {}
-        for c in classes:
-            label_counts[c] = labeled_samples.loc[
-                labeled_samples[TARGET_LABEL] == c].shape[0]
-        sample_weights = []
-        for df_index, row in labeled_samples.iterrows():
-            class_count = label_counts[row[TARGET_LABEL]]
-            sample_weights.append(1 / class_count)
-        return np.array(sample_weights)
+    def predict(self, x):
+        return self.classifier.predict(x=x,  batch_size=1)
 
-    def init_network(self, X, y):
+    def init_classifier(self, X, y):
         """
         Create Keras Neural Network for this set of data. Use sample weights and grid search to create optimal network.
         :param X: DataFrame of features
@@ -89,7 +69,7 @@ class SubNetwork:
         class_weights = dict(enumerate(class_weights))
 
         # NN hyperparameters
-        epochs = 10000
+        epochs = 50
         batch_size = 24
         es = EarlyStopping(monitor='val_loss',
                            mode='auto',

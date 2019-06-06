@@ -3,13 +3,12 @@ import pandas as pd
 from thex_data.data_consts import TARGET_LABEL, UNDEF_CLASS, class_to_subclass
 from thex_data.data_clean import *
 
-from models.network_model.subnetwork import SubNetwork
 
+class ConditionalTrain:
 
-class NetworkTrain:
-
-    def get_subnet_classes(self, child_classes, y, parent_class):
+    def get_subclf_classes(self, child_classes, y, parent_class):
         """
+        Get specific set of classes to be used to construct a subclassifier.
         Select classes by:
             1. add classes that exist in data and in child_classes
             2. add Undefined_parent class if a row contains no child classes, but does contain parent AND other rows also contain children. 
@@ -32,9 +31,9 @@ class NetworkTrain:
             unique_classes.append(UNDEF_CLASS + parent_class)
         return (list(set(unique_classes)))
 
-    def get_subnet_data(self, X, y, class_labels):
+    def get_subclf_data(self, X, y, class_labels):
         """
-        Filter features (X) and labels (y) to only include those rows that have a class within class_labels
+        Filter features (X) and labels (y) to only include those rows that have a class within class_labels. This data will be used to construct a subclassifier.
         :param class_labels: List of classes (single class name, like the children in class_to_subclass)
         :return: X filtered down to same rows as y, which is filtered to only those samples that contain a class in class_labels. And relabeled as the index of the class in the list class_labels (need numeric label for later processing)
         """
@@ -64,22 +63,23 @@ class NetworkTrain:
 
     def train(self):
         """
-        Create series of SubNetworks connecting layers of class hierarchy
+        Create series of SubClassifiers connecting layers of class hierarchy
         """
         for parent_class, subclasses in class_to_subclass.items():
             class_level = self.class_levels[parent_class]
 
-            subnet_classes = self.get_subnet_classes(
+            subnet_classes = self.get_subclf_classes(
                 subclasses, self.y_train, parent_class)
             if len(subnet_classes) <= 1:
                 # print("Do not need network for " + parent_class +
                 #       " since it has no subclasses in dataset.")
                 continue
-            X, y = self.get_subnet_data(self.X_train, self.y_train, subnet_classes)
+            X, y = self.get_subclf_data(self.X_train, self.y_train, subnet_classes)
 
-            print("\n\nInitialzing SubNetwork for classes " +
+            print("\n\nInitialzing subclassifier for classes " +
                   str(subnet_classes) + " with " + str(X.shape[0]) + "  samples total.")
 
-            self.networks[parent_class] = SubNetwork(subnet_classes, X, y)
+            self.subclassifiers[parent_class] = self.create_classifier(
+                subnet_classes, X, y)
 
-        return self.networks
+        return self.subclassifiers
