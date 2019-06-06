@@ -101,7 +101,7 @@ def filter_class_size(df, X):
     :return: DataFrame of original format, with only top X classes of data
     """
     class_counts = get_class_counts(df)
-    min_classes = class_counts.loc[class_counts['avg_count'] > X]
+    min_classes = class_counts.loc[class_counts['avg_count'] >= X]
     min_classes = list(min_classes[TARGET_LABEL])
     return df.loc[df[TARGET_LABEL].isin(min_classes)]
 
