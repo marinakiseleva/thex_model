@@ -81,6 +81,25 @@ class MCBaseModelPerformance:
                     unique_classes.append(label)
         return list(set(unique_classes))
 
+    def get_mc_class_performance(self, class_names):
+        """
+        Record class performance by metrics that will later be used to compute precision and recall. Record: true positives, false positives, and # of Actual Positives, per class
+        """
+        df = self.combine_pred_actual()
+        class_metrics = {}
+        # TARGET_LABEL is list of classes, and PRED_LABEL is single class, so we
+        # need to update comparison to reflect this.
+        for class_name in class_names:
+            AP = df[df[TARGET_LABEL].str.contains(class_name)].shape[0]
+            TP = df[(df[PRED_LABEL] == class_name) & (
+                df[TARGET_LABEL].str.contains(class_name))].shape[0]
+            FP = df[(df[PRED_LABEL] == class_name) & (
+                ~df[TARGET_LABEL].str.contains(class_name))].shape[0]
+
+            class_metrics[class_name] = [AP, TP, FP]
+
+        return class_metrics
+
     def get_mc_metrics(self):
         """
         Gets recall and precision of all classes in training set (using self.get_mc_unique_classes())
