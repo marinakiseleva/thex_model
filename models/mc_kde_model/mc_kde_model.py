@@ -38,16 +38,18 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
     def get_all_class_probabilities(self):
         return self.test_probabilities()
 
-    def get_class_probabilities(self, x):
+    def get_class_probabilities(self, x, normalized=True):
         """
         Calculates probability of each transient class for the single test data point (x). 
         :param x: Single row of features 
         :return: map from class_name to probabilities
         """
-        densities = {}
+        probabilities = {}
         for class_index, class_name in enumerate(self.class_labels):
             model = self.models[class_name]
-            densities[class_name] = np.exp(model.score_samples([x.values]))[0]
-        sum_densities = sum(densities.values())
-        probabilities = {k: v / sum_densities for k, v in densities.items()}
+            probabilities[class_name] = np.exp(model.score_samples([x.values]))[0]
+
+        if normalized:
+            sum_densities = sum(probabilities.values())
+            probabilities = {k: v / sum_densities for k, v in probabilities.items()}
         return probabilities
