@@ -138,11 +138,12 @@ class BaseModelPerformance:
         df = self.combine_pred_actual()
         class_metrics = {}
         for class_code in class_codes:
+            AP = df[df[TARGET_LABEL] == class_code].shape[0]
             TP = df[(df[PRED_LABEL] == class_code) & (
                 df[TARGET_LABEL] == class_code)].shape[0]
             FP = df[(df[PRED_LABEL] == class_code) & (
                 df[TARGET_LABEL] != class_code)].shape[0]
-            AP = df[df[TARGET_LABEL] == class_code].shape[0]
+
             class_metrics[class_code] = [AP, TP, FP]
 
         return class_metrics
@@ -176,7 +177,7 @@ class BaseModelPerformance:
             TP = metrics[class_code][1]
             FP = metrics[class_code][2]
             if (TP + FP) == 0:
-                precision[class_code] = 1
+                precision[class_code] = 0
             else:
                 precision[class_code] = TP / (TP + FP)
 
