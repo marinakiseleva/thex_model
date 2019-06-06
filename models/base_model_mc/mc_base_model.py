@@ -97,12 +97,11 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             if 'redshift' in features:
                 plot_feature_distribution(df, 'redshift', False)
 
-    def run_cross_validation(self, k, X, y, roc_plots, class_metrics, data_filters):
+    def run_cross_validation(self, k, X, y, roc_plots, class_metrics, acc_metrics, data_filters):
         """
         Run k-fold cross validation
         """
         kf = StratifiedKFold(n_splits=k, shuffle=True)
-
         i = 1  # Fold count, for plotting labels
         for train_index, test_index in kf.split(X, y):
             self.X_train, self.X_test = X.iloc[train_index].reset_index(
@@ -130,7 +129,10 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             for class_name in self.class_labels:
                 class_metrics[class_name].append(self.get_mc_metrics_by_ranges(
                     X_accs, class_name))
-        return roc_plots, class_metrics
+            self.predictions = self.test_model()
+            acc_metrics.append(self.get_mc_class_performance(self.class_labels))
+
+        return roc_plots, class_metrics, acc_metrics
 
     def set_class_labels(self, y):
         if self.test_level is not None:
@@ -157,6 +159,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             self.set_class_labels(y)
         self.visualize_data(data_filters, y, X)
 
+        # Initialize maps of class names to metrics
         roc_plots = {}
         class_metrics = {}
         for class_name in self.class_labels:
@@ -165,11 +168,14 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             roc_plots[class_name] = [roc_fig, roc_ax, [], []]
             class_metrics[class_name] = []
 
+        acc_metrics = []  # List of maps from class to stats
         for index_run in range(data_filters['num_runs']):
             print("\n\nRun " + str(index_run + 1))
-            roc_plots, class_metrics = self.run_cross_validation(
-                k, X, y, roc_plots, class_metrics, data_filters)
+            roc_plots, class_metrics, acc_metrics = self.run_cross_validation(
+                k, X, y, roc_plots, class_metrics, acc_metrics, data_filters)
 
+        # Plot Results ################################
+        # Plot ROC curves for each class
         for class_name in self.class_labels:
             fig, ax, tprs, aucs = roc_plots[class_name]
             #   Baseline
@@ -205,5 +211,15 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
         plt.show()
 
+        # Plot probability vs accuracy for each class
         aggregated_class_metrics = self.aggregate_mc_metrics(class_metrics)
         self.plot_mc_probability_precision(aggregated_class_metrics)
+
+        # Plot Recall and Precision for each class
+        agg_accs = self.aggregate_metrics(acc_metrics, self.class_labels)
+        class_recalls = self.get_recall(agg_accs, self.class_labels)
+        class_precisions = self.get_precision(agg_accs, self.class_labels)
+        self.plot_performance(class_recalls, "Recall",
+                              ylabel="Recall", class_names=self.class_labels)
+        self.plot_performance(class_precisions, "Precision",
+                              ylabel="Precision", class_names=self.class_labels)
