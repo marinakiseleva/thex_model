@@ -263,21 +263,22 @@ class BaseModelVisualization:
         plt.xlabel('Predicted label')
         self.display_and_save_plot(title, ax)
 
-    def plot_performance(self, class_metrics, plot_title, class_counts=None, ylabel="Accuracy"):
+    def plot_performance(self, class_metrics, plot_title, class_counts=None, ylabel="Accuracy", class_names=None):
         """
         Visualizes accuracy per class with bar graph
         :param class_metrics: Mapping from class codes to metric value.
         """
 
         # Get class names and corresponding accuracies
-        class_names = [code_cat[c] for c in class_metrics.keys()]
+        if class_names is None:
+            class_names = [code_cat[c] for c in class_metrics.keys()]
         metrics = [class_metrics[c] for c in class_metrics.keys()]
 
         # Class names will be assigned in same order as these indices
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         ax = self.plot_bar_with_annotations(
             axis=ax, x_vals=class_names, y_vals=metrics, annotations=class_counts)
-        plt.xticks(rotation=-45)
+        plt.xticks(rotation=-90)
         plt.xlabel('Transient Class', fontsize=10)
         plt.ylabel(ylabel, fontsize=10)
         self.display_and_save_plot(plot_title, ax)
