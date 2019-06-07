@@ -46,7 +46,11 @@ class SubNetwork(SubClassifier):
         super(SubNetwork, self).__init__(classes, X, y)
 
     def predict(self, x):
-        return self.classifier.predict(x=x,  batch_size=1)
+        """
+        Return probabilities as list, in same order as self.classes
+        :param x: 2D Numpy array of features for single row
+        """
+        return list(self.classifier.predict(x=x,  batch_size=1)[0])
 
     def init_classifier(self, X, y):
         """

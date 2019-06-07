@@ -63,7 +63,7 @@ class ConditionalModel(MCBaseModel, ConditionalTrain, ConditionalTest):
     def get_class_probabilities(self, x):
         """
         Calculates probability of each transient class for the single test data point (x). Compute conditional probability of each class.
-        :param x: Single row of features
+        :param x: 2D array of features, because predict functions expect 2D arrays - although it only contains 1 row. List of single Numpy array.
         :return: map from class_names to probabilities
         """
 
@@ -75,9 +75,7 @@ class ConditionalModel(MCBaseModel, ConditionalTrain, ConditionalTest):
 
         # Step 1 - Get probability of each class
         for parent_class, subclassifier in self.subclassifiers.items():
-            predictions = subclassifier.predict(x=x)
-            # predictions = subnet.network.predict(x=x,  batch_size=1)
-            predictions = list(predictions[0])
+            predictions = subclassifier.predict(x)
             for pred_index, pred_class_prob in enumerate(predictions):
                 pred_class_name = subclassifier.classes[pred_index]
                 probabilities[pred_class_name] = pred_class_prob

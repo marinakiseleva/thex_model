@@ -40,6 +40,7 @@ class SubClassifier(ABC):
     @abstractmethod
     def predict(self, x):
         """
-        Get the probability of each class for the feature row x
+        Get the probability of each class for the feature row x. Return probabilities as list, in same order as self.classes
+        :param x: 2D Numpy array of features for single row 
         """
         pass
