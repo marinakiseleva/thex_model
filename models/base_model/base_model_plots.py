@@ -274,6 +274,9 @@ class BaseModelVisualization:
             class_names = [code_cat[c] for c in class_metrics.keys()]
         metrics = [class_metrics[c] for c in class_metrics.keys()]
 
+        # Sort by class names, so they show up consistently
+        class_names, metrics = zip(*sorted(zip(class_names, metrics)))
+
         # Class names will be assigned in same order as these indices
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         ax = self.plot_bar_with_annotations(
