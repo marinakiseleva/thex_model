@@ -130,7 +130,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                 class_metrics[class_name].append(self.get_mc_metrics_by_ranges(
                     X_accs, class_name))
             self.predictions = self.test_model()
-            acc_metrics.append(self.get_mc_class_performance(self.class_labels))
+            # acc_metrics.append(self.get_mc_class_performance(self.class_labels))
 
         return roc_plots, class_metrics, acc_metrics
 
@@ -216,10 +216,11 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         self.plot_mc_probability_precision(aggregated_class_metrics)
 
         # Plot Recall and Precision for each class
-        agg_accs = self.aggregate_metrics(acc_metrics, self.class_labels)
-        class_recalls = self.get_recall(agg_accs, self.class_labels)
-        class_precisions = self.get_precision(agg_accs, self.class_labels)
-        self.plot_performance(class_recalls, "Recall",
-                              ylabel="Recall", class_names=self.class_labels)
-        self.plot_performance(class_precisions, "Precision",
-                              ylabel="Precision", class_names=self.class_labels)
+        # agg_accs = self.aggregate_metrics(acc_metrics, self.class_labels)
+        # class_recalls = self.get_recall(agg_accs, self.class_labels)
+        # class_precisions = self.get_precision(agg_accs, self.class_labels)
+
+        # self.plot_performance(class_recalls, "Recall",
+        #                       ylabel="Recall", class_names=self.class_labels)
+        # self.plot_performance(class_precisions, "Precision",
+        #                       ylabel="Precision", class_names=self.class_labels)
