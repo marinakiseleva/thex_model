@@ -1,6 +1,6 @@
 """
 data_clean:
-Reassigns labels for data. convert_class_vectors creates a vector of Booleans for class presence like [0,0,0,0,1,0,1, ...], and remaining functionality is predominantly for assigning each sample a single class. 
+Reassigns labels for data. convert_class_vectors creates a vector of Booleans for class presence like [0,0,0,0,1,0,1, ...], and remaining functionality is predominantly for assigning each sample a single class.
 
 """
 import numpy as np
@@ -28,8 +28,8 @@ def relabel(class_index, class_vectors):
 
 def convert_class_vectors(df, class_labels, class_levels, level=None):
     """
-    Convert labels of TARGET_LABEL column (list of class names) in passed-in DataFrame to class vectors. Class is assigned to the parent's Undefined group if it does not have a subclass. For example Ia becomes Undefined_Ia if the sample is not a subtype of Ia. 
-    :param class_labels: Class names in order of their presence in the class vectors. 
+    Convert labels of TARGET_LABEL column (list of class names) in passed-in DataFrame to class vectors. Class is assigned to the parent's Undefined group if it does not have a subclass. For example Ia becomes Undefined_Ia if the sample is not a subtype of Ia.
+    :param class_labels: Class names in order of their presence in the class vectors.
     :param class_levels: Mapping from class name to level, to determine if sample is undefined class type
     :param level: Currently not used - NEED TO DROP.
     :return class_vectors: DataFrame with same number of rows as df, with only TARGET_LABEL column. Each row has a single vector in that columns, with the same length as class_labels, and where values are 0 or 1. 1 if it is that class, 0 otherwise.
@@ -101,9 +101,9 @@ def convert_str_to_list(input_string):
 
 def group_by_tree(df, transform_labels):
     """
-    Normalized claimed type (transient type). If claimed type is not in map, it is removed. Only considers 1-1 mappings, does not use galaxies that have more than 1. Defines new TARGET_LABEL column. 
+    Normalized claimed type (transient type). If claimed type is not in map, it is removed. Only considers 1-1 mappings, does not use galaxies that have more than 1. Defines new TARGET_LABEL column.
     :param df: DataFrame of values and labels. Must have column ORIG_TARGET_LABEL
-    :return df: Returns Pandas DataFrame with new column TARGET_LABEL, which has normalized transient type for each 
+    :return df: Returns Pandas DataFrame with new column TARGET_LABEL, which has normalized transient type for each
     """
     if transform_labels == False:
         df[TARGET_LABEL] = df[ORIG_TARGET_LABEL]
@@ -147,9 +147,32 @@ def find_min_label(labels, node_depths):
     return min_label
 
 
+def find_label(labels, node_depths, target_level):
+    """
+    Find label with target_level depth. If there is none, just return max label.
+    """
+    if target_level is None:
+        raise ValueError(
+            "Cannot compute find_label without target_level. By default, will do max label. ")
+    max_depth = 0
+    max_label = None
+
+    for label in labels:
+        if label in node_depths and node_depths[label] == target_level:
+            return label
+
+        if label in node_depths and node_depths[label] > max_depth:
+            max_depth = node_depths[label]
+            max_label = label
+
+    raise ValueError("Precision and Recall only make sense when all target classes are on same level. It appears this sample does not have a class on the target level required. Classes " +
+                     str(labels) + " and target level: " + str(target_level))
+    return max_label
+
+
 def find_max_label(labels, node_depths):
     """
-    Find label with maximal depth (deepest in the tree), ie. Ia Pec, IIb, etc.
+    Find label with maximal depth(deepest in the tree), ie. Ia Pec, IIb, etc.
     """
     max_depth = 0
     max_label = None
@@ -167,7 +190,7 @@ def find_max_label(labels, node_depths):
 
 def fill_nulls(df):
     """
-    Fills NULL values in dataframe by assigning average value in the column 
+    Fills NULL values in dataframe by assigning average value in the column
     """
     for col_name in list(df):
         df[col_name].fillna((df[col_name].mean()), inplace=True)
