@@ -1,8 +1,5 @@
 import pandas as pd
-
-# from models.base_model.roc_logic import *
-from models.base_model.base_model_performance import BaseModelPerformance
-from thex_data.data_clean import convert_class_vectors, convert_str_to_list
+from thex_data.data_clean import *
 from thex_data.data_consts import *
 
 
@@ -81,20 +78,49 @@ class MCBaseModelPerformance:
                     unique_classes.append(label)
         return list(set(unique_classes))
 
+    def combine_mc_pred_actual(self, class_names):
+        """
+        Create DataFrame by which to gauge performance. Each class name is a column, which a 0 or 1 for actual class presence. Class is marked as UNDEFINED_ if the max label has an UNDEFINED_label in class_names. PRED_LABEL column contains current single-class prediction.
+        :return: DataFrame with PRED_LABEL column with single class prediction, and a column for each class from class_names, with a 0/1 for actual class presence
+        """
+        df = self.predictions
+        actual_classes = self.y_test
+
+        for class_name in class_names:
+            df[class_name] = 0
+
+        # Fill each row's  column classes
+        for index, row in df.iterrows():
+            classes = actual_classes.iloc[index][TARGET_LABEL]
+            orig_labels = convert_str_to_list(classes)
+
+            label = find_label(orig_labels, self.class_levels, self.test_level)
+
+            for class_name in orig_labels:
+                if class_name in list(df):
+                    df.at[index, class_name] = 1
+
+            undef_label = UNDEF_CLASS + label
+            if undef_label in list(df):
+                df.at[index, undef_label] = 1
+
+        return df
+
     def get_mc_class_performance(self, class_names):
         """
         Record class performance by metrics that will later be used to compute precision and recall. Record: true positives, false positives, and # of Actual Positives, per class
         """
-        df = self.combine_pred_actual()
+        df = self.combine_mc_pred_actual(class_names)
         class_metrics = {}
-        # TARGET_LABEL is list of classes, and PRED_LABEL is single class, so we
-        # need to update comparison to reflect this.
+        # print("Unique predicted classes")
+        # print(list(df[PRED_LABEL].unique()))
         for class_name in class_names:
-            AP = df[df[TARGET_LABEL].str.contains(class_name)].shape[0]
-            TP = df[(df[PRED_LABEL] == class_name) & (
-                df[TARGET_LABEL].str.contains(class_name))].shape[0]
-            FP = df[(df[PRED_LABEL] == class_name) & (
-                ~df[TARGET_LABEL].str.contains(class_name))].shape[0]
+            # print("for class " + class_name)
+
+            AP = df.loc[df[class_name] == 1].shape[0]
+            TP = df[(df[PRED_LABEL] == class_name) & (df[class_name] == 1)].shape[0]
+            FP = df[(df[PRED_LABEL] == class_name) & (df[class_name] == 0)].shape[0]
+            TN = df[(df[PRED_LABEL] != class_name) & (df[class_name] == 0)].shape[0]
 
             class_metrics[class_name] = [AP, TP, FP]
 
@@ -148,9 +174,9 @@ class MCBaseModelPerformance:
     def aggregate_mc_metrics(self, metrics):
         """
         Aggregate output of get_mc_metrics_by_ranges over several folds/runs
-        :param metrics: Dictionary of class names to their ranged metrics, 
+        :param metrics: Dictionary of class names to their ranged metrics,
          {class_name: [[percent_ranges, AP_ranges, TOTAL_ranges],...] , ...}
-        :return: Dictionary of class names to their SUMMED ranged metrics, 
+        :return: Dictionary of class names to their SUMMED ranged metrics,
          {class_name: [percent_ranges, sum(AP_ranges), sum(TOTAL_ranges)] , ...}
         """
 
