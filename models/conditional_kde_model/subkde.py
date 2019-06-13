@@ -34,7 +34,11 @@ class SubKDE(SubClassifier):
         for class_index, class_name in enumerate(self.classes):
             model = self.kdes[class_index]
             probabilities[class_index] = np.exp(model.score_samples(x))[0]
+
         sum_densities = sum(probabilities.values())
+        if sum_densities == 0:
+            raise ValueError(
+                "Sum of probability densities in SubKDE should be greater than 0.")
         probabilities = {k: v / sum_densities for k, v in probabilities.items()}
         return list(probabilities.values())
 
@@ -43,16 +47,15 @@ class SubKDE(SubClassifier):
         Get maximum likelihood estimated distribution by kernel density estimate of this class over all features
         :return: best fitting KDE
         """
-
         # Create grid to search over bandwidth for
-        range_bws = np.linspace(0.01, 2, 100)
+        range_bws = np.linspace(0.01, 100, 1000)
         grid = {
             'bandwidth': range_bws,
             'kernel': ['gaussian'],
             'metric': ['euclidean']
         }
         clf_optimize = GridSearchCV(KernelDensity(), grid, iid=False, cv=3, n_jobs=-1)
-
         clf_optimize.fit(X)
 
+        print("Best model params  " + str(clf_optimize.best_params_))
         return clf_optimize.best_estimator_
