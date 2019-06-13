@@ -29,10 +29,11 @@ def relabel(class_index, class_vectors):
 def convert_class_vectors(df, class_labels, class_levels, level=None):
     """
     Convert labels of TARGET_LABEL column (list of class names) in passed-in DataFrame to class vectors. Class is assigned to the parent's Undefined group if it does not have a subclass. For example Ia becomes Undefined_Ia if the sample is not a subtype of Ia.
+    :param df: Pandas DataFrame with TARGET_LABEL column of original labels (ex. I, Ia)
     :param class_labels: Class names in order of their presence in the class vectors.
     :param class_levels: Mapping from class name to level, to determine if sample is undefined class type
     :param level: Currently not used - NEED TO DROP.
-    :return class_vectors: DataFrame with same number of rows as df, with only TARGET_LABEL column. Each row has a single vector in that columns, with the same length as class_labels, and where values are 0 or 1. 1 if it is that class, 0 otherwise.
+    :return class_vectors: DataFrame with same number of rows as df, with only TARGET_LABEL column. Each row has a single vector in that column, with the same length as class_labels, and where values are 0 or 1. 1 if it is that class, 0 otherwise.
 
     """
     # Convert labels to 0/1 class vectors in order of class_labels
