@@ -12,8 +12,8 @@ from thex_data.data_consts import TARGET_LABEL
 from models.conditional_model.classifier import SubClassifier
 
 
-def create_model(layer_sizes=[48, 16], input_length=1, output_length=1):
- # learn_rate=0.1, momentum=0.1, decay=0.1, nesterov=False,
+def create_model(layer_sizes=[48, 16], input_length=1, output_length=1,
+                 learn_rate=0.1, momentum=0.1, decay=0.1, nesterov=False):
     model = Sequential()
     # Add fully connected layers
     model.add(Dense(layer_sizes[0], input_dim=input_length, activation='relu'))
@@ -27,7 +27,7 @@ def create_model(layer_sizes=[48, 16], input_length=1, output_length=1):
     # sgd = optimizers.SGD(lr=learn_rate, momentum=momentum,
     #                      decay=decay, nesterov=nesterov)
     model.compile(loss='categorical_crossentropy',
-                  optimizer='adam',  # sgd
+                  optimizer='adam',  # sgd,  # 'adam'
                   metrics=['accuracy', 'categorical_accuracy'])
     return model
 
@@ -73,13 +73,13 @@ class SubNetwork(SubClassifier):
         class_weights = dict(enumerate(class_weights))
 
         # NN hyperparameters
-        epochs = 50
+        epochs = 1500
         batch_size = 24
         es = EarlyStopping(monitor='val_loss',
-                           mode='auto',
+                           mode='min',
                            verbose=0,
-                           min_delta=0.001,
-                           patience=50,
+                           min_delta=0,
+                           patience=10,
                            restore_best_weights=True)
 
         model = self.get_best_model(batch_size=batch_size,
@@ -98,9 +98,10 @@ class SubNetwork(SubClassifier):
                             batch_size=batch_size,
                             verbose=0,
                             epochs=epochs,
-                            # sample_weight=weights_train,
-                            validation_data=(x_valid.values, y_valid),  # , weights_valid
-                            class_weight=class_weights,
+                            sample_weight=weights_train,
+                            validation_data=(x_valid.values, y_valid,
+                                             weights_valid),  # , weights_valid
+                            # class_weight=class_weights,
                             callbacks=[es]
                             )
 
@@ -110,18 +111,21 @@ class SubNetwork(SubClassifier):
         metrics = model.evaluate(x_valid.values, y_valid)
         print("Valiation " +
               str(model.metrics_names[2]) + " : " + str(round(metrics[2], 4)))
+        print("Finished at epoch " + str(es.stopped_epoch))
+        if es.stopped_epoch == 0:
+            print("Early stopping did not take effect, validation loss never increased. Simply ended at max of " + str(epochs) + "epochs.")
 
         return model
 
     def get_best_model(self, batch_size, epochs, x_valid, y_valid, val_sample_weights, x_train, y_train, train_sample_weights, callbacks, class_weights):
 
         param_grid = {
-            # 'learn_rate': [0.0001, 0.001, 0.01],
-            # 'momentum': [0.5, 0.9],  # usually between 0.5-0.9
+            # 'learn_rate': [0.0001, 0.001],  # , 0.01
+            # 'momentum': [0.5],  # usually between 0.5-0.9
             # 'decay': [0.2, 0.6],
-            # 'nesterov': [True, False],
-            # , [88, 64, 16], [64, 38, 24, 12]],
-            'layer_sizes': [[66, 16], [92, 32], [88, 44, 32, 16]],
+            # 'nesterov': [True],  # False
+            # , [88, 64, 16], [64, 38, 24, 12]],[88, 44, 32, 16]
+            'layer_sizes': [[92, 32], [108, 64, 16]],
             'input_length': [self.input_length],
             'output_length': [self.output_length]}
 
@@ -131,7 +135,7 @@ class SubNetwork(SubClassifier):
                                      verbose=0)
 
         keras_fit_params = {
-            'callbacks': callbacks,
+            # 'callbacks': callbacks,
             'epochs': epochs,
             'batch_size': batch_size,
             'validation_data': (x_valid, y_valid),  # , val_sample_weights
@@ -144,14 +148,15 @@ class SubNetwork(SubClassifier):
                             verbose=0,
                             cv=3)
 
-        grid.fit(x_train, y_train, shuffle=True, class_weight=class_weights)
+        # , class_weight=class_weights)
+        grid.fit(x_train, y_train, shuffle=True, sample_weight=train_sample_weights)
         # sample_weight=train_sample_weights)
 
         m = create_model(
             # learn_rate=grid.best_params_['learn_rate'],
-            #                momentum=grid.best_params_['momentum'],
-            #                decay=grid.best_params_['decay'],
-            #                nesterov=grid.best_params_['nesterov'],
+            # momentum=grid.best_params_['momentum'],
+            # decay=grid.best_params_['decay'],
+            # nesterov=grid.best_params_['nesterov'],
             layer_sizes=grid.best_params_['layer_sizes'],
             input_length=grid.best_params_['input_length'],
             output_length=grid.best_params_['output_length'])
