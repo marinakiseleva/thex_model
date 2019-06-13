@@ -44,9 +44,9 @@ class ConditionalTrain:
             has_level_class = False
             for class_index, class_name in enumerate(class_labels):
                 if class_name in cur_classes:
-                    # if has_level_class:
-                    #     print("Sample was already assigned " + str(class_labels[
-                    #         labels[-1]]) + " and now it also wants " + str(class_name))
+                    if has_level_class:
+                        print("Sample was already assigned " + str(class_labels[
+                            labels[-1]]) + " and now it also wants " + str(class_name))
                     has_level_class = True
                     labels.append(class_labels.index(class_name))
                     keep_indices.append(df_index)
@@ -65,6 +65,7 @@ class ConditionalTrain:
         """
         Create series of SubClassifiers connecting layers of class hierarchy
         """
+
         for parent_class, subclasses in class_to_subclass.items():
             class_level = self.class_levels[parent_class]
 
