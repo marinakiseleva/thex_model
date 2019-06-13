@@ -14,15 +14,21 @@ DPI = 600
 # LOCAL_DATA_PATH to relative path of THEx FITS file, relative to root of
 # package: thex_model
 
+
+# Testing
+# LOCAL_DATA_PATH = '/../../data/test_data.fits'
+
+# June 3 Assembled - More data?
+# LOCAL_DATA_PATH = '/../../data/assembled.fits'
+
 # GALEX/WISE/PANSTARRS Versions 1, 2
 # LOCAL_DATA_PATH = '/../../data/THEx-training-set.v0_0_1.fits'
 LOCAL_DATA_PATH = '/../../data/THEx-training-set-v0_0_2.fits'
-# LOCAL_DATA_PATH = '/../../data/test_data.fits'
-# GALEX/WISE/PANSTARRS Version 2
-# LOCAL_DATA_PATH = '/../../data/THEx-training-set-v0_0_2.npy'
 
 # All data Version 4
 # LOCAL_DATA_PATH = '/../../data/THEx-catalog.v0_0_4.fits'
+
+
 #***************************************************************
 
 
@@ -39,6 +45,39 @@ TARGET_LABEL = 'transient_type'
 UNKNOWN_LABEL = 'Unknown'
 PRED_LABEL = 'predicted_class'
 UNDEF_CLASS = 'Undefined_'
+
+"""
+class_to_subclass
+{Parent : [Child1, child2, ...] }
+Hierarchy of transient types, used in hierarchical multilabel classifiers
+"""
+class_to_subclass = {
+    "TTypes": ["I", "CC", "SLSN", "GRB", "Kilonova", "TDE", "AGN", "Candidate", "GW", "Galaxy", "HII Region", "Impostor", "Minor Planet", "Nova", "Other", "PISN", "Star", "False", "Lensing", UNKNOWN_LABEL],
+    "I": ["I Pec", "Ia", "Ib", "Ic", "Ib/c", "nIa"],
+    "I Pec": ["I-rapid", "I-faint"],  # removed Ia Pec
+    "Ia": ["Ia Pec", "Ia-HV", "Ia/b", "Ia/c", "Ia-02cx"],
+    "Ia Pec": ["Ia CSM", "Ia-91bg", "Ia-91T", "Ia-02cx",
+               "Ia-00cx", "Ia-99aa", "Ia-09dc", "Ia-HV"],
+    "CC": ["II"],  # "Ib", "Ic",
+    "Ib": ["Ibn", "Ib Pec"],
+    "Ib Pec": ["Ib-Ca"],
+    "Ic": ["Ic Pec", "Ia/c"],
+    "Ic Pec": ["Ic BL", "Ic-lum"],
+    "Ib/c": ["Ib/c Pec"],
+    "II": ["II P", "II L", "IIn", "IIb", "IIc", "II Pec"],
+    "II Pec": ["IIn Pec", "II P-97D"],
+    "II P": ["II P Pec", "IIn P"],
+    "II P Pec": ["II P-97D"],
+    "II L": ["IIn L"],
+    "IIn": ["IIn P", "IIn L", "IIn Pec"],
+    "IIb": ["IIb Pec"],
+    "SLSN": ["SLSN-I", "SLSN-II", "SLSN-R"],
+    "GRB": ["LGRB", "SGRB"],
+    "Kilonova": ["KilonovaCand"],
+    "TDE": ["TDE", "MS + SMBH", "He + SMBH", "Planet + WD", "Low-mass TDE", "WD + IMBH"],
+    "Star": ["Variable Star"]
+    # "TDE": ["CandidateTDE", "XrayTDE", "UVOptTDE"]
+}
 
 
 """
@@ -552,71 +591,101 @@ grouping_lists = {
 drop_cols
 Columns with non-numeric values that are not used in analysis
 """
-drop_cols = ['event', 'ra', 'dec', 'ra_deg', 'dec_deg', 'radec_err', 'host', 'host_ra', 'host_dec', 'ebv', 'host_ra_deg', 'host_dec_deg', 'host_dist', 'host_search_radius', 'is_confirmed_host', 'by_primary_cand',
-             'by_transient', 'AllWISE_IsVar', 'HyperLEDA_objtype', 'HyperLEDA_type', 'HyperLEDA_bar', 'HyperLEDA_ring', 'HyperLEDA_multiple', 'HyperLEDA_compactness', 'HyperLEDA_agnclass', "Err",  "_e_",  "_ERR"]
+drop_cols = ['event',
+             'ra',
+             'dec',
+             'ra_deg',
+             'dec_deg',
+             'radec_err',
+             'host',
+             'host_ra',
+             'host_dec',
+             'ebv',
+             'host_ra_deg',
+             'host_dec_deg',
+             'host_dist',
+             'host_search_radius',
+             'is_confirmed_host',
+             'by_primary_cand',
+             'by_transient',
+             'AllWISE_IsVar',
+             'HyperLEDA_objtype',
+             'HyperLEDA_type',
+             'HyperLEDA_bar',
+             'HyperLEDA_ring',
+             'HyperLEDA_multiple',
+             'HyperLEDA_compactness',
+             'HyperLEDA_agnclass',
+             "Err",
+             "_e_",
+             "_ERR"]
 
 """
 mag_cols
 Column names corresponding to magntiude, which can be subtracted from one another to produce color
 """
-mag_cols = ['GALEXAIS_FUV', 'GALEXAIS_NUV',
-            'GALEXAIS_FUV.b', 'GALEXAIS_e_FUV.b', 'GALEXAIS_NUV.b',
-            'GALEXAIS_e_NUV.b', 'GALEXAIS_FUV.a', 'GALEXAIS_e_FUV.a', 'GALEXAIS_NUV.a',
-            'GALEXAIS_e_NUV.a', 'GALEXAIS_FUV.4', 'GALEXAIS_e_FUV.4', 'GALEXAIS_NUV.4',
-            'GALEXAIS_e_NUV.4', 'GALEXAIS_FUV.6', 'GALEXAIS_e_FUV.6', 'GALEXAIS_NUV.6',
+mag_cols = ['GALEXAIS_FUV',
+            'GALEXAIS_NUV',
+            'GALEXAIS_FUV.b',
+            'GALEXAIS_e_FUV.b',
+            'GALEXAIS_NUV.b',
+            'GALEXAIS_e_NUV.b',
+            'GALEXAIS_FUV.a',
+            'GALEXAIS_e_FUV.a',
+            'GALEXAIS_NUV.a',
+            'GALEXAIS_e_NUV.a',
+            'GALEXAIS_FUV.4',
+            'GALEXAIS_e_FUV.4',
+            'GALEXAIS_NUV.4',
+            'GALEXAIS_e_NUV.4',
+            'GALEXAIS_FUV.6',
+            'GALEXAIS_e_FUV.6',
+            'GALEXAIS_NUV.6',
             'GALEXAIS_e_NUV.6',
-            'AllWISE_W1mag', 'AllWISE_e_W1mag', 'AllWISE_W2mag', 'AllWISE_e_W2mag',
-            'AllWISE_W3mag', 'AllWISE_e_W3mag', 'AllWISE_W4mag', 'AllWISE_e_W4mag',
+            'AllWISE_W1mag',
+            'AllWISE_e_W1mag',
+            'AllWISE_W2mag',
+            'AllWISE_e_W2mag',
+            'AllWISE_W3mag',
+            'AllWISE_e_W3mag',
+            'AllWISE_W4mag',
+            'AllWISE_e_W4mag',
             'PS1_gmag',
-            'PS1_gmagStd', 'PS1_b_gmag', 'PS1_B_gmag',
+            'PS1_gmagStd',
+            'PS1_b_gmag',
+            'PS1_B_gmag',
             'PS1_gKmag',
             'PS1_rmag',
-            'PS1_rmagStd', 'PS1_b_rmag', 'PS1_B_rmag',
+            'PS1_rmagStd',
+            'PS1_b_rmag',
+            'PS1_B_rmag',
             'PS1_rKmag',
             'PS1_imag',
-            'PS1_imagStd', 'PS1_b_imag', 'PS1_B_imag',
+            'PS1_imagStd',
+            'PS1_b_imag',
+            'PS1_B_imag',
             'PS1_iKmag',
             'PS1_zmag',
-            'PS1_zmagStd', 'PS1_b_zmag', 'PS1_B_zmag',
+            'PS1_zmagStd',
+            'PS1_b_zmag',
+            'PS1_B_zmag',
             'PS1_zKmag',
             'PS1_ymag',
-            'PS1_ymagStd', 'PS1_b_ymag', 'PS1_B_ymag',
+            'PS1_ymagStd',
+            'PS1_b_ymag',
+            'PS1_B_ymag',
             'PS1_yKmag',
-
-            'NED_GALEX_FUV', 'NED_GALEX_NUV', 'NED_2MASS_J', 'NED_2MASS_H', 'NED_2MASS_Ks', 'NED_SDSS_u', 'NED_SDSS_g', 'NED_SDSS_r', 'NED_SDSS_i', 'NED_SDSS_z',  'AllWISE_Jmag', 'AllWISE_Hmag', 'AllWISE_Kmag'
-
-
+            'NED_GALEX_FUV',
+            'NED_GALEX_NUV',
+            'NED_2MASS_J',
+            'NED_2MASS_H',
+            'NED_2MASS_Ks',
+            'NED_SDSS_u',
+            'NED_SDSS_g',
+            'NED_SDSS_r',
+            'NED_SDSS_i',
+            'NED_SDSS_z',
+            'AllWISE_Jmag',
+            'AllWISE_Hmag',
+            'AllWISE_Kmag'
             ]
-
-"""
-class_to_subclass
-{Parent : [Child1, child2, ...] }
-Hierarchy of transient types, used in hierarchical multilabel classifiers
-"""
-class_to_subclass = {
-    "TTypes": ["I", "CC", "SLSN", "GRB", "Kilonova", "TDE", "AGN", "Candidate", "GW", "Galaxy", "HII Region", "Impostor", "Minor Planet", "Nova", "Other", "PISN", "Star", "False", "Lensing", UNKNOWN_LABEL],
-    "I": ["I Pec", "Ia", "Ib", "Ic", "Ib/c", "nIa"],
-    "I Pec": ["I-rapid", "I-faint"],  # removed Ia Pec
-    "Ia": ["Ia Pec", "Ia-HV", "Ia/b", "Ia/c", "Ia-02cx"],
-    "Ia Pec": ["Ia CSM", "Ia-91bg", "Ia-91T", "Ia-02cx",
-               "Ia-00cx", "Ia-99aa", "Ia-09dc", "Ia-HV"],
-    "CC": ["II"],  # "Ib", "Ic",
-    "Ib": ["Ibn", "Ib Pec"],
-    "Ib Pec": ["Ib-Ca"],
-    "Ic": ["Ic Pec", "Ia/c"],
-    "Ic Pec": ["Ic BL", "Ic-lum"],
-    "Ib/c": ["Ib/c Pec"],
-    "II": ["II P", "II L", "IIn", "IIb", "IIc", "II Pec"],
-    "II Pec": ["IIn Pec", "II P-97D"],
-    "II P": ["II P Pec", "IIn P"],
-    "II P Pec": ["II P-97D"],
-    "II L": ["IIn L"],
-    "IIn": ["IIn P", "IIn L", "IIn Pec"],
-    "IIb": ["IIb Pec"],
-    "SLSN": ["SLSN-I", "SLSN-II", "SLSN-R"],
-    "GRB": ["LGRB", "SGRB"],
-    "Kilonova": ["KilonovaCand"],
-    "TDE": ["TDE", "MS + SMBH", "He + SMBH", "Planet + WD", "Low-mass TDE", "WD + IMBH"],
-    "Star": ["Variable Star"]
-    # "TDE": ["CandidateTDE", "XrayTDE", "UVOptTDE"]
-}
