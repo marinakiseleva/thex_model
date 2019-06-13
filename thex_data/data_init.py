@@ -32,8 +32,10 @@ def collect_cols(cols, col_matches):
                     col_list.append(column)
         else:
             col_list = all_cols
-            col_list.remove('redshift')
-            col_list.remove(ORIG_TARGET_LABEL)
+            if 'redshift' in col_list:
+                col_list.remove('redshift')
+            if ORIG_TARGET_LABEL in col_list:
+                col_list.remove(ORIG_TARGET_LABEL)
 
     # Drop all non-numeric columns
     column_list_numeric = set()
@@ -62,5 +64,6 @@ def collect_data():
             df.drop(column + "_str", axis=1, inplace=True)
         else:
             df[column] = df_bytes[column]
-
+    # Drop infinity values.
+    df = df[~df.isin([np.nan, np.inf, -np.inf]).any(1)]
     return df
