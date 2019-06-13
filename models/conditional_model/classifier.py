@@ -14,18 +14,17 @@ class SubClassifier(ABC):
         self.classes = classes
         self.classifier = self.init_classifier(X, y)
 
-    def get_sample_weights(self, X, y):
+    def get_sample_weights(self, y):
         """
         Get weight of each sample (1/# of samples in class)
+        :param y: Pandas DataFrame with TARGET_LABEL column
         """
-        labeled_samples = pd.concat([X, y], axis=1)
-        classes = labeled_samples[TARGET_LABEL].unique()
+        classes = y[TARGET_LABEL].unique()
         label_counts = {}
         for c in classes:
-            label_counts[c] = labeled_samples.loc[
-                labeled_samples[TARGET_LABEL] == c].shape[0]
+            label_counts[c] = y.loc[y[TARGET_LABEL] == c].shape[0]
         sample_weights = []
-        for df_index, row in labeled_samples.iterrows():
+        for df_index, row in y.iterrows():
             class_count = label_counts[row[TARGET_LABEL]]
             sample_weights.append(1 / class_count)
         return np.array(sample_weights)

@@ -60,8 +60,8 @@ class SubNetwork(SubClassifier):
         """
         x_train, x_valid, y_train, y_valid = train_test_split(
             X, y, test_size=0.5)
-        weights_train = self.get_sample_weights(x_train, y_train)
-        weights_valid = self.get_sample_weights(x_valid, y_valid)
+        weights_train = self.get_sample_weights(y_train)
+        weights_valid = self.get_sample_weights(y_valid)
         # Convert numeric labels to one-hot encoding (which is what Keras fit expects)
         y_train = to_categorical(y=y_train, num_classes=len(self.classes))
         y_valid = to_categorical(y=y_valid, num_classes=len(self.classes))
