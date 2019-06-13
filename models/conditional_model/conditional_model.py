@@ -54,7 +54,7 @@ class ConditionalModel(MCBaseModel, ConditionalTrain, ConditionalTest):
         for df_index, x in self.X_test.iterrows():
             prob_map = self.get_class_probabilities(
                 np.array([x.values]))
-            # Convert to list - order is find because map was created with
+            # Convert to list - order is fine because map was created with
             # self.class_labels
             probabilites = list(prob_map.values())
             predictions.append(list(prob_map.values()))
@@ -78,12 +78,14 @@ class ConditionalModel(MCBaseModel, ConditionalTrain, ConditionalTest):
             predictions = subclassifier.predict(x)
             for pred_index, pred_class_prob in enumerate(predictions):
                 pred_class_name = subclassifier.classes[pred_index]
-                probabilities[pred_class_name] = pred_class_prob
+                if pred_class_name in probabilities:
+                    probabilities[pred_class_name] = pred_class_prob
 
         # Step 2 - Compute conditional probabilities
         for current_level in range(max(self.class_levels.values())):
             for class_name, probability in probabilities.items():
-                if self.class_levels[class_name] == current_level:
+                if self.class_levels[class_name] == current_level and class_name in probabilities:
                     probabilities[
                         class_name] *= self.get_parent_prob(class_name, probabilities)
+
         return probabilities
