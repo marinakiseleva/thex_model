@@ -57,5 +57,5 @@ class SubKDE(SubClassifier):
         clf_optimize = GridSearchCV(KernelDensity(), grid, iid=False, cv=3, n_jobs=-1)
         clf_optimize.fit(X)
 
-        print("Best model params  " + str(clf_optimize.best_params_))
+        # print("Best model params  " + str(clf_optimize.best_params_))
         return clf_optimize.best_estimator_
