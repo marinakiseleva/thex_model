@@ -217,6 +217,8 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         avg_ax.set_xlabel('False Positive Rate')
         avg_ax.set_ylabel('True Positive Rate')
         avg_ax.legend(loc="best")
+        avg_fig.savefig(file_dir + "/roc_summary",
+                        bbox_inches=extent.expanded(1.3, 1.3))
         plt.show()
 
         # Plot probability vs accuracy for each class
