@@ -39,7 +39,6 @@ class SubKTree(SubClassifier):
         probabilities = OrderedDict()
         for class_index, class_name in enumerate(self.classes):
             tree = self.ktrees[class_index]
-
             if tree is not None:
                 class_probabilities = tree.predict_proba(x)
                 # class_probabilities = [[prob class 0, prob class 1]]
@@ -49,6 +48,13 @@ class SubKTree(SubClassifier):
 
             probabilities[class_name] = class_probability
 
+        sum_probabilities = sum(probabilities.values())
+        if sum_probabilities == 0:
+            # raise ValueError("SubKTree: Sum should be > than 0.")
+            # print("All probabilities for this sample are 0.")
+            probabilities = {k: 0 for k, v in probabilities.items()}
+        else:
+            probabilities = {k: v / sum_probabilities for k, v in probabilities.items()}
         return list(probabilities.values())
 
     def get_best_model(self, X, y):
@@ -69,7 +75,7 @@ class SubKTree(SubClassifier):
                 'class_weight': ['balanced']
                 }
         clf_optimize = GridSearchCV(
-            estimator=DecisionTreeClassifier(), param_grid=grid, scoring='brier_score_loss', cv=3, iid=True, n_jobs=12)
+            estimator=DecisionTreeClassifier(), param_grid=grid, scoring='brier_score_loss', cv=3, iid=True, n_jobs=-1)
 
         # Fit the random search model
         clf_optimize.fit(X, y, sample_weight=sample_weights)
