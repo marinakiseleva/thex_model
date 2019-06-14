@@ -176,6 +176,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
         # Plot Results ################################
         # Plot ROC curves for each class
+        avg_fig, avg_ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         for class_name in self.class_labels:
             fig, ax, tprs, aucs = roc_plots[class_name]
             #   Baseline
@@ -191,6 +192,9 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                     label=r'Mean ROC (AUC=%0.2f$\pm$%0.2f)' % (
                         mean_auc, std_auc),
                     lw=2, alpha=.8)
+            avg_ax.plot(mean_fpr, mean_tpr, lw=1, alpha=0.6,
+                        label=class_name + r' AUC=%0.2f$\pm$%0.2f' % (
+                            mean_auc, std_auc))
             # Standard deviation in gray shading
             std_tpr = np.std(tprs, axis=0)
             tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
@@ -209,6 +213,10 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             file_name = file_dir + "/" + self.prep_file_name(title)
             fig.savefig(file_name, bbox_inches=extent.expanded(1.3, 1.3))
 
+        avg_ax.set_title(self.name + " ROC Curves")
+        avg_ax.set_xlabel('False Positive Rate')
+        avg_ax.set_ylabel('True Positive Rate')
+        avg_ax.legend(loc="best")
         plt.show()
 
         # Plot probability vs accuracy for each class
