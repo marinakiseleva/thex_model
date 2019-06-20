@@ -44,9 +44,9 @@ class ConditionalTrain:
             has_level_class = False
             for class_index, class_name in enumerate(class_labels):
                 if class_name in cur_classes:
-                    if has_level_class:
-                        print("Sample was already assigned " + str(class_labels[
-                            labels[-1]]) + " and now it also wants " + str(class_name))
+                    # if has_level_class:
+                    #     print("Sample was already assigned " + str(class_labels[
+                    #         labels[-1]]) + " and now it also wants " + str(class_name))
                     has_level_class = True
                     labels.append(class_labels.index(class_name))
                     keep_indices.append(df_index)
@@ -77,8 +77,8 @@ class ConditionalTrain:
                 continue
             X, y = self.get_subclf_data(self.X_train, self.y_train, subnet_classes)
 
-            print("\n\nInitialzing subclassifier for classes " +
-                  str(subnet_classes) + " with " + str(X.shape[0]) + "  samples total.")
+            # print("\n\nInitialzing subclassifier for classes " +
+            # str(subnet_classes) + " with " + str(X.shape[0]) + "  samples total.")
 
             self.subclassifiers[parent_class] = self.create_classifier(
                 subnet_classes, X, y)
