@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.metrics import auc
 
 from thex_data.data_clean import *
-from thex_data.data_consts import ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI, UNDEF_CLASS
+from thex_data.data_consts import ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI, UNDEF_CLASS, PRED_LABEL
 from thex_data.data_prep import get_source_target_data
 from thex_data.data_plot import *
 from thex_data.data_consts import class_to_subclass as hierarchy
@@ -22,6 +22,36 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
     Abstract Class representing base functionality of all multiclass models. Inherits from BaseModel, and uses Mixins from other classes. Subclasses of models must implement all BaseModel methods PLUS test_probabilities
     """
 
+    def test_model(self, keep_top_half=True):
+        """
+        Get class prediction for each sample. Predict class with max probability density.
+        :return: DataFrame with column PRED_LABEL, which contains the class name of the class with the highest probability assigned. 
+        """
+        # For diagnosing purposes - keep only top 1/2 probs
+        if keep_top_half:
+            unnormalized_max_probabilities = []
+            for index, row in self.X_test.iterrows():
+                # TODO: how to change if probabilities are normalized or unnormalized.
+                unnormalized_probabilities = self.get_class_probabilities(
+                    row)
+                max_unnormalized_prob = max(unnormalized_probabilities.values())
+                unnormalized_max_probabilities.append(max_unnormalized_prob)
+            probs = np.array(unnormalized_max_probabilities)
+            keep_indices = np.argwhere(probs > np.average(probs)).transpose()[0].tolist()
+
+            # Get max class for those indices, and filter down self.X_test and
+            # self.y_test to have same rows
+            self.X_test = self.X_test.loc[self.X_test.index.isin(keep_indices)]
+            self.y_test = self.y_test.loc[self.y_test.index.isin(keep_indices)]
+
+        predictions = []
+        for index, row in self.X_test.iterrows():
+            probabilities = self.get_class_probabilities(row)
+            max_prob_class = max(probabilities, key=probabilities.get)
+            predictions.append(max_prob_class)
+        predicted_classes = pd.DataFrame(predictions, columns=[PRED_LABEL])
+        return predicted_classes
+
     def run_model(self):
         """
         Set custom attributes for Multiclass classifiers: test_level (level of class hierarchy over which to get probabilities, for MCKDEModel), and class_labels (specific classes to run model on)
@@ -33,6 +63,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
         self.test_level = self.user_data_filters[
             'test_level'] if 'test_level' in self.user_data_filters.keys() else None
+
         self.class_labels = self.user_data_filters[
             'class_labels'] if 'class_labels' in self.user_data_filters.keys() else None
         super(MCBaseModel, self).run_model()
@@ -226,6 +257,9 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         self.plot_mc_probability_precision(aggregated_class_metrics)
 
         # Plot Recall and Precision for each class
+        # if self.test_level is not None:
+        #     print("Can return accuracy since predictions are across a level.")
+
         # agg_accs = self.aggregate_metrics(acc_metrics, self.class_labels)
         # class_recalls = self.get_recall(agg_accs, self.class_labels)
         # class_precisions = self.get_precision(agg_accs, self.class_labels)
