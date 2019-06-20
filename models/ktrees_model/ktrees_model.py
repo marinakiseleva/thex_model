@@ -26,13 +26,6 @@ class KTreesModel(MCBaseModel, KTreesTrain, KTreesTest):
             self.class_labels = self.get_mc_unique_classes(self.y_train)
         return self.train()
 
-    def test_model(self):
-        """
-        Get class prediction for each sample, from each Tree. Reconstruct class vectors for samples, with 1 if class was predicted and 0 otherwise.
-        :return m_predictions: Numpy Matrix with each row corresponding to sample, and each column the prediction for that class
-        """
-        return self.test()
-
     def get_all_class_probabilities(self):
         return self.test_probabilities()
 

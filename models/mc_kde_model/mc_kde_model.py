@@ -28,12 +28,12 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
         print(self.class_labels)
         return self.train()
 
-    def test_model(self):
-        """
-        Get class prediction for each sample.
-        :return m_predictions: Numpy Matrix with each row corresponding to sample, and each column the prediction for that class
-        """
-        return self.test()
+    # def test_model(self):
+    #     """
+    #     Get class prediction for each sample.
+    #     :return m_predictions: Numpy Matrix with each row corresponding to sample, and each column the prediction for that class
+    #     """
+    #     return self.test()
 
     def get_all_class_probabilities(self):
         return self.test_probabilities()

@@ -8,35 +8,6 @@ class MCKDETest:
     Testing Mixin for Multiclass Kernel Density Estimate testing code. Gets probabilities/predictions for samples.
     """
 
-    def test(self, keep_top_half=False):
-        """
-        Get class prediction for each sample. Predict class with max probability density.
-        """
-        # For diagnosing purposes - keep only top 1/2 probs
-        if keep_top_half:
-            unnormalized_max_probabilities = []
-            for index, row in self.X_test.iterrows():
-                # Save unnormalized probabilities
-                unnormalized_probabilities = self.get_class_probabilities(
-                    row, normalized=False)
-                max_unnormalized_prob = max(unnormalized_probabilities.values())
-                unnormalized_max_probabilities.append(max_unnormalized_prob)
-            probs = np.array(unnormalized_max_probabilities)
-            keep_indices = np.argwhere(probs > np.average(probs)).transpose()[0].tolist()
-
-            # Get max class for those indices, and filter down self.X_test and
-            # self.y_test to have same rows
-            self.X_test = self.X_test.loc[self.X_test.index.isin(keep_indices)]
-            self.y_test = self.y_test.loc[self.y_test.index.isin(keep_indices)]
-
-        predictions = []
-        for index, row in self.X_test.iterrows():
-            probabilities = self.get_class_probabilities(row)
-            max_prob_class = max(probabilities, key=probabilities.get)
-            predictions.append(max_prob_class)
-        predicted_classes = pd.DataFrame(predictions, columns=[PRED_LABEL])
-        return predicted_classes
-
     def test_probabilities(self):
         """
         Get class probability for each sample.
