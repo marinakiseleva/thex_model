@@ -25,7 +25,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
     def test_model(self, keep_top_half=True):
         """
         Get class prediction for each sample. Predict class with max probability density.
-        :return: DataFrame with column PRED_LABEL, which contains the class name of the class with the highest probability assigned. 
+        :return: DataFrame with column PRED_LABEL, which contains the class name of the class with the highest probability assigned.
         """
         # For diagnosing purposes - keep only top 1/2 probs
         if keep_top_half:
@@ -161,7 +161,8 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                 class_metrics[class_name].append(self.get_mc_metrics_by_ranges(
                     X_accs, class_name))
             self.predictions = self.test_model()
-            # acc_metrics.append(self.get_mc_class_performance(self.class_labels))
+            if self.test_level is not None:
+                acc_metrics.append(self.get_mc_class_metrics())
 
         return roc_plots, class_metrics, acc_metrics
 
@@ -256,15 +257,23 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         aggregated_class_metrics = self.aggregate_mc_metrics(class_metrics)
         self.plot_mc_probability_precision(aggregated_class_metrics)
 
-        # Plot Recall and Precision for each class
-        # if self.test_level is not None:
-        #     print("Can return accuracy since predictions are across a level.")
-
-        # agg_accs = self.aggregate_metrics(acc_metrics, self.class_labels)
-        # class_recalls = self.get_recall(agg_accs, self.class_labels)
-        # class_precisions = self.get_precision(agg_accs, self.class_labels)
-
-        # self.plot_performance(class_recalls, "Recall",
-        #                       ylabel="Recall", class_names=self.class_labels)
-        # self.plot_performance(class_precisions, "Precision",
-        #                       ylabel="Precision", class_names=self.class_labels)
+        # Report overall metrics: precision, recall, accuracy
+        if self.test_level is not None:
+            agg_metrics = self.aggregate_mc_class_metrics(acc_metrics)
+            precisions = {}
+            recalls = {}
+            accuracy = 0
+            for class_name in self.class_labels:
+                [TP, FN, FP, TN] = agg_metrics[class_name]
+                precisions[class_name] = TP / (TP + FP)
+                recalls[class_name] = TP / (TP + FN)
+                accuracy += TP
+            print("total tn " + str(accuracy))
+            total = data_filters['num_runs'] * self.y_test.shape[0]
+            print("Total number " + str(total))
+            accuracy = accuracy / total
+            print("Overall accuracy " + str(round(accuracy, 2) * 100) + "%")
+            self.plot_performance(precisions, "Precision", class_counts=None,
+                                  ylabel="Precision", class_names=self.class_labels)
+            self.plot_performance(recalls, "Recall", class_counts=None,
+                                  ylabel="Recall", class_names=self.class_labels)

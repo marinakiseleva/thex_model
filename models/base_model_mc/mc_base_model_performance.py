@@ -78,80 +78,64 @@ class MCBaseModelPerformance:
                     unique_classes.append(label)
         return list(set(unique_classes))
 
-    # def combine_mc_pred_actual(self, class_names):
-    #     """
-    #     Create DataFrame by which to gauge performance. Each class name is a column, which a 0 or 1 for actual class presence. Class is marked as UNDEFINED_ if the max label has an UNDEFINED_label in class_names. PRED_LABEL column contains current single-class prediction.
-    #     :param class_names: List of classes to consider. Will be column for each class in output DataFrame with 1 if that sample row actually has that class and 0 otherwise.
-    #     :return: DataFrame with PRED_LABEL column with single class prediction, and a column for each class from class_names, with a 0/1 for actual class presence
-    #     """
-    #     df = self.predictions
-    #     actual_classes = self.y_test
-
-    #     for class_name in class_names:
-    #         df[class_name] = 0
-
-    #     # Fill each row's  column classes
-    #     for index, row in df.iterrows():
-    #         classes = actual_classes.iloc[index][TARGET_LABEL]
-    #         orig_labels = convert_str_to_list(classes)
-
-    #         label = find_label(orig_labels, self.class_levels, self.test_level)
-
-    #         for class_name in orig_labels:
-    #             if class_name in list(df):
-    #                 df.at[index, class_name] = 1
-
-    #             undef_label = UNDEF_CLASS + label
-    #             if undef_label in list(df):
-    #                 df.at[index, undef_label] = 1
-
-    #     return df
-
-    # def get_mc_class_performance(self, class_names):
-    #     """
-    #     Record class performance by metrics that will later be used to compute precision and recall. Record: true positives, false positives, and # of Actual Positives, per class
-    #     """
-    #     df = self.combine_mc_pred_actual(class_names)
-    #     class_metrics = {}
-    #     # print("Unique predicted classes")
-    #     # print(list(df[PRED_LABEL].unique()))
-    #     for class_name in class_names:
-    #         # print("for class " + class_name)
-
-    #         AP = df.loc[df[class_name] == 1].shape[0]
-    #         TP = df[(df[PRED_LABEL] == class_name) & (df[class_name] == 1)].shape[0]
-    #         FP = df[(df[PRED_LABEL] == class_name) & (df[class_name] == 0)].shape[0]
-    #         TN = df[(df[PRED_LABEL] != class_name) & (df[class_name] == 0)].shape[0]
-
-    #         class_metrics[class_name] = [AP, TP, FP]
-
-    #     return class_metrics
-
-    def get_mc_class_accuracies(self, class_names):
+    def get_mc_class_metrics(self):
         """
-        Get accuracy per class : TP + TN / (TP + TN + FP + FN)
+        Save TP, FN, FP, and TN for each class.
+        self.predictions is DataFrame with PRED_LABEL column of class name with max probability; currently only compares and doesn't check hierarchy levels.
+        self.y_test has TARGET_LABEL column with string list of classes per sample
         """
-        # self.predictions is DataFrame with PRED_LABEL column of class name with
-        # max probability
+        if self.test_level is None:
+            raise ValueError(
+                "Currently cannot compute accuracy for multilevel classifiers -- need test_level.")
+        # Relabel self.y_test actual labels with test_level label
+        class_vectors = convert_class_vectors(self.y_test, self.class_labels,
+                                              self.class_levels, self.test_level)
+
         predicted_classes = self.predictions
-        # self.y_test has TARGET_LABEL column with string list of classes per sample
         actual_classes = self.y_test
         class_accuracies = {}
-        for class_name in class_names:
+        for class_index, class_name in enumerate(self.class_labels):
+            # Turn into 0/1 for this particular class
+            onehot_labels = relabel(class_index, class_vectors)
+            TP = 0  # True Positives
+            FN = 0  # False Negatives
+            FP = 0  # False Positives
+            TN = 0  # True Negatives
             class_accuracies[class_name] = 0
             for index, row in predicted_classes.iterrows():
-                predicted_class = predicted_classes.iloc[index][PRED_LABEL]
-                actual_classes = convert_str_to_list(
-                    actual_classes.iloc[index][TARGET_LABEL])
-                print("predicted class")
-                print(predicted_class)
-                print("actual class")
-                print(actual_classes)
-                if predicted_class in actual_classes:
-                    class_accuracies[class_name] += 1
+                predicted_label = predicted_classes.iloc[index][PRED_LABEL]
+                actual_label = onehot_labels.iloc[index][TARGET_LABEL]
+                if actual_label == 1:
+                    if predicted_label == class_name:
+                        TP += 1
+                    else:
+                        FN += 1
+                elif actual_label == 0:
+                    if predicted_label == class_name:
+                        FP += 1
+                    else:
+                        TN += 1
 
-            class_accuracies[class_name] = class_accuracies[
-                class_name] / predicted_classes.shape[0]
+            class_accuracies[class_name] = [TP, FN, FP, TN]
+
+        return class_accuracies
+
+    def aggregate_mc_class_metrics(self, metrics):
+        """
+        Aggregate list of class_accuracies from get_mc_class_metrics
+        """
+
+        class_metrics = {class_name: [0, 0, 0, 0]
+                         for class_name in self.class_labels}
+        for metric in metrics:
+            for class_name in self.class_labels:
+                [TP, FN, FP, TN] = metric[class_name]
+                class_metrics[class_name][0] += TP
+                class_metrics[class_name][1] += FN
+                class_metrics[class_name][2] += FP
+                class_metrics[class_name][3] += TN
+
+        return class_metrics
 
     def get_mc_metrics(self):
         """
