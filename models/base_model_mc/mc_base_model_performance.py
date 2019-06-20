@@ -78,53 +78,80 @@ class MCBaseModelPerformance:
                     unique_classes.append(label)
         return list(set(unique_classes))
 
-    def combine_mc_pred_actual(self, class_names):
+    # def combine_mc_pred_actual(self, class_names):
+    #     """
+    #     Create DataFrame by which to gauge performance. Each class name is a column, which a 0 or 1 for actual class presence. Class is marked as UNDEFINED_ if the max label has an UNDEFINED_label in class_names. PRED_LABEL column contains current single-class prediction.
+    #     :param class_names: List of classes to consider. Will be column for each class in output DataFrame with 1 if that sample row actually has that class and 0 otherwise.
+    #     :return: DataFrame with PRED_LABEL column with single class prediction, and a column for each class from class_names, with a 0/1 for actual class presence
+    #     """
+    #     df = self.predictions
+    #     actual_classes = self.y_test
+
+    #     for class_name in class_names:
+    #         df[class_name] = 0
+
+    #     # Fill each row's  column classes
+    #     for index, row in df.iterrows():
+    #         classes = actual_classes.iloc[index][TARGET_LABEL]
+    #         orig_labels = convert_str_to_list(classes)
+
+    #         label = find_label(orig_labels, self.class_levels, self.test_level)
+
+    #         for class_name in orig_labels:
+    #             if class_name in list(df):
+    #                 df.at[index, class_name] = 1
+
+    #             undef_label = UNDEF_CLASS + label
+    #             if undef_label in list(df):
+    #                 df.at[index, undef_label] = 1
+
+    #     return df
+
+    # def get_mc_class_performance(self, class_names):
+    #     """
+    #     Record class performance by metrics that will later be used to compute precision and recall. Record: true positives, false positives, and # of Actual Positives, per class
+    #     """
+    #     df = self.combine_mc_pred_actual(class_names)
+    #     class_metrics = {}
+    #     # print("Unique predicted classes")
+    #     # print(list(df[PRED_LABEL].unique()))
+    #     for class_name in class_names:
+    #         # print("for class " + class_name)
+
+    #         AP = df.loc[df[class_name] == 1].shape[0]
+    #         TP = df[(df[PRED_LABEL] == class_name) & (df[class_name] == 1)].shape[0]
+    #         FP = df[(df[PRED_LABEL] == class_name) & (df[class_name] == 0)].shape[0]
+    #         TN = df[(df[PRED_LABEL] != class_name) & (df[class_name] == 0)].shape[0]
+
+    #         class_metrics[class_name] = [AP, TP, FP]
+
+    #     return class_metrics
+
+    def get_mc_class_accuracies(self, class_names):
         """
-        Create DataFrame by which to gauge performance. Each class name is a column, which a 0 or 1 for actual class presence. Class is marked as UNDEFINED_ if the max label has an UNDEFINED_label in class_names. PRED_LABEL column contains current single-class prediction.
-        :return: DataFrame with PRED_LABEL column with single class prediction, and a column for each class from class_names, with a 0/1 for actual class presence
+        Get accuracy per class : TP + TN / (TP + TN + FP + FN)
         """
-        df = self.predictions
+        # self.predictions is DataFrame with PRED_LABEL column of class name with
+        # max probability
+        predicted_classes = self.predictions
+        # self.y_test has TARGET_LABEL column with string list of classes per sample
         actual_classes = self.y_test
-
+        class_accuracies = {}
         for class_name in class_names:
-            df[class_name] = 0
+            class_accuracies[class_name] = 0
+            for index, row in predicted_classes.iterrows():
+                predicted_class = predicted_classes.iloc[index][PRED_LABEL]
+                actual_classes = convert_str_to_list(
+                    actual_classes.iloc[index][TARGET_LABEL])
+                print("predicted class")
+                print(predicted_class)
+                print("actual class")
+                print(actual_classes)
+                if predicted_class in actual_classes:
+                    class_accuracies[class_name] += 1
 
-        # Fill each row's  column classes
-        for index, row in df.iterrows():
-            classes = actual_classes.iloc[index][TARGET_LABEL]
-            orig_labels = convert_str_to_list(classes)
-
-            label = find_label(orig_labels, self.class_levels, self.test_level)
-
-            for class_name in orig_labels:
-                if class_name in list(df):
-                    df.at[index, class_name] = 1
-
-            undef_label = UNDEF_CLASS + label
-            if undef_label in list(df):
-                df.at[index, undef_label] = 1
-
-        return df
-
-    def get_mc_class_performance(self, class_names):
-        """
-        Record class performance by metrics that will later be used to compute precision and recall. Record: true positives, false positives, and # of Actual Positives, per class
-        """
-        df = self.combine_mc_pred_actual(class_names)
-        class_metrics = {}
-        # print("Unique predicted classes")
-        # print(list(df[PRED_LABEL].unique()))
-        for class_name in class_names:
-            # print("for class " + class_name)
-
-            AP = df.loc[df[class_name] == 1].shape[0]
-            TP = df[(df[PRED_LABEL] == class_name) & (df[class_name] == 1)].shape[0]
-            FP = df[(df[PRED_LABEL] == class_name) & (df[class_name] == 0)].shape[0]
-            TN = df[(df[PRED_LABEL] != class_name) & (df[class_name] == 0)].shape[0]
-
-            class_metrics[class_name] = [AP, TP, FP]
-
-        return class_metrics
+            class_accuracies[class_name] = class_accuracies[
+                class_name] / predicted_classes.shape[0]
 
     def get_mc_metrics(self):
         """
