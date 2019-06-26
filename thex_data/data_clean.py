@@ -166,8 +166,8 @@ def find_label(labels, node_depths, target_level):
             max_depth = node_depths[label]
             max_label = label
 
-    raise ValueError("Precision and Recall only make sense when all target classes are on same level. It appears this sample does not have a class on the target level required. Classes " +
-                     str(labels) + " and target level: " + str(target_level))
+    # raise ValueError("Precision and Recall only make sense when all target classes are on same level. It appears this sample does not have a class on the target level required. Classes " +
+    #                  str(labels) + " and target level: " + str(target_level))
     return max_label
 
 
