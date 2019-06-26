@@ -263,6 +263,24 @@ class BaseModelVisualization:
         plt.xlabel('Predicted label')
         self.display_and_save_plot(title, ax)
 
+    def basic_plot(self, class_metrics, ylabel, class_names):
+        # Get class names and corresponding accuracies
+        if class_names is None:
+            class_names = [code_cat[c] for c in class_metrics.keys()]
+        metrics = [class_metrics[c] for c in class_metrics.keys()]
+
+        # Sort by class names, so they show up consistently
+        class_names, metrics = zip(*sorted(zip(class_names, metrics)))
+
+        # Class names will be assigned in same order as these indices
+        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+        x_indices = np.arange(len(metrics))
+        ax.bar(x_indices, metrics)
+        plt.xticks(x_indices, class_names, fontsize=12, rotation=-90)
+        plt.xlabel('Transient Class', fontsize=10)
+        plt.ylabel(ylabel, fontsize=10)
+        self.display_and_save_plot(ylabel, ax)
+
     def plot_performance(self, class_metrics, plot_title, class_counts=None, ylabel="Accuracy", class_names=None):
         """
         Visualizes accuracy per class with bar graph
