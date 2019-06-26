@@ -22,7 +22,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
     Abstract Class representing base functionality of all multiclass models. Inherits from BaseModel, and uses Mixins from other classes. Subclasses of models must implement all BaseModel methods PLUS test_probabilities
     """
 
-    def test_model(self, keep_top_half=True):
+    def test_model(self, keep_top_half=False):
         """
         Get class prediction for each sample. Predict class with max probability density.
         :return: DataFrame with column PRED_LABEL, which contains the class name of the class with the highest probability assigned.
@@ -41,8 +41,10 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
             # Get max class for those indices, and filter down self.X_test and
             # self.y_test to have same rows
-            self.X_test = self.X_test.loc[self.X_test.index.isin(keep_indices)]
-            self.y_test = self.y_test.loc[self.y_test.index.isin(keep_indices)]
+            self.X_test = self.X_test.loc[self.X_test.index.isin(
+                keep_indices)].reset_index(drop=True)
+            self.y_test = self.y_test.loc[self.y_test.index.isin(
+                keep_indices)].reset_index(drop=True)
 
         predictions = []
         for index, row in self.X_test.iterrows():
@@ -139,7 +141,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                 drop=True), X.iloc[test_index].reset_index(drop=True)
             self.y_train, self.y_test = y.iloc[train_index].reset_index(
                 drop=True), y.iloc[test_index].reset_index(drop=True)
-
             if data_filters['test_on_train']:
                 self.X_test = self.X_train
                 self.y_test = self.y_train
@@ -149,7 +150,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
             # Run model
             self.train_model()
-            # self.test_model()
 
             # Save ROC curve for each class
             roc_plots = self.save_roc_curve(i, roc_plots)
@@ -157,10 +157,12 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
             # Record metrics for prob vs. accuracy plots
             X_accs = self.get_mc_probability_matrix()
+
             for class_name in self.class_labels:
                 class_metrics[class_name].append(self.get_mc_metrics_by_ranges(
                     X_accs, class_name))
             self.predictions = self.test_model()
+
             if self.test_level is not None:
                 acc_metrics.append(self.get_mc_class_metrics())
 
@@ -254,26 +256,26 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         plt.show()
 
         # Plot probability vs accuracy for each class
-        aggregated_class_metrics = self.aggregate_mc_metrics(class_metrics)
+        aggregated_class_metrics = self.aggregate_mc_prob_metrics(class_metrics)
         self.plot_mc_probability_precision(aggregated_class_metrics)
 
-        # Report overall metrics: precision, recall, accuracy
+        # Report overall metrics for single-level comparison: precision, recall
         if self.test_level is not None:
+            total = data_filters['num_runs'] * y.shape[0]
             agg_metrics = self.aggregate_mc_class_metrics(acc_metrics)
             precisions = {}
             recalls = {}
-            accuracy = 0
+            briers = {}
+            loglosses = {}
             for class_name in self.class_labels:
-                [TP, FN, FP, TN] = agg_metrics[class_name]
+                [TP, FN, FP, TN, BS, LL] = agg_metrics[class_name]
                 precisions[class_name] = TP / (TP + FP)
                 recalls[class_name] = TP / (TP + FN)
-                accuracy += TP
-            print("total tn " + str(accuracy))
-            total = data_filters['num_runs'] * self.y_test.shape[0]
-            print("Total number " + str(total))
-            accuracy = accuracy / total
-            print("Overall accuracy " + str(round(accuracy, 2) * 100) + "%")
+                briers[class_name] = BS
+                loglosses[class_name] = LL
             self.plot_performance(precisions, "Precision", class_counts=None,
                                   ylabel="Precision", class_names=self.class_labels)
             self.plot_performance(recalls, "Recall", class_counts=None,
                                   ylabel="Recall", class_names=self.class_labels)
+            self.basic_plot(briers, "Brier Score",   self.class_labels)
+            self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
