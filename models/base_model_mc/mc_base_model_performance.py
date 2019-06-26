@@ -1,4 +1,6 @@
+from math import log
 import pandas as pd
+import numpy as np
 from thex_data.data_clean import *
 from thex_data.data_consts import *
 
@@ -80,8 +82,9 @@ class MCBaseModelPerformance:
 
     def get_mc_class_metrics(self):
         """
-        Save TP, FN, FP, and TN for each class.
-        self.predictions is DataFrame with PRED_LABEL column of class name with max probability; currently only compares and doesn't check hierarchy levels.
+        Save TP, FN, FP, TN, and BS (Brier Score) for each class.
+        Brier score: (1/N) * sum(probability - actual)^2
+        Log loss: -1/N * sum((actual * log(prob)) + (1-actual)(log(1-prob)))
         self.y_test has TARGET_LABEL column with string list of classes per sample
         """
         if self.test_level is None:
@@ -90,21 +93,26 @@ class MCBaseModelPerformance:
         # Relabel self.y_test actual labels with test_level label
         class_vectors = convert_class_vectors(self.y_test, self.class_labels,
                                               self.class_levels, self.test_level)
-
+        # self.predictions is DataFrame with PRED_LABEL column of class name with
+        # max probability
         predicted_classes = self.predictions
         actual_classes = self.y_test
         class_accuracies = {}
         for class_index, class_name in enumerate(self.class_labels):
-            # Turn into 0/1 for this particular class
-            onehot_labels = relabel(class_index, class_vectors)
             TP = 0  # True Positives
             FN = 0  # False Negatives
             FP = 0  # False Positives
             TN = 0  # True Negatives
+            BS = 0  # Brier Score
+            LL = 0  # Log Loss
             class_accuracies[class_name] = 0
+            # predicted_classes has single class_name per row
+            # class_one_zero has 1/0 class presence per row
+            class_one_zero = relabel(class_index, class_vectors)
+
             for index, row in predicted_classes.iterrows():
                 predicted_label = predicted_classes.iloc[index][PRED_LABEL]
-                actual_label = onehot_labels.iloc[index][TARGET_LABEL]
+                actual_label = class_one_zero.iloc[index][TARGET_LABEL]
                 if actual_label == 1:
                     if predicted_label == class_name:
                         TP += 1
@@ -116,25 +124,35 @@ class MCBaseModelPerformance:
                     else:
                         TN += 1
 
-            class_accuracies[class_name] = [TP, FN, FP, TN]
+                prob = self.get_class_probabilities(self.X_test.iloc[index])[class_name]
+                BS += (prob - actual_label)**2
+                # Log Loss
+                prob = np.clip(prob, 1e-15, 1 - 1e-15)
+                LL += (actual_label * log(prob)) + (1 - actual_label) * log(1 - prob)
+            BS /= self.y_test.shape[0]
+            LL /= self.y_test.shape[0] * -1
+            class_accuracies[class_name] = [TP, FN, FP, TN, BS, LL]
 
         return class_accuracies
 
     def aggregate_mc_class_metrics(self, metrics):
         """
         Aggregate list of class_accuracies from get_mc_class_metrics
+        :param metrics: List of maps from class to stats, like: [{"Ia": [2, 3, 4, 1], "Ib":{2,3,1,4}}, {"Ia": [1, 1, 0, 1], "Ib":{2,3,1,4}, etc.]
         """
-
-        class_metrics = {class_name: [0, 0, 0, 0]
+        class_metrics = {class_name: [0, 0, 0, 0, 0, 0]
                          for class_name in self.class_labels}
         for metric in metrics:
             for class_name in self.class_labels:
-                [TP, FN, FP, TN] = metric[class_name]
+                [TP, FN, FP, TN, BS, LL] = metric[class_name]
                 class_metrics[class_name][0] += TP
                 class_metrics[class_name][1] += FN
                 class_metrics[class_name][2] += FP
                 class_metrics[class_name][3] += TN
-
+                class_metrics[class_name][4] += BS
+                class_metrics[class_name][5] += LL
+        class_metrics[class_name][4] /= len(metrics)
+        class_metrics[class_name][5] /= len(metrics)
         return class_metrics
 
     def get_mc_metrics(self):
@@ -182,7 +200,7 @@ class MCBaseModelPerformance:
                 FP += 1
         return [TP, FP, FN]
 
-    def aggregate_mc_metrics(self, metrics):
+    def aggregate_mc_prob_metrics(self, metrics):
         """
         Aggregate output of get_mc_metrics_by_ranges over several folds/runs
         :param metrics: Dictionary of class names to their ranged metrics,
