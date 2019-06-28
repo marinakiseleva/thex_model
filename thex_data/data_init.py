@@ -1,6 +1,6 @@
 import pandas as pd
-from astropy.table import Table
 import numpy as np
+from astropy.table import Table
 
 from thex_data.data_consts import DATA_PATH, drop_cols, ORIG_TARGET_LABEL
 
@@ -51,6 +51,7 @@ def collect_cols(cols, col_matches):
 def collect_data():
     """ 
     Sets up Data Object using data 
+    :return: Pandas DataFrame created from DATA_PATH data 
     """
     dat = Table.read(DATA_PATH, format='fits')
     df_bytes = dat.to_pandas()  # Convert to pandas dataframe
