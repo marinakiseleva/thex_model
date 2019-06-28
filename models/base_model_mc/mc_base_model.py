@@ -19,11 +19,13 @@ from models.base_model_mc.mc_base_model_plots import MCBaseModelVisualization
 
 class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
     """
-    Abstract Class representing base functionality of all multiclass models. Inherits from BaseModel, and uses Mixins from other classes. Subclasses of models must implement all BaseModel methods PLUS test_probabilities
+    Abstract Class representing base functionality of all multiclass models. Inherits from BaseModel, and uses Mixins from other classes. Subclasses of models must implement all BaseModel abstract methods PLUS get_all_class_probabilities
     """
 
     def run_model(self):
         """
+        Override run_model in BaseModel.
+
         Set custom attributes for Multiclass classifiers: test_level (level of class hierarchy over which to get probabilities, for MCKDEModel), and class_labels (specific classes to run model on)
         """
         for parent in hierarchy.keys():
