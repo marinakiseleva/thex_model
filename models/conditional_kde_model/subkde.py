@@ -35,11 +35,11 @@ class SubKDE(SubClassifier):
             model = self.kdes[class_index]
             probabilities[class_index] = np.exp(model.score_samples(x))[0]
 
-        sum_densities = sum(probabilities.values())
-        if sum_densities == 0:
-            raise ValueError(
-                "Sum of probability densities in SubKDE should be greater than 0.")
-        probabilities = {k: v / sum_densities for k, v in probabilities.items()}
+        sum_probabilities = sum(probabilities.values())
+        if sum_probabilities == 0:
+            probabilities = {k: 0 for k, v in probabilities.items()}
+        else:
+            probabilities = {k: v / sum_probabilities for k, v in probabilities.items()}
         return list(probabilities.values())
 
     def get_best_model(self, X, y):
