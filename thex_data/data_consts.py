@@ -21,9 +21,11 @@ DPI = 600
 # June 3 Assembled - More data?
 # LOCAL_DATA_PATH = '/../../data/assembled.fits'
 
-# GALEX/WISE/PANSTARRS Versions 1, 2
+# GALEX/WISE/PANSTARRS Versions 1, 2, 3
 # LOCAL_DATA_PATH = '/../../data/THEx-training-set.v0_0_1.fits'
-LOCAL_DATA_PATH = '/../../data/THEx-training-set-v0_0_2.fits'
+# LOCAL_DATA_PATH = '/../../data/THEx-training-set-v0_0_2.fits'
+LOCAL_DATA_PATH = '/../../data/THEx-training-set-v0_0_3.fits'
+
 
 # All data Version 4
 # LOCAL_DATA_PATH = '/../../data/THEx-catalog.v0_0_4.fits'
@@ -51,34 +53,19 @@ class_to_subclass
 {Parent : [Child1, child2, ...] }
 Hierarchy of transient types, used in hierarchical multilabel classifiers
 """
+# Version 3
 class_to_subclass = {
-    "TTypes": ["I", "CC", "SLSN", "GRB", "Kilonova", "TDE", "AGN", "Candidate", "GW", "Galaxy", "HII Region", "Impostor", "Minor Planet", "Nova", "Other", "PISN", "Star", "False", "Lensing", UNKNOWN_LABEL],
-    "I": ["I Pec", "Ia", "Ib", "Ic", "Ib/c", "nIa"],
-    "I Pec": ["I-rapid", "I-faint"],  # removed Ia Pec
-    "Ia": ["Ia Pec", "Ia-HV", "Ia/b", "Ia/c", "Ia-02cx"],
-    "Ia Pec": ["Ia CSM", "Ia-91bg", "Ia-91T", "Ia-02cx",
-               "Ia-00cx", "Ia-99aa", "Ia-09dc", "Ia-HV"],
-    "CC": ["II"],  # "Ib", "Ic",
-    "Ib": ["Ibn", "Ib Pec"],
-    "Ib Pec": ["Ib-Ca"],
-    "Ic": ["Ic Pec", "Ia/c"],
-    "Ic Pec": ["Ic BL", "Ic-lum"],
-    "Ib/c": ["Ib/c Pec"],
-    "II": ["II P", "II L", "IIn", "IIb", "IIc", "II Pec"],
-    "II Pec": ["IIn Pec", "II P-97D"],
-    "II P": ["II P Pec", "IIn P"],
-    "II P Pec": ["II P-97D"],
-    "II L": ["IIn L"],
-    "IIn": ["IIn P", "IIn L", "IIn Pec"],
-    "IIb": ["IIb Pec"],
+    "TTypes": ["Ia", "CC", "TDE", "GRB", "FRB", "Kilonova",  "GW"],
+    "Ia": ["Ia-91bg", "Ia-91T", "Ia-02cx",  "Ia-CSM"],
+    "CC": ["SE", "II", "SLSN"],
+    "SE": ["Ib", "Ic", "Ib/c"],
+    "Ib": ["Ibn", "IIb", "Ib-Ca?"],
+    "Ic": ["Ic-BL"],
+    "II": ["II P", "II L", "IIn"],
     "SLSN": ["SLSN-I", "SLSN-II", "SLSN-R"],
     "GRB": ["LGRB", "SGRB"],
-    "Kilonova": ["KilonovaCand"],
-    "TDE": ["TDE", "MS + SMBH", "He + SMBH", "Planet + WD", "Low-mass TDE", "WD + IMBH"],
-    "Star": ["Variable Star"]
-    # "TDE": ["CandidateTDE", "XrayTDE", "UVOptTDE"]
+    "TDE": ["UVOptTDE", "XrayTDE"]
 }
-
 
 """
 cat_code
@@ -168,7 +155,7 @@ Transient Type codes mapped to categories.
 code_cat = {v: k for k, v in cat_code.items()}
 
 
-""" 
+"""
 groupings
 {data values : transient type }
 The groupings below map specific transient types in the data set to claimed type groups. For example: nIa, Ia, Ia*, and Ia-HV all map to Ia.
@@ -591,34 +578,29 @@ grouping_lists = {
 drop_cols
 Columns with non-numeric values that are not used in analysis
 """
-drop_cols = ['event',
-             'ra',
-             'dec',
-             'ra_deg',
-             'dec_deg',
-             'radec_err',
-             'host',
-             'host_ra',
-             'host_dec',
-             'ebv',
-             'host_ra_deg',
-             'host_dec_deg',
-             'host_dist',
-             'host_search_radius',
-             'is_confirmed_host',
-             'by_primary_cand',
-             'by_transient',
-             'AllWISE_IsVar',
-             'HyperLEDA_objtype',
-             'HyperLEDA_type',
-             'HyperLEDA_bar',
-             'HyperLEDA_ring',
-             'HyperLEDA_multiple',
-             'HyperLEDA_compactness',
-             'HyperLEDA_agnclass',
-             "Err",
-             "_e_",
-             "_ERR"]
+drop_cols = [
+    "_id",  # object
+    "name",  # object
+    "ra",  # object
+    "dec",  # object
+    "ra_deg",  # float64
+    "radec_err",  # float32
+    "dec_deg",  # float64
+    "host_dist",  # float32
+    "claimedtype",  # object
+    "redshift",  # float32
+    "N_candidates",  # int32
+    "host_dec",  # float64
+    "host_id",  # object
+    "host_ra",  # float64
+    "host_radec_src",  # object
+    "identified_by",  # object
+    "is_identified",  # bool
+    "valid_crossid",  # bool
+    "host_confusion",  # bool
+    "host_confusion_cats",  # object
+]
+
 
 """
 mag_cols
