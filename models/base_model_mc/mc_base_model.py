@@ -22,6 +22,22 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
     Abstract Class representing base functionality of all multiclass models. Inherits from BaseModel, and uses Mixins from other classes. Subclasses of models must implement all BaseModel methods PLUS test_probabilities
     """
 
+    def run_model(self):
+        """
+        Set custom attributes for Multiclass classifiers: test_level (level of class hierarchy over which to get probabilities, for MCKDEModel), and class_labels (specific classes to run model on)
+        """
+        for parent in hierarchy.keys():
+            hierarchy[parent].append(UNDEF_CLASS + parent)
+        self.tree = init_tree(hierarchy)
+        self.class_levels = assign_levels(self.tree, {}, self.tree.root, 1)
+
+        self.test_level = self.user_data_filters[
+            'test_level'] if 'test_level' in self.user_data_filters.keys() else None
+
+        self.class_labels = self.user_data_filters[
+            'class_labels'] if 'class_labels' in self.user_data_filters.keys() else None
+        super(MCBaseModel, self).run_model()
+
     def test_model(self, keep_top_half=False):
         """
         Get class prediction for each sample. Predict class with max probability density.
@@ -53,22 +69,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             predictions.append(max_prob_class)
         predicted_classes = pd.DataFrame(predictions, columns=[PRED_LABEL])
         return predicted_classes
-
-    def run_model(self):
-        """
-        Set custom attributes for Multiclass classifiers: test_level (level of class hierarchy over which to get probabilities, for MCKDEModel), and class_labels (specific classes to run model on)
-        """
-        for parent in hierarchy.keys():
-            hierarchy[parent].append(UNDEF_CLASS + parent)
-        self.tree = init_tree(hierarchy)
-        self.class_levels = assign_levels(self.tree, {}, self.tree.root, 1)
-
-        self.test_level = self.user_data_filters[
-            'test_level'] if 'test_level' in self.user_data_filters.keys() else None
-
-        self.class_labels = self.user_data_filters[
-            'class_labels'] if 'class_labels' in self.user_data_filters.keys() else None
-        super(MCBaseModel, self).run_model()
 
     @abstractmethod
     def get_all_class_probabilities(self):
