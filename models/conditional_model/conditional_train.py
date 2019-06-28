@@ -71,7 +71,7 @@ class ConditionalTrain:
 
             subnet_classes = self.get_subclf_classes(
                 subclasses, self.y_train, parent_class)
-            if len(subnet_classes) <= 1:
+            if len(subnet_classes) <= self.min_class_size:
                 # print("Do not need network for " + parent_class +
                 #       " since it has no subclasses in dataset.")
                 continue
