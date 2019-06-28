@@ -32,6 +32,7 @@ class TestConditionalKTreesModel(unittest.TestCase):
         self.test_model.tree = init_tree(hierarchy)
         self.test_model.class_levels = assign_levels(
             self.test_model.tree, {}, self.test_model.tree.root, 1)
+        self.test_model.min_class_size = 1
 
     def test_train(self):
         self.test_model.y_train = pd.DataFrame([
