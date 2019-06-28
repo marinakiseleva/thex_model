@@ -32,7 +32,7 @@ def convert_class_vectors(df, class_labels, class_levels, level=None):
     :param df: Pandas DataFrame with TARGET_LABEL column of original labels (ex. I, Ia)
     :param class_labels: Class names in order of their presence in the class vectors.
     :param class_levels: Mapping from class name to level, to determine if sample is undefined class type
-    :param level: Currently not used - NEED TO DROP.
+    :param level: Assigns undefined parent if exists, otherwise it's a 0 vector.
     :return class_vectors: DataFrame with same number of rows as df, with only TARGET_LABEL column. Each row has a single vector in that column, with the same length as class_labels, and where values are 0 or 1. 1 if it is that class, 0 otherwise.
 
     """
