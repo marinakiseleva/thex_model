@@ -39,12 +39,6 @@ class ConditionalModel(MCBaseModel, ConditionalTrain, ConditionalTest):
             self.class_labels = self.set_class_labels(self.y_train)
         return self.train()
 
-    # def test_model(self):
-    #     """
-    #     Get class prediction for each sample.
-    #     """
-    #     return self.test()
-
     def get_all_class_probabilities(self):
         """
         Get class probability for each sample in self.X_test
