@@ -7,7 +7,6 @@ from sklearn.tree import DecisionTreeClassifier
 
 from models.conditional_model.classifier import SubClassifier
 from thex_data.data_consts import TARGET_LABEL
-# from thex_data.data_clean import convert_class_vectors, relabel
 
 
 class SubKTree(SubClassifier):
@@ -48,12 +47,12 @@ class SubKTree(SubClassifier):
 
             probabilities[class_name] = class_probability
 
-        # sum_probabilities = sum(probabilities.values())
-        # if sum_probabilities == 0:
-        #     # print("All probabilities for this sample are 0.")
-        #     probabilities = {k: 0 for k, v in probabilities.items()}
-        # else:
-        #     probabilities = {k: v / sum_probabilities for k, v in probabilities.items()}
+        sum_probabilities = sum(probabilities.values())
+        if sum_probabilities == 0:
+            # print("All probabilities for this sample are 0.")
+            probabilities = {k: 0 for k, v in probabilities.items()}
+        else:
+            probabilities = {k: v / sum_probabilities for k, v in probabilities.items()}
         return list(probabilities.values())
 
     def get_best_model(self, X, y):
