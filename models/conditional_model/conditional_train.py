@@ -33,7 +33,7 @@ class ConditionalTrain:
 
     def get_subclf_data(self, X, y, class_labels):
         """
-        Filter features (X) and labels (y) to only include those rows that have a class within class_labels. This data will be used to construct a subclassifier.
+        Filter features (X) and labels (y) to only include those rows that have a class within class_labels. This data will be used to construct a subclassifier. the y TARGET_LABEL has a full string of classes (ex. Ia, Ia-91bg)
         :param class_labels: List of classes (single class name, like the children in class_to_subclass)
         :return: X filtered down to same rows as y, which is filtered to only those samples that contain a class in class_labels. And relabeled as the index of the class in the list class_labels (need numeric label for later processing)
         """
