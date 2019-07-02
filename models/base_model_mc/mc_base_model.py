@@ -104,39 +104,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         else:
             self.class_labels = self.get_mc_unique_classes(y)
 
-    def evaluate_model(self, roc_plots, class_metrics, acc_metrics, k):
-        """
-        Evaluate and plot performance of model
-        :param roc_plots: Mapping from class_name to [figure, axis, true positive rates, aucs]. This function plots curve on corresponding axis using this dict.
-        :param class_metrics: Mapping from class names to SUMMED ranged metrics
-        :param acc_metrcis: List of results from get_mc_class_metrics, per fold/run
-        :param k: Number of folds
-        """
-        # Plot ROC curves for each class
-        self.plot_mc_roc_curves(roc_plots, k)
-
-        # Plot probability vs positive rate for each class
-        self.plot_mc_probability_pos_rates(class_metrics)
-
-        # Report overall metrics
-        agg_metrics = self.aggregate_mc_class_metrics(acc_metrics)
-        precisions = {}
-        recalls = {}
-        briers = {}
-        loglosses = {}
-        for class_name in self.class_labels:
-            metrics = agg_metrics[class_name]
-            precisions[class_name] = metrics["TP"] / (metrics["TP"] + metrics["FP"])
-            recalls[class_name] = metrics["TP"] / (metrics["TP"] + metrics["FN"])
-            briers[class_name] = metrics["BS"]
-            loglosses[class_name] = metrics["LL"]
-        self.plot_performance(precisions, "Precision", class_counts=None,
-                              ylabel="Precision", class_names=self.class_labels)
-        self.plot_performance(recalls, "Recall", class_counts=None,
-                              ylabel="Recall", class_names=self.class_labels)
-        # self.basic_plot(briers, "Brier Score",   self.class_labels)
-        self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
-
     def visualize_data(self, data_filters, y=None, X=None):
         """
         Visualize distribution of data used to train and test
@@ -172,6 +139,37 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             features = list(df)
             if 'redshift' in features:
                 plot_feature_distribution(df, 'redshift', False)
+
+    def evaluate_model(self, roc_plots, class_metrics, acc_metrics, k):
+        """
+        Evaluate and plot performance of model
+        :param roc_plots: Mapping from class_name to [figure, axis, true positive rates, aucs]. This function plots curve on corresponding axis using this dict.
+        :param class_metrics: Mapping from class names to SUMMED ranged metrics
+        :param acc_metrcis: List of results from get_mc_class_metrics, per fold/run
+        :param k: Number of folds
+        """
+        # Plot ROC curves for each class
+        self.plot_mc_roc_curves(roc_plots, k)
+
+        # Plot probability vs positive rate for each class
+        self.plot_mc_probability_pos_rates(class_metrics)
+
+        # Report overall metrics
+        agg_metrics = self.aggregate_mc_class_metrics(acc_metrics)
+        precisions = {}
+        recalls = {}
+        briers = {}
+        loglosses = {}
+        for class_name in self.class_labels:
+            metrics = agg_metrics[class_name]
+            precisions[class_name] = metrics["TP"] / (metrics["TP"] + metrics["FP"])
+            recalls[class_name] = metrics["TP"] / (metrics["TP"] + metrics["FN"])
+            briers[class_name] = metrics["BS"]
+            loglosses[class_name] = metrics["LL"]
+        self.plot_mc_performance(precisions, "Precision")
+        self.plot_mc_performance(recalls, "Recall")
+        # self.basic_plot(briers, "Brier Score",   self.class_labels)
+        self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
 
     def run_cross_validation(self, k, X, y, roc_plots, class_metrics, acc_metrics, data_filters):
         """

@@ -63,8 +63,8 @@ class BaseModelVisualization:
 
             ax = self.plot_bar_with_annotations(
                 axis=ax, x_vals=perc_ranges, y_vals=perc_correct, annotations=AP_ranges, bar_colors=colors)
-            plt.xlabel('Probability of ' + code_cat[class_code] + ' +/- 5%', fontsize=12)
-            plt.ylabel('Precision', fontsize=12)
+            plt.xlabel('Probability of ' + code_cat[class_code] + ' +/- 5%', fontsize=10)
+            plt.ylabel('Precision', fontsize=10)
             title = "Accuracy vs Probability" if title is None else title
 
             self.display_and_save_plot(title + ": " + str(code_cat[class_code]), ax)
@@ -92,8 +92,8 @@ class BaseModelVisualization:
 
             ax = self.plot_bar_with_annotations(
                 axis=ax, x_vals=perc_ranges, y_vals=perc_correct, annotations=AP_ranges, bar_colors=colors)
-            plt.xlabel('Probability of ' + code_cat[class_code] + ' +/- 5%', fontsize=12)
-            plt.ylabel('Recall', fontsize=12)
+            plt.xlabel('Probability of ' + code_cat[class_code] + ' +/- 5%', fontsize=10)
+            plt.ylabel('Recall', fontsize=10)
             title = "Accuracy vs Probability" if title is None else title
 
             self.display_and_save_plot(title + ": " + str(code_cat[class_code]), ax)
@@ -107,8 +107,8 @@ class BaseModelVisualization:
         colors = plt.cm.Blues(normalize(color_ranges))
         ax = self.plot_bar_with_annotations(
             axis=ax, x_vals=perc_ranges, y_vals=y_values, annotations=color_ranges, bar_colors=colors)
-        plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
-        plt.ylabel(ylabel, fontsize=12)
+        plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=10)
+        plt.ylabel(ylabel, fontsize=10)
         title = "Probability Assigned vs. " + ylabel if title is None else title
         self.display_and_save_plot(title + ": " + str(class_name), ax)
 
@@ -138,8 +138,8 @@ class BaseModelVisualization:
         ax.set_ylim([0, 1])
 
         plt_title = "ROC Curves" if title is None else title
-        ax.set_ylabel('True Positive Rate', fontsize=12)
-        ax.set_xlabel('False Positive Rate', fontsize=12)
+        ax.set_ylabel('True Positive Rate', fontsize=10)
+        ax.set_xlabel('False Positive Rate', fontsize=10)
         ax.legend(loc='best')
         self.display_and_save_plot(plt_title, ax)
 
@@ -182,9 +182,9 @@ class BaseModelVisualization:
         # Plot histogram of correct and incorrect probs
         plot_hist(pos_probs, ax, "green")
         plot_hist(neg_probs, ax, "red")
-        ax.set_xlabel('P(class =' + class_name + ')', fontsize=12)
-        ax.set_ylabel('Counts', fontsize=12)
-        ax.set_title('Distribution', fontsize=15)
+        ax.set_xlabel('P(class =' + class_name + ')', fontsize=10)
+        ax.set_ylabel('Counts', fontsize=10)
+        ax.set_title('Distribution', fontsize=14)
         ax.legend(["Type " + class_name, "NOT Type " + class_name])
 
     def plot_pdfs(self, pos_probs, neg_probs, ax, class_name):
@@ -201,9 +201,9 @@ class BaseModelVisualization:
 
         plot_pdf(x, pos_pdf, ax, color="green")
         plot_pdf(x, neg_pdf, ax, color="red")
-        ax.set_xlabel('P(class =' + class_name + ')', fontsize=12)
-        ax.set_ylabel('PDF', fontsize=12)
-        ax.set_title('Probability Distribution of ' + class_name, fontsize=15)
+        ax.set_xlabel('P(class =' + class_name + ')', fontsize=10)
+        ax.set_ylabel('PDF', fontsize=10)
+        ax.set_title('Probability Distribution of ' + class_name, fontsize=14)
         ax.legend(["Type " + class_name, "NOT Type " + class_name])
         return x, pos_pdf, neg_pdf
 
@@ -221,8 +221,8 @@ class BaseModelVisualization:
         ax.set_xlim([0, 1])
         ax.set_ylim([0, 1])
         ax.set_title("ROC Curve", fontsize=14)
-        ax.set_ylabel('True Positive Rate', fontsize=12)
-        ax.set_xlabel('False Positive Rate', fontsize=12)
+        ax.set_ylabel('True Positive Rate', fontsize=10)
+        ax.set_xlabel('False Positive Rate', fontsize=10)
         ax.grid()
         # auc = Probability that it will guess true over false
         auc = np.sum(TP_rates) / 100  # 100= # of values for x
@@ -276,7 +276,7 @@ class BaseModelVisualization:
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         x_indices = np.arange(len(metrics))
         ax.bar(x_indices, metrics)
-        plt.xticks(x_indices, class_names, fontsize=12, rotation=-90)
+        plt.xticks(x_indices, class_names, fontsize=10, rotation=-90)
         plt.xlabel('Transient Class', fontsize=10)
         plt.ylabel(ylabel, fontsize=10)
         self.display_and_save_plot(ylabel, ax)
@@ -315,8 +315,8 @@ class BaseModelVisualization:
         axis.bar(x_indices, y_vals, color=bar_colors)
         self.add_bar_counts(x_indices, y_vals, annotations, axis)
         plt.yticks(list(np.linspace(0, 1, 11)), [
-                   str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=12)
-        plt.xticks(x_indices, x_vals, fontsize=12)
+                   str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
+        plt.xticks(x_indices, x_vals, fontsize=10)
 
     def add_bar_counts(self, x, y, class_counts, ax):
         """

@@ -130,3 +130,44 @@ class MCBaseModelVisualization:
         avg_fig.savefig(file_dir + "/roc_summary",
                         bbox_inches=extent.expanded(1.3, 1.3))
         plt.show()
+
+    def plot_mc_performance(self, class_metrics, ylabel):
+        """
+        Visualizes accuracy per class with bar graph; with random baseline based on class level in hierarchy.
+        :param class_metrics: Mapping from class name to metric value.
+        """
+        class_names = list(class_metrics.keys())
+        metrics = list(class_metrics.values())
+        # Sort by class names, so they show up consistently
+        class_names, metrics = zip(*sorted(zip(class_names, metrics)))
+
+        # Class names will be assigned in same order as these indices
+        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+
+        x_indices = np.arange(len(metrics))
+        bar_width = 0.8
+        ax.bar(x=x_indices, height=metrics, width=bar_width)
+        ax.set_ylim(0, 1)
+        plt.yticks(list(np.linspace(0, 1, 11)), [
+                   str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
+        plt.xticks(x_indices, class_names, fontsize=10, rotation=-90)
+        plt.xlabel('Transient Class', fontsize=10)
+        plt.ylabel(ylabel, fontsize=10)
+
+        # Plot base lines
+        # Map each level to the total # of classes at that level
+        level_counts = {}
+        for class_name in class_names:
+            level = self.class_levels[class_name]
+            if level in level_counts:
+                level_counts[level] += 1
+            else:
+                level_counts[level] = 1
+
+        for index, class_name in enumerate(class_names):
+            level = self.class_levels[class_name]
+            # Random chance of class is 1/# of classes at this level
+            level_base = 1 / level_counts[level]
+            plt.hlines(y=level_base, xmin=index - 0.45, xmax=index +
+                       bar_width - 0.45, linestyles='--', colors='red')
+        self.display_and_save_plot(ylabel, ax)

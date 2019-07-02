@@ -1,10 +1,13 @@
 from abc import abstractmethod
 import numpy as np
 import pandas as pd
+
+from thex_data.data_print import print_styled
+from thex_data.data_consts import class_to_subclass
+
 from models.base_model_mc.mc_base_model import MCBaseModel
 from models.conditional_model.conditional_train import ConditionalTrain
 from models.conditional_model.conditional_test import ConditionalTest
-from thex_data.data_consts import class_to_subclass
 
 
 class ConditionalModel(MCBaseModel, ConditionalTrain, ConditionalTest):
@@ -31,8 +34,7 @@ class ConditionalModel(MCBaseModel, ConditionalTrain, ConditionalTest):
             class_labels += subnet_classes
 
         self.class_labels = list(set(class_labels))
-        print("\n Class labels:")
-        print(self.class_labels)
+        print_styled(self.class_labels, "Class Labels")
 
     def train_model(self):
         if self.class_labels is None:
