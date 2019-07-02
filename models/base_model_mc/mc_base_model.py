@@ -1,14 +1,12 @@
-import os
 from abc import ABC, abstractmethod
 from sklearn.model_selection import StratifiedKFold
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.metrics import auc
 
 from thex_data.data_clean import *
-from thex_data.data_consts import ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI, UNDEF_CLASS, PRED_LABEL
-from thex_data.data_prep import get_source_target_data
 from thex_data.data_plot import *
+from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, UNDEF_CLASS, PRED_LABEL
+from thex_data.data_prep import get_source_target_data
 from thex_data.data_consts import class_to_subclass as hierarchy
 
 
@@ -90,21 +88,54 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         pass
 
-    def evaluate_model(self, test_on_train):
+    def set_class_labels(self, y):
+
+        if self.test_level is not None:
+            # Gets all class labels on self.test_level,
+            # including 'Undefined' classes of parent level.
+            self.class_labels = []
+            for class_name in self.get_mc_unique_classes(y):
+                if class_name in self.class_levels:
+                    class_level = self.class_levels[class_name]
+                    if class_level == self.test_level:
+                        self.class_labels.append(class_name)
+                    elif class_level == self.test_level - 1:
+                        self.class_labels.append(UNDEF_CLASS + class_name)
+        else:
+            self.class_labels = self.get_mc_unique_classes(y)
+
+    def evaluate_model(self, roc_plots, class_metrics, acc_metrics, k):
         """
         Evaluate and plot performance of model
+        :param roc_plots: Mapping from class_name to [figure, axis, true positive rates, aucs]. This function plots curve on corresponding axis using this dict.
+        :param class_metrics: Mapping from class names to SUMMED ranged metrics
+        :param acc_metrcis: List of results from get_mc_class_metrics, per fold/run
+        :param k: Number of folds
         """
-        # class_recalls, class_precisions = self.get_mc_metrics()
-        self.plot_mc_roc_curves()
+        # Plot ROC curves for each class
+        self.plot_mc_roc_curves(roc_plots, k)
 
-        # Plot probability vs precision for each class
-        X_accs = self.get_mc_probability_matrix()
+        # Plot probability vs positive rate for each class
+        self.plot_mc_probability_pos_rates(class_metrics)
+
+        # Report overall metrics
+        agg_metrics = self.aggregate_mc_class_metrics(acc_metrics)
+        precisions = {}
+        recalls = {}
+        briers = {}
+        loglosses = {}
         for class_name in self.class_labels:
-            perc_ranges, AP, TOTAL = self.get_mc_metrics_by_ranges(
-                X_accs, class_name)
-            acc_ranges = [AP[index] / T if T > 0 else 0 for index, T in enumerate(TOTAL)]
-            self.plot_probability_ranges(perc_ranges, acc_ranges,
-                                         'TP/Total', class_name, TOTAL)
+            metrics = agg_metrics[class_name]
+            precisions[class_name] = metrics["TP"] / (metrics["TP"] + metrics["FP"])
+            recalls[class_name] = metrics["TP"] / (metrics["TP"] + metrics["FN"])
+            briers[class_name] = metrics["BS"]
+            loglosses[class_name] = metrics["LL"]
+        self.plot_performance(precisions, "Precision", class_counts=None,
+                              ylabel="Precision", class_names=self.class_labels)
+        self.plot_performance(recalls, "Recall", class_counts=None,
+                              ylabel="Recall", class_names=self.class_labels)
+        # self.basic_plot(briers, "Brier Score",   self.class_labels)
+        self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
 
     def visualize_data(self, data_filters, y=None, X=None):
         """
@@ -177,22 +208,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
         return roc_plots, class_metrics, acc_metrics
 
-    def set_class_labels(self, y):
-
-        if self.test_level is not None:
-            # Gets all class labels on self.test_level,
-            # including 'Undefined' classes of parent level.
-            self.class_labels = []
-            for class_name in self.get_mc_unique_classes(y):
-                if class_name in self.class_levels:
-                    class_level = self.class_levels[class_name]
-                    if class_level == self.test_level:
-                        self.class_labels.append(class_name)
-                    elif class_level == self.test_level - 1:
-                        self.class_labels.append(UNDEF_CLASS + class_name)
-        else:
-            self.class_labels = self.get_mc_unique_classes(y)
-
     def run_model_cv(self, data_columns, data_filters):
         """
         Split data into k-folds and perform k-fold cross validation
@@ -220,72 +235,5 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                 k, X, y, roc_plots, class_metrics, acc_metrics, data_filters)
 
         # Plot Results ################################
-        # Plot ROC curves for each class
-        avg_fig, avg_ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-        for class_name in self.class_labels:
-            fig, ax, tprs, aucs = roc_plots[class_name]
-            #   Baseline
-            ax.plot([0, 1], [0, 1], linestyle='--', lw=1.5, color='r',
-                    label='Baseline', alpha=.8)
-            # Average line
-            mean_tpr = np.mean(tprs, axis=0)
-            mean_tpr[-1] = 1.0
-            mean_fpr = np.linspace(0, 1, 100)
-            mean_auc = auc(mean_fpr, mean_tpr)
-            std_auc = np.std(aucs)
-            ax.plot(mean_fpr, mean_tpr, color='b',
-                    label=r'Mean ROC (AUC=%0.2f$\pm$%0.2f)' % (
-                        mean_auc, std_auc),
-                    lw=2, alpha=.8)
-            avg_ax.plot(mean_fpr, mean_tpr, lw=1, alpha=0.6,
-                        label=class_name + r' AUC=%0.2f$\pm$%0.2f' % (
-                            mean_auc, std_auc))
-            # Standard deviation in gray shading
-            std_tpr = np.std(tprs, axis=0)
-            tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
-            tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-            ax.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
-                            label=r'$\sigma$')
-            title = class_name + " ROC Curve " + "over " + str(k) + "-folds"
-            ax.set_title(title)
-            ax.set_xlabel('False Positive Rate')
-            ax.set_ylabel('True Positive Rate')
-            ax.legend(loc="best")
-            extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
-            file_dir = ROOT_DIR + "/output/" + self.prep_file_name(self.name)
-            if not os.path.exists(file_dir):
-                os.mkdir(file_dir)
-            file_name = file_dir + "/" + self.prep_file_name(title)
-            fig.savefig(file_name, bbox_inches=extent.expanded(1.3, 1.3))
-
-        avg_ax.set_title(self.name + " ROC Curves")
-        avg_ax.set_xlabel('False Positive Rate')
-        avg_ax.set_ylabel('True Positive Rate')
-        avg_ax.legend(loc="best")
-        avg_fig.savefig(file_dir + "/roc_summary",
-                        bbox_inches=extent.expanded(1.3, 1.3))
-        plt.show()
-
-        # Plot probability vs accuracy for each class
-        aggregated_class_metrics = self.aggregate_mc_prob_metrics(class_metrics)
-        self.plot_mc_probability_pos_rates(aggregated_class_metrics)
-
-        # Report overall metrics
-        total = data_filters['num_runs'] * y.shape[0]
-        agg_metrics = self.aggregate_mc_class_metrics(acc_metrics)
-        precisions = {}
-        recalls = {}
-        briers = {}
-        loglosses = {}
-        for class_name in self.class_labels:
-            metrics = agg_metrics[class_name]
-            precisions[class_name] = metrics["TP"] / (metrics["TP"] + metrics["FP"])
-            recalls[class_name] = metrics["TP"] / (metrics["TP"] + metrics["FN"])
-            briers[class_name] = metrics["BS"]
-            loglosses[class_name] = metrics["LL"]
-        self.plot_performance(precisions, "Precision", class_counts=None,
-                              ylabel="Precision", class_names=self.class_labels)
-        self.plot_performance(recalls, "Recall", class_counts=None,
-                              ylabel="Recall", class_names=self.class_labels)
-        self.basic_plot(briers, "Brier Score",   self.class_labels)
-        self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
+        agg_class_metrics = self.aggregate_mc_prob_metrics(class_metrics)
+        self.evaluate_model(roc_plots, agg_class_metrics, acc_metrics, k)

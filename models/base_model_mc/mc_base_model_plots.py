@@ -1,9 +1,12 @@
-from thex_data.data_clean import convert_class_vectors, relabel
-from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, TARGET_LABEL
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, auc
 from scipy import interp
+
+
+from thex_data.data_clean import convert_class_vectors, relabel
+from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, TARGET_LABEL, ROOT_DIR
 
 
 class MCBaseModelVisualization:
@@ -73,32 +76,57 @@ class MCBaseModelVisualization:
 
         return roc_plots
 
-    def plot_mc_roc_curves(self):
+    def plot_mc_roc_curves(self, roc_plots, num_folds):
         """
-        Plot using Sklearn ROC Curve logic
+        Plot saved ROC curves
+        :param roc_plots: Results from save_roc_curve
         """
-        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-        # class_probabilities is a numpy ndarray with a row for each X_test
-        # sample, and a column for each class probability, in order of valid
-        # self.class_labels
-        class_probabilities = self.get_all_class_probabilities()
-        # y_test_vectors has TARGET_LABEL column, with each class vector of length
-        # self.class_labels
-        y_test_vectors = convert_class_vectors(
-            self.y_test, self.class_labels, self.test_level)
-        for class_index, class_name in enumerate(self.class_labels):
-            # If there is a valid model for this class
-            column = class_probabilities[:, class_index]
-            y_test_labels = np.transpose(relabel(class_index, y_test_vectors)[
-                                         [TARGET_LABEL]].values)[0]
-            fpr, tpr, thresholds = roc_curve(
-                y_true=y_test_labels, y_score=column, sample_weight=None, drop_intermediate=True)
+        avg_fig, avg_ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
 
-            plt.plot(fpr, tpr, label=class_name)
-        ax.set_ylabel('True Positive Rate', fontsize=10)
-        ax.set_xlabel('False Positive Rate', fontsize=10)
-        # ax.plot(x, x, "--", label="Baseline")  # baseline
-        plt.plot([0, 1], [0, 1], 'k--', label="Baseline")
-        plt.title('ROC curve')
-        plt.legend(loc='lower right')
+        # Directory to save output in
+        file_dir = ROOT_DIR + "/output/" + self.prep_file_name(self.name)
+        if not os.path.exists(file_dir):
+            os.mkdir(file_dir)
+
+        for class_name in self.class_labels:
+            fig, ax, tprs, aucs = roc_plots[class_name]
+            #   Baseline
+            ax.plot([0, 1], [0, 1], linestyle='--', lw=1.5, color='r',
+                    label='Baseline', alpha=.8)
+            # Average line
+            mean_tpr = np.mean(tprs, axis=0)
+            mean_tpr[-1] = 1.0
+            mean_fpr = np.linspace(0, 1, 100)
+            mean_auc = auc(mean_fpr, mean_tpr)
+            std_auc = np.std(aucs)
+            ax.plot(mean_fpr, mean_tpr, color='b',
+                    label=r'Mean ROC (AUC=%0.2f$\pm$%0.2f)' % (
+                        mean_auc, std_auc),
+                    lw=2, alpha=.8)
+            avg_ax.plot(mean_fpr, mean_tpr, lw=1, alpha=0.6,
+                        label=class_name + r' AUC=%0.2f$\pm$%0.2f' % (
+                            mean_auc, std_auc))
+            # Standard deviation in gray shading
+            std_tpr = np.std(tprs, axis=0)
+            tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
+            tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
+            ax.fill_between(mean_fpr, tprs_lower, tprs_upper,
+                            color='grey', alpha=.2, label=r'$\sigma$')
+            title = class_name + " ROC Curve " + "over " + str(num_folds) + "-folds"
+            ax.set_title(title)
+            ax.set_xlabel('False Positive Rate')
+            ax.set_ylabel('True Positive Rate')
+            ax.legend(loc="best")
+            extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+
+            file_name = file_dir + "/" + self.prep_file_name(title)
+            fig.savefig(file_name, bbox_inches=extent.expanded(1.3, 1.3))
+
+        avg_ax.set_title(self.name + " ROC Curves")
+        avg_ax.set_xlabel('False Positive Rate')
+        avg_ax.set_ylabel('True Positive Rate')
+        avg_ax.legend(loc="best")
+        # Plot the mean of each class ROC curve on same plot
+        avg_fig.savefig(file_dir + "/roc_summary",
+                        bbox_inches=extent.expanded(1.3, 1.3))
         plt.show()

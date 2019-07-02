@@ -160,20 +160,15 @@ class MCBaseModelPerformance:
     def aggregate_mc_class_metrics(self, metrics):
         """
         Aggregate list of class_accuracies from get_mc_class_metrics
-        :param metrics: List of maps from class to stats, like: [{"Ia": [2, 3, 4, 1], "Ib":{2, 3, 1, 4}}, {"Ia": [1, 1, 0, 1], "Ib":{2, 3, 1, 4}, etc.]
+        :param metrics: List of maps from class to stats, like: [{"Ia": {TP:3, FN:3, TN:4, ... }, "Ib":{TP: 3, FN: 3, TN: 4, ... }, ...}, {"Ia": {TP: 3, FN: 3, TN: 4, ... }, ...}, ... ]
         """
         agg_metrics = {class_name: {"TP": 0, "FN": 0, "FP": 0, "TN": 0,
                                     "BS": 0, "LL": 0} for class_name in self.class_labels}
-        for metric in metrics:
-            for class_name in self.class_labels:
-                cur_class_metrics = metric[class_name]
-                agg_metrics[class_name]["TP"] += cur_class_metrics["TP"]
-                agg_metrics[class_name]["FN"] += cur_class_metrics["FN"]
-                agg_metrics[class_name]["FP"] += cur_class_metrics["FP"]
-                agg_metrics[class_name]["TN"] += cur_class_metrics["TN"]
-                agg_metrics[class_name]["BS"] += cur_class_metrics["BS"]
-                agg_metrics[class_name]["LL"] += cur_class_metrics["LL"]
-            # Divide Brier Score and Log Loss sum by number of runs to get average.
+        for metric_set in metrics:
+            for class_name in metric_set.keys():
+                for metric in metric_set[class_name].keys():
+                    agg_metrics[class_name][metric] += metric_set[class_name][metric]
+            # Divide Brier Score and Log Loss sum by # of runs to get average
             agg_metrics[class_name]["BS"] /= len(metrics)
             agg_metrics[class_name]["LL"] /= len(metrics)
         return agg_metrics
@@ -181,8 +176,9 @@ class MCBaseModelPerformance:
     def aggregate_mc_prob_metrics(self, metrics):
         """
         Aggregate output of get_mc_metrics_by_ranges over several folds / runs: param metrics: Dictionary of class names to their ranged metrics,
-         {class_name: [[percent_ranges, AP_ranges, TOTAL_ranges], ...], ...}: return: Dictionary of class names to their SUMMED ranged metrics,
-         {class_name: [percent_ranges, sum(AP_ranges), sum(TOTAL_ranges)], ...}
+         {class_name: [[percent_ranges, AP_ranges, TOTAL_ranges], ...], ...}
+        return: Dictionary of class names to their SUMMED ranged metrics,
+        {class_name: [percent_ranges, sum(AP_ranges), sum(TOTAL_ranges)], ...}
         """
 
         percent_ranges = [0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]

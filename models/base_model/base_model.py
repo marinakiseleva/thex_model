@@ -35,7 +35,7 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
                         # will use all AllWISE columns.
                         'num_runs': 1,
                         'test_on_train': False,
-                        'folds': None,  # Number of folds if using k-fold Cross Validation
+                        'folds': 3,  # Number of folds if using k-fold Cross Validation
                         'data_split': 0.3,  # For single run
                         'top_classes': None,
                         'one_all': None,
@@ -55,16 +55,7 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
         col_list = collect_cols(data_filters['cols'], data_filters['col_matches'])
         print_features_used(col_list)
 
-        if data_filters['folds'] is not None:
-            self.run_model_cv(col_list,  data_filters)
-            return self
-
-        # Collect data filtered on these parameters
-        self.set_model_data(col_list, data_filters)
-        self.visualize_data(data_filters)
-        self.train_model()
-        self.predictions = self.test_model()
-        self.evaluate_model(data_filters['test_on_train'])
+        self.run_model_cv(col_list,  data_filters)
         return self
 
     @abstractmethod
@@ -135,38 +126,6 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
         if y is None:
             y = pd.concat([self.y_train, self.y_test], axis=0)
         data_plot.plot_class_hist(y)
-
-    def evaluate_model(self, test_on_train):
-        """
-        Evaluate and plot performance of model
-        """
-        unique_classes = self.get_unique_classes()
-        # data_type = 'Training' if test_on_train else 'Testing'
-        # info = self.name + " Recall on " + data_type + " Data"
-
-        # self.plot_samples(1)
-        # self.get_rarest()
-
-        # class_metrics = self.get_metrics_by_ranges(X_preds, class_code)
-        # self.plot_probability_precision(class_metrics)
-        # self.plot_probability_completeness(class_metrics)
-
-        rates = {}
-        for index, class_code in enumerate(unique_classes):
-            FP_rates, TP_rates = self.get_roc_curve(class_code)
-            rates[class_code] = [FP_rates, TP_rates]
-        self.plot_roc_curves(rates, "ROC Curves")
-
-        # Get accuracy per class of transient
-        # class_recalls = self.get_recall(class_metrics, unique_classes)
-        # class_precisions = self.get_precision(class_metrics, unique_classes)
-
-        # self.plot_performance(class_recalls, self.name + " Recall",
-        #                       class_counts=None, ylabel="Recall")
-        # self.plot_performance(class_precisions, self.name + " Precision",
-        # class_counts = None, ylabel = "Precision")
-
-        # self.plot_confusion_matrix(normalize=True)
 
     def run_cross_validation(self, k, X, y, data_filters):
         """
