@@ -41,7 +41,7 @@ def convert_class_vectors(df, class_labels, class_levels, level=None):
     for df_index, row in df.iterrows():
         class_vector = [0] * len(class_labels)
         cur_classes = convert_str_to_list(row[TARGET_LABEL])
-        has_class_level = False
+        has_level_class = False
         max_depth = 0
         for class_index, c in enumerate(class_labels):
             if c in cur_classes:
@@ -84,7 +84,8 @@ def init_tree(class_hierarchy=None):
 
 def assign_levels(tree, mapping, node, level):
     """
-    Assigns level to each node based on level in hierarchical tree. The lower it is in the tree, the larger the level. The level at the root is 1. Returns mapping of class name to level.
+    Assigns level to each node based on level in hierarchical tree. The lower it is in the tree, the larger the level. The level at the root is 1. 
+    :return: Dict from class name to level number.
     """
     mapping[str(node)] = level
     for child in tree._get_children(node):
@@ -103,7 +104,7 @@ def convert_str_to_list(input_string):
 def group_by_tree(df, transform_labels):
     """
     Normalized claimed type (transient type). If claimed type is not in map, it is removed. Only considers 1-1 mappings, does not use galaxies that have more than 1. Defines new TARGET_LABEL column.
-    :param df: DataFrame of values and labels. Must have column ORIG_TARGET_LABEL
+    :param df: DataFrame of features and labels in ORIG_TARGET_LABEL column
     :return df: Returns Pandas DataFrame with new column TARGET_LABEL, which has normalized transient type for each
     """
     if transform_labels == False:
