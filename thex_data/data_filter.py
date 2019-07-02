@@ -45,7 +45,6 @@ def filter_columns(df, col_list, incl_redshift):
     col_list = col_list + [TARGET_LABEL]
     if incl_redshift:
         col_list.append('redshift')
-    # print_features_used(col_list)
     df = df[col_list]
     return df
 
