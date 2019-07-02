@@ -68,17 +68,16 @@ class ConditionalTrain:
 
         for parent_class, subclasses in class_to_subclass.items():
             class_level = self.class_levels[parent_class]
-
             subnet_classes = self.get_subclf_classes(
                 subclasses, self.y_train, parent_class)
-            if len(subnet_classes) <= self.min_class_size:
+            if len(subnet_classes) <= 1:
                 # print("Do not need network for " + parent_class +
                 #       " since it has no subclasses in dataset.")
                 continue
             X, y = self.get_subclf_data(self.X_train, self.y_train, subnet_classes)
 
-            # print("\n\nInitialzing subclassifier for classes " +
-            # str(subnet_classes) + " with " + str(X.shape[0]) + "  samples total.")
+            print("\n\nInitialzing subclassifier for classes " +
+                  str(subnet_classes) + " with " + str(X.shape[0]) + "  samples total.")
 
             self.subclassifiers[parent_class] = self.create_classifier(
                 subnet_classes, X, y)
