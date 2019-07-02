@@ -110,7 +110,8 @@ class MCBaseModelPerformance:
             # class_one_zero has 1/0 class presence per row
             class_one_zero = relabel(class_index, class_vectors)
 
-            level_num = self.class_levels[class_name]
+            # cur_level is hierarchical level of class_name
+            cur_level = self.class_levels[class_name]
 
             for index, row in predicted_classes.iterrows():
                 actual_label = class_one_zero.iloc[index][TARGET_LABEL]
@@ -121,8 +122,8 @@ class MCBaseModelPerformance:
                     # Get class name with max probability at this level.
                     max_probability = 0
                     predicted_label = None
-                    for cur_class in self.class_labels.keys():
-                        if self.class_levels[cur_class] == level_num:
+                    for cur_class in self.class_labels:
+                        if self.class_levels[cur_class] == cur_level:
                             class_prob = predicted_classes.iloc[index][cur_class]
                             if class_prob > max_probability:
                                 max_probability = class_prob
@@ -141,12 +142,18 @@ class MCBaseModelPerformance:
 
                 prob = self.get_class_probabilities(self.X_test.iloc[index])[class_name]
                 BS += (prob - actual_label)**2
-                # Log Loss
                 prob = np.clip(prob, 1e-15, 1 - 1e-15)
-                LL += (actual_label * log(prob)) + (1 - actual_label) * log(1 - prob)
-            BS /= self.y_test.shape[0]
-            LL /= self.y_test.shape[0] * -1
-            class_accuracies[class_name] = [TP, FN, FP, TN, BS, LL]
+                LL += (actual_label * log(prob)) + \
+                    (1 - actual_label) * log(1 - prob)
+
+            BS /= self.y_test.shape[0]  # Brier Score
+            LL /= self.y_test.shape[0] * -1  # Neg Log Loss
+            class_accuracies[class_name] = {"TP": TP,
+                                            "FN": FN,
+                                            "FP": FP,
+                                            "TN": TN,
+                                            "BS": BS,
+                                            "LL": LL}
 
         return class_accuracies
 
@@ -155,21 +162,21 @@ class MCBaseModelPerformance:
         Aggregate list of class_accuracies from get_mc_class_metrics
         :param metrics: List of maps from class to stats, like: [{"Ia": [2, 3, 4, 1], "Ib":{2, 3, 1, 4}}, {"Ia": [1, 1, 0, 1], "Ib":{2, 3, 1, 4}, etc.]
         """
-        class_metrics = {class_name: [0, 0, 0, 0, 0, 0]
-                         for class_name in self.class_labels}
+        agg_metrics = {class_name: {"TP": 0, "FN": 0, "FP": 0, "TN": 0,
+                                    "BS": 0, "LL": 0} for class_name in self.class_labels}
         for metric in metrics:
             for class_name in self.class_labels:
-                [TP, FN, FP, TN, BS, LL] = metric[class_name]
-                class_metrics[class_name][0] += TP
-                class_metrics[class_name][1] += FN
-                class_metrics[class_name][2] += FP
-                class_metrics[class_name][3] += TN
-                class_metrics[class_name][4] += BS
-                class_metrics[class_name][5] += LL
+                cur_class_metrics = metric[class_name]
+                agg_metrics[class_name]["TP"] += cur_class_metrics["TP"]
+                agg_metrics[class_name]["FN"] += cur_class_metrics["FN"]
+                agg_metrics[class_name]["FP"] += cur_class_metrics["FP"]
+                agg_metrics[class_name]["TN"] += cur_class_metrics["TN"]
+                agg_metrics[class_name]["BS"] += cur_class_metrics["BS"]
+                agg_metrics[class_name]["LL"] += cur_class_metrics["LL"]
             # Divide Brier Score and Log Loss sum by number of runs to get average.
-            class_metrics[class_name][4] /= len(metrics)
-            class_metrics[class_name][5] /= len(metrics)
-        return class_metrics
+            agg_metrics[class_name]["BS"] /= len(metrics)
+            agg_metrics[class_name]["LL"] /= len(metrics)
+        return agg_metrics
 
     def aggregate_mc_prob_metrics(self, metrics):
         """

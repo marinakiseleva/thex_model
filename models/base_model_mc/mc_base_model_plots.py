@@ -11,7 +11,7 @@ class MCBaseModelVisualization:
     Mixin Class for Multiclass BaseModel performance visualization
     """
 
-    def plot_mc_probability_precision(self, range_metrics):
+    def plot_mc_probability_pos_rates(self, range_metrics):
         """
         Plots precision of class (y) vs. probability assigned to class (x)
         :param range_metrics: Map of classes to [percent_ranges, AP_range_sums, TOTAL_range_sums]
@@ -21,14 +21,14 @@ class MCBaseModelVisualization:
             f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
 
             perc_actual = []
-            annotations = []
+            # annotations = [] Can be used to show X/Y instead of just Y
             for index, AP in enumerate(AP_ranges):
                 p = 0
                 total_predicted = TOTAL_ranges[index]
                 if total_predicted != 0:
-                    # (TP) / (TP+FP)
+                    # Positive Class Samples / Total # with prob in range
                     p = AP / total_predicted
-                annotations.append(str(AP) + " / " + str(total_predicted))
+                # annotations.append(str(AP) + " / " + str(total_predicted))
                 perc_actual.append(p)
 
             normalize = plt.Normalize(min(AP_ranges), max(AP_ranges))
@@ -40,13 +40,12 @@ class MCBaseModelVisualization:
             ax = self.plot_bar_with_annotations(
                 axis=ax, x_vals=perc_ranges, y_vals=perc_actual, annotations=TOTAL_ranges, bar_colors=colors)
             plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
-            plt.ylabel('Accuracy (Positive/Total)', fontsize=12)
-            self.display_and_save_plot("Accuracy vs Probability: " + class_name, ax)
+            plt.ylabel('Class Presence Rate (Positive/Total)', fontsize=12)
+            self.display_and_save_plot("Probability vs Positive Rate: " + class_name, ax)
 
-    def save_roc_curve(self, i, roc_plots):
+    def save_roc_curve(self, roc_plots):
         """
         Plot ROC curve for each class, but do not show. Plot to axis attached to class's plot (saved in roc_plots). Used to save many curves for multiple runs.
-        :param i: Fold or iteration number
         :param roc_plots: Mapping of class_name to [figure, axis, true positive rates, aucs]. This function plots curve on corresponding axis using this dict.
         """
         mean_fpr = np.linspace(0, 1, 100)
@@ -71,7 +70,6 @@ class MCBaseModelVisualization:
             roc_auc = auc(fpr, tpr)
             aucs.append(roc_auc)
             ax.plot(fpr, tpr, lw=1, alpha=0.3)
-            # label='ROC fold %d (AUC=%0.2f)' % (i, roc_auc))
 
         return roc_plots
 

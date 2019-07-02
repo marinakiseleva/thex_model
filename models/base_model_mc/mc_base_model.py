@@ -44,7 +44,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
     def test_model(self, keep_top_half=False):
         """
         Get class prediction for each sample. If test_level is not None, save just the max probability class. If test_level is None, we need to consider probability for each level in the hierarchy, so we create a DataFrame with a column for each class in self.class_labels and save each probability.
-        :return: 
+        :return:
             when self.test_level is not None: DataFrame with column PRED_LABEL, which contains the class name of the class with the highest probability assigned.
             when self.test_level is None: DataFrame with column for each class in self.class_labels, and probabilities filled in.
         """
@@ -147,7 +147,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         Run k-fold cross validation
         """
         kf = StratifiedKFold(n_splits=k, shuffle=True)
-        i = 1  # Fold count, for plotting labels
         for train_index, test_index in kf.split(X, y):
             self.X_train, self.X_test = X.iloc[train_index].reset_index(
                 drop=True), X.iloc[test_index].reset_index(drop=True)
@@ -164,8 +163,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             self.train_model()
 
             # Save ROC curve for each class
-            roc_plots = self.save_roc_curve(i, roc_plots)
-            i += 1
+            roc_plots = self.save_roc_curve(roc_plots)
 
             # Record metrics for prob vs. accuracy plots
             X_accs = self.get_mc_probability_matrix()
@@ -175,8 +173,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                     X_accs, class_name))
             self.predictions = self.test_model()
 
-            if self.test_level is not None:
-                acc_metrics.append(self.get_mc_class_metrics())
+            acc_metrics.append(self.get_mc_class_metrics())
 
         return roc_plots, class_metrics, acc_metrics
 
@@ -271,10 +268,9 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
         # Plot probability vs accuracy for each class
         aggregated_class_metrics = self.aggregate_mc_prob_metrics(class_metrics)
-        self.plot_mc_probability_precision(aggregated_class_metrics)
+        self.plot_mc_probability_pos_rates(aggregated_class_metrics)
 
-        # Report overall metrics for single-level comparison: precision, recall
-        # if self.test_level is not None:
+        # Report overall metrics
         total = data_filters['num_runs'] * y.shape[0]
         agg_metrics = self.aggregate_mc_class_metrics(acc_metrics)
         precisions = {}
@@ -282,18 +278,18 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         briers = {}
         loglosses = {}
         for class_name in self.class_labels:
-            [TP, FN, FP, TN, BS, LL] = agg_metrics[class_name]
+            metrics = agg_metrics[class_name]
             print("Class metrics for " + class_name)
-            print("TP " + str(TP))
-            print("FP " + str(FP))
-            print("FN " + str(FN))
-            print("TN " + str(TN))
-            print("BS " + str(BS))
-            print("LL " + str(LL))
-            precisions[class_name] = TP / (TP + FP)
-            recalls[class_name] = TP / (TP + FN)
-            briers[class_name] = BS
-            loglosses[class_name] = LL
+            print("TP " + str(metrics["TP"]))
+            print("FP " + str(metrics["FP"]))
+            print("FN " + str(metrics["FN"]))
+            print("TN " + str(metrics["TN"]))
+            print("BS " + str(metrics["BS"]))
+            print("LL " + str(metrics["LL"]))
+            precisions[class_name] = metrics["TP"] / (metrics["TP"] + metrics["FP"])
+            recalls[class_name] = metrics["TP"] / (metrics["TP"] + metrics["FN"])
+            briers[class_name] = metrics["BS"]
+            loglosses[class_name] = metrics["LL"]
         self.plot_performance(precisions, "Precision", class_counts=None,
                               ylabel="Precision", class_names=self.class_labels)
         self.plot_performance(recalls, "Recall", class_counts=None,
