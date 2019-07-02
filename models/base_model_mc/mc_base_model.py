@@ -279,13 +279,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         loglosses = {}
         for class_name in self.class_labels:
             metrics = agg_metrics[class_name]
-            print("Class metrics for " + class_name)
-            print("TP " + str(metrics["TP"]))
-            print("FP " + str(metrics["FP"]))
-            print("FN " + str(metrics["FN"]))
-            print("TN " + str(metrics["TN"]))
-            print("BS " + str(metrics["BS"]))
-            print("LL " + str(metrics["LL"]))
             precisions[class_name] = metrics["TP"] / (metrics["TP"] + metrics["FP"])
             recalls[class_name] = metrics["TP"] / (metrics["TP"] + metrics["FN"])
             briers[class_name] = metrics["BS"]
