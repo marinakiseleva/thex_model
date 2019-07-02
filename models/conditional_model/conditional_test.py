@@ -4,15 +4,6 @@ from thex_data.data_consts import class_to_subclass, PRED_LABEL
 
 class ConditionalTest:
 
-    # def test(self):
-    #     predictions = []
-    #     for index, row in self.X_test.iterrows():
-    #         probabilities = self.get_class_probabilities(row)
-    #         max_prob_class = max(probabilities, key=probabilities.get)
-    #         predictions.append(max_prob_class)
-    #     predicted_classes = pd.DataFrame(predictions, columns=[PRED_LABEL])
-    #     return predicted_classes
-
     def get_parent_prob(self, class_name, probabilities):
         """
         Recurse up through tree, getting parent prob until we find a valid one. For example, there may only be CC, II, II P in CC so we need to inherit the probability of CC.
