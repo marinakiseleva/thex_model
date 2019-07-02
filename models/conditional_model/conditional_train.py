@@ -51,7 +51,7 @@ class ConditionalTrain:
                     labels.append(class_labels.index(class_name))
                     keep_indices.append(df_index)
             if has_level_class == False:
-                # Assign parent's undefined class if it has NO subclass.
+                # Assign parent's undefined class if it has NO subclass and has parent.
                 for class_index, class_name in enumerate(class_labels):
                     if UNDEF_CLASS in class_name and class_name[len(UNDEF_CLASS):] in cur_classes:
                         labels.append(class_labels.index(class_name))
