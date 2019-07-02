@@ -38,18 +38,20 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
         self.class_labels = self.user_data_filters[
             'class_labels'] if 'class_labels' in self.user_data_filters.keys() else None
+
         super(MCBaseModel, self).run_model()
 
     def test_model(self, keep_top_half=False):
         """
-        Get class prediction for each sample. Predict class with max probability density.
-        :return: DataFrame with column PRED_LABEL, which contains the class name of the class with the highest probability assigned.
+        Get class prediction for each sample. If test_level is not None, save just the max probability class. If test_level is None, we need to consider probability for each level in the hierarchy, so we create a DataFrame with a column for each class in self.class_labels and save each probability.
+        :return: 
+            when self.test_level is not None: DataFrame with column PRED_LABEL, which contains the class name of the class with the highest probability assigned.
+            when self.test_level is None: DataFrame with column for each class in self.class_labels, and probabilities filled in.
         """
         # For diagnosing purposes - keep only top 1/2 probs
         if keep_top_half:
             unnormalized_max_probabilities = []
             for index, row in self.X_test.iterrows():
-                # TODO: how to change if probabilities are normalized or unnormalized.
                 unnormalized_probabilities = self.get_class_probabilities(
                     row)
                 max_unnormalized_prob = max(unnormalized_probabilities.values())
@@ -67,9 +69,17 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         predictions = []
         for index, row in self.X_test.iterrows():
             probabilities = self.get_class_probabilities(row)
-            max_prob_class = max(probabilities, key=probabilities.get)
-            predictions.append(max_prob_class)
-        predicted_classes = pd.DataFrame(predictions, columns=[PRED_LABEL])
+            if self.test_level is not None:
+                # Single column with max prob class_name
+                max_prob_class = max(probabilities, key=probabilities.get)
+                predictions.append(max_prob_class)
+            else:
+                # Create column for each class in self.class_labels, w/ probability
+                predictions.append(list(probabilities.values()))
+
+        columns = [PRED_LABEL] if self.test_level is not None else self.class_labels
+        predicted_classes = pd.DataFrame(predictions, columns=columns)
+
         return predicted_classes
 
     @abstractmethod
@@ -171,16 +181,18 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         return roc_plots, class_metrics, acc_metrics
 
     def set_class_labels(self, y):
+
         if self.test_level is not None:
             # Gets all class labels on self.test_level,
             # including 'Undefined' classes of parent level.
             self.class_labels = []
             for class_name in self.get_mc_unique_classes(y):
-                class_level = self.class_levels[class_name]
-                if class_level == self.test_level:
-                    self.class_labels.append(class_name)
-                elif class_level == self.test_level - 1:
-                    self.class_labels.append(UNDEF_CLASS + class_name)
+                if class_name in self.class_levels:
+                    class_level = self.class_levels[class_name]
+                    if class_level == self.test_level:
+                        self.class_labels.append(class_name)
+                    elif class_level == self.test_level - 1:
+                        self.class_labels.append(UNDEF_CLASS + class_name)
         else:
             self.class_labels = self.get_mc_unique_classes(y)
 
@@ -262,22 +274,29 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         self.plot_mc_probability_precision(aggregated_class_metrics)
 
         # Report overall metrics for single-level comparison: precision, recall
-        if self.test_level is not None:
-            total = data_filters['num_runs'] * y.shape[0]
-            agg_metrics = self.aggregate_mc_class_metrics(acc_metrics)
-            precisions = {}
-            recalls = {}
-            briers = {}
-            loglosses = {}
-            for class_name in self.class_labels:
-                [TP, FN, FP, TN, BS, LL] = agg_metrics[class_name]
-                precisions[class_name] = TP / (TP + FP)
-                recalls[class_name] = TP / (TP + FN)
-                briers[class_name] = BS
-                loglosses[class_name] = LL
-            self.plot_performance(precisions, "Precision", class_counts=None,
-                                  ylabel="Precision", class_names=self.class_labels)
-            self.plot_performance(recalls, "Recall", class_counts=None,
-                                  ylabel="Recall", class_names=self.class_labels)
-            self.basic_plot(briers, "Brier Score",   self.class_labels)
-            self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
+        # if self.test_level is not None:
+        total = data_filters['num_runs'] * y.shape[0]
+        agg_metrics = self.aggregate_mc_class_metrics(acc_metrics)
+        precisions = {}
+        recalls = {}
+        briers = {}
+        loglosses = {}
+        for class_name in self.class_labels:
+            [TP, FN, FP, TN, BS, LL] = agg_metrics[class_name]
+            print("Class metrics for " + class_name)
+            print("TP " + str(TP))
+            print("FP " + str(FP))
+            print("FN " + str(FN))
+            print("TN " + str(TN))
+            print("BS " + str(BS))
+            print("LL " + str(LL))
+            precisions[class_name] = TP / (TP + FP)
+            recalls[class_name] = TP / (TP + FN)
+            briers[class_name] = BS
+            loglosses[class_name] = LL
+        self.plot_performance(precisions, "Precision", class_counts=None,
+                              ylabel="Precision", class_names=self.class_labels)
+        self.plot_performance(recalls, "Recall", class_counts=None,
+                              ylabel="Recall", class_names=self.class_labels)
+        self.basic_plot(briers, "Brier Score",   self.class_labels)
+        self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)

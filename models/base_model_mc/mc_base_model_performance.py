@@ -47,9 +47,8 @@ class MCBaseModelPerformance:
     def get_mc_probability_matrix(self):
         """
         Gets probability of each class and actual class values, for each row
-        class1_prediction  class1_actual  .. classN_prediction classN_actual
-        .88                 1                   .2              0
-        ...
+        classname1_prediction  classname1_actual  .. classnameN_prediction classnameN_actual
+        .88           1         ...          .2              0
         """
         X_accuracy = pd.DataFrame()
         y_test_vectors = convert_class_vectors(
@@ -69,7 +68,8 @@ class MCBaseModelPerformance:
 
     def get_mc_unique_classes(self, df=None):
         """
-        Gets all unique class names based for HMC model. In HMC, we save class vectors, so we need to figure out all the unique subclasses from these vectors.
+        Get all unique class names from passed in DataFrame (or if None, self.y_test)
+        :param df: Pandas DataFrame with TARGET_LABEL column with string list of classes per sample; if None self.y_test is used
         """
         if df is None:
             df = self.y_test
@@ -82,14 +82,12 @@ class MCBaseModelPerformance:
 
     def get_mc_class_metrics(self):
         """
-        Save TP, FN, FP, TN, and BS (Brier Score) for each class.
-        Brier score: (1/N) * sum(probability - actual)^2
-        Log loss: -1/N * sum((actual * log(prob)) + (1-actual)(log(1-prob)))
+        Save TP, FN, FP, TN, and BS(Brier Score) for each class.
+        Brier score: (1 / N) * sum(probability - actual) ^ 2
+        Log loss: -1 / N * sum((actual * log(prob)) + (1 - actual)(log(1 - prob)))
         self.y_test has TARGET_LABEL column with string list of classes per sample
         """
-        if self.test_level is None:
-            raise ValueError(
-                "Currently cannot compute accuracy for multilevel classifiers -- need test_level.")
+
         # Relabel self.y_test actual labels with test_level label
         class_vectors = convert_class_vectors(self.y_test, self.class_labels,
                                               self.class_levels, self.test_level)
@@ -98,6 +96,7 @@ class MCBaseModelPerformance:
         predicted_classes = self.predictions
         actual_classes = self.y_test
         class_accuracies = {}
+
         for class_index, class_name in enumerate(self.class_labels):
             TP = 0  # True Positives
             FN = 0  # False Negatives
@@ -106,13 +105,29 @@ class MCBaseModelPerformance:
             BS = 0  # Brier Score
             LL = 0  # Log Loss
             class_accuracies[class_name] = 0
+
             # predicted_classes has single class_name per row
             # class_one_zero has 1/0 class presence per row
             class_one_zero = relabel(class_index, class_vectors)
 
+            level_num = self.class_levels[class_name]
+
             for index, row in predicted_classes.iterrows():
-                predicted_label = predicted_classes.iloc[index][PRED_LABEL]
                 actual_label = class_one_zero.iloc[index][TARGET_LABEL]
+
+                if self.test_level is not None:
+                    predicted_label = predicted_classes.iloc[index][PRED_LABEL]
+                else:
+                    # Get class name with max probability at this level.
+                    max_probability = 0
+                    predicted_label = None
+                    for cur_class in self.class_labels.keys():
+                        if self.class_levels[cur_class] == level_num:
+                            class_prob = predicted_classes.iloc[index][cur_class]
+                            if class_prob > max_probability:
+                                max_probability = class_prob
+                                predicted_label = cur_class
+
                 if actual_label == 1:
                     if predicted_label == class_name:
                         TP += 1
@@ -138,7 +153,7 @@ class MCBaseModelPerformance:
     def aggregate_mc_class_metrics(self, metrics):
         """
         Aggregate list of class_accuracies from get_mc_class_metrics
-        :param metrics: List of maps from class to stats, like: [{"Ia": [2, 3, 4, 1], "Ib":{2,3,1,4}}, {"Ia": [1, 1, 0, 1], "Ib":{2,3,1,4}, etc.]
+        :param metrics: List of maps from class to stats, like: [{"Ia": [2, 3, 4, 1], "Ib":{2, 3, 1, 4}}, {"Ia": [1, 1, 0, 1], "Ib":{2, 3, 1, 4}, etc.]
         """
         class_metrics = {class_name: [0, 0, 0, 0, 0, 0]
                          for class_name in self.class_labels}
@@ -151,62 +166,16 @@ class MCBaseModelPerformance:
                 class_metrics[class_name][3] += TN
                 class_metrics[class_name][4] += BS
                 class_metrics[class_name][5] += LL
-        class_metrics[class_name][4] /= len(metrics)
-        class_metrics[class_name][5] /= len(metrics)
+            # Divide Brier Score and Log Loss sum by number of runs to get average.
+            class_metrics[class_name][4] /= len(metrics)
+            class_metrics[class_name][5] /= len(metrics)
         return class_metrics
-
-    def get_mc_metrics(self):
-        """
-        Gets recall and precision of all classes in training set (using self.get_mc_unique_classes())
-        :return: {class code : recall}, {class code : precision}
-        """
-        class_recalls = {}
-        class_precisions = {}
-        for class_index, class_name in enumerate(self.class_labels):
-            class_code = cat_code[class_name]
-            TP, FP, FN = self.get_mc_class_recall(class_index)
-            # Recall = TP/(TP+FN)
-            recall = TP / (TP + FN) if (TP + FN) > 0 else 0
-            # Precision = TP/(TP+FP)
-            precision = TP / (TP + FP) if (TP + FP) > 0 else 0
-            class_recalls[class_code] = recall
-            class_precisions[class_code] = precision
-
-        return class_recalls, class_precisions
-
-    def get_mc_class_recall(self, class_index):
-        """
-        Records total number of true positives (TP), false positives (FP), and false negatives (FN) for this class across all y_test data
-        :return: [TP, FP, FN]
-        """
-        y_test_vectors = convert_class_vectors(
-            self.y_test, self.class_labels, self.class_levels)
-        row_count = y_test_vectors.shape[0]
-        TP = 0  # True positive count
-        FN = 0  # False negative count
-        FP = 0  # False positive count
-        for sample_index in range(row_count - 1):
-
-            # Compare this index of 2 class vectors
-            predicted_class = self.predictions[sample_index, class_index]
-            actual_classes = y_test_vectors.iloc[sample_index][TARGET_LABEL]
-            actual_class = actual_classes[class_index]
-
-            if actual_class == 1 and predicted_class == 1:
-                TP += 1
-            elif actual_class == 0 and predicted_class == 0:
-                FN += 1
-            elif actual_class == 0 and predicted_class == 1:
-                FP += 1
-        return [TP, FP, FN]
 
     def aggregate_mc_prob_metrics(self, metrics):
         """
-        Aggregate output of get_mc_metrics_by_ranges over several folds/runs
-        :param metrics: Dictionary of class names to their ranged metrics,
-         {class_name: [[percent_ranges, AP_ranges, TOTAL_ranges],...] , ...}
-        :return: Dictionary of class names to their SUMMED ranged metrics,
-         {class_name: [percent_ranges, sum(AP_ranges), sum(TOTAL_ranges)] , ...}
+        Aggregate output of get_mc_metrics_by_ranges over several folds / runs: param metrics: Dictionary of class names to their ranged metrics,
+         {class_name: [[percent_ranges, AP_ranges, TOTAL_ranges], ...], ...}: return: Dictionary of class names to their SUMMED ranged metrics,
+         {class_name: [percent_ranges, sum(AP_ranges), sum(TOTAL_ranges)], ...}
         """
 
         percent_ranges = [0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]
