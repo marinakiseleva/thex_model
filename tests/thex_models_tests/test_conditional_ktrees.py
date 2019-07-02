@@ -54,3 +54,18 @@ class TestConditionalKTreesModel(unittest.TestCase):
             child_classes=["Ia-91bg"], y=self.test_model.y_train, parent_class="Ia")
         print(classes)
         self.assertEqual(set(classes), set(["Ia-91bg", UNDEF_CLASS + "Ia"]))
+
+    def test_get_subclf_data(self):
+        y = pd.DataFrame([
+            ["Ia"], ["CC"], ["CC"], ["Ia, Ia-91bg"], ["Ia"]], columns=[TARGET_LABEL])
+        X = pd.DataFrame([
+            [20, 15], [5, 8], [6, 8], [21, 16], [18, 16]], columns=['feature1', 'feature2'])
+        class_labels = ['Ia', 'CC']
+
+        X, y = self.test_model.get_subclf_data(X, y, class_labels)
+        exp_X = pd.DataFrame([
+            [20, 15], [5, 8], [6, 8], [21, 16], [18, 16]], columns=['feature1', 'feature2'])
+        exp_y = pd.DataFrame([
+            [0], [1], [1], [0], [0]], columns=[TARGET_LABEL])
+        exp_X.equals(X)
+        exp_y.equals(y)
