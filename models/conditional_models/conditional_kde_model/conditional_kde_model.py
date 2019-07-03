@@ -1,5 +1,5 @@
-from models.conditional_kde_model.subkde import SubKDE
-from models.conditional_model.conditional_model import ConditionalModel
+from models.conditional_models.conditional_kde_model.subkde import SubKDE
+from models.conditional_models.conditional_model.conditional_model import ConditionalModel
 
 
 class ConditionalKDEModel(ConditionalModel):

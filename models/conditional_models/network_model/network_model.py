@@ -1,5 +1,5 @@
-from models.network_model.subnetwork import SubNetwork
-from models.conditional_model.conditional_model import ConditionalModel
+from models.conditional_models.network_model.subnetwork import SubNetwork
+from models.conditional_models.conditional_model.conditional_model import ConditionalModel
 
 
 class NetworkModel(ConditionalModel):

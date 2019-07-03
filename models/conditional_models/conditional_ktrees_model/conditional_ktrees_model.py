@@ -1,5 +1,5 @@
-from models.conditional_ktrees_model.subktree import SubKTree
-from models.conditional_model.conditional_model import ConditionalModel
+from models.conditional_models.conditional_ktrees_model.subktree import SubKTree
+from models.conditional_models.conditional_model.conditional_model import ConditionalModel
 
 
 class ConditionalKTreesModel(ConditionalModel):

@@ -4,7 +4,7 @@ from sklearn.neighbors.kde import KernelDensity
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 
 from thex_data.data_consts import TARGET_LABEL
-from models.conditional_model.classifier import SubClassifier
+from models.conditional_models.conditional_model.classifier import SubClassifier
 
 
 class SubKDE(SubClassifier):

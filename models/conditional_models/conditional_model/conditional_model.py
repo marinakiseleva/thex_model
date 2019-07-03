@@ -6,8 +6,8 @@ from thex_data.data_print import print_styled
 from thex_data.data_consts import class_to_subclass
 
 from models.base_model_mc.mc_base_model import MCBaseModel
-from models.conditional_model.conditional_train import ConditionalTrain
-from models.conditional_model.conditional_test import ConditionalTest
+from models.conditional_models.conditional_model.conditional_train import ConditionalTrain
+from models.conditional_models.conditional_model.conditional_test import ConditionalTest
 
 
 class ConditionalModel(MCBaseModel, ConditionalTrain, ConditionalTest):

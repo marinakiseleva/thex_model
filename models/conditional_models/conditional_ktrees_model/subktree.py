@@ -5,7 +5,7 @@ from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 
 
-from models.conditional_model.classifier import SubClassifier
+from models.conditional_models.conditional_model.classifier import SubClassifier
 from thex_data.data_consts import TARGET_LABEL
 
 
