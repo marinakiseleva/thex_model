@@ -46,13 +46,6 @@ class SubKTree(SubClassifier):
                 raise ValueError("Each class should have a tree.")
 
             probabilities[class_name] = class_probability
-
-        # sum_probabilities = sum(probabilities.values())
-        # if sum_probabilities == 0:
-        #     # print("All probabilities for this sample are 0.")
-        #     probabilities = {k: 0 for k, v in probabilities.items()}
-        # else:
-        #     probabilities = {k: v / sum_probabilities for k, v in probabilities.items()}
         return list(probabilities.values())
 
     def get_best_model(self, X, y):
