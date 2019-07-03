@@ -130,12 +130,12 @@ class MCBaseModelPerformance:
                                 predicted_label = cur_class
 
                 # Get probability of this class and clip to avoid log(0)
-                prob_orig = self.get_class_probabilities(
+                prob = self.get_class_probabilities(
                     self.X_test.iloc[index])[class_name]
                 e = 1e-13
-                if prob_orig == 0:
+                if prob == 0:
                     prob = e
-                elif prob_orig == 1:
+                elif prob == 1:
                     prob = 1 - e
 
                 if actual_label == 1:
