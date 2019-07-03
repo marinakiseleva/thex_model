@@ -162,8 +162,10 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         loglosses = {}
         for class_name in self.class_labels:
             metrics = agg_metrics[class_name]
-            precisions[class_name] = metrics["TP"] / (metrics["TP"] + metrics["FP"])
-            recalls[class_name] = metrics["TP"] / (metrics["TP"] + metrics["FN"])
+            den = metrics["TP"] + metrics["FP"]
+            precisions[class_name] = metrics["TP"] / den if den > 0 else 0
+            den = metrics["TP"] + metrics["FN"]
+            recalls[class_name] = metrics["TP"] / den if den > 0 else 0
             briers[class_name] = metrics["BS"]
             loglosses[class_name] = metrics["LL"]
         self.plot_mc_performance(precisions, "Precision")
