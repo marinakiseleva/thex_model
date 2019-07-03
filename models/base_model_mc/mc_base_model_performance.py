@@ -129,25 +129,31 @@ class MCBaseModelPerformance:
                                 max_probability = class_prob
                                 predicted_label = cur_class
 
+                # Get probability of this class and clip to avoid log(0)
+                prob_orig = self.get_class_probabilities(
+                    self.X_test.iloc[index])[class_name]
+                e = 1e-13
+                if prob_orig == 0:
+                    prob = e
+                elif prob_orig == 1:
+                    prob = 1 - e
+
                 if actual_label == 1:
+                    LL += -log(prob)
                     if predicted_label == class_name:
                         TP += 1
                     else:
                         FN += 1
                 elif actual_label == 0:
+                    LL += -log(1 - prob)
                     if predicted_label == class_name:
                         FP += 1
                     else:
                         TN += 1
-
-                prob = self.get_class_probabilities(self.X_test.iloc[index])[class_name]
                 BS += (prob - actual_label)**2
-                prob = np.clip(prob, 1e-15, 1 - 1e-15)
-                LL += (actual_label * log(prob)) + \
-                    (1 - actual_label) * log(1 - prob)
 
             BS /= self.y_test.shape[0]  # Brier Score
-            LL /= self.y_test.shape[0] * -1  # Neg Log Loss
+            LL /= self.y_test.shape[0]  # Divide Log Loss Sum by # of samples
             class_accuracies[class_name] = {"TP": TP,
                                             "FN": FN,
                                             "FP": FP,
