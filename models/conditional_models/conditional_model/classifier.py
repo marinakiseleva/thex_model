@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 from abc import ABC, abstractmethod
+from sklearn.utils.class_weight import compute_class_weight
+
 
 from thex_data.data_consts import TARGET_LABEL
 
@@ -13,6 +15,16 @@ class SubClassifier(ABC):
     def __init__(self, classes, X, y):
         self.classes = classes
         self.classifier = self.init_classifier(X, y)
+
+    def get_class_weights(self, y):
+        """
+        Gets weight of each class
+        :return: Dict from self.classes values to their weights
+        """
+        class_indices = list(range(len(self.classes)))
+        class_weights = compute_class_weight(
+            class_weight='balanced', classes=class_indices, y=y[TARGET_LABEL].values)
+        return dict(enumerate(class_weights))
 
     def get_sample_weights(self, y):
         """
