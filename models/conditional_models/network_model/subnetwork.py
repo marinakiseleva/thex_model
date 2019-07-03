@@ -1,6 +1,5 @@
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV, train_test_split
 from keras.utils import to_categorical
 from keras.models import Sequential
 from keras.layers import Dense
@@ -131,7 +130,8 @@ class SubNetwork(SubClassifier):
             # , [88, 64, 16], [64, 38, 24, 12]], [88, 44, 32, 16]
             'layer_sizes': [[92, 32], [88, 64, 16], [108, 64, 16]],
             'input_length': [self.input_length],
-            'output_length': [self.output_length]}
+            'output_length': [self.output_length]
+        }
 
         grid_model = KerasClassifier(build_fn=create_model,
                                      epochs=epochs,
@@ -142,7 +142,8 @@ class SubNetwork(SubClassifier):
             'callbacks': callbacks,
             'epochs': epochs,
             'batch_size': batch_size,
-            'validation_data': (x_valid, y_valid),  # , val_sample_weights
+            'validation_data': (x_valid, y_valid),  # val_sample_weights
+            'class_weight': class_weights,
             'verbose': 0
         }
         grid = GridSearchCV(estimator=grid_model,
@@ -150,11 +151,9 @@ class SubNetwork(SubClassifier):
                             fit_params=keras_fit_params,
                             n_jobs=-1,
                             verbose=0,
-                            class_weight=class_weights,
                             cv=3)
 
-        grid.fit(x_train, y_train, shuffle=True)
-        # , sample_weight=train_sample_weights)
+        grid.fit(x_train, y_train, shuffle=True)  # , sample_weight=train_sample_weights)
 
         m = create_model(
             learn_rate=grid.best_params_['learn_rate'],
@@ -164,6 +163,7 @@ class SubNetwork(SubClassifier):
             layer_sizes=grid.best_params_['layer_sizes'],
             input_length=grid.best_params_['input_length'],
             output_length=grid.best_params_['output_length'])
+
         print("Best model parameters")
         print(grid.best_params_)
 
