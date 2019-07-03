@@ -1,4 +1,3 @@
-from sklearn.utils.class_weight import compute_class_weight
 from sklearn.model_selection import GridSearchCV, train_test_split
 from keras.utils import to_categorical
 from keras.models import Sequential
@@ -23,10 +22,10 @@ def create_model(layer_sizes=[48, 16], input_length=1, output_length=1,
     model.add(Dense(layer_sizes[-1], activation='relu'))
     model.add(Dense(output_length, activation='softmax'))
 
-    sgd = optimizers.SGD(lr=learn_rate, momentum=momentum,
-                         decay=decay, nesterov=nesterov)
+    # sgd = optimizers.SGD(lr=learn_rate, momentum=momentum,
+    #                      decay=decay, nesterov=nesterov)
     model.compile(loss='categorical_crossentropy',
-                  optimizer='sgd',   # 'adam'
+                  optimizer='adam',  # adam or sgd
                   metrics=['accuracy', 'categorical_accuracy'])
     return model
 
@@ -66,20 +65,17 @@ class SubNetwork(SubClassifier):
         y_valid = to_categorical(y=y_valid, num_classes=len(self.classes))
 
         # Assign class weights
-        class_indices = list(range(len(self.classes)))
-        class_weights = compute_class_weight(
-            class_weight='balanced', classes=class_indices, y=y[TARGET_LABEL].values)
-        class_weights = dict(enumerate(class_weights))
-        print("Class weights")
-        print(class_weights)
+        class_weights = self.get_class_weights(y)
+
         # NN hyperparameters
         epochs = 1500
-        batch_size = 24
+        batch_size = 12
+        patience = 200
         es = EarlyStopping(monitor='val_loss',
                            mode='min',
                            verbose=0,
                            min_delta=0,
-                           patience=50,
+                           patience=patience,
                            restore_best_weights=True)
 
         model = self.get_best_model(batch_size=batch_size,
@@ -123,43 +119,43 @@ class SubNetwork(SubClassifier):
     def get_best_model(self, batch_size, epochs, x_valid, y_valid, val_sample_weights, x_train, y_train, train_sample_weights, callbacks, class_weights):
 
         param_grid = {
-            'learn_rate': [0.0001, 0.001],  # , 0.01
-            'momentum': [0.5],  # usually between 0.5-0.9
-            'decay': [0.2, 0.6],
-            'nesterov': [True],  # False
+            # 'learn_rate': [0.0001, 0.001],  # , 0.01
+            # 'momentum': [0.5],  # usually between 0.5-0.9
+            # 'decay': [0.2, 0.6],
+            # 'nesterov': [True],  # False
             # , [88, 64, 16], [64, 38, 24, 12]], [88, 44, 32, 16]
-            'layer_sizes': [[92, 32], [88, 64, 16], [108, 64, 16]],
+            'layer_sizes': [[92, 32], [88, 64, 16], [108, 64]],
             'input_length': [self.input_length],
             'output_length': [self.output_length]
         }
 
-        grid_model = KerasClassifier(build_fn=create_model,
-                                     epochs=epochs,
-                                     batch_size=batch_size,
-                                     verbose=0)
+        grid_model = KerasClassifier(build_fn=create_model)
+
+        grid = GridSearchCV(estimator=grid_model,
+                            param_grid=param_grid,
+                            n_jobs=-1,
+                            verbose=0,
+                            iid=False,  # Avg score across folds
+                            cv=3)
 
         keras_fit_params = {
+            'shuffle': True,
             'callbacks': callbacks,
             'epochs': epochs,
             'batch_size': batch_size,
             'validation_data': (x_valid, y_valid),  # val_sample_weights
+            #'sample_weight': train_sample_weights)
             'class_weight': class_weights,
             'verbose': 0
-        }
-        grid = GridSearchCV(estimator=grid_model,
-                            param_grid=param_grid,
-                            fit_params=keras_fit_params,
-                            n_jobs=-1,
-                            verbose=0,
-                            cv=3)
 
-        grid.fit(x_train, y_train, shuffle=True)  # , sample_weight=train_sample_weights)
+        }
+        grid.fit(x_train, y_train, **keras_fit_params)
 
         m = create_model(
-            learn_rate=grid.best_params_['learn_rate'],
-            momentum=grid.best_params_['momentum'],
-            decay=grid.best_params_['decay'],
-            nesterov=grid.best_params_['nesterov'],
+            # learn_rate=grid.best_params_['learn_rate'],
+            # momentum=grid.best_params_['momentum'],
+            # decay=grid.best_params_['decay'],
+            # nesterov=grid.best_params_['nesterov'],
             layer_sizes=grid.best_params_['layer_sizes'],
             input_length=grid.best_params_['input_length'],
             output_length=grid.best_params_['output_length'])
