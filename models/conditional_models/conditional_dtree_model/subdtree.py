@@ -34,20 +34,21 @@ class SubMCDTree(SubClassifier):
         """
         # Get weight of each sample by its class frequency
         class_weights = self.get_class_weights(y)
+        # sample_weights = self.get_sample_weights(y)
 
         grid = {'criterion': ['entropy', 'gini'],
-                'max_depth': [50, None],
-                'min_samples_split': [2, 8, 0.05],
-                'min_samples_leaf': [1, 3],
+                'max_depth': [20, 50, None],
+                'min_samples_split': [2, 4, 0.05, 0.1],
+                'min_samples_leaf': [1, 2, 8],
                 'min_weight_fraction_leaf': [0, 0.001, 0.01],
-                'max_features': [0.3, None],
-                'class_weight': ['balanced']
+                'max_features': [0.3, 0.5, None],
+                'class_weight': ['balanced', class_weights]
                 }
 
         clf_optimize = GridSearchCV(
-            estimator=RandomForestClassifier(),
+            estimator=DecisionTreeClassifier(),
             param_grid=grid,
-            # scoring='brier_score_loss',
+            scoring='balanced_accuracy',
             cv=3,
             iid=True,
             n_jobs=-1
@@ -59,8 +60,8 @@ class SubMCDTree(SubClassifier):
         print("Tree brier_score_loss: " + str(clf_optimize.best_score_))
         print("Best params: ")
         print(clf_optimize.best_params_)
-        print("Feature importance: ")
-        print(sorted(zip(X.columns, clf.feature_importances_),
-                     key=lambda x: x[1], reverse=True)[0:5])
+        # print("Feature importance: ")
+        # print(sorted(zip(X.columns, clf.feature_importances_),
+        #              key=lambda x: x[1], reverse=True)[0:5])
 
         return clf
