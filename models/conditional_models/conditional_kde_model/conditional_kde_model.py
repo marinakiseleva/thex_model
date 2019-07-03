@@ -4,7 +4,7 @@ from models.conditional_models.conditional_model.conditional_model import Condit
 
 class ConditionalKDEModel(ConditionalModel):
     """
-    Neural Networks for each group of siblings in the class hierarchy. Conditional probabilities are computed for each class.
+    KDE for each class, for each group of siblings in the class hierarchy. Normalize each probability by dividing over the sum of all sibling densities. Conditional probabilities are computed for each class.
     """
 
     def __init__(self, **data_args):

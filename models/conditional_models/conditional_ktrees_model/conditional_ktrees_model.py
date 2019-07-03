@@ -4,7 +4,7 @@ from models.conditional_models.conditional_model.conditional_model import Condit
 
 class ConditionalKTreesModel(ConditionalModel):
     """
-    Neural Networks for each group of siblings in the class hierarchy. Conditional probabilities are computed for each class.
+    K Decision Trees (each one versus all) created for each class separately - for each group of siblings in the class hierarchy. Conditional probabilities are computed for each class.
     """
 
     def __init__(self, **data_args):
