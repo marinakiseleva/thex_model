@@ -4,7 +4,7 @@ from models.conditional_models.conditional_model.conditional_model import Condit
 
 class ConditionalMCDTreesModel(ConditionalModel):
     """
-    Multiclass RandomForestClassifier  for each group of siblings in the class hierarchy. Conditional probabilities are computed for each class.
+    Multiclass DecisionTreeClassifier for each group of siblings in the class hierarchy. Conditional probabilities are computed for each class.
     """
 
     def __init__(self, **data_args):

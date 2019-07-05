@@ -1,6 +1,5 @@
 from sklearn.model_selection import GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
 
 from models.conditional_models.conditional_model.classifier import SubClassifier
 
@@ -9,7 +8,7 @@ class SubMCDTree(SubClassifier):
 
     def init_classifier(self, X, y):
         """
-        Create Multiclass RandomForestClassifier to classify self.classes 
+        Create Multiclass DecisionTreeClassifier to classify self.classes 
         :param X: DataFrame of features
         :param y: DataFrame of numeric labels, each number corresponding to index in self.classes
         :return: map from class index in self.classes to Tree
@@ -24,7 +23,6 @@ class SubMCDTree(SubClassifier):
         """
 
         probabilities = self.classifier.predict_proba(x).tolist()[0]
-
         return probabilities
 
     def get_best_model(self, X, y):
@@ -34,7 +32,6 @@ class SubMCDTree(SubClassifier):
         """
         # Get weight of each sample by its class frequency
         class_weights = self.get_class_weights(y)
-        # sample_weights = self.get_sample_weights(y)
 
         grid = {'criterion': ['entropy', 'gini'],
                 'max_depth': [20, 50, None],
