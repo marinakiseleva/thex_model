@@ -140,13 +140,14 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             if 'redshift' in features:
                 plot_feature_distribution(df, 'redshift', False)
 
-    def evaluate_model(self, roc_plots, class_metrics, acc_metrics, k):
+    def evaluate_model(self, roc_plots, class_metrics, acc_metrics, k,  total_samples):
         """
         Evaluate and plot performance of model
         :param roc_plots: Mapping from class_name to [figure, axis, true positive rates, aucs]. This function plots curve on corresponding axis using this dict.
         :param class_metrics: Mapping from class names to SUMMED ranged metrics
         :param acc_metrcis: List of results from get_mc_class_metrics, per fold/run
         :param k: Number of folds
+        :param total_samples: # of samples * # of runs
         """
         # Plot ROC curves for each class
         self.plot_mc_roc_curves(roc_plots, k)
@@ -156,6 +157,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
         # Report overall metrics
         agg_metrics = self.aggregate_mc_class_metrics(acc_metrics)
+        corr = {}
         precisions = {}
         recalls = {}
         briers = {}
@@ -168,8 +170,10 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             recalls[class_name] = metrics["TP"] / den if den > 0 else 0
             briers[class_name] = metrics["BS"]
             loglosses[class_name] = metrics["LL"]
+            corr[class_name] = (metrics["TP"] + metrics["TN"]) / total_samples
         self.plot_mc_performance(precisions, "Precision")
         self.plot_mc_performance(recalls, "Recall")
+        self.plot_mc_performance(corr, "Accuracy", True)
         # self.basic_plot(briers, "Brier Score",   self.class_labels)
         self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
 
@@ -186,6 +190,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             if data_filters['test_on_train']:
                 self.X_test = self.X_train
                 self.y_test = self.y_train
+
             # Apply PCA
             if data_filters['pca'] is not None:
                 self.X_train, self.X_test = self.apply_pca(data_filters['pca'])
@@ -236,4 +241,5 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
         # Plot Results ################################
         agg_class_metrics = self.aggregate_mc_prob_metrics(class_metrics)
-        self.evaluate_model(roc_plots, agg_class_metrics, acc_metrics, k)
+        total_samples = data_filters['num_runs'] * y.shape[0]
+        self.evaluate_model(roc_plots, agg_class_metrics, acc_metrics, k, total_samples)
