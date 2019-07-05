@@ -46,7 +46,7 @@ ORIG_TARGET_LABEL = 'claimedtype'
 TARGET_LABEL = 'transient_type'
 UNKNOWN_LABEL = 'Unknown'
 PRED_LABEL = 'predicted_class'
-UNDEF_CLASS = 'Undefined_'
+UNDEF_CLASS = 'Unspecified '
 
 """
 class_to_subclass
