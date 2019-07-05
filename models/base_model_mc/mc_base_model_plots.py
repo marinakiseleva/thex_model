@@ -125,13 +125,13 @@ class MCBaseModelVisualization:
         avg_ax.set_title(self.name + " ROC Curves")
         avg_ax.set_xlabel('False Positive Rate')
         avg_ax.set_ylabel('True Positive Rate')
-        avg_ax.legend(loc="best")
+        avg_ax.legend(loc="best", bbox_to_anchor=(1.2, 1))
         # Plot the mean of each class ROC curve on same plot
         avg_fig.savefig(file_dir + "/roc_summary",
                         bbox_inches=extent.expanded(1.3, 1.3))
         plt.show()
 
-    def plot_mc_performance(self, class_metrics, ylabel):
+    def plot_mc_performance(self, class_metrics, ylabel, base_lines=False):
         """
         Visualizes accuracy per class with bar graph; with random baseline based on class level in hierarchy.
         :param class_metrics: Mapping from class name to metric value.
@@ -156,18 +156,19 @@ class MCBaseModelVisualization:
 
         # Plot base lines
         # Map each level to the total # of classes at that level
-        level_counts = {}
-        for class_name in class_names:
-            level = self.class_levels[class_name]
-            if level in level_counts:
-                level_counts[level] += 1
-            else:
-                level_counts[level] = 1
+        if base_lines:
+            level_counts = {}
+            for class_name in class_names:
+                level = self.class_levels[class_name]
+                if level in level_counts:
+                    level_counts[level] += 1
+                else:
+                    level_counts[level] = 1
 
-        for index, class_name in enumerate(class_names):
-            level = self.class_levels[class_name]
-            # Random chance of class is 1/# of classes at this level
-            level_base = 1 / level_counts[level]
-            plt.hlines(y=level_base, xmin=index - 0.45, xmax=index +
-                       bar_width - 0.45, linestyles='--', colors='red')
+            for index, class_name in enumerate(class_names):
+                level = self.class_levels[class_name]
+                # Random chance of class is 1/# of classes at this level
+                level_base = 1 / level_counts[level]
+                plt.hlines(y=level_base, xmin=index - 0.45, xmax=index +
+                           bar_width - 0.45, linestyles='--', colors='red')
         self.display_and_save_plot(ylabel, ax)
