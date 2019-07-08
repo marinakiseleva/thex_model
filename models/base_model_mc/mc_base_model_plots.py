@@ -128,7 +128,7 @@ class MCBaseModelVisualization:
         avg_ax.legend(loc="best", bbox_to_anchor=(1.2, 1))
         # Plot the mean of each class ROC curve on same plot
         avg_fig.savefig(file_dir + "/roc_summary",
-                        bbox_inches=extent.expanded(1.3, 1.3))
+                        bbox_inches=extent.expanded(1.6, 1.6))
         plt.show()
 
     def plot_mc_performance(self, class_metrics, ylabel, base_lines=False):
