@@ -8,7 +8,7 @@ import pandas as pd
 
 from hmc import hmc
 
-from .data_consts import groupings, ORIG_TARGET_LABEL, TARGET_LABEL, cat_code, UNDEF_CLASS
+from .data_consts import groupings, ORIG_TARGET_LABEL, TARGET_LABEL, cat_code, UNDEF_CLASS, TREE_ROOT
 from .data_consts import class_to_subclass as full_class_hierarchy
 
 
@@ -68,7 +68,7 @@ def convert_class_vectors(df, class_labels, class_levels, level=None):
 
 def init_tree(class_hierarchy=None):
     print("\n\nConstructing Class Hierarchy Tree...")
-    hmc_hierarchy = hmc.ClassHierarchy("TTypes")
+    hmc_hierarchy = hmc.ClassHierarchy(TREE_ROOT)
     hierarchy = full_class_hierarchy if class_hierarchy is None else class_hierarchy
     for parent in hierarchy.keys():
         # hierarchy maps parents to children, so get all children
@@ -143,7 +143,7 @@ def find_min_label(labels, node_depths):
             # Groups labels into mapped definitions, ie. 1c -> Ic
             label = groupings[label]
 
-        if label in node_depths and node_depths[label] < min_depth and label != 'TTypes':
+        if label in node_depths and node_depths[label] < min_depth and label != TREE_ROOT:
             min_depth = node_depths[label]
             min_label = label
     return min_label

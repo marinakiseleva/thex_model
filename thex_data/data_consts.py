@@ -47,6 +47,7 @@ TARGET_LABEL = 'transient_type'
 UNKNOWN_LABEL = 'Unknown'
 PRED_LABEL = 'predicted_class'
 UNDEF_CLASS = 'Unspecified '
+TREE_ROOT = "_ROOT"  # 'TTypes'  #
 
 """
 class_to_subclass
@@ -54,7 +55,7 @@ class_to_subclass
 Hierarchy of transient types, used in hierarchical multilabel classifiers
 """
 # Version 3
-class_to_subclass = {
+class_to_subclass_old = {
     "TTypes": ["Ia", "CC", "TDE", "GRB", "FRB", "Kilonova",  "GW"],
     "Ia": ["Ia-91bg", "Ia-91T", "Ia-02cx",  "Ia-CSM"],
     "CC": ["SE", "II", "SLSN"],
@@ -65,6 +66,71 @@ class_to_subclass = {
     "SLSN": ["SLSN-I", "SLSN-II", "SLSN-R"],
     "GRB": ["LGRB", "SGRB"],
     "TDE": ["UVOptTDE", "XrayTDE"]
+}
+# Version 4
+class_to_subclass = {
+    "Ia":                    ["Ia Pec"],
+    "Ia Pec":                ["Ia-00cx", "Ia-02cx", "Ia-09dc", "Ia-91T",
+                              "Ia-91bg", "Ia-99aa", "Ia-HV", "Ia CSM"],
+    "CC":                    ["nIa", "SE", "II", "SLSN"],
+
+    "SE":                    ["Ib", "Ic", "Ib/c"],
+
+    "Ib/c":                  ["Ib/c Pec"],
+
+    "Ib":                    ["Ibn", "Ib Pec", "IIb"],
+    "Ib Pec":                ["Ib-Ca"],
+
+    "Ic":                    ["Ic Pec"],
+    "Ic Pec":                ["Ic BL", "Ic-SL"],
+
+    "IIb":                   ["IIb Pec"],
+    "IIb Pec":               ["IIb-n"],
+
+    "II":                    ["II Pec", "II L", "II P", "IIn"],
+
+    "II P":                  ["II P Pec"],
+    "II P Pec":              ["II P-97D"],
+
+    "IIn":                   ["IIn Pec"],
+    "IIn Pec":               ["IIn-09ip"],
+
+    "SLSN":                  ["SLSN-R", "SLSN-I", "SLSN-II"],
+
+    "GRB":                   ["LGRB", "SGRB"],
+
+    "TDE":                   ["XrayTDE", "UVOptTDE"],
+    "XrayTDE":               ["LikelyXrayTDE", "PossibleXrayTDE"],
+
+    "MiscRadio":             ["Radio", "maser"],
+    "Other":                 ["NT", "MiscRadio"],
+    "Impostor":              ["Star", "SolarSystem", "AGN", "Galaxy",
+                              "Galactic", "blue"],
+    "Star":                  ["Variable"],
+    "Variable":              ["CV", "LBV", "LRV", "LRV", "LPV", "XRB", "YSO",
+                              "Nova"],
+    "SolarSystem":           ["Comet", "mover"],
+
+    # "_SN":                   ["I", "II", "SLSN"],
+
+    # "_PEC_SN":               ["I Pec", "Ia Pec", "Ib Pec", "Ic Pec",
+    #                           "Ib/c Pec", "II Pec", "II P Pec", "IIb Pec",
+    #                           "IIn Pec", "Pec"],
+
+    # "_W_RADIO":              ["FRB", "MiscRadio"],
+    # "_W_UVOPT":              ["I", "II", "SLSN", "UVOptTDE", "Kilonova"],
+    # "_W_HIENERGY":           ["GRB", "XrayTDE"],
+    # "_W_GW":                 ["GW"],
+
+    "_ROOT":                 ["Ia", "CC", "GRB", "TDE",
+                              "FRB", "GW", "Kilonova"],
+
+    # "_UNCLEAR_LABELS":       ["_UNCLEAR", "CN", "LCH", "LSQ", "c"],
+    # "_IGNORED_LABELS":       ["removed"],
+    # "_CONFUSION":            ["_CONFUSION_Ia_CC", "_CONFUSION_CC",
+    #                           "_CONFUSION_SN_Other"],
+    # "__CONFLICT_CASES":      [["Ia", "CC"], ["I", "II"], ["_SN", "Impostor"],
+    #                           ["II L", "II P"], ["IIn", "IIb"], ["Ib", "Ic"]]
 }
 
 """
@@ -476,6 +542,7 @@ groupings = {
     'CV': 'Other',
     'LSQ': 'Other'
 }
+
 
 """
 grouping_lists
