@@ -1,6 +1,6 @@
 from models.base_model_mc.mc_base_model import MCBaseModel
-from models.mc_kde_model.mc_kde_train import MCKDETrain
-from models.mc_kde_model.mc_kde_test import MCKDETest
+from models.ensemble_models.mc_kde_model.mc_kde_train import MCKDETrain
+from models.ensemble_models.mc_kde_model.mc_kde_test import MCKDETest
 
 import numpy as np
 
@@ -17,16 +17,6 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
         data_args['transform_labels'] = False
         self.user_data_filters = data_args
         self.models = {}
-
-    def train_model(self):
-        """
-        Train K-trees, where K is the total number of classes in the data (at all levels of the hierarchy)
-        """
-        if self.class_labels is None:
-            self.set_class_labels(self.y_train)
-        print("Classes:\n------------------\n")
-        print(self.class_labels)
-        return self.train()
 
     def get_all_class_probabilities(self):
         return self.test_probabilities()

@@ -173,7 +173,8 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             corr[class_name] = (metrics["TP"] + metrics["TN"]) / total_samples
         self.plot_mc_performance(precisions, "Precision")
         self.plot_mc_performance(recalls, "Recall")
-        self.plot_mc_performance(corr, "Accuracy", True)
+
+        self.plot_mc_performance(corr, "Accuracy")
         # self.basic_plot(briers, "Brier Score",   self.class_labels)
         self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
 
