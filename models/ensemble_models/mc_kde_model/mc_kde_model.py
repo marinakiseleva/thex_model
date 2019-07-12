@@ -18,6 +18,13 @@ class MCKDEModel(MCBaseModel, MCKDETrain, MCKDETest):
         self.user_data_filters = data_args
         self.models = {}
 
+    def train_model(self):
+        if self.class_labels is None:
+            self.set_class_labels(self.y_train)
+        print("Classes:\n------------------\n")
+        print(self.class_labels)
+        return self.train()
+
     def get_all_class_probabilities(self):
         return self.test_probabilities()
 
