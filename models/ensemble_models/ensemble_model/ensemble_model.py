@@ -27,6 +27,32 @@ class EnsembleModel(MCBaseModel, ABC):
             self.class_labels = self.get_mc_unique_classes(self.y_train)
         return self.train()
 
+    def train(self):
+        """
+        Train K-trees, where K is the total number of classes in the data (at all levels of the hierarchy)
+        """
+        # Create classifier for each class, present or not in sample
+        valid_classes = []
+        for class_index, class_name in enumerate(self.class_labels):
+            # Relabel for this tree
+            y_relabeled = self.get_class_data(class_name, self.y_train)
+            positive_count = y_relabeled.loc[y_relabeled[TARGET_LABEL] == 1].shape[0]
+            if positive_count < 3:
+                print("WARNING: No model for " + class_name)
+                continue
+
+            print("\nK-Trees Class Model: " + class_name)
+            self.models[class_name] = self.create_classifier(
+                class_name, self.X_train, y_relabeled)
+            valid_classes.append(class_name)
+
+        # Update class labels to only have classes for which we built models
+        if len(valid_classes) != len(self.class_labels):
+            print("\nWARNING: Not all class labels have classifiers.")
+        self.class_labels = valid_classes
+
+        return self.models
+
     def get_class_data(self, class_name, y):
         """
         Return DataFrame like y except that TARGET_LABEL values have been replaced with 0 or 1. 1 if class_name is in list of labels. 
