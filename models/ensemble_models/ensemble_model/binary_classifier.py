@@ -18,6 +18,7 @@ class BinaryClassifier(ABC):
         :param labeled_samples: DataFrame of features and TARGET_LABEL, where TARGET_LABEL values are 0 or 1
         :return: dictionary with 0 and 1 as keys and values of class weight
         """
+        # Weight of class 𝑐 is the size of largest class divided by the size of class 𝑐.
         class_weights = compute_class_weight(
             class_weight='balanced', classes=[0, 1], y=labeled_samples[TARGET_LABEL].values)
         return dict(enumerate(class_weights))

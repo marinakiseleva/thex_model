@@ -25,23 +25,17 @@ class EnsembleModel(MCBaseModel, ABC):
         """
         if self.class_labels is None:
             self.class_labels = self.get_mc_unique_classes(self.y_train)
-        return self.train()
 
-    def train(self):
-        """
-        Train K-trees, where K is the total number of classes in the data (at all levels of the hierarchy)
-        """
-        # Create classifier for each class, present or not in sample
+        # Create classifier for each class
         valid_classes = []
         for class_index, class_name in enumerate(self.class_labels):
-            # Relabel for this tree
             y_relabeled = self.get_class_data(class_name, self.y_train)
             positive_count = y_relabeled.loc[y_relabeled[TARGET_LABEL] == 1].shape[0]
             if positive_count < 3:
                 print("WARNING: No model for " + class_name)
                 continue
 
-            print("\nK-Trees Class Model: " + class_name)
+            print("\nClass Model: " + class_name)
             self.models[class_name] = self.create_classifier(
                 class_name, self.X_train, y_relabeled)
             valid_classes.append(class_name)
@@ -78,9 +72,6 @@ class EnsembleModel(MCBaseModel, ABC):
         m_predictions = np.zeros((num_samples, 0))
         for class_index, class_name in enumerate(self.class_labels):
             model = self.models[class_name]
-
-            # pos_predictions = tree.predict_proba(self.X_test)[:, 1]
-            # col_predictions = np.array([pos_predictions]).T
             col_predictions = model.predict(self.X_test)
             # Add probabilities of positive class as column to predictions across classes
             m_predictions = np.append(m_predictions, col_predictions, axis=1)
