@@ -17,30 +17,6 @@ class KTreesModel(EnsembleModel):
         self.user_data_filters = data_args
         self.models = {}
 
-    def train(self):
-        """
-        Train K-trees, where K is the total number of classes in the data (at all levels of the hierarchy)
-        """
-        # Create classifier for each class, present or not in sample
-        valid_classes = []
-        for class_index, class_name in enumerate(self.class_labels):
-            # Relabel for this tree
-            y_relabeled = self.get_class_data(class_name, self.y_train)
-            positive_count = y_relabeled.loc[y_relabeled[TARGET_LABEL] == 1].shape[0]
-            if positive_count < 3:
-                print("No model for " + class_name)
-                continue
-
-            print("\nK-Trees Class Model: " + class_name)
-
-            self.models[class_name] = self.create_classifier(
-                class_name, self.X_train, y_relabeled)
-            valid_classes.append(class_name)
-
-        # Update class labels to only have classes for which we built models
-        self.class_labels = valid_classes
-        return self.models
-
     def create_classifier(self, pos_class, X, y):
         """
         Create Decision Tree classifier for pos_class versus all
