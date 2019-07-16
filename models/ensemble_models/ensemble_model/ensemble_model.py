@@ -43,7 +43,7 @@ class EnsembleModel(MCBaseModel, ABC):
         # Update class labels to only have classes for which we built models
         if len(valid_classes) != len(self.class_labels):
             print("\nWARNING: Not all class labels have classifiers.")
-        self.class_labels = valid_classes
+            self.class_labels = valid_classes
 
         return self.models
 

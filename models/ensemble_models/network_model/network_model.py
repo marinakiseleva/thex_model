@@ -1,6 +1,8 @@
 from models.ensemble_models.ensemble_model.ensemble_model import EnsembleModel
 from models.ensemble_models.network_model.net import NetClassifier
 
+import numpy as np
+
 
 class Network(EnsembleModel):
     """
@@ -28,13 +30,13 @@ class Network(EnsembleModel):
         probabilities = {}
         for class_index, class_name in enumerate(self.class_labels):
             model = self.models[class_name].model
+            input_length = self.models[class_name].input_length
             if model is not None:
-                class_probabilities = model.predict(x.values)
-                print("Class probs")
-                print(class_probabilities)
-                # class_probabilities = [[prob class 0, prob class 1]]
-                class_probability = class_probabilities[1]
+                x_row = np.reshape(x.values, (1, input_length))
+                # [[probability of class = 1]]
+                class_probability = model.predict(x_row)[0][0]
             else:
+                print("No model - probability = 0.")
                 class_probability = 0
 
             probabilities[class_name] = class_probability
