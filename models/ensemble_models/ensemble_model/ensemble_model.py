@@ -16,6 +16,9 @@ class EnsembleModel(MCBaseModel, ABC):
     def create_classifier(self, pos_class, X, y):
         """
         Initialize classifier, with positive class as positive class name
+        :param pos_class: class_name that corresponds to TARGET_LABEL == 1
+        :param X: DataFrame of features
+        :param y: DataFrame with TARGET_LABEL column, 1 if it has class, 0 otherwise
         """
         pass
 

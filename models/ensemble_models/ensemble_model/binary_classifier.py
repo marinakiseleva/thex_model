@@ -9,6 +9,12 @@ class BinaryClassifier(ABC):
     """
 
     def __init__(self, pos_class, X, y):
+        """
+        Initialize binary classifier
+        :param pos_class: class_name that corresponds to TARGET_LABEL == 1
+        :param X: DataFrame of features
+        :param y: DataFrame with TARGET_LABEL column, 1 if it has class, 0 otherwise
+        """
         self.pos_class = pos_class
         self.classifier = self.init_classifier(X, y)
 
@@ -37,7 +43,6 @@ class BinaryClassifier(ABC):
         for df_index, row in labeled_samples.iterrows():
             class_count = label_counts[row[TARGET_LABEL]]
             sample_weights.append(1 / class_count)
-        # return np.array(sample_weights)
         return sample_weights
 
     @abstractmethod
