@@ -1,8 +1,11 @@
 import pandas as pd
-# import numpy as np
+import numpy as np
 from models.ensemble_models.ensemble_model.binary_classifier import BinaryClassifier
 from thex_data.data_consts import TARGET_LABEL
+
+
 from sklearn.model_selection import train_test_split
+
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.callbacks import EarlyStopping
@@ -33,7 +36,6 @@ class NetClassifier(BinaryClassifier):
         # Get weight of each sample by its class frequency
         # labeled_samples = pd.concat([X, y], axis=1)
         # class_weights = self.get_class_weights(labeled_samples)
-
         x_train, x_valid, y_train, y_valid = train_test_split(
             X, y, test_size=0.5)
         weights_train = self.get_sample_weights(y_train)
@@ -42,19 +44,43 @@ class NetClassifier(BinaryClassifier):
         # Assign class weights
         class_weights = self.get_class_weights(y)
 
+        model = self.get_nn()
+
+        epochs = 150
+        batch_size = 32
+        verbosity = 0
         es = EarlyStopping(monitor='val_loss',
-                           mode='auto',
-                           verbose=0,
-                           min_delta=0,
-                           patience=20,
+                           patience=15,
                            restore_best_weights=True)
 
+        metrics = model.fit(x_train,  # X
+                            y_train,  # y
+                            epochs=epochs,
+                            batch_size=batch_size,
+                            verbose=verbosity,
+                            class_weight=class_weights,
+                            validation_data=(x_valid, y_valid),
+                            callbacks=[es])
+
+        print("\nFinished at epoch " + str(es.stopped_epoch))
+
+        print("Validation loss: "
+              + str(metrics.history['val_loss'][-1])
+              + " , training loss: " + str(metrics.history['loss'][-1]))
+
+        if es.stopped_epoch == 0:
+            print("Exit at max epochs: validation loss never increased.")
+        return model
+
+    def get_nn(self):
+        """
+        Initialize neural network 
+        """
         model = Sequential()
         model.add(Dense(self.input_length,
                         input_dim=self.input_length,
                         kernel_initializer='normal',
                         activation='relu'))
-        # model.add(Dense(64, activation='relu'))
         model.add(Dense(1,
                         kernel_initializer='normal',
                         activation='sigmoid'))
@@ -63,23 +89,4 @@ class NetClassifier(BinaryClassifier):
                       optimizer='adam',
                       metrics=['accuracy'])
 
-        metrics = model.fit(x_train,  # X
-                            y_train,  # y
-                            epochs=150,
-                            batch_size=32,
-                            verbose=0,
-                            class_weight=class_weights,
-                            validation_data=(x_valid, y_valid),
-                            callbacks=[es])
-
-        print("\nFinished at epoch " + str(es.stopped_epoch))
-        print("Validation loss: " + str(metrics.history['val_loss'][-1])
-              + " , training loss: " + str(metrics.history['loss'][-1]))
-
-        metrics = model.evaluate(x_valid.values, y_valid)
-        print("Valiation " +
-              str(model.metrics_names[0]) + " : " + str(round(metrics[0], 4)))
-
-        if es.stopped_epoch == 0:
-            print("Exit at max epochs: validation loss never increased.")
         return model

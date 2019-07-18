@@ -29,12 +29,12 @@ class Network(EnsembleModel):
         """
         probabilities = {}
         for class_index, class_name in enumerate(self.class_labels):
-            model = self.models[class_name].model
+            net_model = self.models[class_name]
             input_length = self.models[class_name].input_length
-            if model is not None:
+            if net_model is not None:
                 x_row = np.reshape(x.values, (1, input_length))
                 # [[probability of class = 1]]
-                class_probability = model.predict(x_row)[0][0]
+                class_probability = net_model.model.predict(x_row)[0][0]
             else:
                 print("No model - probability = 0.")
                 class_probability = 0
