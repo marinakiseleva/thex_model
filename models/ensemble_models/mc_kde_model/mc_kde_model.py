@@ -1,45 +1,46 @@
-from models.base_model_mc.mc_base_model import MCBaseModel
-from models.ensemble_models.mc_kde_model.mc_kde_train import MCKDETrain
+from models.ensemble_models.mc_kde_model.kde_classifier import KDEClassifier
+from models.ensemble_models.ensemble_model.ensemble_model import EnsembleModel
+
 
 import numpy as np
-import pandas as pd
-from thex_data.data_consts import PRED_LABEL
 
 
-class MCKDEModel(MCBaseModel, MCKDETrain):
+class MCKDEModel(EnsembleModel):
     """
     Multiclass Kernel Density Estimate (KDE) model. Creates KDE for each class, and computes probability by normalizing over class at same level in class hierarchy.
     """
 
     def __init__(self, **data_args):
         self.name = "Multiclass KDE Model"
-        # do not use default label transformations; instead we will do it manually
-        # in this class
+        # do not use default label transformations - done manually
         data_args['transform_labels'] = False
         self.user_data_filters = data_args
         self.models = {}
 
-    def train_model(self):
-        if self.class_labels is None:
-            self.set_class_labels(self.y_train)
-        print("Classes:\n------------------\n")
-        print(self.class_labels)
-        return self.train()
+    def create_classifier(self, pos_class, X, y):
+        """
+        Initialize classifier, with positive class as positive class name
+        :param pos_class: class_name that corresponds to TARGET_LABEL == 1
+        :param X: DataFrame of features
+        :param y: DataFrame with TARGET_LABEL column, 1 if it has class, 0 otherwise
+        """
+        return KDEClassifier(pos_class, X, y)
 
     def get_all_class_probabilities(self):
         """
+        Overwrite get_all_class_probabilities in EnsembleModel because these need to be normalized over all classes.
         Get class probability for each sample.
         :return probabilities: Numpy Matrix with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels
         """
         class_densities = {}
         norm = np.zeros(self.X_test.shape[0])
         for class_index, class_name in enumerate(self.class_labels):
-            kde = self.models[class_name]  # Model
+            kde = self.models[class_name].model
             class_densities[class_name] = np.exp(
                 kde.score_samples(self.X_test.values))
             norm = np.add(norm, class_densities[class_name])
 
-        # Divide each density by normalization (sum of all densities)
+        # Normalize: divide each density by sum of all densities
         probabilities = np.zeros((self.X_test.shape[0], 0))
         for class_name in class_densities.keys():
             p_nans = np.divide(class_densities[class_name], norm)
@@ -57,7 +58,7 @@ class MCKDEModel(MCBaseModel, MCKDETrain):
         """
         probabilities = {}
         for class_index, class_name in enumerate(self.class_labels):
-            model = self.models[class_name]
+            model = self.models[class_name].model
             probabilities[class_name] = np.exp(model.score_samples([x.values]))[0]
 
         if normalized:
