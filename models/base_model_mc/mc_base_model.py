@@ -162,6 +162,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         recalls = {}
         briers = {}
         loglosses = {}
+        specificities = {}
         for class_name in self.class_labels:
             metrics = agg_metrics[class_name]
             den = metrics["TP"] + metrics["FP"]
@@ -171,12 +172,15 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             briers[class_name] = metrics["BS"]
             loglosses[class_name] = metrics["LL"]
             corr[class_name] = (metrics["TP"] + metrics["TN"]) / total_samples
-        self.plot_mc_performance(precisions, "Precision")
-        self.plot_mc_performance(recalls, "Recall")
+            # specificity = true negative rate
+            specificities[class_name] = metrics["TN"] / (metrics["TN"] + metrics["FP"])
 
+        self.plot_mc_performance(recalls, "True Positive Rate/Recall")
+        self.plot_mc_performance(specificities, "True Negative Rate/Specificity")
+        self.plot_mc_performance(precisions, "Precision")
         self.plot_mc_performance(corr, "Accuracy")
         # self.basic_plot(briers, "Brier Score",   self.class_labels)
-        self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
+        # self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
 
     def run_cross_validation(self, k, X, y, roc_plots, class_metrics, acc_metrics, data_filters):
         """
