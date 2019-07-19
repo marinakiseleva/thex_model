@@ -2,6 +2,7 @@ import os
 from abc import ABC, abstractmethod
 from sklearn.model_selection import StratifiedKFold
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import scale
 
 from thex_data.data_consts import cat_code, ROOT_DIR
 from thex_data.data_init import collect_cols
@@ -108,11 +109,22 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
         print(pca.explained_variance_ratio_)
 
         def convert_to_df(data, k):
+            """
+            Convert Numpy 2D array to DataFrame with k PCA columns
+            :param data: Numpy 2D array of data features
+            :param k: Number of PCA components to label cols
+            """
+            # Rescale data
+            scaled_data = scale(X=data, axis=0, with_mean=True, with_std=True, copy=True)
+
             reduced_columns = []
             for i in range(k):
-                reduced_columns.append("PC" + str(i + 1))
-            return pd.DataFrame(data=data, columns=reduced_columns)
+                new_column = "PC" + str(i + 1)
+                reduced_columns.append(new_column)
 
+            df = pd.DataFrame(data=scaled_data, columns=reduced_columns)
+
+            return df
         reduced_training = convert_to_df(reduced_training, k)
         reduced_testing = convert_to_df(reduced_testing, k)
         return reduced_training, reduced_testing
