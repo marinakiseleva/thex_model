@@ -43,7 +43,7 @@ class KDEClassifier(BinaryClassifier):
         range_bws = np.linspace(0.01, 10, 100)
         grid = {
             'bandwidth': range_bws,
-            'kernel': ['gaussian', 'epanechnikov', 'tophat', 'exponential', 'linear', 'cosine'],
+            'kernel': ['gaussian'],
             'metric': ['euclidean']
         }
 
