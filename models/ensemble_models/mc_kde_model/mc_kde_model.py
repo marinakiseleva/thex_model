@@ -28,22 +28,25 @@ class MCKDEModel(EnsembleModel):
 
     def get_all_class_probabilities(self):
         """
-        Overwrite get_all_class_probabilities in EnsembleModel because these need to be normalized over all classes.
-        Get class probability for each sample.
+        Overwrite get_all_class_probabilities in EnsembleModel. Probability of class 1 = density(1) / (density(1) + density(0))
         :return probabilities: Numpy Matrix with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels
         """
-        class_densities = {}
+
+        probabilities = np.zeros((self.X_test.shape[0], 0))
+        pos_class_densities = {}
+        neg_class_densities = {}
         norm = np.zeros(self.X_test.shape[0])
         for class_index, class_name in enumerate(self.class_labels):
-            kde = self.models[class_name].model
-            class_densities[class_name] = np.exp(
-                kde.score_samples(self.X_test.values))
-            norm = np.add(norm, class_densities[class_name])
-
-        # Normalize: divide each density by sum of all densities
-        probabilities = np.zeros((self.X_test.shape[0], 0))
-        for class_name in class_densities.keys():
-            p_nans = np.divide(class_densities[class_name], norm)
+            pos_kde = self.models[class_name].pos_model
+            neg_kde = self.models[class_name].neg_model
+            pos_class_densities[class_name] = np.exp(
+                pos_kde.score_samples(self.X_test.values))
+            neg_class_densities[class_name] = np.exp(
+                neg_kde.score_samples(self.X_test.values))
+            norm = np.add(neg_class_densities[class_name],
+                          pos_class_densities[class_name])
+            # Divide each density by (density class 1 + density class 0)
+            p_nans = np.divide(pos_class_densities[class_name], norm)
             p = np.nan_to_num(p_nans)
             probs = np.array([p]).T  # append probabilities as column
             probabilities = np.append(probabilities, probs, axis=1)
@@ -58,10 +61,10 @@ class MCKDEModel(EnsembleModel):
         """
         probabilities = {}
         for class_index, class_name in enumerate(self.class_labels):
-            model = self.models[class_name].model
-            probabilities[class_name] = np.exp(model.score_samples([x.values]))[0]
+            pos_kde = self.models[class_name].pos_model
+            neg_kde = self.models[class_name].neg_model
+            pos_density = np.exp(pos_kde.score_samples([x.values]))[0]
+            neg_density = np.exp(neg_kde.score_samples([x.values]))[0]
+            probabilities[class_name] = pos_density / (pos_density + neg_density)
 
-        if normalized:
-            sum_densities = sum(probabilities.values())
-            probabilities = {k: v / sum_densities for k, v in probabilities.items()}
         return probabilities

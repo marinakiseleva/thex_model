@@ -16,8 +16,15 @@ class KDEClassifier(BinaryClassifier):
         """
         Initialize the classifier by fitting the data to it.
         """
-        self.model = self.get_best_model(X, y)
-        return self.model
+        # Fit KDE to positive samples only.
+        X_pos = X.loc[y[TARGET_LABEL] == 1]
+        y_pos = y.loc[y[TARGET_LABEL] == 1]
+        self.pos_model = self.get_best_model(X_pos, y_pos)
+
+        X_neg = X.loc[y[TARGET_LABEL] == 0]
+        y_neg = y.loc[y[TARGET_LABEL] == 0]
+        self.neg_model = self.get_best_model(X_neg, y_neg)
+        return self.pos_model
 
     def predict(self, X):
         """
@@ -32,22 +39,17 @@ class KDEClassifier(BinaryClassifier):
         Get maximum likelihood estimated distribution by kernel density estimate of this class over all features
         :return: best fitting KDE
         """
-        # Fit KDE to positive samples only.
-        X = X.loc[y[TARGET_LABEL] == 1]
-        y = y.loc[y[TARGET_LABEL] == 1]
-
         # Create grid to get optimal bandwidth
         range_bws = np.linspace(0.01, 10, 100)
         grid = {
             'bandwidth': range_bws,
-            'kernel': ['gaussian'],
+            'kernel': ['gaussian', 'epanechnikov', 'tophat', 'exponential', 'linear', 'cosine'],
             'metric': ['euclidean']
         }
 
         clf_optimize = GridSearchCV(KernelDensity(), grid, iid=False, cv=3, n_jobs=-1)
         clf_optimize.fit(X)
-
-        print("Optimal bandwidth")
+        print("Optimal parameters")
         print(clf_optimize.best_params_)
 
         return clf_optimize.best_estimator_

@@ -106,7 +106,7 @@ class EnsembleModel(MCBaseModel, ABC):
             for index, row in self.y_test.iterrows():
                 # Actual is class_name
                 if class_name in row[TARGET_LABEL]:
-                    # Prediction is class name (prob > 50%)
+                    # Class predicted if prob > 50%
                     if preds[index] > 0.5:
                         TP += 1
                     else:
@@ -116,7 +116,6 @@ class EnsembleModel(MCBaseModel, ABC):
                         FP += 1
                     else:
                         TN += 1
-
             class_accuracies[class_name] = {"TP": TP,
                                             "FN": FN,
                                             "FP": FP,
