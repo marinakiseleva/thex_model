@@ -38,19 +38,21 @@ class NetClassifier(BinaryClassifier):
         # class_weights = self.get_class_weights(labeled_samples)
         x_train, x_valid, y_train, y_valid = train_test_split(
             X, y, test_size=0.5)
-        weights_train = self.get_sample_weights(y_train)
-        weights_valid = self.get_sample_weights(y_valid)
+        # weights_train = self.get_sample_weights(y_train)
+        # weights_valid = self.get_sample_weights(y_valid)
 
         # Assign class weights
         class_weights = self.get_class_weights(y)
 
         model = self.get_nn()
 
-        epochs = 150
+        epochs = 1500
         batch_size = 32
         verbosity = 0
         es = EarlyStopping(monitor='val_loss',
-                           patience=15,
+                           min_delta=0.000001,
+                           verbose=1,
+                           patience=150,
                            restore_best_weights=True)
 
         metrics = model.fit(x_train,  # X
@@ -81,6 +83,9 @@ class NetClassifier(BinaryClassifier):
                         input_dim=self.input_length,
                         kernel_initializer='normal',
                         activation='relu'))
+        # model.add(Dense(int(self.input_length / 2),
+        #                 kernel_initializer='normal',
+        #                 activation='relu'))
         model.add(Dense(1,
                         kernel_initializer='normal',
                         activation='sigmoid'))
