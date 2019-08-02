@@ -131,7 +131,7 @@ class MCBaseModelVisualization:
                         bbox_inches=extent.expanded(1.6, 1.6))
         plt.show()
 
-    def plot_mc_performance(self, class_metrics, ylabel, base_lines=False):
+    def plot_mc_performance(self, class_metrics, ylabel, base_lines=None):
         """
         Visualizes accuracy per class with bar graph; with random baseline based on class level in hierarchy.
         :param class_metrics: Mapping from class name to metric value.
@@ -156,7 +156,7 @@ class MCBaseModelVisualization:
 
         # Plot base lines
         # Map each level to the total # of classes at that level
-        if base_lines:
+        if base_lines == True:
             level_counts = {}
             for class_name in class_names:
                 level = self.class_levels[class_name]
@@ -170,5 +170,12 @@ class MCBaseModelVisualization:
                 # Random chance of class is 1/# of classes at this level
                 level_base = 1 / level_counts[level]
                 plt.hlines(y=level_base, xmin=index - 0.45, xmax=index +
+                           bar_width - 0.45, linestyles='--', colors='red')
+        elif base_lines is not None:
+            # passed in specific baselines
+            for index, class_name in enumerate(base_lines.keys()):
+                baseline = base_lines[class_name]
+                print("baseline for " + class_name + "  is " + str(baseline))
+                plt.hlines(y=baseline, xmin=index - 0.45, xmax=index +
                            bar_width - 0.45, linestyles='--', colors='red')
         self.display_and_save_plot(ylabel, ax)
