@@ -5,6 +5,8 @@ from thex_data.data_consts import TARGET_LABEL
 
 
 from sklearn.model_selection import train_test_split
+from sklearn import preprocessing
+
 
 from keras.models import Sequential
 from keras.layers import Dense
@@ -36,8 +38,14 @@ class NetClassifier(BinaryClassifier):
         # Get weight of each sample by its class frequency
         # labeled_samples = pd.concat([X, y], axis=1)
         # class_weights = self.get_class_weights(labeled_samples)
+
+        # mm_scaler = preprocessing.MinMaxScaler()
+        # X_processed = mm_scaler.fit_transform(X)
+
+        X_processed = preprocessing.normalize(X)
         x_train, x_valid, y_train, y_valid = train_test_split(
-            X, y, test_size=0.5)
+            X_processed, y, test_size=0.3)
+
         # weights_train = self.get_sample_weights(y_train)
         # weights_valid = self.get_sample_weights(y_valid)
 
@@ -50,9 +58,9 @@ class NetClassifier(BinaryClassifier):
         batch_size = 32
         verbosity = 0
         es = EarlyStopping(monitor='val_loss',
-                           min_delta=0.000001,
+                           min_delta=0.0000001,
                            verbose=1,
-                           patience=150,
+                           patience=200,
                            restore_best_weights=True)
 
         metrics = model.fit(x_train,  # X
@@ -79,7 +87,8 @@ class NetClassifier(BinaryClassifier):
         Initialize neural network 
         """
         model = Sequential()
-        model.add(Dense(self.input_length,
+        num_neurons = int(self.input_length / 2)
+        model.add(Dense(num_neurons,
                         input_dim=self.input_length,
                         kernel_initializer='normal',
                         activation='relu'))
