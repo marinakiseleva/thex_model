@@ -131,7 +131,7 @@ class MCBaseModelVisualization:
                         bbox_inches=extent.expanded(1.6, 1.6))
         plt.show()
 
-    def plot_mc_performance(self, class_metrics, ylabel, base_lines=None):
+    def plot_mc_performance(self, class_metrics, ylabel, base_lines=None, annotations=None):
         """
         Visualizes accuracy per class with bar graph; with random baseline based on class level in hierarchy.
         :param class_metrics: Mapping from class name to metric value.
@@ -175,7 +175,9 @@ class MCBaseModelVisualization:
             # passed in specific baselines
             for index, class_name in enumerate(base_lines.keys()):
                 baseline = base_lines[class_name]
-                print("baseline for " + class_name + "  is " + str(baseline))
                 plt.hlines(y=baseline, xmin=index - 0.45, xmax=index +
                            bar_width - 0.45, linestyles='--', colors='red')
+
+        if annotations is not None:
+            self.add_bar_counts(x_indices, metrics, annotations, ax)
         self.display_and_save_plot(ylabel, ax)

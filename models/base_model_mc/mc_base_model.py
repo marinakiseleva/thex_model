@@ -166,6 +166,8 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         specificities = {}
         pos_baselines = {}
         neg_baselines = {}
+        pos_annotations = []
+        neg_annotations = []
         for class_name in self.class_labels:
             metrics = agg_metrics[class_name]
             den = metrics["TP"] + metrics["FP"]
@@ -176,19 +178,23 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             loglosses[class_name] = metrics["LL"]
             corr[class_name] = (metrics["TP"] + metrics["TN"]) / total_samples
             # specificity = true negative rate
-            specificities[class_name] = metrics["TN"] / (metrics["TN"] + metrics["FP"])
+            specificities["Not " + class_name] = metrics["TN"] / \
+                (metrics["TN"] + metrics["FP"])
 
             # % of positive samples * # of positive samples
             pos_count = class_counts[class_name]
+            pos_annotations.append(pos_count)
             pos_baselines[class_name] = (pos_count / total_count) ** 2
 
             # % of neg samples * # of neg samples
             neg_count = total_count - pos_count
+            neg_annotations.append(neg_count)
             neg_baselines[class_name] = (neg_count / total_count) ** 2
 
-        self.plot_mc_performance(recalls, "True Positive Rate/Recall", pos_baselines)
+        self.plot_mc_performance(recalls, "Recall: True Positive Rate",
+                                 pos_baselines, pos_annotations)
         self.plot_mc_performance(
-            specificities, "True Negative Rate/Specificity", neg_baselines)
+            specificities, "Recall: True Negative Rate", neg_baselines, neg_annotations)
         self.plot_mc_performance(precisions, "Precision")
         self.plot_mc_performance(corr, "Accuracy")
         # self.basic_plot(briers, "Brier Score",   self.class_labels)
