@@ -2,7 +2,7 @@ import os
 from abc import ABC, abstractmethod
 from sklearn.model_selection import StratifiedKFold
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import scale
+from sklearn.preprocessing import StandardScaler
 
 from thex_data.data_consts import cat_code, ROOT_DIR
 from thex_data.data_init import collect_cols
@@ -101,10 +101,14 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
         """
         Compute PCA reductions on training then apply to both training and testing.
         """
+        # Rescale data before PCA, z = (x - mean) / stdev
+        scaler = StandardScaler()
+        scaled_X_train = scaler.fit_transform(self.X_train)
+        scaled_X_test = scaler.transform(self.X_test)
+
         pca = PCA(n_components=k)
-        pca = pca.fit(self.X_train)  # Fit on training
-        reduced_training = pca.transform(self.X_train)
-        reduced_testing = pca.transform(self.X_test)
+        reduced_training = pca.fit_transform(scaled_X_train)
+        reduced_testing = pca.transform(scaled_X_test)
         print("\nPCA Analysis: Explained Variance Ratio")
         print(pca.explained_variance_ratio_)
 
@@ -114,15 +118,11 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
             :param data: Numpy 2D array of data features
             :param k: Number of PCA components to label cols
             """
-            # Rescale data
-            scaled_data = scale(X=data, axis=0, with_mean=True, with_std=True, copy=True)
-
             reduced_columns = []
             for i in range(k):
                 new_column = "PC" + str(i + 1)
                 reduced_columns.append(new_column)
-
-            df = pd.DataFrame(data=scaled_data, columns=reduced_columns)
+            df = pd.DataFrame(data=data, columns=reduced_columns)
 
             return df
         reduced_training = convert_to_df(reduced_training, k)
