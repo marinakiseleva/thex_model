@@ -4,6 +4,8 @@ from models.ensemble_models.ensemble_model.binary_classifier import BinaryClassi
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 
+from thex_data.data_consts import CPU_COUNT
+
 
 class TreeClassifier(BinaryClassifier):
     """
@@ -46,7 +48,7 @@ class TreeClassifier(BinaryClassifier):
                 'class_weight': ['balanced', class_weights]
                 }
         clf_optimize = GridSearchCV(
-            estimator=DecisionTreeClassifier(), param_grid=grid, scoring='brier_score_loss', cv=3, iid=True, n_jobs=12)
+            estimator=DecisionTreeClassifier(), param_grid=grid, scoring='brier_score_loss', cv=3, iid=True, n_jobs=CPU_COUNT)
 
         # Fit the random search model
         clf_optimize.fit(X, y, sample_weight=sample_weights)

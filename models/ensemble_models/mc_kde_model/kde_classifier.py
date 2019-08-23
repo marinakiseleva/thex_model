@@ -4,7 +4,7 @@ from models.ensemble_models.ensemble_model.binary_classifier import BinaryClassi
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV
 
-from thex_data.data_consts import TARGET_LABEL
+from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
 
 
 class KDEClassifier(BinaryClassifier):
@@ -40,14 +40,14 @@ class KDEClassifier(BinaryClassifier):
         :return: best fitting KDE
         """
         # Create grid to get optimal bandwidth
-        range_bws = np.linspace(0.01, 10, 100)
+        range_bws = np.linspace(0.01, 10, 400)
         grid = {
             'bandwidth': range_bws,
             'kernel': ['gaussian'],
             'metric': ['euclidean']
         }
-
-        clf_optimize = GridSearchCV(KernelDensity(), grid, iid=False, cv=3, n_jobs=-1)
+        clf_optimize = GridSearchCV(KernelDensity(), grid,
+                                    iid=False, cv=3, n_jobs=CPU_COUNT)
         clf_optimize.fit(X)
         print("Optimal parameters")
         print(clf_optimize.best_params_)

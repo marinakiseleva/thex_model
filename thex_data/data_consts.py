@@ -5,6 +5,8 @@ Constant data-based information needed in THEx data program. Includes file locat
 
 import os
 
+CPU_COUNT = 16
+
 # Plotting Specifications
 FIG_WIDTH = 6
 FIG_HEIGHT = 4
@@ -209,6 +211,8 @@ cat_code = {
     'Variable Star': 68,
     'WD + IMBH': 69,
     'nIa': 70,
+    'Ic-BL': 71,  # New class
+    'UVOptTDE': 72,  # New class
     'Unknown': 100,
     'TTypes': 200
 }
