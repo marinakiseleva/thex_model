@@ -127,7 +127,7 @@ class_to_subclass = {
     "_ROOT":                 ["Ia", "CC", "GRB", "TDE",
                               "FRB", "GW", "Kilonova",
                               "_W_UVOPT", "_W_HIENERGY", "_PEC_SN",
-                              "Variable"],
+                              "Variable", "Candidate"],
 
     # "_UNCLEAR_LABELS":       ["_UNCLEAR", "CN", "LCH", "LSQ", "c"],
     # "_IGNORED_LABELS":       ["removed"],
