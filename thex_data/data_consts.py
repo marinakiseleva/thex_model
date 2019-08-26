@@ -115,13 +115,13 @@ class_to_subclass = {
 
     # "_SN":                   ["I", "II", "SLSN"],
 
-    # "_PEC_SN":               ["I Pec", "Ia Pec", "Ib Pec", "Ic Pec",
-    #                           "Ib/c Pec", "II Pec", "II P Pec", "IIb Pec",
-    #                           "IIn Pec", "Pec"],
+    "_PEC_SN":               ["I Pec", "Ia Pec", "Ib Pec", "Ic Pec",
+                              "Ib/c Pec", "II Pec", "II P Pec", "IIb Pec",
+                              "IIn Pec", "Pec"],
 
     # "_W_RADIO":              ["FRB", "MiscRadio"],
-    # "_W_UVOPT":              ["I", "II", "SLSN", "UVOptTDE", "Kilonova"],
-    # "_W_HIENERGY":           ["GRB", "XrayTDE"],
+    "_W_UVOPT":              ["I", "II", "SLSN", "UVOptTDE", "Kilonova"],
+    "_W_HIENERGY":           ["GRB", "XrayTDE"],
     # "_W_GW":                 ["GW"],
 
     "_ROOT":                 ["Ia", "CC", "GRB", "TDE",
@@ -208,11 +208,18 @@ cat_code = {
     'SLSN-R': 65,
     'Star': 66,
     'TDE': 67,
-    'Variable Star': 68,
+    'Variable': 68,
     'WD + IMBH': 69,
     'nIa': 70,
     'Ic-BL': 71,  # New class
     'UVOptTDE': 72,  # New class
+    '_W_UVOPT': 73,
+    '_W_HIENERGY': 74,
+    '_PEC_SN': 75,
+    "UVOptTDE": 76,
+    "XrayTDE": 77,
+    "PossibleXrayTDE": 78,
+    "LikelyXrayTDE": 79,
     'Unknown': 100,
     'TTypes': 200
 }
