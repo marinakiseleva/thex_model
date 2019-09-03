@@ -141,10 +141,13 @@ class MCBaseModelVisualization:
         """
         class_names = list(class_metrics.keys())
         metrics = list(class_metrics.values())
-        base_lines = list(base_lines.values())
-        # Sort by class names, so they show up consistently
-        class_names, metrics, base_lines = zip(
-            *sorted(zip(class_names, metrics, base_lines)))
+        # Sort by class names, so the metrics & baselines show up consistently
+        if base_lines is not None:
+            base_lines = list(base_lines.values())
+            class_names, metrics, base_lines = zip(
+                *sorted(zip(class_names, metrics, base_lines)))
+        else:
+            class_names, metrics = zip(*sorted(zip(class_names, metrics)))
 
         # Class names will be assigned in same order as these indices
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
