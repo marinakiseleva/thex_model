@@ -5,7 +5,7 @@ Constant data-based information needed in THEx data program. Includes file locat
 
 import os
 
-CPU_COUNT = 16
+CPU_COUNT = 6
 
 # Plotting Specifications
 FIG_WIDTH = 6
@@ -26,8 +26,8 @@ DPI = 600
 # GALEX/WISE/PANSTARRS Versions 1, 2, 3
 # LOCAL_DATA_PATH = '/../../data/THEx-training-set.v0_0_1.fits'
 # LOCAL_DATA_PATH = '/../../data/THEx-training-set-v0_0_2.fits'
-LOCAL_DATA_PATH = '/../../data/THEx-training-set-v0_0_3.fits'
-
+# LOCAL_DATA_PATH = '/../../data/THEx-training-set-v0_0_3.fits'
+LOCAL_DATA_PATH = '/../../data/assembled-magcols.fits'
 
 # All data Version 4
 # LOCAL_DATA_PATH = '/../../data/THEx-catalog.v0_0_4.fits'
@@ -49,7 +49,7 @@ TARGET_LABEL = 'transient_type'
 UNKNOWN_LABEL = 'Unknown'
 PRED_LABEL = 'predicted_class'
 UNDEF_CLASS = 'Unspecified '
-TREE_ROOT = "_ROOT"  # 'TTypes'  #
+TREE_ROOT = "_ROOT"
 
 """
 class_to_subclass
