@@ -135,11 +135,16 @@ class MCBaseModelVisualization:
         """
         Visualizes accuracy per class with bar graph; with random baseline based on class level in hierarchy.
         :param class_metrics: Mapping from class name to metric value.
+        :param ylabel: Label to assign to y-axis
+        :param base_lines: Optional Mapping from class name to random-baseline performance
+        :param annotations: Optional # of positive samples in each class, plotted atop bar
         """
         class_names = list(class_metrics.keys())
         metrics = list(class_metrics.values())
+        base_lines = list(base_lines.values())
         # Sort by class names, so they show up consistently
-        class_names, metrics = zip(*sorted(zip(class_names, metrics)))
+        class_names, metrics, base_lines = zip(
+            *sorted(zip(class_names, metrics, base_lines)))
 
         # Class names will be assigned in same order as these indices
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
@@ -173,8 +178,7 @@ class MCBaseModelVisualization:
                            bar_width - 0.45, linestyles='--', colors='red')
         elif base_lines is not None:
             # passed in specific baselines
-            for index, class_name in enumerate(base_lines.keys()):
-                baseline = base_lines[class_name]
+            for index, baseline in enumerate(base_lines):
                 plt.hlines(y=baseline, xmin=index - 0.45, xmax=index +
                            bar_width - 0.45, linestyles='--', colors='red')
 
