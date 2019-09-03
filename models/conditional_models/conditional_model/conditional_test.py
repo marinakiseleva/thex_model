@@ -1,5 +1,5 @@
 import pandas as pd
-from thex_data.data_consts import class_to_subclass, PRED_LABEL
+from thex_data.data_consts import class_to_subclass, PRED_LABEL, TREE_ROOT
 
 
 class ConditionalTest:
@@ -8,7 +8,7 @@ class ConditionalTest:
         """
         Recurse up through tree, getting parent prob until we find a valid one. For example, there may only be CC, II, II P in CC so we need to inherit the probability of CC.
         """
-        if class_name == "TTypes":
+        if class_name == TREE_ROOT:
             return 1
         elif self.get_parent(class_name) in probabilities:
             return probabilities[self.get_parent(class_name)]
