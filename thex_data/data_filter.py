@@ -16,8 +16,8 @@ from .data_print import *
 def sub_sample(df, count):
     """
     Sub-samples over-represented class
-    :param df: the dataframe to manipulate
-    :param count: number to set all classes to; if class has less than this, then just leave it
+    :param df: DataFrame to subsample
+    :param count: Randomly subsample all classes to this #; if class has less than or equal to this #, then just leave it
     """
     if count is None:
         return df
