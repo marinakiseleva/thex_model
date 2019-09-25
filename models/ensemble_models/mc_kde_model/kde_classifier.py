@@ -21,6 +21,7 @@ class KDEClassifier(BinaryClassifier):
         y_pos = y.loc[y[TARGET_LABEL] == 1]
         self.pos_model = self.get_best_model(X_pos, y_pos)
 
+        # need negative model to normalize over
         X_neg = X.loc[y[TARGET_LABEL] == 0]
         y_neg = y.loc[y[TARGET_LABEL] == 0]
         self.neg_model = self.get_best_model(X_neg, y_neg)
@@ -40,7 +41,7 @@ class KDEClassifier(BinaryClassifier):
         :return: best fitting KDE
         """
         # Create grid to get optimal bandwidth
-        range_bws = np.linspace(0.01, 10, 400)
+        range_bws = np.linspace(0.01, 5, 200)
         grid = {
             'bandwidth': range_bws,
             'kernel': ['gaussian'],
@@ -49,7 +50,11 @@ class KDEClassifier(BinaryClassifier):
         clf_optimize = GridSearchCV(KernelDensity(), grid,
                                     iid=False, cv=3, n_jobs=CPU_COUNT)
         clf_optimize.fit(X)
-        print("Optimal parameters")
+        print("Optimal Parameters:")
         print(clf_optimize.best_params_)
 
-        return clf_optimize.best_estimator_
+        clf = clf_optimize.best_estimator_
+
+        print("Total log-likelihood of training data: " + str(clf.score(X)))
+
+        return clf
