@@ -7,11 +7,11 @@ import numpy as np
 
 class MCKDEModel(EnsembleModel):
     """
-    Multiclass Kernel Density Estimate (KDE) model. Creates KDE for each class, and computes probability by normalizing over class at same level in class hierarchy.
+    Ensemble Kernel Density Estimate (KDE) model. Creates KDE for each class, and computes probability by normalizing over sum of density of class and density of no class.
     """
 
     def __init__(self, **data_args):
-        self.name = "Multiclass KDE Model"
+        self.name = "Ensemble KDE Model"
         # do not use default label transformations - done manually
         data_args['transform_labels'] = False
         self.user_data_filters = data_args
