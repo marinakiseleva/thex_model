@@ -91,25 +91,28 @@ def count_classes(df):
 from matplotlib.ticker import FormatStrFormatter
 
 
-def plot_class_hist(df, target_is_name=False):
+def plot_class_hist(df, target_is_name=False, class_counts=None):
     """
     Plots histogram of class sizes
     :param df: DataFrame with TARGET_LABEL column
     :param target_is_name: Boolean to use keys in count_classes dictionary as class labels. Can be True if TARGET_LABEL contains real class names and not codes.
+    :param class_counts: Map from class name to counts, if pre-computed
     """
-
-    class_counts = count_classes(df)
-    class_names = []
-    for c in class_counts.keys():
-        if target_is_name:
-            class_names.append(str(c))
-        else:
-            class_names.append(code_cat[c])
+    if class_counts is None:
+        class_counts = count_classes(df)
+        class_names = []
+        for c in class_counts.keys():
+            if target_is_name:
+                class_names.append(str(c))
+            else:
+                class_names.append(code_cat[c])
+    else:
+        class_names = list(class_counts.keys())
 
     num_classes = len(class_names)
     class_indices = np.arange(num_classes)
 
-    f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT + 2), dpi=DPI)
+    f, ax = plt.subplots(figsize=(6, 6), dpi=DPI)
     # Plot data horizontally
     ax.barh(class_indices, list(class_counts.values()))
 
@@ -119,16 +122,15 @@ def plot_class_hist(df, target_is_name=False):
     if (max(class_counts.values()) - min(class_counts.values())) > 100:
         ax.set_xscale('log')
         ax.xaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
-        plt.tick_params(axis='x', which='minor')
+        plt.tick_params(axis='x', which='major')
 
     ax.invert_yaxis()  # labels read top-to-bottom
-    plt.yticks(class_indices, class_names, fontsize=10)
+    plt.yticks(class_indices, class_names, fontsize=8)
 
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    ax.tick_params(axis='both', which='major', labelsize=8)
-    ax.tick_params(axis='both', which='minor', labelsize=7)
-    ax.tick_params(axis='x', which='minor', rotation=-45)
-    ax.tick_params(axis='x', which='major', rotation=-45)
+    # ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    # ax.tick_params(axis='both', which='major', labelsize=8)
+    # # ax.tick_params(axis='x', which='minor', labelsize=7, rotation=-90)
+    # ax.tick_params(axis='x', which='major', rotation=-90)
 
     plt.ylabel('Class', fontsize=12)
     plt.xlabel('Count', fontsize=12)
