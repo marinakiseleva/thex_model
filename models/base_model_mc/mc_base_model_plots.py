@@ -128,7 +128,7 @@ class MCBaseModelVisualization:
         avg_ax.legend(loc="best", bbox_to_anchor=(1.2, 1))
         # Plot the mean of each class ROC curve on same plot
         avg_fig.savefig(file_dir + "/roc_summary",
-                        bbox_inches=extent.expanded(1.6, 1.6))
+                        bbox_inches=extent.expanded(2, 2))
         plt.show()
 
     def plot_mc_performance(self, class_metrics, ylabel, base_lines=None, annotations=None):
@@ -136,16 +136,24 @@ class MCBaseModelVisualization:
         Visualizes accuracy per class with bar graph; with random baseline based on class level in hierarchy.
         :param class_metrics: Mapping from class name to metric value.
         :param ylabel: Label to assign to y-axis
-        :param base_lines: Optional Mapping from class name to random-baseline performance
-        :param annotations: Optional # of positive samples in each class, plotted atop bar
+        :[optional] param base_lines: Mapping from class name to random-baseline performance
+        :[optional] param annotations: List of # of samples in each class (get plotted atop the bars)
         """
         class_names = list(class_metrics.keys())
         metrics = list(class_metrics.values())
-        # Sort by class names, so the metrics & baselines show up consistently
+        # Sort by class names, so the metrics, baselines, and annotations show up
+        # consistently
         if base_lines is not None:
             base_lines = list(base_lines.values())
-            class_names, metrics, base_lines = zip(
-                *sorted(zip(class_names, metrics, base_lines)))
+            if annotations is not None:
+                class_names, metrics, base_lines, annotations = zip(
+                    *sorted(zip(class_names, metrics, base_lines, annotations)))
+            else:
+                class_names, metrics, base_lines = zip(
+                    *sorted(zip(class_names, metrics, base_lines)))
+        elif annotations is not None:
+            class_names, metrics, annotations = zip(
+                *sorted(zip(class_names, metrics, annotations)))
         else:
             class_names, metrics = zip(*sorted(zip(class_names, metrics)))
 
@@ -164,26 +172,11 @@ class MCBaseModelVisualization:
 
         # Plot base lines
         # Map each level to the total # of classes at that level
-        if base_lines == True:
-            level_counts = {}
-            for class_name in class_names:
-                level = self.class_levels[class_name]
-                if level in level_counts:
-                    level_counts[level] += 1
-                else:
-                    level_counts[level] = 1
-
-            for index, class_name in enumerate(class_names):
-                level = self.class_levels[class_name]
-                # Random chance of class is 1/# of classes at this level
-                level_base = 1 / level_counts[level]
-                plt.hlines(y=level_base, xmin=index - 0.45, xmax=index +
-                           bar_width - 0.45, linestyles='--', colors='red')
-        elif base_lines is not None:
+        if base_lines is not None:
             # passed in specific baselines
             for index, baseline in enumerate(base_lines):
-                plt.hlines(y=baseline, xmin=index - 0.45, xmax=index +
-                           bar_width - 0.45, linestyles='--', colors='red')
+                plt.hlines(y=baseline, xmin=index - (bar_width / 2),
+                           xmax=index + (bar_width / 2), linestyles='--', colors='red')
 
         if annotations is not None:
             self.add_bar_counts(x_indices, metrics, annotations, ax)

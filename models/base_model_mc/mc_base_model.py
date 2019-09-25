@@ -108,14 +108,11 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         Visualize distribution of data used to train and test
         """
-        if self.class_labels is None:
-            self.set_class_labels(y)
-
         if y is None:
             y = pd.concat([self.y_train, self.y_test], axis=0)
 
-        # Filter y to keep only rows with at least 1 class label in
-        # self.class_labels
+        """  Filter y to keep only rows with at least 1 class label in self.class_labels and count total # of samples in each class. """
+        class_counts = {n: 0 for n in self.class_labels}
         keep_rows = []
         indices = []
         for df_index, row in y.iterrows():
@@ -125,12 +122,14 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                 # Keep if at least one value in list is acceptable
                 if c in self.class_labels or UNDEF_CLASS + c in self.class_labels:
                     keep = True
+                    class_counts[c] += 1
             if keep:
                 keep_rows.append({TARGET_LABEL: row[TARGET_LABEL]})
                 indices.append(df_index)
+
         self.y_filtered = pd.DataFrame(keep_rows).reset_index(drop=True)
 
-        plot_class_hist(self.y_filtered, True)
+        plot_class_hist(self.y_filtered, True, class_counts)
 
         if X is not None:
             # pass in X and y combined
@@ -255,6 +254,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         # Initialize self.class_labels if None
         if self.class_labels is None:
             self.set_class_labels(y)
+
         self.visualize_data(data_filters, y, X)
 
         # Initialize maps of class names to metrics
