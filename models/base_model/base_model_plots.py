@@ -328,5 +328,5 @@ class BaseModelVisualization:
                 # Get class count of current class_index
                 class_count = str(class_counts[class_index])
                 ax.annotate(str(class_count), xy=xy,
-                            textcoords='data', ha='center', va='bottom', fontsize=10)
+                            textcoords='data', ha='center', va='bottom', fontsize=8, rotation=-90)
                 class_index += 1
