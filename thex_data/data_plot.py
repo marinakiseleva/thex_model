@@ -114,7 +114,7 @@ def plot_class_hist(df, target_is_name=False, class_counts=None):
 
     f, ax = plt.subplots(figsize=(6, 6), dpi=DPI)
     # Plot data horizontally
-    ax.barh(class_indices, list(class_counts.values()))
+    ax.barh(y=class_indices, width=list(class_counts.values()), height=0.7)
 
     plt.gcf().subplots_adjust(left=0.1)
 
@@ -122,21 +122,18 @@ def plot_class_hist(df, target_is_name=False, class_counts=None):
     if (max(class_counts.values()) - min(class_counts.values())) > 100:
         ax.set_xscale('log')
         ax.xaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
-        plt.tick_params(axis='x', which='major')
+        plt.tick_params(axis='x', which='major', rotation=-90)
 
     ax.invert_yaxis()  # labels read top-to-bottom
     plt.yticks(class_indices, class_names, fontsize=8)
-
-    # ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    # ax.tick_params(axis='both', which='major', labelsize=8)
-    # # ax.tick_params(axis='x', which='minor', labelsize=7, rotation=-90)
-    # ax.tick_params(axis='x', which='major', rotation=-90)
+    ax.tick_params(axis='x', which='both', labelsize=8, rotation=-90)
+    ax.tick_params(axis='x', which='minor', labelsize=4)
 
     plt.ylabel('Class', fontsize=12)
     plt.xlabel('Count', fontsize=12)
 
     title = "Distribution of Transient Types in Data Sample"
     plt.title(title, fontsize=12)
-
+    plt.tight_layout()
     plt.savefig(ROOT_DIR + "/output/" + title)
     plt.show()
