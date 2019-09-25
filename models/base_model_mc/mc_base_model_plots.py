@@ -127,8 +127,9 @@ class MCBaseModelVisualization:
         avg_ax.set_ylabel('True Positive Rate')
         avg_ax.legend(loc="best", bbox_to_anchor=(1.2, 1))
         # Plot the mean of each class ROC curve on same plot
+        extent = avg_ax.get_window_extent().transformed(avg_fig.dpi_scale_trans.inverted())
         avg_fig.savefig(file_dir + "/roc_summary",
-                        bbox_inches=extent.expanded(2, 2))
+                        bbox_inches=extent.expanded(2.8, 1.4))
         plt.show()
 
     def plot_mc_performance(self, class_metrics, ylabel, base_lines=None, annotations=None):
