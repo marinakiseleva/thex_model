@@ -78,15 +78,11 @@ class MCBaseModelVisualization:
 
     def plot_mc_roc_curves(self, roc_plots, num_folds):
         """
-        Plot saved ROC curves
-        :param roc_plots: Results from save_roc_curve
+        Plots all ROC curves & average for each class separately, and plots the average ROC curves of each plot on 1 aggregated plot.
+        :param roc_plots: :param roc_plots: Mapping from class_name to [figure, axis, true positive rates, aucs]. This function plots curve on corresponding axis using this dict; Results from save_roc_curve
+        :param num_folds: Number of folds use in K-fold CV, used in title
         """
         avg_fig, avg_ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-
-        # Directory to save output in
-        file_dir = ROOT_DIR + "/output/" + self.prep_file_name(self.name)
-        if not os.path.exists(file_dir):
-            os.mkdir(file_dir)
 
         for class_name in self.class_labels:
             fig, ax, tprs, aucs = roc_plots[class_name]
@@ -118,9 +114,8 @@ class MCBaseModelVisualization:
             ax.set_ylabel('True Positive Rate')
             ax.legend(loc="best")
             extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
-
-            file_name = file_dir + "/" + self.prep_file_name(title)
-            fig.savefig(file_name, bbox_inches=extent.expanded(1.3, 1.3))
+            self.save_plot(title=title, ax=ax,
+                           bbox_inches=extent.expanded(1.3, 1.3), fig=fig)
 
         avg_ax.set_title(self.name + " ROC Curves")
         avg_ax.set_xlabel('False Positive Rate')
@@ -128,8 +123,8 @@ class MCBaseModelVisualization:
         avg_ax.legend(loc="best", bbox_to_anchor=(1.2, 1))
         # Plot the mean of each class ROC curve on same plot
         extent = avg_ax.get_window_extent().transformed(avg_fig.dpi_scale_trans.inverted())
-        avg_fig.savefig(file_dir + "/roc_summary",
-                        bbox_inches=extent.expanded(2.8, 1.4))
+        self.save_plot(title="ROC_Summary", ax=avg_ax,
+                       bbox_inches=extent.expanded(2.8, 1.4), fig=avg_fig)
         plt.show()
 
     def plot_mc_performance(self, class_metrics, ylabel, base_lines=None, annotations=None):
