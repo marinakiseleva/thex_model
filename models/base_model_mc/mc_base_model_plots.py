@@ -120,12 +120,23 @@ class MCBaseModelVisualization:
         avg_ax.set_title(self.name + " ROC Curves")
         avg_ax.set_xlabel('False Positive Rate')
         avg_ax.set_ylabel('True Positive Rate')
-        avg_ax.legend(loc="best", bbox_to_anchor=(1.2, 1))
-        # Plot the mean of each class ROC curve on same plot
-        extent = avg_ax.get_window_extent().transformed(avg_fig.dpi_scale_trans.inverted())
-        self.save_plot(title="ROC_Summary", ax=avg_ax,
-                       bbox_inches=extent.expanded(2.8, 1.4), fig=avg_fig)
+        self.display_and_save_plot(title="ROC Summary", ax=avg_ax,
+                       bbox_inches=None, fig=avg_fig)
+
+        # Save legend separately
+        handles, labels = avg_ax.get_legend_handles_labels()
+        legend_fig, legend_ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+        legend = legend_ax.legend(handles, labels, loc='upper center')
+        # Erase everything except the legend
+        legend_ax.xaxis.set_visible(False)
+        legend_ax.yaxis.set_visible(False)
         plt.show()
+
+        legend_fig.patch.set_visible(False)
+        legend_ax.axis('off')
+        self.save_plot(title="Legend", ax=legend_ax,
+                       bbox_inches=None, fig=legend_fig, extra_artists=(legend,))
+
 
     def plot_mc_performance(self, class_metrics, ylabel, base_lines=None, annotations=None):
         """
