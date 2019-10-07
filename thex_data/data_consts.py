@@ -56,19 +56,7 @@ class_to_subclass
 {Parent : [Child1, child2, ...] }
 Hierarchy of transient types, used in hierarchical multilabel classifiers
 """
-# Version 3
-class_to_subclass_old = {
-    "TTypes": ["Ia", "CC", "TDE", "GRB", "FRB", "Kilonova",  "GW"],
-    "Ia": ["Ia-91bg", "Ia-91T", "Ia-02cx",  "Ia-CSM"],
-    "CC": ["SE", "II", "SLSN"],
-    "SE": ["Ib", "Ic", "Ib/c"],
-    "Ib": ["Ibn", "IIb", "Ib-Ca?"],
-    "Ic": ["Ic-BL"],
-    "II": ["II P", "II L", "IIn"],
-    "SLSN": ["SLSN-I", "SLSN-II", "SLSN-R"],
-    "GRB": ["LGRB", "SGRB"],
-    "TDE": ["UVOptTDE", "XrayTDE"]
-}
+
 # Version 4
 class_to_subclass = {
     "Ia":                    ["Ia Pec"],
