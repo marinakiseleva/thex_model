@@ -68,7 +68,8 @@ class MCBaseModelPerformance:
 
     def get_mc_unique_classes(self, df=None):
         """
-        Get all unique class names from passed in DataFrame (or if None, self.y_test)
+        Get all unique class names from passed in DataFrame (or if None, self.y_test),
+        and ensure they all exist in defined hierarchy
         :param df: Pandas DataFrame with TARGET_LABEL column with string list of classes per sample; if None self.y_test is used
         """
         if df is None:
@@ -78,7 +79,21 @@ class MCBaseModelPerformance:
             for label in convert_str_to_list(row[TARGET_LABEL]):
                 if label != '':
                     unique_classes.append(label)
-        return list(set(unique_classes))
+        unique_classes = set(unique_classes)
+
+        # Ensure all classes are in defined hierarchy
+        # Save all classes in hierarchy as set
+        unique_defined_classes = []
+        for parent in class_to_subclass.keys():
+            children = class_to_subclass[parent]
+            unique_defined_classes.append(parent)
+            for child in children:
+                unique_defined_classes.append(child)
+        unique_defined_classes = set(unique_defined_classes)
+
+        classes = list(unique_classes.intersection(unique_defined_classes))
+        return classes.sort()
+
 
     def get_mc_class_metrics(self):
         """
