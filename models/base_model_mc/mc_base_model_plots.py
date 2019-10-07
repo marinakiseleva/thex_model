@@ -132,10 +132,9 @@ class MCBaseModelVisualization:
         legend_ax.yaxis.set_visible(False)
         plt.show()
 
-        legend_fig.patch.set_visible(False)
         legend_ax.axis('off')
         self.save_plot(title="Legend", ax=legend_ax,
-                       bbox_inches=None, fig=legend_fig, extra_artists=(legend,))
+                       bbox_inches='tight', fig=legend_fig, extra_artists=(legend,))
 
 
     def plot_mc_performance(self, class_metrics, ylabel, base_lines=None, annotations=None):
