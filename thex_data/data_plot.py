@@ -95,7 +95,8 @@ def plot_class_hist(df, target_is_name=False, class_counts=None):
     """
     Plots histogram of class sizes
     :param df: DataFrame with TARGET_LABEL column
-    :param target_is_name: Boolean to use keys in count_classes dictionary as class labels. Can be True if TARGET_LABEL contains real class names and not codes.
+    :param target_is_name: Boolean to use keys in count_classes dictionary as class labels.
+    Can be True if TARGET_LABEL contains real class names and not codes.
     :param class_counts: Map from class name to counts, if pre-computed
     """
     if class_counts is None:
