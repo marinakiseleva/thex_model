@@ -23,7 +23,7 @@ class BaseModelVisualization:
             text = text.replace(r, "_")
         return text
 
-    def save_plot(self, title, ax, bbox_inches=None, fig=None):
+    def save_plot(self, title, ax, bbox_inches=None, fig=None, extra_artists=None):
         """
         Saves plot (by model name and passed-in title); this functionality is split up from display_and_save_plot because it us uniquely used elsewhere.
         :param title: String title of plot, used to save 
@@ -44,6 +44,9 @@ class BaseModelVisualization:
 
         if fig is not None:
             fig.savefig(file_dir + "/" + title, bbox_inches=bbox_inches)
+            fig.savefig('samplefigure', bbox_extra_artists=extra_artists,
+                        bbox_inches='tight')
+
         else:
             plt.savefig(file_dir + "/" + title, bbox_inches=bbox_inches)
 
