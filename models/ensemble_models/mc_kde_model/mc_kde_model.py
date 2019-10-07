@@ -51,12 +51,14 @@ class MCKDEModel(EnsembleModel):
             probs = np.array([p]).T  # append probabilities as column
             probabilities = np.append(probabilities, probs, axis=1)
 
+        # Normalize - divide probability of each class by sum of Probabilities
+        norm_probabilities = probabilities/probabilities.sum(axis=1)[:,None]
         return probabilities
 
     def get_class_probabilities(self, x, normalized=True):
         """
-        Calculates probability of each transient class for the single test data point (x). 
-        :param x: Single row of features 
+        Calculates probability of each transient class for the single test data point (x).
+        :param x: Single row of features
         :return: map from class_name to probabilities
         """
         probabilities = {}
@@ -66,5 +68,9 @@ class MCKDEModel(EnsembleModel):
             pos_density = np.exp(pos_kde.score_samples([x.values]))[0]
             neg_density = np.exp(neg_kde.score_samples([x.values]))[0]
             probabilities[class_name] = pos_density / (pos_density + neg_density)
+
+        if normalized:
+            total = sum(probabilities.values())
+            probabilities = {k: v / total for k, v in probabilities.items()}
 
         return probabilities
