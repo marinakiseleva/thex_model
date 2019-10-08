@@ -139,7 +139,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             if 'redshift' in features:
                 plot_feature_distribution(df, 'redshift', False)
 
-    def evaluate_model(self, roc_plots, class_metrics, acc_metrics, k,  total_samples, class_counts, class_probabilities, y):
+    def evaluate_model(self, roc_plots, class_metrics, acc_metrics, k,  total_samples, class_counts, class_probabilities, X, y):
         """
         Evaluate and plot performance of model
         :param roc_plots: Mapping from class_name to [figure, axis, true positive rates, aucs]. This function plots curve on corresponding axis using this dict.
@@ -149,6 +149,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         :param total_samples: # of samples * # of runs
         :param class_counts: Map from class labels to number of samples (from total y)
         :param class_probabilities: List of Numpy matrices returned from get_all_class_probabilities for each run
+        :param X: all features in DataFrame
         :param y: DataFrame of TARGET_LABEL column for all data.
         """
         total_count = y.shape[0]
@@ -158,7 +159,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         # Plot probability vs positive rate for each class
         self.plot_mc_probability_pos_rates(class_metrics)
 
-        self.plot_probability_dists(class_probabilities, y)
+        self.plot_probability_dists(class_probabilities, k, X, y)
 
         # Report overall metrics
         agg_metrics = self.aggregate_mc_class_metrics(acc_metrics)
@@ -214,7 +215,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         Run k-fold cross validation
         """
-        kf = StratifiedKFold(n_splits=k, shuffle=True)
+        kf = StratifiedKFold(n_splits=k, shuffle=True, random_state=10)
         for train_index, test_index in kf.split(X, y):
             self.X_train, self.X_test = X.iloc[train_index].reset_index(
                 drop=True), X.iloc[test_index].reset_index(drop=True)
@@ -258,6 +259,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         if self.class_labels is None:
             self.set_class_labels(y)
 
+
         self.visualize_data(data_filters, y, X)
 
         # Initialize maps of class names to metrics
@@ -283,4 +285,4 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         class_counts = self.get_class_counts(y)
 
         self.evaluate_model(roc_plots, agg_class_metrics,
-                            acc_metrics, k, total_samples, class_counts, cps, y)
+                            acc_metrics, k, total_samples, class_counts, cps, X, y)

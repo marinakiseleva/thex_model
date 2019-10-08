@@ -8,13 +8,13 @@ from scipy import interp
 from thex_data.data_clean import convert_class_vectors, relabel
 from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, TARGET_LABEL, ROOT_DIR
 
-
+from sklearn.model_selection import StratifiedKFold
 class MCBaseModelVisualization:
     """
     Mixin Class for Multiclass BaseModel performance visualization
     """
 
-    def plot_probability_dists(self, class_probabilities):
+    def plot_probability_dists(self, class_probabilities, k, X, y):
         """
         Plots the distribution of probabilities per class as scatter plot
         :param class_probabilities: List of Numpy matrices returned from get_all_class_probabilities for each run;
@@ -24,13 +24,28 @@ class MCBaseModelVisualization:
         all_class_probs = np.concatenate((class_probabilities), axis=0)
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         total_num_samples = np.shape(all_class_probs)[0]
+
+        kf = StratifiedKFold(n_splits=k, shuffle=True, random_state=10)
+        test_indices = []
+        for train_index, test_index in kf.split(X, y):
+            test_indices.append(test_index)
+        # df_indices: indices of y in order corresponding to all_class_probs
+        df_indices = np.concatenate((test_indices), axis=0)
+
         # columns in matrix are in order of self.class_labels
         for class_index, class_name in enumerate(self.class_labels):
             class_probs = all_class_probs[:,class_index]
-            print("all class probabilities for class " + str(class_name))
-            print("class index " + str(class_index))
-            x_vals = [class_index]*total_num_samples
-            ax.scatter(x_vals, class_probs, s=2)
+
+            # For each class probability, only keep if this class is the label
+            contains_class_probs = []
+            class_count = 0
+            for index, df_index in enumerate(df_indices):
+                if class_name in y.iloc[df_index][TARGET_LABEL]:
+                    contains_class_probs.append(class_probs[index])
+                    class_count += 1
+
+            x_vals = [class_index]*class_count
+            ax.scatter(x_vals, contains_class_probs, s=2)
         plt.xticks(np.arange(len(self.class_labels)), self.class_labels)
         self.display_and_save_plot(title="Probability Distributions", ax=ax, bbox_inches=None, fig=fig)
 
