@@ -45,8 +45,8 @@ class MCBaseModelVisualization:
                     class_count += 1
 
             x_vals = [class_index]*class_count
-            ax.scatter(x_vals, contains_class_probs, s=2)
-        plt.xticks(np.arange(len(self.class_labels)), self.class_labels)
+            ax.scatter(contains_class_probs, x_vals, s=2)
+        plt.yticks(np.arange(len(self.class_labels)), self.class_labels)
         self.display_and_save_plot(title="Probability Distributions", ax=ax, bbox_inches=None, fig=fig)
 
 
