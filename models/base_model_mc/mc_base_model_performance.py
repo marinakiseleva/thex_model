@@ -94,6 +94,9 @@ class MCBaseModelPerformance:
         classes = list(unique_classes.intersection(unique_defined_classes))
         classes.sort()
 
+        # Exclude tree root
+        classes.remove(TREE_ROOT)
+
         return classes
 
 
