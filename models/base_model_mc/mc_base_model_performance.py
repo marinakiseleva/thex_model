@@ -92,7 +92,9 @@ class MCBaseModelPerformance:
         unique_defined_classes = set(unique_defined_classes)
 
         classes = list(unique_classes.intersection(unique_defined_classes))
-        return classes.sort()
+        classes.sort()
+
+        return classes
 
 
     def get_mc_class_metrics(self):
