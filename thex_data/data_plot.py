@@ -136,5 +136,5 @@ def plot_class_hist(df, target_is_name=False, class_counts=None):
     title = "Distribution of Transient Types in Data Sample"
     plt.title(title, fontsize=12)
     plt.tight_layout()
-    plt.savefig(ROOT_DIR + "/output/" + title)
+    plt.savefig(ROOT_DIR + "/output/" + title.replace(" ", "_"))
     plt.show()
