@@ -26,7 +26,7 @@ class MCKDEModel(EnsembleModel):
         """
         return KDEClassifier(pos_class, X, y)
 
-    def get_all_class_probabilities(self):
+    def get_all_class_probabilities(self, normalized=True):
         """
         Overwrite get_all_class_probabilities in EnsembleModel. Probability of class 1 = density(1) / (density(1) + density(0))
         :return probabilities: Numpy Matrix with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels
@@ -51,8 +51,11 @@ class MCKDEModel(EnsembleModel):
             probs = np.array([p]).T  # append probabilities as column
             probabilities = np.append(probabilities, probs, axis=1)
 
-        # Normalize - divide probability of each class by sum of Probabilities
-        norm_probabilities = probabilities/probabilities.sum(axis=1)[:,None]
+        if normalized:
+            # Normalize - divide probability of each class by sum of Probabilities
+            norm_probabilities = probabilities/probabilities.sum(axis=1)[:,None]
+            return norm_probabilities
+
         return probabilities
 
     def get_class_probabilities(self, x, normalized=True):

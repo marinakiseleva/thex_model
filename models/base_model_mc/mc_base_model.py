@@ -245,7 +245,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
             acc_metrics.append(self.get_mc_class_metrics())
 
-            cps.append(self.get_all_class_probabilities())
+            cps.append(self.get_all_class_probabilities(normalized=True))
 
         return roc_plots, class_metrics, acc_metrics, cps
 
