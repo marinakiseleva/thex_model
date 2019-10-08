@@ -14,6 +14,27 @@ class MCBaseModelVisualization:
     Mixin Class for Multiclass BaseModel performance visualization
     """
 
+    def plot_probability_dists(self, class_probabilities):
+        """
+        Plots the distribution of probabilities per class as scatter plot
+        :param class_probabilities: List of Numpy matrices returned from get_all_class_probabilities for each run;
+        each matrix has rows corresponding to samples, and each column the probability of that class
+        """
+
+        all_class_probs = np.concatenate((class_probabilities), axis=0)
+        fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+        total_num_samples = np.shape(all_class_probs)[0]
+        # columns in matrix are in order of self.class_labels
+        for class_index, class_name in enumerate(self.class_labels):
+            class_probs = all_class_probs[:,class_index]
+            print("all class probabilities for class " + str(class_name))
+            print("class index " + str(class_index))
+            x_vals = [class_index]*total_num_samples
+            ax.scatter(x_vals, class_probs, s=2)
+        plt.xticks(np.arange(len(self.class_labels)), self.class_labels)
+        self.display_and_save_plot(title="Probability Distributions", ax=ax, bbox_inches=None, fig=fig)
+
+
     def plot_mc_probability_pos_rates(self, range_metrics):
         """
         Plots precision of class (y) vs. probability assigned to class (x)

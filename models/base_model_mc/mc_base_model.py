@@ -139,7 +139,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             if 'redshift' in features:
                 plot_feature_distribution(df, 'redshift', False)
 
-    def evaluate_model(self, roc_plots, class_metrics, acc_metrics, k,  total_samples, class_counts, total_count):
+    def evaluate_model(self, roc_plots, class_metrics, acc_metrics, k,  total_samples, class_counts, class_probabilities, y):
         """
         Evaluate and plot performance of model
         :param roc_plots: Mapping from class_name to [figure, axis, true positive rates, aucs]. This function plots curve on corresponding axis using this dict.
@@ -148,12 +148,17 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         :param k: Number of folds
         :param total_samples: # of samples * # of runs
         :param class_counts: Map from class labels to number of samples (from total y)
+        :param class_probabilities: List of Numpy matrices returned from get_all_class_probabilities for each run
+        :param y: DataFrame of TARGET_LABEL column for all data.
         """
+        total_count = y.shape[0]
         # Plot ROC curves for each class
         self.plot_mc_roc_curves(roc_plots, k)
 
         # Plot probability vs positive rate for each class
         self.plot_mc_probability_pos_rates(class_metrics)
+
+        self.plot_probability_dists(class_probabilities, y)
 
         # Report overall metrics
         agg_metrics = self.aggregate_mc_class_metrics(acc_metrics)
@@ -165,8 +170,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         specificities = {}
         pos_baselines = {}
         neg_baselines = {}
-        pos_annotations = []
-        neg_annotations = []
         for class_name in self.class_labels:
             metrics = agg_metrics[class_name]
             den = metrics["TP"] + metrics["FP"]
@@ -182,12 +185,10 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
             # % of positive samples * # of positive samples
             pos_count = class_counts[class_name]
-            pos_annotations.append(pos_count)
             pos_baselines[class_name] = (pos_count / total_count) ** 2
 
             # % of neg samples * # of neg samples
             neg_count = total_count - pos_count
-            neg_annotations.append(neg_count)
             neg_baselines[class_name] = (neg_count / total_count) ** 2
 
         self.plot_mc_performance(
@@ -209,7 +210,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                 0]
         return class_counts
 
-    def run_cross_validation(self, k, X, y, roc_plots, class_metrics, acc_metrics, data_filters):
+    def run_cross_validation(self, k, X, y, roc_plots, class_metrics, acc_metrics, cps, data_filters):
         """
         Run k-fold cross validation
         """
@@ -243,7 +244,9 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
             acc_metrics.append(self.get_mc_class_metrics())
 
-        return roc_plots, class_metrics, acc_metrics
+            cps.append(self.get_all_class_probabilities())
+
+        return roc_plots, class_metrics, acc_metrics, cps
 
     def run_model_cv(self, data_columns, data_filters):
         """
@@ -267,10 +270,11 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             class_metrics[class_name] = []
 
         acc_metrics = []  # List of maps from class to stats
+        cps = [] # List of all class probabilities Numpy matrices
         for index_run in range(data_filters['num_runs']):
             print("\n\nRun " + str(index_run + 1))
-            roc_plots, class_metrics, acc_metrics = self.run_cross_validation(
-                k, X, y, roc_plots, class_metrics, acc_metrics, data_filters)
+            roc_plots, class_metrics, acc_metrics, cps = self.run_cross_validation(
+                k, X, y, roc_plots, class_metrics, acc_metrics, cps, data_filters)
 
         # Plot Results ################################
         agg_class_metrics = self.aggregate_mc_prob_metrics(class_metrics)
@@ -279,4 +283,4 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         class_counts = self.get_class_counts(y)
 
         self.evaluate_model(roc_plots, agg_class_metrics,
-                            acc_metrics, k, total_samples, class_counts, y.shape[0])
+                            acc_metrics, k, total_samples, class_counts, cps, y)
