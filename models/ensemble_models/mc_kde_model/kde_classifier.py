@@ -50,11 +50,11 @@ class KDEClassifier(BinaryClassifier):
         clf_optimize = GridSearchCV(KernelDensity(), grid,
                                     iid=False, cv=3, n_jobs=CPU_COUNT)
         clf_optimize.fit(X)
-        print("Optimal Parameters:")
-        print(clf_optimize.best_params_)
+        # print("Optimal Parameters:")
+        # print(clf_optimize.best_params_)
 
         clf = clf_optimize.best_estimator_
 
-        print("Total log-likelihood of training data: " + str(clf.score(X)))
+        # print("Total log-likelihood of training data: " + str(clf.score(X)))
 
         return clf
