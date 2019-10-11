@@ -30,7 +30,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             hierarchy[parent].append(UNDEF_CLASS + parent)
         self.tree = init_tree(hierarchy)
         self.class_levels = assign_levels(self.tree, {}, self.tree.root, 1)
-
+        self.level_classes = self.invert_class_levels(self.class_levels)
         self.test_level = self.user_data_filters[
             'test_level'] if 'test_level' in self.user_data_filters.keys() else None
 
@@ -38,6 +38,19 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             'class_labels'] if 'class_labels' in self.user_data_filters.keys() else None
 
         super(MCBaseModel, self).run_model()
+
+    def invert_class_levels(self, class_levels):
+        """
+        Convert dict of class names to levels to dict of class level # to list of classes (disjoint sets)
+        """
+        level_classes = {}
+        for class_name in class_levels.keys():
+            cur_level = class_levels[class_name]
+            if cur_level in level_classes:
+                level_classes[cur_level].append(class_name)
+            else:
+                level_classes[cur_level] = [class_name]
+        return level_classes
 
     def test_model(self, keep_top_half=False):
         """
@@ -258,8 +271,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         # Initialize self.class_labels if None
         if self.class_labels is None:
             self.set_class_labels(y)
-
-
         self.visualize_data(data_filters, y, X)
 
         # Initialize maps of class names to metrics
@@ -272,7 +283,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             class_metrics[class_name] = []
 
         acc_metrics = []  # List of maps from class to stats
-        cps = [] # List of all class probabilities Numpy matrices
+        cps = []  # List of all class probabilities Numpy matrices
         for index_run in range(data_filters['num_runs']):
             print("\n\nRun " + str(index_run + 1))
             roc_plots, class_metrics, acc_metrics, cps = self.run_cross_validation(
