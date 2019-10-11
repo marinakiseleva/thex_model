@@ -28,40 +28,19 @@ class MCKDEModel(EnsembleModel):
 
     def get_all_class_probabilities(self, normalized=True):
         """
-        Overwrite get_all_class_probabilities in EnsembleModel. Probability of class 1 = density(1) / (density(1) + density(0))
+        Overwrite get_all_class_probabilities in EnsembleModel.
         :return probabilities: Numpy Matrix with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels
         """
-
-        probabilities = np.zeros((self.X_test.shape[0], 0))
-        pos_class_densities = {}
-        neg_class_densities = {}
-        norm = np.zeros(self.X_test.shape[0])
-        for class_index, class_name in enumerate(self.class_labels):
-            pos_kde = self.models[class_name].pos_model
-            neg_kde = self.models[class_name].neg_model
-            pos_class_densities[class_name] = np.exp(
-                pos_kde.score_samples(self.X_test.values))
-            neg_class_densities[class_name] = np.exp(
-                neg_kde.score_samples(self.X_test.values))
-            norm = np.add(neg_class_densities[class_name],
-                          pos_class_densities[class_name])
-            # Divide each density by (density class 1 + density class 0)
-            p_nans = np.divide(pos_class_densities[class_name], norm)
-            p = np.nan_to_num(p_nans)
-            probs = np.array([p]).T  # append probabilities as column
-            probabilities = np.append(probabilities, probs, axis=1)
-
-        if normalized:
-            # Normalize - divide probability of each class by sum of Probabilities
-            norm_probabilities = probabilities/probabilities.sum(axis=1)[:,None]
-            return norm_probabilities
-
-        return probabilities
+        all_probs = np.empty((0, len(self.class_labels)))
+        for index, row in self.X_test.iterrows():
+            row_p = self.get_class_probabilities(row, normalized=normalized)
+            all_probs = np.append(all_probs, [list(row_p.values())], axis=0)
+        return all_probs
 
     def get_class_probabilities(self, x, normalized=True):
         """
-        Calculates probability of each transient class for the single test data point (x).
-        :param x: Single row of features
+        Calculates probability of each transient class for the single test data point (x). Probability of class 1 = density(1) / (density(1) + density(0)). 
+        :param x: Pandas DF row of features
         :return: map from class_name to probabilities
         """
         probabilities = {}
@@ -73,7 +52,28 @@ class MCKDEModel(EnsembleModel):
             probabilities[class_name] = pos_density / (pos_density + neg_density)
 
         if normalized:
-            total = sum(probabilities.values())
-            probabilities = {k: v / total for k, v in probabilities.items()}
+            norm_probabilities = self.normalize_probabilities(probabilities)
+        return norm_probabilities
+
+    def normalize_probabilities(self, probabilities):
+        """
+        Normalize over disjoint sets of class hierarchy.
+        :param probabilities: Dictionary from class names to likelihoods 
+        """
+        for level in self.level_classes.keys():
+            cur_level_classes = self.level_classes[level]
+            # Normalize over this set of columns in probabilities
+            level_sum = 0
+            num_classes = 0
+            for c in probabilities.keys():
+                if c in cur_level_classes:
+                    num_classes += 1
+                    level_sum += probabilities[c]
+
+            # Normalize by dividing each over sum
+            for c in probabilities.keys():
+                # If there is only 1 class in set, do not normalize
+                if c in cur_level_classes and num_classes > 1:
+                    probabilities[c] = probabilities[c] / level_sum
 
         return probabilities
