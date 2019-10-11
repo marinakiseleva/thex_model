@@ -35,6 +35,7 @@ class MCKDEModel(EnsembleModel):
         for index, row in self.X_test.iterrows():
             row_p = self.get_class_probabilities(row, normalized=normalized)
             all_probs = np.append(all_probs, [list(row_p.values())], axis=0)
+
         return all_probs
 
     def get_class_probabilities(self, x, normalized=True):
@@ -49,11 +50,12 @@ class MCKDEModel(EnsembleModel):
             neg_kde = self.models[class_name].neg_model
             pos_density = np.exp(pos_kde.score_samples([x.values]))[0]
             neg_density = np.exp(neg_kde.score_samples([x.values]))[0]
+            # Normalize as binary probability first
             probabilities[class_name] = pos_density / (pos_density + neg_density)
 
         if normalized:
-            norm_probabilities = self.normalize_probabilities(probabilities)
-        return norm_probabilities
+            probabilities = self.normalize_probabilities(probabilities)
+        return probabilities
 
     def normalize_probabilities(self, probabilities):
         """
@@ -75,5 +77,7 @@ class MCKDEModel(EnsembleModel):
                 # If there is only 1 class in set, do not normalize
                 if c in cur_level_classes and num_classes > 1:
                     probabilities[c] = probabilities[c] / level_sum
-
+                # Threshold min probability to 0.01 to avoid out of bounds
+                if probabilities[c] < 0.001:
+                    probabilities[c] = 0.001
         return probabilities
