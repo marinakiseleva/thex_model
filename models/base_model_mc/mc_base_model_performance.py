@@ -44,7 +44,7 @@ class MCBaseModelPerformance:
 
         return [percent_ranges, AP_ranges, TOTAL_ranges]
 
-    def get_mc_probability_matrix(self):
+    def get_mc_probability_matrix(self, normalized=True):
         """
         Gets probability of each class and actual class values, for each row
         classname1_prediction  classname1_actual  .. classnameN_prediction classnameN_actual
@@ -54,7 +54,7 @@ class MCBaseModelPerformance:
         y_test_vectors = convert_class_vectors(
             self.y_test, self.class_labels, self.class_levels)
         for index, row in self.X_test.iterrows():
-            probabilities = self.get_class_probabilities(row)
+            probabilities = self.get_class_probabilities(row, normalized)
             target_classes = y_test_vectors.iloc[index][TARGET_LABEL]
             # Add each probability to dataframe
             for class_index, class_name in enumerate(probabilities.keys()):
@@ -98,7 +98,6 @@ class MCBaseModelPerformance:
         classes.remove(TREE_ROOT)
 
         return classes
-
 
     def get_mc_class_metrics(self):
         """

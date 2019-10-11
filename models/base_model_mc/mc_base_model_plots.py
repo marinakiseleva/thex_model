@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, auc
 from scipy import interp
@@ -55,7 +56,7 @@ class MCBaseModelVisualization:
             ax.scatter(is_class_probs, x_vals, s=2, c="green")
             x_vals = [class_index] * (total_num_samples - class_count)
             ax.scatter(not_class_probs, x_vals, s=2, c="red")
-
+        mpl.rcParams['ytick.major.pad'] = '4'
         plt.yticks(np.arange(len(self.class_labels)), self.class_labels)
         self.display_and_save_plot(
             title="Probability Distributions", ax=ax, bbox_inches=None, fig=fig)
@@ -92,15 +93,15 @@ class MCBaseModelVisualization:
             plt.ylabel('Class Presence Rate (Positive/Total)', fontsize=12)
             self.display_and_save_plot("Probability vs Positive Rate: " + class_name, ax)
 
-    def save_roc_curve(self, roc_plots):
+    def save_roc_curve(self, roc_plots, class_probabilities):
         """
         Plot ROC curve for each class, but do not show. Plot to axis attached to class's plot (saved in roc_plots). Used to save many curves for multiple runs.
         :param roc_plots: Mapping of class_name to [figure, axis, true positive rates, aucs]. This function plots curve on corresponding axis using this dict.
+        :param class_probabilities: row for each sample, and each column is probability of class, in order of self.class_labels;  from get_all_class_probabilities
+
         """
+
         mean_fpr = np.linspace(0, 1, 100)
-        # class_probabilities has row for each sample, and each column is
-        # probability of class, in order of self.class_labels
-        class_probabilities = self.get_all_class_probabilities()
         y_test_vectors = convert_class_vectors(
             self.y_test, self.class_labels, self.class_levels, self.test_level)
         for class_index, class_name in enumerate(self.class_labels):

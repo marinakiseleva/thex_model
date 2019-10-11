@@ -245,11 +245,15 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             # Run model
             self.train_model()
 
+            probabilities = self.get_all_class_probabilities(normalized=True)
+            # Save all probabilities for later analysis/plotting
+            cps.append(probabilities)
+
             # Save ROC curve for each class
-            roc_plots = self.save_roc_curve(roc_plots)
+            roc_plots = self.save_roc_curve(roc_plots, probabilities)
 
             # Record metrics for prob vs. accuracy plots
-            X_accs = self.get_mc_probability_matrix()
+            X_accs = self.get_mc_probability_matrix(normalized=True)
 
             for class_name in self.class_labels:
                 class_metrics[class_name].append(self.get_mc_metrics_by_ranges(
@@ -257,8 +261,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             self.predictions = self.test_model()
 
             acc_metrics.append(self.get_mc_class_metrics())
-
-            cps.append(self.get_all_class_probabilities(normalized=True))
 
         return roc_plots, class_metrics, acc_metrics, cps
 
