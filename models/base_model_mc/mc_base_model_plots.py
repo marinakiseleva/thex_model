@@ -9,6 +9,8 @@ from thex_data.data_clean import convert_class_vectors, relabel
 from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, TARGET_LABEL, ROOT_DIR
 
 from sklearn.model_selection import StratifiedKFold
+
+
 class MCBaseModelVisualization:
     """
     Mixin Class for Multiclass BaseModel performance visualization
@@ -34,21 +36,29 @@ class MCBaseModelVisualization:
 
         # columns in matrix are in order of self.class_labels
         for class_index, class_name in enumerate(self.class_labels):
-            class_probs = all_class_probs[:,class_index]
+            class_probs = all_class_probs[:, class_index]
 
-            # For each class probability, only keep if this class is the label
-            contains_class_probs = []
+            # is_class_probs: list of all probabilities assigned to TRUE samples of
+            # this class
+            is_class_probs = []
+            # not_class_probs: list of all probs assigned to FALSE samples of this class
+            not_class_probs = []
             class_count = 0
             for index, df_index in enumerate(df_indices):
                 if class_name in y.iloc[df_index][TARGET_LABEL]:
-                    contains_class_probs.append(class_probs[index])
+                    is_class_probs.append(class_probs[index])
                     class_count += 1
+                else:
+                    not_class_probs.append(class_probs[index])
 
-            x_vals = [class_index]*class_count
-            ax.scatter(contains_class_probs, x_vals, s=2)
+            x_vals = [class_index] * class_count
+            ax.scatter(is_class_probs, x_vals, s=2, c="green")
+            x_vals = [class_index] * (total_num_samples - class_count)
+            ax.scatter(not_class_probs, x_vals, s=2, c="red")
+
         plt.yticks(np.arange(len(self.class_labels)), self.class_labels)
-        self.display_and_save_plot(title="Probability Distributions", ax=ax, bbox_inches=None, fig=fig)
-
+        self.display_and_save_plot(
+            title="Probability Distributions", ax=ax, bbox_inches=None, fig=fig)
 
     def plot_mc_probability_pos_rates(self, range_metrics):
         """
@@ -157,7 +167,7 @@ class MCBaseModelVisualization:
         avg_ax.set_xlabel('False Positive Rate')
         avg_ax.set_ylabel('True Positive Rate')
         self.display_and_save_plot(title="ROC Summary", ax=avg_ax,
-                       bbox_inches=None, fig=avg_fig)
+                                   bbox_inches=None, fig=avg_fig)
 
         # Save legend separately
         handles, labels = avg_ax.get_legend_handles_labels()
@@ -171,7 +181,6 @@ class MCBaseModelVisualization:
         legend_ax.axis('off')
         self.save_plot(title="Legend", ax=legend_ax,
                        bbox_inches='tight', fig=legend_fig, extra_artists=(legend,))
-
 
     def plot_mc_performance(self, class_metrics, ylabel, base_lines=None, annotations=None):
         """
