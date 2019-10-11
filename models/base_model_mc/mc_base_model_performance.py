@@ -79,7 +79,7 @@ class MCBaseModelPerformance:
             for label in convert_str_to_list(row[TARGET_LABEL]):
                 if label != '':
                     unique_classes.append(label)
-        unique_classes = set(unique_classes)
+        unique_data_classes = set(unique_classes)
 
         # Ensure all classes are in defined hierarchy
         # Save all classes in hierarchy as set
@@ -87,11 +87,15 @@ class MCBaseModelPerformance:
         for parent in class_to_subclass.keys():
             children = class_to_subclass[parent]
             unique_defined_classes.append(parent)
+            # Add unspecified parent class
+            unique_defined_classes.append(UNDEF_CLASS + parent)
+            unique_defined_classes.append(parent)
             for child in children:
                 unique_defined_classes.append(child)
+
         unique_defined_classes = set(unique_defined_classes)
 
-        classes = list(unique_classes.intersection(unique_defined_classes))
+        classes = list(unique_data_classes.intersection(unique_defined_classes))
         classes.sort()
 
         # Exclude tree root
