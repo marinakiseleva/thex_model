@@ -101,7 +101,26 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         pass
 
-    def set_class_labels(self, y):
+    def add_unspecified_labels(self, y):
+        """
+        Add unspecified label for each tree parent in data's list of labels
+        """
+
+        for index, row in y.iterrows():
+            # Iterate through all class labels for this row
+            max_depth = 0  # Set max depth to determine what level is undefined
+            for label in convert_str_to_list(row[TARGET_LABEL]):
+                if label in self.class_levels:
+                    max_depth = max(self.class_levels[label], max_depth)
+            if max_depth > 0:
+                # Add Undefined label for any nodes at max depth
+                for label in convert_str_to_list(row[TARGET_LABEL]):
+                    if label in self.class_levels and self.class_levels[label] == max_depth:
+                        add = ", " + UNDEF_CLASS + label
+                        y.iloc[index] = y.iloc[index] + add
+        return y
+
+    def set_class_labels(self, y, user_defined_labels=None):
 
         if self.test_level is not None:
             # Gets all class labels on self.test_level,
@@ -116,6 +135,13 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                         self.class_labels.append(UNDEF_CLASS + class_name)
         else:
             self.class_labels = self.get_mc_unique_classes(y)
+
+        if user_defined_labels is not None:
+            # keep all undefined versions of user-defined classes
+            for label in user_defined_labels:
+                if UNDEF_CLASS + label in self.class_labels:
+                    user_defined_labels.append(UNDEF_CLASS + label)
+            self.class_labels = user_defined_labels
 
     def visualize_data(self, data_filters, y=None, X=None):
         """
@@ -270,9 +296,12 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         k = data_filters['folds']
         X, y = get_source_target_data(data_columns, **data_filters)
-        # Initialize self.class_labels if None
-        if self.class_labels is None:
-            self.set_class_labels(y)
+
+        # Add unspecified class labels to data
+        y = self.add_unspecified_labels(y)
+
+        # Initialize self.class_labels (add undefined classes)
+        self.set_class_labels(y, user_defined_labels=self.class_labels)
         self.visualize_data(data_filters, y, X)
 
         # Initialize maps of class names to metrics
