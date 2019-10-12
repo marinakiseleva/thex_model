@@ -90,6 +90,10 @@ class MCKDEModel(EnsembleModel):
                 # Threshold min probability to 0.01 to avoid out of bounds
                 if probabilities[class_name] < 0.001:
                     probabilities[class_name] = 0.001
+                if probabilities[class_name] is None or np.isnan(probabilities[class_name]):
+                    print("DEBUG: FORCING PROBABILITY TO 0; SOMETHING WRONG.")
+                    print("Probability for class " + class_name)
+                    probabilities[class_name] = 0
         return probabilities
 
     def get_parent_prob(self, class_name, probabilities):
