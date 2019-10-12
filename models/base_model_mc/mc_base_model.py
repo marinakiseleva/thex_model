@@ -101,7 +101,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         pass
 
-    def add_unspecified_labels(self, y):
+    def add_unspecified_labels_to_data(self, y):
         """
         Add unspecified label for each tree parent in data's list of labels
         """
@@ -119,6 +119,15 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                         add = ", " + UNDEF_CLASS + label
                         y.iloc[index] = y.iloc[index] + add
         return y
+
+    def add_unspecified_labels_to_tree(self):
+        """
+        Add unspecified labels to tree hierarchy
+        """
+        for label in self.class_labels:
+            if UNDEF_CLASS in label:
+                parent = label[len(UNDEF_CLASS):]
+                self.tree.add_node(label, parent)
 
     def set_class_labels(self, y, user_defined_labels=None):
 
@@ -298,7 +307,9 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         X, y = get_source_target_data(data_columns, **data_filters)
 
         # Add unspecified class labels to data
-        y = self.add_unspecified_labels(y)
+        y = self.add_unspecified_labels_to_data(y)
+
+        self.add_unspecified_labels_to_tree()
 
         # Initialize self.class_labels (add undefined classes)
         self.set_class_labels(y, user_defined_labels=self.class_labels)
