@@ -309,10 +309,11 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         # Add unspecified class labels to data
         y = self.add_unspecified_labels_to_data(y)
 
-        self.add_unspecified_labels_to_tree()
-
         # Initialize self.class_labels (add undefined classes)
         self.set_class_labels(y, user_defined_labels=self.class_labels)
+
+        self.add_unspecified_labels_to_tree()
+
         self.visualize_data(data_filters, y, X)
 
         # Initialize maps of class names to metrics
