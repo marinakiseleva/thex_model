@@ -25,7 +25,6 @@ class MCBaseModelVisualization:
         """
 
         all_class_probs = np.concatenate((class_probabilities), axis=0)
-        fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         total_num_samples = np.shape(all_class_probs)[0]
 
         kf = StratifiedKFold(n_splits=k, shuffle=True, random_state=10)
@@ -34,6 +33,10 @@ class MCBaseModelVisualization:
             test_indices.append(test_index)
         # df_indices: indices of y in order corresponding to all_class_probs
         df_indices = np.concatenate((test_indices), axis=0)
+
+        mpl.rcParams['ytick.major.pad'] = '14'
+        mpl.rcParams['ytick.minor.pad'] = '14'
+        fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
 
         # columns in matrix are in order of self.class_labels
         for class_index, class_name in enumerate(self.class_labels):
@@ -56,8 +59,9 @@ class MCBaseModelVisualization:
             ax.scatter(is_class_probs, x_vals, s=2, c="green")
             x_vals = [class_index] * (total_num_samples - class_count)
             ax.scatter(not_class_probs, x_vals, s=2, c="red")
-        mpl.rcParams['ytick.major.pad'] = '4'
-        plt.yticks(np.arange(len(self.class_labels)), self.class_labels)
+
+        plt.yticks(np.arange(len(self.class_labels)),
+                   self.class_labels, fontsize='xx-small')
         self.display_and_save_plot(
             title="Probability Distributions", ax=ax, bbox_inches=None, fig=fig)
 

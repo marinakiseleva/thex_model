@@ -1,6 +1,7 @@
 from models.ensemble_models.mc_kde_model.kde_classifier import KDEClassifier
 from models.ensemble_models.ensemble_model.ensemble_model import EnsembleModel
 
+from thex_data.data_consts import TREE_ROOT
 
 import numpy as np
 
@@ -62,6 +63,7 @@ class MCKDEModel(EnsembleModel):
         Normalize over disjoint sets of class hierarchy.
         :param probabilities: Dictionary from class names to likelihoods 
         """
+        # 1. Normalize over disjoint sets
         for level in self.level_classes.keys():
             cur_level_classes = self.level_classes[level]
             # Normalize over this set of columns in probabilities
@@ -77,7 +79,28 @@ class MCKDEModel(EnsembleModel):
                 # If there is only 1 class in set, do not normalize
                 if c in cur_level_classes and num_classes > 1:
                     probabilities[c] = probabilities[c] / level_sum
+
+        # For conditional probabilities based on class levels
+        # 2. Compute conditional probabilities based on parents.
+        for current_level in range(max(self.class_levels.values())):
+            for class_name, probability in probabilities.items():
+                if self.class_levels[class_name] == current_level:
+                    probabilities[
+                        class_name] *= self.get_parent_prob(class_name, probabilities)
                 # Threshold min probability to 0.01 to avoid out of bounds
-                if probabilities[c] < 0.001:
-                    probabilities[c] = 0.001
+                if probabilities[class_name] < 0.001:
+                    probabilities[class_name] = 0.001
         return probabilities
+
+    def get_parent_prob(self, class_name, probabilities):
+        """
+        Recurse up through tree, getting parent prob until we find a valid one. (in case some classes are missing)
+        """
+        if class_name == TREE_ROOT:
+            return 1
+        elif self.tree._get_parent(class_name) in probabilities:
+            return probabilities[self.tree._get_parent(class_name)]
+        else:
+            # Get next valid parent prob
+            return self.get_parent_prob(self.tree._get_parent(class_name),
+                                        probabilities)
