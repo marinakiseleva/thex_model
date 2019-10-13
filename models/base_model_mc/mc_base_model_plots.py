@@ -102,7 +102,6 @@ class MCBaseModelVisualization:
         Plot ROC curve for each class, but do not show. Plot to axis attached to class's plot (saved in roc_plots). Used to save many curves for multiple runs.
         :param roc_plots: Mapping of class_name to [figure, axis, true positive rates, aucs]. This function plots curve on corresponding axis using this dict.
         :param class_probabilities: row for each sample, and each column is probability of class, in order of self.class_labels;  from get_all_class_probabilities
-
         """
 
         mean_fpr = np.linspace(0, 1, 100)
@@ -174,18 +173,21 @@ class MCBaseModelVisualization:
         self.display_and_save_plot(title="ROC Summary", ax=avg_ax,
                                    bbox_inches=None, fig=avg_fig)
 
-        # Save legend separately
-        handles, labels = avg_ax.get_legend_handles_labels()
-        legend_fig, legend_ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-        legend = legend_ax.legend(handles, labels, loc='upper center')
-        # Erase everything except the legend
-        legend_ax.xaxis.set_visible(False)
-        legend_ax.yaxis.set_visible(False)
-        plt.show()
+        # Save legend separately - only if classes < 20, otherwise repeat colors
+        # are useless.
+        if len(self.class_labels) < 20:
+            handles, labels = avg_ax.get_legend_handles_labels()
+            legend_fig, legend_ax = plt.subplots(
+                figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+            legend = legend_ax.legend(handles, labels, loc='upper center')
+            # Erase everything except the legend
+            legend_ax.xaxis.set_visible(False)
+            legend_ax.yaxis.set_visible(False)
+            plt.show()
 
-        legend_ax.axis('off')
-        self.save_plot(title="Legend", ax=legend_ax,
-                       bbox_inches='tight', fig=legend_fig, extra_artists=(legend,))
+            legend_ax.axis('off')
+            self.save_plot(title="Legend", ax=legend_ax,
+                           bbox_inches='tight', fig=legend_fig, extra_artists=(legend,))
 
     def plot_mc_performance(self, class_metrics, ylabel, base_lines=None, annotations=None):
         """
