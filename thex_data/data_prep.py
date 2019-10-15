@@ -25,6 +25,8 @@ def get_data(col_list, **data_filters):
     df = group_by_tree(df, data_filters['transform_labels'])
     df = filter_columns(df.copy(), col_list, data_filters['incl_redshift'])
 
+    df = drop_conflicts(df)
+
     df.dropna(axis=0, inplace=True)
 
     # Keep only some classes, and turn remaining to 'Other'

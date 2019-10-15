@@ -11,6 +11,26 @@ import pandas as pd
 
 from .data_consts import cat_code, TARGET_LABEL
 from .data_print import *
+from .data_clean import convert_str_to_list
+
+
+def drop_conflicts(df):
+    """
+    Drop rows where classes belong to classes in different disjoint groups. This requires special handling not yet implemented. 
+    """
+    conflict_labels = ["_CONFUSION", "_CONFLICT",
+                       "__CONFLICT_CASES", "_UNCLEAR_LABELS", "_IGNORED_LABELS"]
+    keep_indices = []
+    for df_index, row in df.iterrows():
+        list_classes = convert_str_to_list(row[TARGET_LABEL])
+        keep = True
+        for c in list_classes:
+            if c in conflict_labels:
+                keep = False
+        if keep:
+            keep_indices.append(df_index)
+
+    return df.loc[keep_indices, :]
 
 
 def sub_sample(df, count):

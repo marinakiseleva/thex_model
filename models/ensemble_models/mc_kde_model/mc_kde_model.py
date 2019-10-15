@@ -60,40 +60,40 @@ class MCKDEModel(EnsembleModel):
 
     def normalize_probabilities(self, probabilities):
         """
-        Normalize over disjoint sets of class hierarchy.
+        Update inner node probabilities to reflect contraints of the class hierarchy. Leaf nodes are unchanged. 
         :param probabilities: Dictionary from class names to likelihoods 
         """
-        # 1. Normalize over disjoint sets
-        for level in self.level_classes.keys():
-            cur_level_classes = self.level_classes[level]
-            # Normalize over this set of columns in probabilities
-            level_sum = 0
-            num_classes = 0
-            for c in probabilities.keys():
-                if c in cur_level_classes:
-                    num_classes += 1
-                    level_sum += probabilities[c]
 
-            # Normalize by dividing each over sum
-            for c in probabilities.keys():
-                # If there is only 1 class in set, do not normalize
-                if c in cur_level_classes and num_classes > 1:
-                    probabilities[c] = probabilities[c] / level_sum
+        # Set inner-node probabilities
+        levels = list(self.level_classes.keys())[1:]
+        # Start at bottom of tree
+        for level in reversed(levels):
+            # Get all classes at this level & in model
+            cur_level_classes = set(self.level_classes[level]).intersection(
+                set(probabilities.keys()))
+            for class_name in cur_level_classes:
+                children = self.tree._get_children(class_name)
+                if len(children) > 0:  # Inner node
+                    # p(y\hat | y = 1)
+                    pos_prob = self.models[class_name].pos_dist.pdf(
+                        probabilities[class_name])
 
-        # For conditional probabilities based on class levels
-        # 2. Compute conditional probabilities based on parents.
-        for current_level in range(max(self.class_levels.values())):
-            for class_name, probability in probabilities.items():
-                if self.class_levels[class_name] == current_level:
-                    probabilities[
-                        class_name] *= self.get_parent_prob(class_name, probabilities)
-                # Threshold min probability to 0.01 to avoid out of bounds
-                if probabilities[class_name] < 0.001:
-                    probabilities[class_name] = 0.001
-                if probabilities[class_name] is None or np.isnan(probabilities[class_name]):
-                    print("DEBUG: FORCING PROBABILITY TO 0; SOMETHING WRONG.")
-                    print("Probability for class " + class_name)
-                    probabilities[class_name] = 0
+                    # p(y\hat | y = 0)
+                    neg_prob = self.models[class_name].neg_dist.pdf(
+                        probabilities[class_name])
+
+                    # p(y) is probability of parent given childen, based on frequencies,
+                    # basically the weighted sum
+                    p_y = 0
+                    children = set(children).intersection(set(probabilities.keys()))
+                    for child in children:
+                        cp = self.parent_probs[(class_name, child)]
+                        p_y += cp * probabilities[child]
+
+                    hier_prob = (pos_prob / (pos_prob + neg_prob)) * p_y
+
+                    probabilities[class_name] = hier_prob
+
         return probabilities
 
     def get_parent_prob(self, class_name, probabilities):

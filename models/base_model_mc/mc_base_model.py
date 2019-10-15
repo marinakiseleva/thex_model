@@ -29,6 +29,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         for parent in hierarchy.keys():
             hierarchy[parent].append(UNDEF_CLASS + parent)
         self.tree = init_tree(hierarchy)
+        # Root is level 1 in self.class_levels
         self.class_levels = assign_levels(self.tree, {}, self.tree.root, 1)
         self.level_classes = self.invert_class_levels(self.class_levels)
         self.test_level = self.user_data_filters[
@@ -54,6 +55,8 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
     def test_model(self, keep_top_half=False):
         """
+        OLD CODE. NEED TO DELETE.
+
         Get class prediction for each sample. If test_level is not None, save just the max probability class. If test_level is None, we need to consider probability for each level in the hierarchy, so we create a DataFrame with a column for each class in self.class_labels and save each probability.
         :return:
             when self.test_level is not None: DataFrame with column PRED_LABEL, which contains the class name of the class with the highest probability assigned.
@@ -105,13 +108,13 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         Add unspecified label for each tree parent in data's list of labels
         """
-
         for index, row in y.iterrows():
-            # Iterate through all class labels for this row
+            # Iterate through all class labels for this label
             max_depth = 0  # Set max depth to determine what level is undefined
             for label in convert_str_to_list(row[TARGET_LABEL]):
                 if label in self.class_levels:
                     max_depth = max(self.class_levels[label], max_depth)
+            # Max depth will be 0 for classes unhandled in hierarchy.
             if max_depth > 0:
                 # Add Undefined label for any nodes at max depth
                 for label in convert_str_to_list(row[TARGET_LABEL]):
@@ -120,14 +123,54 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                         y.iloc[index] = y.iloc[index] + add
         return y
 
-    def add_unspecified_labels_to_tree(self):
+    def remove_excess_data(self, X, y):
         """
-        Add unspecified labels to tree hierarchy
+        Remove rows that do not contain data that is in self.class_labels. Keep if deepest-level node is in self.class_labels, or unspecified node in self.class_labels
+        :param X: all features in DataFrame
+        :param y: DataFrame of TARGET_LABEL column for all data
         """
-        for label in self.class_labels:
-            if UNDEF_CLASS in label:
-                parent = label[len(UNDEF_CLASS):]
-                self.tree.add_node(label, parent)
+        # Keep rows that have an Unspecified label in self.class_labels.
+
+        keep_indices = []
+        for df_index, row in y.iterrows():
+            list_classes = convert_str_to_list(row[TARGET_LABEL])
+            keep = False
+            deepest_level = 0
+            deepest_class = None
+            for c in list_classes:
+                #  Maintain deepest class level
+                if c in self.class_levels and self.class_levels[c] > deepest_level:
+                    deepest_level = self.class_levels[c]
+                    deepest_class = c
+                # Keep if undefined
+                if UNDEF_CLASS in c and c in self.class_labels:
+                    keep = True
+
+            # Keep if deepest is in class_labels
+            if deepest_class in self.class_labels:
+                keep = True
+            if keep:
+                keep_indices.append(df_index)
+
+        return X.loc[keep_indices, :].reset_index(drop=True), y.loc[keep_indices, :].reset_index(drop=True)
+
+    def get_parent_probabilities(self, class_counts):
+        """
+        Get probability of inner nodes given children frequencies.
+        p(parent | child) = child count / sum of all children counts of parent
+        :param class_counts: Map from class name to count
+        """
+        parent_probs = {}  # Map from (parent, child) tuples to probability
+        for class_name in self.class_labels:
+            children = self.tree._get_children(class_name)
+            if len(children) > 0:
+                parent_count = class_counts[class_name]
+                for child in children:
+                    if child in class_counts:
+                        child_count = class_counts[child]
+                        parent_probs[(class_name, child)] = child_count / parent_count
+
+        return parent_probs
 
     def set_class_labels(self, y, user_defined_labels=None):
 
@@ -152,37 +195,29 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                     user_defined_labels.append(UNDEF_CLASS + label)
             self.class_labels = user_defined_labels
 
-    def visualize_data(self, data_filters, y=None, X=None):
+    def get_class_counts(self, y):
+        """
+        Get number of samples for each class in self.class_labels
+        :param y: DataFrame with TARGET_LABEL
+        """
+        class_counts = {n: 0 for n in self.class_labels}
+        for df_index, row in y.iterrows():
+            list_classes = convert_str_to_list(row[TARGET_LABEL])
+            for class_name in list_classes:
+                if class_name in self.class_labels:
+                    class_counts[class_name] += 1
+        return class_counts
+
+    def visualize_data(self, data_filters, y, X, class_counts):
         """
         Visualize distribution of data used to train and test
         """
-        if y is None:
-            y = pd.concat([self.y_train, self.y_test], axis=0)
 
-        """  Filter y to keep only rows with at least 1 class label in self.class_labels and count total # of samples in each class. """
-        class_counts = {n: 0 for n in self.class_labels}
-        keep_rows = []
-        indices = []
-        for df_index, row in y.iterrows():
-            list_classes = convert_str_to_list(row[TARGET_LABEL])
-            keep = False
-            for c in list_classes:
-                # Keep if at least one value in list is acceptable
-                if c in self.class_labels or UNDEF_CLASS + c in self.class_labels:
-                    keep = True
-                    class_counts[c] += 1
-            if keep:
-                keep_rows.append({TARGET_LABEL: row[TARGET_LABEL]})
-                indices.append(df_index)
-
-        self.y_filtered = pd.DataFrame(keep_rows).reset_index(drop=True)
-
-        plot_class_hist(self.y_filtered, True, class_counts)
+        plot_class_hist(y, True, class_counts)
 
         if X is not None:
             # pass in X and y combined
-            X_filtered = X.iloc[indices].reset_index(drop=True)
-            df = pd.concat([X_filtered, self.y_filtered], axis=1)
+            df = pd.concat([X, y], axis=1)
             features = list(df)
             if 'redshift' in features:
                 plot_feature_distribution(df, 'redshift', False)
@@ -249,16 +284,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         # self.basic_plot(briers, "Brier Score",   self.class_labels)
         # self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
 
-    def get_class_counts(self, y):
-        """
-        :param y: DataFrame with TARGET_LABEL
-        """
-        class_counts = {}
-        for class_name in self.class_labels:
-            class_counts[class_name] = y.loc[y[TARGET_LABEL].str.contains(class_name)].shape[
-                0]
-        return class_counts
-
     def run_cross_validation(self, k, X, y, roc_plots, class_metrics, acc_metrics, cps, data_filters):
         """
         Run k-fold cross validation
@@ -306,16 +331,23 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         k = data_filters['folds']
         X, y = get_source_target_data(data_columns, **data_filters)
 
-        # Add unspecified class labels to data
+        # 1. Add unspecified class labels to data
         y = self.add_unspecified_labels_to_data(y)
 
-        # Initialize self.class_labels (add undefined classes)
+        # 2. Initialize self.class_labels based on data and add undefined classes
         self.set_class_labels(y, user_defined_labels=self.class_labels)
 
-        self.add_unspecified_labels_to_tree()
+        # 3. Remove rows that don't have valid target label
+        X, y = self.remove_excess_data(X, y)
 
-        self.visualize_data(data_filters, y, X)
+        class_counts = self.get_class_counts(y)
+        # 4. Initialize prob(parent |child) for inner nodes
+        self.parent_probs = self.get_parent_probabilities(class_counts)
 
+        # 5. Visualize data
+        self.visualize_data(data_filters, y, X, class_counts)
+
+        # 6. Run Cross-fold validation model.
         # Initialize maps of class names to metrics
         roc_plots = {}
         class_metrics = {}
