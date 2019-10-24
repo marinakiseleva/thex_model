@@ -54,6 +54,10 @@ class MCKDEModel(EnsembleModel):
             # Normalize as binary probability first
             probabilities[class_name] = pos_density / (pos_density + neg_density)
 
+            if probabilities[class_name] < 0.0001:
+                # Force min prob to 0.001 for future computation
+                probabilities[class_name] = 0.001
+
         if normalized:
             probabilities = self.normalize_probabilities(probabilities)
         return probabilities
@@ -61,9 +65,8 @@ class MCKDEModel(EnsembleModel):
     def normalize_probabilities(self, probabilities):
         """
         Update inner node probabilities to reflect contraints of the class hierarchy. Leaf nodes are unchanged. 
-        :param probabilities: Dictionary from class names to likelihoods 
+        :param probabilities: Dictionary from class names to likelihoods for single sample
         """
-
         # Set inner-node probabilities
         levels = list(self.level_classes.keys())[1:]
         # Start at bottom of tree
@@ -71,9 +74,14 @@ class MCKDEModel(EnsembleModel):
             # Get all classes at this level & in model
             cur_level_classes = set(self.level_classes[level]).intersection(
                 set(probabilities.keys()))
+            Z = 0
+            inner_classes = []
             for class_name in cur_level_classes:
                 children = self.tree._get_children(class_name)
+                children = set(children).intersection(set(probabilities.keys()))
+
                 if len(children) > 0:  # Inner node
+                    inner_classes.append(class_name)
                     # p(y\hat | y = 1)
                     pos_prob = self.models[class_name].pos_dist.pdf(
                         probabilities[class_name])
@@ -85,14 +93,25 @@ class MCKDEModel(EnsembleModel):
                     # p(y) is probability of parent given childen, based on frequencies,
                     # basically the weighted sum
                     p_y = 0
-                    children = set(children).intersection(set(probabilities.keys()))
                     for child in children:
-                        cp = self.parent_probs[(class_name, child)]
-                        p_y += cp * probabilities[child]
+                        # prob of parent i given child
+                        p_i_G_child = self.parent_probs[(class_name, child)]
+                        p_y += (p_i_G_child * probabilities[child])
 
-                    hier_prob = (pos_prob / (pos_prob + neg_prob)) * p_y
+                    p_y_hat_G_y = (pos_prob / (pos_prob + neg_prob))
+
+                    hier_prob = p_y_hat_G_y * p_y
+
+                    Z += hier_prob  # Normalizing constant
 
                     probabilities[class_name] = hier_prob
+
+            for k in inner_classes:
+                # Normalize across inner nodes at theis level
+                if Z > 0:
+                    probabilities[k] = probabilities[k] / Z
+                else:
+                    probabilities[k] = 0
 
         return probabilities
 

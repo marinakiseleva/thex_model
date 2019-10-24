@@ -5,7 +5,7 @@ from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV
 
 from scipy.stats import norm
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
@@ -47,16 +47,25 @@ class KDEClassifier(BinaryClassifier):
 
     def get_normal_dist(self, x, a):
         """
-        Return Gaussian distribution, fitted with 1/3 of x
+        Return Gaussian distribution, fitted with all of x
         """
         dist = norm(loc=np.mean(x), scale=np.var(x))
         # Plot distribution of probabilities
-        # fig, ax = plt.subplots(1, 1)
-        # dist_x = np.linspace(.01, 1, 100)
-        # ax.plot(dist_x, dist.pdf(dist_x), 'r-',
-        #         lw=5, alpha=0.6, label='norm pdf')
-        # ax.hist(x, density=True, histtype='stepfilled', alpha=0.2)
-        # plt.savefig("../output/dists/normaldist_" + str(self.pos_class) + "_" + str(a))
+        fig, ax = plt.subplots(1, 1)
+        dist_x = np.linspace(.01, 1, 100)
+        ax.plot(dist_x, dist.pdf(dist_x), 'r-',
+                lw=5, alpha=0.6, label="pdf")
+        ax.hist(x, density=True, histtype='stepfilled', alpha=0.2)
+        ax.set_xlabel("x")
+        ax.set_ylabel("pdf(x)")
+        ax.set_title("PDF with mean=" + str(np.round(np.mean(x), 2)) +
+                     ", var=" + str(np.round(np.var(x), 2)))
+        replace_strs = ["\n", " ", ":", ".", ",", "/"]
+        pc = self.pos_class
+        for r in replace_strs:
+            pc = pc.replace(r, "_")
+
+        plt.savefig("../output/dists/normaldist_" + pc + "_" + str(a))
         return dist
 
     def predict(self, X):
