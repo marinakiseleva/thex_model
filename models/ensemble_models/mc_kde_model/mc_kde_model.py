@@ -53,6 +53,9 @@ class MCKDEModel(EnsembleModel):
             neg_density = np.exp(neg_kde.score_samples([x.values]))[0]
             # Normalize as binary probability first
             probabilities[class_name] = pos_density / (pos_density + neg_density)
+            if np.isnan(probabilities[class_name]):
+                print("going to set null orig prob to 0.001")
+                probabilities[class_name] = 0.001
 
             if probabilities[class_name] < 0.0001:
                 # Force min prob to 0.001 for future computation
