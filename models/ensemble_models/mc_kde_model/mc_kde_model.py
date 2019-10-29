@@ -62,9 +62,9 @@ class MCKDEModel(EnsembleModel):
             probabilities = self.normalize_probabilities(probabilities)
         return probabilities
 
-    def normalize_probabilities(self, probabilities):
+    def norm_pfc(self, probabilities):
         """
-        Update inner node probabilities to reflect contraints of the class hierarchy. Leaf nodes are unchanged. 
+        Normalizes probabilities by using hierarchy to get probability of parents based on children. Update inner node probabilities to reflect contraints of the class hierarchy. Leaf nodes are unchanged. 
         :param probabilities: Dictionary from class names to likelihoods for single sample
         """
         # Set inner-node probabilities
@@ -113,7 +113,43 @@ class MCKDEModel(EnsembleModel):
                 else:
                     probabilities[k] = 0
 
+                if np.isnan(probabilities[k]):
+                    print("NAN Value for " + k)
+
         return probabilities
+
+    def norm_ds(self, probabilities):
+        """
+        Normalize over disjoint sets
+        """
+        for level in self.level_classes.keys():
+            cur_level_classes = self.level_classes[level]
+            # Normalize over this set of columns in probabilities
+            level_sum = 0
+            num_classes = 0
+            for c in probabilities.keys():
+                if c in cur_level_classes:
+                    num_classes += 1
+                    level_sum += probabilities[c]
+
+            # Normalize by dividing each over sum
+            for c in probabilities.keys():
+                # If there is only 1 class in set, do not normalize
+                if c in cur_level_classes and num_classes > 1:
+                    probabilities[c] = probabilities[c] / level_sum
+
+        return probabilities
+
+    def normalize_probabilities(self, probabilities):
+        """
+        Based on strategy
+        :param probabilities: Dictionary from class names to likelihoods for single sample
+        """
+        norm_type = "DS"
+        if norm_type == "PFC":
+            return self.norm_pfc(probabilities)
+        elif norm_type == "DS":
+            return self.norm_ds(probabilities)
 
     def get_parent_prob(self, class_name, probabilities):
         """
