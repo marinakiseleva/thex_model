@@ -22,23 +22,3 @@ class KTreesModel(EnsembleModel):
         Create Decision Tree classifier for pos_class versus all
         """
         return TreeClassifier(pos_class, X, y)
-
-    def get_class_probabilities(self, x):
-        """
-        Calculates probability of each transient class for the single test data point (x).
-        :param x: Single row of features
-        :return: map from class_name to probabilities
-        """
-        probabilities = {}
-        for class_index, class_name in enumerate(self.class_labels):
-            tree = self.models[class_name].model
-            if tree is not None:
-                class_probabilities = tree.predict_proba([x.values])
-                # class_probabilities = [[prob class 0, prob class 1]]
-                class_probability = class_probabilities[0][1]
-            else:
-                class_probability = 0
-
-            probabilities[class_name] = class_probability
-
-        return probabilities

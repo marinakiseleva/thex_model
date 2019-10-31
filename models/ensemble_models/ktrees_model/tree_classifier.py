@@ -19,6 +19,14 @@ class TreeClassifier(BinaryClassifier):
         self.model = self.get_best_model(X, y)
         return self.model
 
+    def get_class_probability(self, x):
+        """
+        Get probability of this class for this sample x
+        :param x: Single row of features
+        """
+        prob = self.model.predict_proba([x.values])[0][1]
+        return prob
+
     def predict(self, X):
         """
         Get the probability of the positive class for each row in DataFrame X. Return probabilities as Numpy column.

@@ -52,8 +52,8 @@ class EnsembleModel(MCBaseModel, ABC):
 
     def get_class_data(self, class_name, y):
         """
-        Return DataFrame like y except that TARGET_LABEL values have been replaced with 0 or 1. 1 if class_name is in list of labels. 
-        :param class_name: Positive class 
+        Return DataFrame like y except that TARGET_LABEL values have been replaced with 0 or 1. 1 if class_name is in list of labels.
+        :param class_name: Positive class
         :return: y, relabeled
         """
         labels = []  # Relabeled y
@@ -66,20 +66,139 @@ class EnsembleModel(MCBaseModel, ABC):
 
     def get_all_class_probabilities(self, normalized=True):
         """
-        Get class probability for each sample, from each model. Reconstruct class vectors for samples, with 1 if class was predicted and 0 otherwise.
-        :param normalized: Does not do anything
-        :return m_predictions: Numpy Matrix with each row corresponding to sample, and each column the probability of that class
+        Get class probabilities for all test data.
+        :return probabilities: Numpy Matrix with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels
         """
-        # record independent probability per class
-        num_samples = self.X_test.shape[0]
-        default_response = np.array([[0] * num_samples]).T
-        m_predictions = np.zeros((num_samples, 0))
+        all_probs = np.empty((0, len(self.class_labels)))
+        for index, row in self.X_test.iterrows():
+            row_p = self.get_class_probabilities(row, normalized=normalized)
+            all_probs = np.append(all_probs, [list(row_p.values())], axis=0)
+
+        return all_probs
+
+    def get_class_probabilities(self, x, normalized=True):
+        """
+        Calculates probability of each transient class for the single test data point (x).
+        :param x: Pandas DF row of features
+        :return: map from class_name to probabilities
+        """
+        probabilities = {}
         for class_index, class_name in enumerate(self.class_labels):
-            model = self.models[class_name]
-            col_predictions = model.predict(self.X_test)
-            # Add probabilities of positive class as column to predictions across classes
-            m_predictions = np.append(m_predictions, col_predictions, axis=1)
-        return m_predictions
+            class_prob = self.models[class_name].get_class_probability(x)
+            probabilities[class_name] = class_prob
+            if np.isnan(probabilities[class_name]):
+                raise ValueError(
+                    "EnsembleModel get_class_probabilities: probability from model is NULL.")
+
+            if probabilities[class_name] < 0.0001:
+                # Force min prob to 0.001 for future computation
+                probabilities[class_name] = 0.001
+
+        if normalized:
+            probabilities = self.normalize_probabilities(probabilities)
+        return probabilities
+
+    def normalize_probabilities(self, probabilities):
+        """
+        Based on strategy
+        :param probabilities: Dictionary from class names to likelihoods for single sample
+        """
+        norm_type = "PFC"
+        if norm_type == "PFC":
+            return self.norm_pfc(probabilities)
+        elif norm_type == "DS":
+            return self.norm_ds(probabilities)
+
+    def norm_pfc(self, probabilities):
+        """
+        Normalizes probabilities by using hierarchy to get probability of parents based on children. Update inner node probabilities to reflect contraints of the class hierarchy. Leaf nodes are unchanged. 
+        :param probabilities: Dictionary from class names to likelihoods for single sample
+        """
+        # Set inner-node probabilities
+        levels = list(self.level_classes.keys())[1:]
+        # Start at bottom of tree
+        for level in reversed(levels):
+            # Get all classes at this level & in model
+            cur_level_classes = set(self.level_classes[level]).intersection(
+                set(probabilities.keys()))
+            Z = 0
+            inner_classes = []
+            for class_name in cur_level_classes:
+                children = self.tree._get_children(class_name)
+                children = set(children).intersection(set(probabilities.keys()))
+
+                if len(children) > 0:  # Inner node
+                    inner_classes.append(class_name)
+                    # p(y\hat | y = 1)
+                    pos_prob = self.models[class_name].pos_dist.pdf(
+                        probabilities[class_name])
+
+                    # p(y\hat | y = 0)
+                    neg_prob = self.models[class_name].neg_dist.pdf(
+                        probabilities[class_name])
+
+                    # p(y) is probability of parent given childen, based on frequencies,
+                    # basically the weighted sum
+                    p_y = 0
+                    for child in children:
+                        # prob of parent i given child
+                        p_i_G_child = self.parent_probs[(class_name, child)]
+                        p_y += (p_i_G_child * probabilities[child])
+
+                    p_y_hat_G_y = (pos_prob / (pos_prob + neg_prob))
+
+                    hier_prob = p_y_hat_G_y * p_y
+
+                    Z += hier_prob  # Normalizing constant
+
+                    probabilities[class_name] = hier_prob
+
+            for k in inner_classes:
+                # Normalize across inner nodes at this level
+                if Z > 0:
+                    probabilities[k] = probabilities[k] / Z
+                else:
+                    probabilities[k] = 0
+
+                if np.isnan(probabilities[k]):
+                    print("NAN Value for " + k)
+
+        return probabilities
+
+    def norm_ds(self, probabilities):
+        """
+        Normalize over disjoint sets
+        """
+        for level in self.level_classes.keys():
+            cur_level_classes = self.level_classes[level]
+            # Normalize over this set of columns in probabilities
+            level_sum = 0
+            num_classes = 0
+            for c in probabilities.keys():
+                if c in cur_level_classes:
+                    num_classes += 1
+                    level_sum += probabilities[c]
+
+            # Normalize by dividing each over sum
+            for c in probabilities.keys():
+                # If there is only 1 class in set, do not normalize
+                if c in cur_level_classes and num_classes > 1:
+                    probabilities[c] = probabilities[c] / level_sum
+
+        return probabilities
+
+    def get_parent_prob(self, class_name, probabilities):
+        """
+        Recurse up through tree, getting parent prob until we find a valid one. (in case some classes are missing)
+        """
+        if class_name == TREE_ROOT:
+            return 1
+        elif self.tree._get_parent(class_name) in probabilities:
+            return probabilities[self.tree._get_parent(class_name)]
+        else:
+            # Get next valid parent prob
+            return self.get_parent_prob(self.tree._get_parent(class_name),
+                                        probabilities)
 
     def get_mc_class_metrics(self):
         """

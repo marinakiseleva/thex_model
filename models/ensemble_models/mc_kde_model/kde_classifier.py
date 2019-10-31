@@ -4,9 +4,6 @@ from models.ensemble_models.ensemble_model.binary_classifier import BinaryClassi
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV
 
-from scipy.stats import norm
-import matplotlib.pyplot as plt
-
 
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
 
@@ -35,38 +32,16 @@ class KDEClassifier(BinaryClassifier):
 
         return self.pos_model
 
-    def get_model_dist(self, samples, p):
+    def get_class_probability(self, x):
         """
-        Returns Gaussian distribution of probabilities for the model. 
-        :param marg_model: Refers to the model we need to marginalize densities over to get probabilities: model / model + marg_model
+        Get probability of this class for this sample x. Probability of class 1 = density(1) / (density(1) + density(0)). 
+        :param x: Single row of features
         """
-        pos_densities = np.exp(self.pos_model.score_samples(samples))
-        neg_densities = np.exp(self.neg_model.score_samples(samples))
-        probs = pos_densities / (pos_densities + neg_densities)
-        return self.get_normal_dist(probs, p)
-
-    def get_normal_dist(self, x, a):
-        """
-        Return Gaussian distribution, fitted with all of x
-        """
-        dist = norm(loc=np.mean(x), scale=np.var(x))
-        # Plot distribution of probabilities
-        fig, ax = plt.subplots(1, 1)
-        dist_x = np.linspace(.01, 1, 100)
-        ax.plot(dist_x, dist.pdf(dist_x), 'r-',
-                lw=5, alpha=0.6, label="pdf")
-        ax.hist(x, density=True, histtype='stepfilled', alpha=0.2)
-        ax.set_xlabel("x")
-        ax.set_ylabel("pdf(x)")
-        ax.set_title("PDF with mean=" + str(np.round(np.mean(x), 2)) +
-                     ", var=" + str(np.round(np.var(x), 2)))
-        replace_strs = ["\n", " ", ":", ".", ",", "/"]
-        pc = self.pos_class
-        for r in replace_strs:
-            pc = pc.replace(r, "_")
-
-        plt.savefig("../output/dists/normaldist_" + pc + "_" + str(a))
-        return dist
+        pos_density = np.exp(self.pos_model.score_samples([x.values]))[0]
+        neg_density = np.exp(self.neg_model.score_samples([x.values]))[0]
+        # Normalize as binary probability first
+        binary_prob = pos_density / (pos_density + neg_density)
+        return binary_prob
 
     def predict(self, X):
         """
