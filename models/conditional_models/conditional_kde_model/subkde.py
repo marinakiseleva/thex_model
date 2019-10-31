@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.neighbors.kde import KernelDensity
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 
-from thex_data.data_consts import TARGET_LABEL
+from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
 from models.conditional_models.conditional_model.classifier import SubClassifier
 
 
@@ -47,15 +47,16 @@ class SubKDE(SubClassifier):
         Get maximum likelihood estimated distribution by kernel density estimate of this class over all features
         :return: best fitting KDE
         """
-        # Create grid to search over bandwidth for
-        range_bws = np.linspace(0.01, 100, 1000)
+        # Create grid to get optimal bandwidth
+        range_bws = np.linspace(0.01, 5, 200)
         grid = {
             'bandwidth': range_bws,
             'kernel': ['gaussian'],
             'metric': ['euclidean']
         }
-        clf_optimize = GridSearchCV(KernelDensity(), grid, iid=False, cv=3, n_jobs=-1)
-        clf_optimize.fit(X)
+        clf = GridSearchCV(KernelDensity(), grid, iid=False, cv=3, n_jobs=CPU_COUNT)
+        clf.fit(X)
+        print("Total log-likelihood of training data: " + str(clf.score(X)))
 
-        # print("Best model params  " + str(clf_optimize.best_params_))
-        return clf_optimize.best_estimator_
+        print("Best model params  " + str(clf.best_params_))
+        return clf.best_estimator_
