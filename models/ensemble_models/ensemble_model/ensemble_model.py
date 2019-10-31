@@ -4,7 +4,7 @@ import numpy as np
 
 from models.base_model_mc.mc_base_model import MCBaseModel
 from thex_data.data_clean import convert_str_to_list
-from thex_data.data_consts import TARGET_LABEL
+from thex_data.data_consts import TARGET_LABEL, TREE_ROOT
 
 
 class EnsembleModel(MCBaseModel, ABC):
@@ -103,16 +103,31 @@ class EnsembleModel(MCBaseModel, ABC):
         Based on strategy
         :param probabilities: Dictionary from class names to likelihoods for single sample
         """
-        norm_type = "PFC"
-        if norm_type == "PFC":
-            return self.norm_pfc(probabilities)
-        elif norm_type == "DS":
-            return self.norm_ds(probabilities)
+        # 1. Normalize across disjoint sets of siblings
+        probabilities = self.norm_siblings(probabilities)
 
-    def norm_pfc(self, probabilities):
+        # 2. Compute conditional probabilities based on hierarchy
+        return self.norm_top_down(probabilities)
+
+    def norm_top_down(self, probabilities):
         """
-        Normalizes probabilities by using hierarchy to get probability of parents based on children. Update inner node probabilities to reflect contraints of the class hierarchy. Leaf nodes are unchanged. 
-        :param probabilities: Dictionary from class names to likelihoods for single sample
+        Compute the conditional probabilities of classes based on the hierarchy in a top-down approach. For each level of the hierarchy, compute probability of class as sibling-normalized binary classifier probability * parent probability.
+        :param probabilities: Dict from class names to probabilities, already normalized across disjoint sets
+        """
+
+        # Compute conditional probabilities
+        for current_level in range(max(self.class_levels.values())):
+            for class_name, probability in probabilities.items():
+                if self.class_levels[class_name] == current_level and class_name in probabilities:
+                    probabilities[
+                        class_name] *= self.get_parent_prob(class_name, probabilities)
+
+        return probabilities
+
+    def norm_bottom_up(self, probabilities):
+        """
+        Normalizes probabilities by using hierarchy to get probability of parents based on children, in bottom-up approach. Update inner node probabilities to reflect contraints of the class hierarchy. Leaf nodes are unchanged.
+        :param probabilities: Dict from class names to probabilities, already normalized across disjoint sets
         """
         # Set inner-node probabilities
         levels = list(self.level_classes.keys())[1:]
@@ -165,10 +180,27 @@ class EnsembleModel(MCBaseModel, ABC):
 
         return probabilities
 
-    def norm_ds(self, probabilities):
+    def norm_siblings(self, probabilities):
         """
-        Normalize over disjoint sets
+        Normalize over set of all siblings
+        :param probabilities: Dict from class names to probabilities
         """
+        for primary_class in probabilities.keys():
+            parent = self.tree._get_parent(primary_class)
+            sibling_sum = 0
+            num_siblings = 0
+            for class_name in probabilities.keys():
+                if self.tree._get_parent(class_name) == parent:
+                    sibling_sum += probabilities[class_name]
+                    num_siblings += 1
+
+            # If there is only 1 class in set, do not normalize
+            if num_siblings > 1:
+                probabilities[primary_class] = probabilities[primary_class] / sibling_sum
+        return probabilities
+
+    def norm_level(self, probabilities):
+        # Normalize over level
         for level in self.level_classes.keys():
             cur_level_classes = self.level_classes[level]
             # Normalize over this set of columns in probabilities
@@ -189,7 +221,7 @@ class EnsembleModel(MCBaseModel, ABC):
 
     def get_parent_prob(self, class_name, probabilities):
         """
-        Recurse up through tree, getting parent prob until we find a valid one. (in case some classes are missing)
+        Recurse up through tree, getting parent prob until we find a valid one. For example, there may only be CC, II, II P in CC so we need to inherit the probability of CC.
         """
         if class_name == TREE_ROOT:
             return 1
@@ -202,45 +234,52 @@ class EnsembleModel(MCBaseModel, ABC):
 
     def get_mc_class_metrics(self):
         """
-        Overriding get_mc_class_metrics in MCBaseModel to function for one versus all classification.
+        Overriding get_mc_class_metrics in MCBaseModel to function for one versus all classification. Collects metrics based on maximum probabilities across hierarchy levels.
         Save TP, FN, FP, TN, and BS(Brier Score) for each class.
         Brier score: (1 / N) * sum(probability - actual) ^ 2
         Log loss: -1 / N * sum((actual * log(prob)) + (1 - actual)(log(1 - prob)))
         self.y_test has TARGET_LABEL column with string list of classes per sample
         """
-        # Numpy Matrix with each row corresponding to sample, and each column the
-        # probability of that class
+        class_probs_np = self.get_all_class_probabilities()
+        class_probabilities = pd.DataFrame(class_probs_np, columns=self.class_labels)
         class_accuracies = {}
-        class_probabilities = self.get_all_class_probabilities()
-        for class_index, class_name in enumerate(self.class_labels):
-            TP = 0  # True Positives
-            FN = 0  # False Negatives
-            FP = 0  # False Positives
-            TN = 0  # True Negatives
-            BS = 0  # Brier Score
-            LL = 0  # Log Loss
-            class_accuracies[class_name] = 0
 
-            # preds: probability of each sample for this class_name
-            preds = class_probabilities[:, class_index]
-            for index, row in self.y_test.iterrows():
-                # Actual is class_name
-                if class_name in row[TARGET_LABEL]:
-                    # Class predicted if prob > 50%
-                    if preds[index] > 0.5:
-                        TP += 1
-                    else:
-                        FN += 1
-                else:
-                    if preds[index] > 0.5:
-                        FP += 1
-                    else:
-                        TN += 1
-            class_accuracies[class_name] = {"TP": TP,
-                                            "FN": FN,
-                                            "FP": FP,
-                                            "TN": TN,
-                                            "BS": BS,
-                                            "LL": LL}
+        for current_level in range(1, max(self.level_classes.keys())):
+            classes = self.level_classes[current_level]
+            cur_level_classes = list(set(self.class_labels).intersection(classes))
+            for class_name in cur_level_classes:
+                TP = 0  # True Positives
+                FN = 0  # False Negatives
+                FP = 0  # False Positives
+                TN = 0  # True Negatives
+                BS = 0  # Brier Score
+                LL = 0  # Log Loss
+                cur_class_probs = class_probabilities[cur_level_classes]
+                for index, row in cur_class_probs.iterrows():
+                    actual_classes = self.y_test.iloc[index][TARGET_LABEL]
+                    # Get class in cur_level_classes with maximum probability
+                    max_class = row.idxmax()
+
+                    if class_name in actual_classes:
+                        # current class is in target, and maximum probability was given
+                        # to it
+                        if max_class == class_name:
+                            TP += 1
+                        else:
+                            FN += 1
+                    else:  # current class is not in target class
+                        # Assigned max prob to current class, which is not in target
+                        if max_class == class_name:
+                            FP += 1
+                        # Assigned max prob to another class
+                        else:
+                            TN += 1
+
+                class_accuracies[class_name] = {"TP": TP,
+                                                "FN": FN,
+                                                "FP": FP,
+                                                "TN": TN,
+                                                "BS": BS,
+                                                "LL": LL}
 
         return class_accuracies
