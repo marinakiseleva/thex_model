@@ -5,7 +5,7 @@ import numpy as np
 
 from thex_data.data_clean import *
 from thex_data.data_plot import *
-from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, UNDEF_CLASS, PRED_LABEL
+from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, UNDEF_CLASS, PRED_LABEL, TREE_ROOT
 from thex_data.data_prep import get_source_target_data
 from thex_data.data_consts import class_to_subclass as hierarchy
 
@@ -95,6 +95,19 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         predicted_classes = pd.DataFrame(predictions, columns=columns)
 
         return predicted_classes
+
+    def get_parent_prob(self, class_name, probabilities):
+        """
+        Recurse up through tree, getting parent prob until we find a valid one. For example, there may only be CC, II, II P in CC so we need to inherit the probability of CC.
+        """
+        if class_name == TREE_ROOT:
+            return 1
+        elif self.tree._get_parent(class_name) in probabilities:
+            return probabilities[self.tree._get_parent(class_name)]
+        else:
+            # Get next valid parent prob
+            return self.get_parent_prob(self.tree._get_parent(class_name),
+                                        probabilities)
 
     @abstractmethod
     def get_all_class_probabilities(self):
