@@ -64,9 +64,10 @@ class EnsembleModel(MCBaseModel, ABC):
         relabeled_y = pd.DataFrame(labels, columns=[TARGET_LABEL])
         return relabeled_y
 
-    def get_all_class_probabilities(self):
+    def get_all_class_probabilities(self, normalized=True):
         """
         Get class probability for each sample, from each model. Reconstruct class vectors for samples, with 1 if class was predicted and 0 otherwise.
+        :param normalized: Does not do anything
         :return m_predictions: Numpy Matrix with each row corresponding to sample, and each column the probability of that class
         """
         # record independent probability per class
