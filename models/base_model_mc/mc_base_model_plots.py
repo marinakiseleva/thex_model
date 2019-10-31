@@ -55,10 +55,11 @@ class MCBaseModelVisualization:
                 else:
                     not_class_probs.append(class_probs[index])
 
-            x_vals = [class_index] * class_count
-            ax.scatter(is_class_probs, x_vals, s=2, c="green")
             x_vals = [class_index] * (total_num_samples - class_count)
             ax.scatter(not_class_probs, x_vals, s=2, c="red")
+
+            x_vals = [class_index] * class_count
+            ax.scatter(is_class_probs, x_vals, s=2, c="green")
 
         plt.yticks(np.arange(len(self.class_labels)),
                    self.class_labels, fontsize='xx-small')
@@ -189,11 +190,11 @@ class MCBaseModelVisualization:
             self.save_plot(title="Legend", ax=legend_ax,
                            bbox_inches='tight', fig=legend_fig, extra_artists=(legend,))
 
-    def plot_mc_performance(self, class_metrics, ylabel, base_lines=None, annotations=None):
+    def plot_mc_performance(self, class_metrics, xlabel, base_lines=None, annotations=None):
         """
         Visualizes accuracy per class with bar graph; with random baseline based on class level in hierarchy.
         :param class_metrics: Mapping from class name to metric value.
-        :param ylabel: Label to assign to y-axis
+        :param xlabel: Label to assign to y-axis
         :[optional] param base_lines: Mapping from class name to random-baseline performance
         :[optional] param annotations: List of # of samples in each class (get plotted atop the bars)
         """
@@ -216,26 +217,28 @@ class MCBaseModelVisualization:
             class_names, metrics = zip(*sorted(zip(class_names, metrics)))
 
         # Class names will be assigned in same order as these indices
+        mpl.rcParams['ytick.major.pad'] = '14'
+        mpl.rcParams['ytick.minor.pad'] = '14'
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
 
-        x_indices = np.arange(len(metrics))
+        y_indices = np.arange(len(metrics))
         bar_width = 0.8
-        ax.bar(x=x_indices, height=metrics, width=bar_width)
-        ax.set_ylim(0, 1)
-        plt.yticks(list(np.linspace(0, 1, 11)), [
+        ax.barh(y=y_indices, width=metrics, height=bar_width)
+        ax.set_xlim(0, 1)
+        plt.xticks(list(np.linspace(0, 1, 11)), [
                    str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
-        plt.xticks(x_indices, class_names, fontsize=10, rotation=-90)
-        plt.xlabel('Transient Class', fontsize=10)
-        plt.ylabel(ylabel, fontsize=10)
+        plt.yticks(y_indices, class_names,  fontsize='xx-small')
+        plt.ylabel('Transient Class', fontsize=10)
+        plt.xlabel(xlabel, fontsize=10)
 
         # Plot base lines
         # Map each level to the total # of classes at that level
         if base_lines is not None:
             # passed in specific baselines
             for index, baseline in enumerate(base_lines):
-                plt.hlines(y=baseline, xmin=index - (bar_width / 2),
-                           xmax=index + (bar_width / 2), linestyles='--', colors='red')
+                plt.vlines(x=baseline, ymin=index - (bar_width / 2),
+                           ymax=index + (bar_width / 2), linestyles='--', colors='red')
 
         if annotations is not None:
-            self.add_bar_counts(x_indices, metrics, annotations, ax)
-        self.display_and_save_plot(ylabel, ax)
+            self.add_bar_counts(y_indices, metrics, annotations, ax)
+        self.display_and_save_plot(xlabel, ax)

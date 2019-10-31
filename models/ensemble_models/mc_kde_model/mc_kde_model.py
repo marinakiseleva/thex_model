@@ -110,7 +110,7 @@ class MCKDEModel(EnsembleModel):
                     probabilities[class_name] = hier_prob
 
             for k in inner_classes:
-                # Normalize across inner nodes at theis level
+                # Normalize across inner nodes at this level
                 if Z > 0:
                     probabilities[k] = probabilities[k] / Z
                 else:
@@ -148,7 +148,7 @@ class MCKDEModel(EnsembleModel):
         Based on strategy
         :param probabilities: Dictionary from class names to likelihoods for single sample
         """
-        norm_type = "DS"
+        norm_type = "PFC"
         if norm_type == "PFC":
             return self.norm_pfc(probabilities)
         elif norm_type == "DS":
