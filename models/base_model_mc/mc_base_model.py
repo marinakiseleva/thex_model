@@ -19,6 +19,13 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
     """
     Abstract Class representing base functionality of all multiclass models. Inherits from BaseModel, and uses Mixins from other classes. Subclasses of models must implement all BaseModel abstract methods PLUS get_all_class_probabilities
     """
+    @abstractmethod
+    def get_all_class_probabilities(self):
+        """
+        Get class probability for each sample, for each class.
+        :return: Numpy Matrix with each row corresponding to sample, and each column the probability of that class
+        """
+        pass
 
     def run_model(self):
         """
@@ -39,19 +46,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             'class_labels'] if 'class_labels' in self.user_data_filters.keys() else None
 
         super(MCBaseModel, self).run_model()
-
-    def invert_class_levels(self, class_levels):
-        """
-        Convert dict of class names to levels to dict of class level # to list of classes (disjoint sets)
-        """
-        level_classes = {}
-        for class_name in class_levels.keys():
-            cur_level = class_levels[class_name]
-            if cur_level in level_classes:
-                level_classes[cur_level].append(class_name)
-            else:
-                level_classes[cur_level] = [class_name]
-        return level_classes
 
     def test_model(self, keep_top_half=False):
         """
@@ -96,6 +90,22 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
         return predicted_classes
 
+    ##############################################################
+    # Helper Functions
+
+    def invert_class_levels(self, class_levels):
+        """
+        Convert dict of class names to levels to dict of class level # to list of classes (disjoint sets)
+        """
+        level_classes = {}
+        for class_name in class_levels.keys():
+            cur_level = class_levels[class_name]
+            if cur_level in level_classes:
+                level_classes[cur_level].append(class_name)
+            else:
+                level_classes[cur_level] = [class_name]
+        return level_classes
+
     def get_parent_prob(self, class_name, probabilities):
         """
         Recurse up through tree, getting parent prob until we find a valid one. For example, there may only be CC, II, II P in CC so we need to inherit the probability of CC.
@@ -109,13 +119,39 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             return self.get_parent_prob(self.tree._get_parent(class_name),
                                         probabilities)
 
-    @abstractmethod
-    def get_all_class_probabilities(self):
+    def get_class_counts(self, y):
         """
-        Get class probability for each sample, for each class.
-        :return: Numpy Matrix with each row corresponding to sample, and each column the probability of that class
+        Get number of samples for each class in self.class_labels
+        :param y: DataFrame with TARGET_LABEL
         """
-        pass
+        class_counts = {n: 0 for n in self.class_labels}
+        for df_index, row in y.iterrows():
+            list_classes = convert_str_to_list(row[TARGET_LABEL])
+            for class_name in list_classes:
+                if class_name in self.class_labels:
+                    class_counts[class_name] += 1
+        return class_counts
+
+    def get_parent_probabilities(self, class_counts):
+        """
+        Get probability of inner nodes given children frequencies.
+        p(parent | child) = child count / sum of all children counts of parent
+        :param class_counts: Map from class name to count
+        """
+        parent_probs = {}  # Map from (parent, child) tuples to probability
+        for class_name in self.class_labels:
+            children = self.tree._get_children(class_name)
+            if len(children) > 0:
+                parent_count = class_counts[class_name]
+                for child in children:
+                    if child in class_counts:
+                        child_count = class_counts[child]
+                        parent_probs[(class_name, child)] = child_count / parent_count
+
+        return parent_probs
+
+    ##############################################################
+    # Data - Prepping Functionality
 
     def add_unspecified_labels_to_data(self, y):
         """
@@ -167,24 +203,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
         return X.loc[keep_indices, :].reset_index(drop=True), y.loc[keep_indices, :].reset_index(drop=True)
 
-    def get_parent_probabilities(self, class_counts):
-        """
-        Get probability of inner nodes given children frequencies.
-        p(parent | child) = child count / sum of all children counts of parent
-        :param class_counts: Map from class name to count
-        """
-        parent_probs = {}  # Map from (parent, child) tuples to probability
-        for class_name in self.class_labels:
-            children = self.tree._get_children(class_name)
-            if len(children) > 0:
-                parent_count = class_counts[class_name]
-                for child in children:
-                    if child in class_counts:
-                        child_count = class_counts[child]
-                        parent_probs[(class_name, child)] = child_count / parent_count
-
-        return parent_probs
-
     def set_class_labels(self, y, user_defined_labels=None):
 
         if self.test_level is not None:
@@ -208,32 +226,16 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                     user_defined_labels.append(UNDEF_CLASS + label)
             self.class_labels = user_defined_labels
 
-    def get_class_counts(self, y):
-        """
-        Get number of samples for each class in self.class_labels
-        :param y: DataFrame with TARGET_LABEL
-        """
-        class_counts = {n: 0 for n in self.class_labels}
-        for df_index, row in y.iterrows():
-            list_classes = convert_str_to_list(row[TARGET_LABEL])
-            for class_name in list_classes:
-                if class_name in self.class_labels:
-                    class_counts[class_name] += 1
-        return class_counts
-
     def visualize_data(self, data_filters, y, X, class_counts):
         """
         Visualize distribution of data used to train and test
         """
-
         plot_class_hist(y, True, class_counts)
-
-        if X is not None:
-            # pass in X and y combined
-            df = pd.concat([X, y], axis=1)
-            features = list(df)
-            if 'redshift' in features:
-                plot_feature_distribution(df, 'redshift', False)
+        # Combine X and y for plotting feature dist
+        df = pd.concat([X, y], axis=1)
+        features = list(df)
+        if 'redshift' in features:
+            plot_feature_distribution(df, 'redshift', False)
 
     def evaluate_model(self, roc_plots, class_metrics, acc_metrics, k,  total_samples, class_counts, class_probabilities, X, y):
         """
