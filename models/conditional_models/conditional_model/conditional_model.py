@@ -67,7 +67,6 @@ class ConditionalModel(MCBaseModel, ConditionalTrain):
 
         # Step 2 - Compute conditional probabilities
         for current_level in range(max(self.class_levels.values())):
-            print("starting at level " + str(current_level))
             for class_name, probability in probabilities.items():
                 if self.class_levels[class_name] == current_level and class_name in probabilities:
                     probabilities[
