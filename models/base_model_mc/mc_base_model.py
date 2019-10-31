@@ -291,10 +291,10 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             neg_baselines[class_name] = (neg_count / total_count) ** 2
 
         self.plot_mc_performance(
-            recalls, "Recall: True Positive Rate", pos_baselines)
+            recalls, "Completeness")
         self.plot_mc_performance(
-            specificities, "Recall: True Negative Rate", neg_baselines)
-        self.plot_mc_performance(precisions, "Precision")
+            specificities, "Completeness of Negative Class Presence")
+        self.plot_mc_performance(precisions, "Purity")
         self.plot_mc_performance(corr, "Accuracy")
         # self.basic_plot(briers, "Brier Score",   self.class_labels)
         # self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
