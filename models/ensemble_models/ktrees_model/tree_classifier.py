@@ -4,7 +4,7 @@ from models.ensemble_models.ensemble_model.binary_classifier import BinaryClassi
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 
-from thex_data.data_consts import CPU_COUNT
+from thex_data.data_consts import CPU_COUNT, TARGET_LABEL
 
 
 class TreeClassifier(BinaryClassifier):
@@ -17,6 +17,13 @@ class TreeClassifier(BinaryClassifier):
         Initialize the classifier by fitting the data to it.
         """
         self.model = self.get_best_model(X, y)
+
+        X_pos = X.loc[y[TARGET_LABEL] == 1]
+        X_neg = X.loc[y[TARGET_LABEL] == 0]
+
+        self.pos_dist = self.get_model_dist(X_pos, "positive")
+        self.neg_dist = self.get_model_dist(X_neg, "negative")
+
         return self.model
 
     def get_class_probability(self, x):
