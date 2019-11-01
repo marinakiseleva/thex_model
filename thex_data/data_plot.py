@@ -5,50 +5,55 @@ Functionality to plot data distributions and counts. This includes plotting the 
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 from matplotlib.ticker import MaxNLocator
+import matplotlib.pyplot as plt
 from sklearn.neighbors.kde import KernelDensity
 
 from .data_consts import code_cat, TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI, cat_code
+from .data_clean import convert_str_to_list
 
 
-def plot_feature_distribution(df, feature, transformed=True, logged=False):
+def plot_feature_distribution(df, feature, class_labels, class_counts):
     """
     Plots the distribution of each transient type in df over 'feature'
     :param df: DataFrame with both feature column and TARGET_LABEL column
     :param feature: Name of feature to plot distribution over
-    :param transformed: If labels are not transformed, we do not call code_cat on them; they are already class names
-
+    :param class_labels: list of class names to show in legend
+    :param class_counts: map fro class names to count
     """
+    # Order classes  by count from largest to smallest so they plot well
+    ordered_classes = []
+    for class_name, class_count in sorted(class_counts.items(), key=lambda item: item[1],  reverse=True):
+        ordered_classes.append(class_name)
 
-    unique_classes = list(df[TARGET_LABEL].unique())
     f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
     cm = plt.get_cmap('tab20')
-    NUM_COLORS = len(unique_classes)
+    NUM_COLORS = len(class_labels)
+    if NUM_COLORS > 20:
+        colors1 = plt.get_cmap('tab20b').colors
+        colors2 = plt.get_cmap('tab20c').colors
+        # combine them and build a new colormap
+        colors = np.vstack((colors1, colors2))
+        cm = ListedColormap(colors)
+
     ax.set_prop_cycle('color', [cm(1. * i / NUM_COLORS) for i in range(NUM_COLORS)])
     max_value = df[feature].max()
-    for class_code in unique_classes:
-        values = df.loc[(df[TARGET_LABEL] == class_code)
-                        & (df[feature].notnull())][feature].values
-        vector_values = np.sort(np.matrix(values).T, axis=0)
-        if transformed:
-            l = code_cat[class_code]
-        else:
-            l = class_code  # class code is actually name
-        n, x, _ = ax.hist(vector_values, bins=np.linspace(
-            0, max_value, 50), alpha=0.7, label=l)
+    for class_name in ordered_classes:
+        keep_indices = []
+        for index, row in df.iterrows():
+            classes = convert_str_to_list(row[TARGET_LABEL])
+            if class_name in classes and row[feature] is not None:
+                keep_indices.append(index)
 
-        # kde = KernelDensity(bandwidth=0.1, kernel='gaussian', metric='euclidean')
-        # kde = kde.fit(vector_values)  # Fit KDE to values
-        # pdf = kde.score_samples(vector_values)  # Get PDF of values from KDE
-        # ax.plot(vector_values, np.exp(pdf), label = l)
+        values = df.loc[keep_indices, :][feature].values
+        vector_values = np.sort(np.matrix(values).T, axis=0)
+        n, x, _ = ax.hist(vector_values, bins=np.linspace(
+            0, max_value, 50), alpha=0.7, label=class_name)
 
     # if feature == "redshift":
     #     # Plot LSST-expected redshift distributions atop actual
     #     plot_lsst_distribution(ax)
-
-    if logged:
-        plt.yscale('log', nonposy='clip')
 
     ylabel = "Class Count"
     title = "Transient Type Distributions over " + feature
@@ -57,7 +62,8 @@ def plot_feature_distribution(df, feature, transformed=True, logged=False):
     plt.xlabel(feature, fontsize=10)
     plt.ylabel(ylabel, fontsize=10)
     plt.xlim(left=0, right=max_value)
-    ax.legend(loc='best',  prop={'size': 6})
+    plt.yscale('log', nonposy='clip')
+    ax.legend(loc='best',  prop={'size': 5})
     plt.savefig(ROOT_DIR + "/output/" + title)
     plt.show()
 
