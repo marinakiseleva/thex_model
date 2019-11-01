@@ -235,7 +235,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         df = pd.concat([X, y], axis=1)
         features = list(df)
         if 'redshift' in features:
-            plot_feature_distribution(df, 'redshift', False)
+            plot_feature_distribution(df, 'redshift', self.class_labels, class_counts)
 
     def evaluate_model(self, roc_plots, class_metrics, acc_metrics, k,  total_samples, class_counts, class_probabilities, X, y):
         """
