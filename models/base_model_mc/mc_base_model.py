@@ -250,7 +250,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         :param X: all features in DataFrame
         :param y: DataFrame of TARGET_LABEL column for all data.
         """
-        total_count = y.shape[0]
         # Plot ROC curves for each class
         self.plot_mc_roc_curves(roc_plots, k)
 
@@ -269,33 +268,53 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         specificities = {}
         pos_baselines = {}
         neg_baselines = {}
-        for class_name in self.class_labels:
-            metrics = agg_metrics[class_name]
-            den = metrics["TP"] + metrics["FP"]
-            precisions[class_name] = metrics["TP"] / den if den > 0 else 0
-            den = metrics["TP"] + metrics["FN"]
-            recalls[class_name] = metrics["TP"] / den if den > 0 else 0
-            briers[class_name] = metrics["BS"]
-            loglosses[class_name] = metrics["LL"]
-            corr[class_name] = (metrics["TP"] + metrics["TN"]) / total_samples
-            # specificity = true negative rate
-            specificities["Not " + class_name] = metrics["TN"] / \
-                (metrics["TN"] + metrics["FP"])
+        precision_baselines = {}
+        accuracy_baselines = {}
 
-            # % of positive samples * # of positive samples
-            pos_count = class_counts[class_name]
-            pos_baselines[class_name] = (pos_count / total_count) ** 2
+        # Calculate baselines per level of the class hierarchy.
+        for level in list(self.level_classes.keys())[1:]:
+            cur_level_classes = set(self.level_classes[level]).intersection(
+                set(self.class_labels))
+            total_count = 0  # Get level total
+            for class_name in cur_level_classes:
+                total_count += class_counts[class_name]
 
-            # % of neg samples * # of neg samples
-            neg_count = total_count - pos_count
-            neg_baselines[class_name] = (neg_count / total_count) ** 2
+            for class_name in cur_level_classes:
+                # Compute baselines
+                pos_count = class_counts[class_name]
+                # % of positive samples * # of positive samples
+                pos_ratio = (pos_count / total_count)
+                pos_baselines[class_name] = pos_ratio ** 2
 
+                # % of neg samples * # of neg samples
+                neg_ratio = ((total_count - pos_count) / total_count)
+                neg_baselines[class_name] = neg_ratio ** 2
+
+                precision_baselines[class_name] = pos_ratio
+
+                accuracy_baselines[class_name] = (
+                    pos_baselines[class_name] + neg_baselines[class_name]) / total_count
+
+                # Compute metrics
+                metrics = agg_metrics[class_name]
+                den = metrics["TP"] + metrics["FP"]
+                precisions[class_name] = metrics["TP"] / den if den > 0 else 0
+                den = metrics["TP"] + metrics["FN"]
+                recalls[class_name] = metrics["TP"] / den if den > 0 else 0
+                briers[class_name] = metrics["BS"]
+                loglosses[class_name] = metrics["LL"]
+                corr[class_name] = (metrics["TP"] + metrics["TN"]) / total_samples
+                # specificity = true negative rate
+                specificities["Not " + class_name] = metrics["TN"] / \
+                    (metrics["TN"] + metrics["FP"])
+        print("pos baselines")
+        print(pos_baselines)
         self.plot_mc_performance(
-            recalls, "Completeness")
+            recalls, "Completeness", pos_baselines)
         self.plot_mc_performance(
-            specificities, "Completeness of Negative Class Presence")
-        self.plot_mc_performance(precisions, "Purity")
-        self.plot_mc_performance(corr, "Accuracy")
+            specificities, "Completeness of Negative Class Presence", neg_baselines)
+        self.plot_mc_performance(precisions, "Purity", precision_baselines)
+        self.plot_mc_performance(corr, "Accuracy", accuracy_baselines)
         # self.basic_plot(briers, "Brier Score",   self.class_labels)
         # self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
 
