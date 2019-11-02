@@ -53,6 +53,7 @@ def collect_data():
     Sets up Data Object using data 
     :return: Pandas DataFrame created from DATA_PATH data 
     """
+    print("Using data from " + str(DATA_PATH))
     dat = Table.read(DATA_PATH, format='fits')
     df_bytes = dat.to_pandas()  # Convert to pandas dataframe
     df = pd.DataFrame()     # Init empty dataframe for converted types
