@@ -45,7 +45,8 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
                         'transform_labels': True,
                         'incl_redshift': False,
                         'min_class_size': 6,
-                        'pca': None  # Number of principal components
+                        'pca': None,  # Number of principal components
+                        'prior': 'uniform'
                         }
 
         # Update filters with any passed-in filters (from self.user_data_filters)
