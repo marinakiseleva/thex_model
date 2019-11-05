@@ -87,8 +87,8 @@ class EnsembleModel(MCBaseModel, ABC):
             class_prob = self.models[class_name].get_class_probability(x)
             probabilities[class_name] = class_prob
             if np.isnan(probabilities[class_name]):
-                raise ValueError(
-                    "EnsembleModel get_class_probabilities: probability from model is NULL.")
+                probabilities[class_name] = 0.001
+                print("EnsembleModel get_class_probabilities NULL probability for " + class_name)
 
             if probabilities[class_name] < 0.0001:
                 # Force min prob to 0.001 for future computation
