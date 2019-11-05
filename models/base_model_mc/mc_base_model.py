@@ -237,20 +237,20 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         if 'redshift' in features:
             plot_feature_distribution(df, 'redshift', self.class_labels, class_counts)
 
-    def evaluate_model(self, roc_plots, class_metrics, acc_metrics, k,  total_samples, class_counts, class_probabilities, X, y):
+    def evaluate_model(self, roc_plots, class_metrics, acc_metrics, data_filters, class_counts, class_probabilities, X, y):
         """
         Evaluate and plot performance of model
         :param roc_plots: Mapping from class_name to [figure, axis, true positive rates, aucs]. This function plots curve on corresponding axis using this dict.
         :param class_metrics: Mapping from class names to SUMMED ranged metrics
-        :param acc_metrcis: List of results from get_mc_class_metrics, per fold/run
-        :param k: Number of folds
-        :param total_samples: # of samples * # of runs
+        :param acc_metrics: List of results from get_mc_class_metrics, per fold/run
+        :param data_filters: Map from data filter to value
         :param class_counts: Map from class labels to number of samples (from total y)
         :param class_probabilities: List of Numpy matrices returned from get_all_class_probabilities for each run
         :param X: all features in DataFrame
         :param y: DataFrame of TARGET_LABEL column for all data.
         """
         # Plot ROC curves for each class
+        k = data_filters['folds']
         self.plot_mc_roc_curves(roc_plots, k)
 
         # Plot probability vs positive rate for each class
@@ -258,65 +258,11 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
         self.plot_probability_dists(class_probabilities, k, X, y)
 
-        # Report overall metrics
+        # Collect overall metrics
         agg_metrics = self.aggregate_mc_class_metrics(acc_metrics)
-        corr = {}
-        precisions = {}
-        recalls = {}
-        briers = {}
-        loglosses = {}
-        specificities = {}
-        pos_baselines = {}
-        neg_baselines = {}
-        precision_baselines = {}
-        accuracy_baselines = {}
 
-        # Calculate baselines per level of the class hierarchy.
-        for level in list(self.level_classes.keys())[1:]:
-            cur_level_classes = set(self.level_classes[level]).intersection(
-                set(self.class_labels))
-            total_count = 0  # Get level total
-            for class_name in cur_level_classes:
-                total_count += class_counts[class_name]
-
-            for class_name in cur_level_classes:
-                # Compute baselines
-                pos_count = class_counts[class_name]
-                # % of positive samples * # of positive samples
-                pos_ratio = (pos_count / total_count)
-                pos_baselines[class_name] = pos_ratio ** 2
-
-                # % of neg samples * # of neg samples
-                neg_ratio = ((total_count - pos_count) / total_count)
-                neg_baselines[class_name] = neg_ratio ** 2
-
-                precision_baselines[class_name] = pos_ratio
-
-                accuracy_baselines[class_name] = (
-                    pos_baselines[class_name] + neg_baselines[class_name]) / total_count
-
-                # Compute metrics
-                metrics = agg_metrics[class_name]
-                den = metrics["TP"] + metrics["FP"]
-                precisions[class_name] = metrics["TP"] / den if den > 0 else 0
-                den = metrics["TP"] + metrics["FN"]
-                recalls[class_name] = metrics["TP"] / den if den > 0 else 0
-                briers[class_name] = metrics["BS"]
-                loglosses[class_name] = metrics["LL"]
-                corr[class_name] = (metrics["TP"] + metrics["TN"]) / total_samples
-                # specificity = true negative rate
-                specificities["Not " + class_name] = metrics["TN"] / \
-                    (metrics["TN"] + metrics["FP"])
-        print("pos baselines")
-        print(pos_baselines)
-        self.plot_mc_performance(
-            recalls, "Completeness", pos_baselines)
-        self.plot_mc_performance(
-            specificities, "Completeness of Negative Class Presence", neg_baselines)
-        self.plot_mc_performance(precisions, "Purity", precision_baselines)
-        self.plot_mc_performance(corr, "Accuracy", accuracy_baselines)
-        # self.basic_plot(briers, "Brier Score",   self.class_labels)
-        # self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
+        # Plot overall metrics
+        self.plot_metrics(agg_metrics, class_counts, data_filters['prior'])
 
     def run_cross_validation(self, k, X, y, roc_plots, class_metrics, acc_metrics, cps, data_filters):
         """
@@ -400,9 +346,6 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
 
         # Plot Results ################################
         agg_class_metrics = self.aggregate_mc_prob_metrics(class_metrics)
-        total_samples = data_filters['num_runs'] * y.shape[0]
-
-        class_counts = self.get_class_counts(y)
 
         self.evaluate_model(roc_plots, agg_class_metrics,
-                            acc_metrics, k, total_samples, class_counts, cps, X, y)
+                            acc_metrics, data_filters, class_counts, cps, X, y)

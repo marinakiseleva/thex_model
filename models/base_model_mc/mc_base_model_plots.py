@@ -242,3 +242,71 @@ class MCBaseModelVisualization:
         if annotations is not None:
             self.add_bar_counts(y_indices, metrics, annotations, ax)
         self.display_and_save_plot(xlabel, ax)
+
+    def plot_metrics(self, agg_metrics, class_counts, prior):
+        """
+        Plot performance metrics for model
+        """
+        corr = {}
+        precisions = {}
+        recalls = {}
+        briers = {}
+        loglosses = {}
+        specificities = {}
+        pos_baselines = {}
+        neg_baselines = {}
+        precision_baselines = {}
+        accuracy_baselines = {}
+
+        # Calculate baselines per level of the class hierarchy.
+        for level in list(self.level_classes.keys())[1:]:
+            cur_level_classes = list(set(self.level_classes[level]).intersection(
+                set(self.class_labels)))
+
+            # Get level total
+            total_count = sum(class_counts[c] for c in cur_level_classes)
+
+            if prior == 'uniform':
+                class_priors = {c: 1 / len(cur_level_classes) for c in cur_level_classes}
+            elif prior == 'frequency':
+                class_priors = {c: class_counts[c] /
+                                total_count for c in cur_level_classes}
+            else:
+                raise ValueError("Priors not set.")
+
+            for class_name in cur_level_classes:
+                # Compute baselines
+                pos_count = class_counts[class_name]
+                pos_baselines[class_name] = class_priors[class_name] ** 2
+
+                neg_baselines[class_name] = (1 - class_priors[class_name]) ** 2
+
+                precision_baselines[class_name] = class_priors[class_name]
+
+                accuracy_baselines[class_name] = (
+                    pos_baselines[class_name] + neg_baselines[class_name]) / total_count
+
+                # Compute metrics
+                metrics = agg_metrics[class_name]
+                den = metrics["TP"] + metrics["FP"]
+                precisions[class_name] = metrics["TP"] / den if den > 0 else 0
+                den = metrics["TP"] + metrics["FN"]
+                recalls[class_name] = metrics["TP"] / den if den > 0 else 0
+                briers[class_name] = metrics["BS"]
+                loglosses[class_name] = metrics["LL"]
+                corr[class_name] = (metrics["TP"] + metrics["TN"]) / total_count
+                # specificity = true negative rate
+                specificities["Not " + class_name] = metrics["TN"] / \
+                    (metrics["TN"] + metrics["FP"])
+        print("pos baselines")
+        print(pos_baselines)
+        self.plot_mc_performance(
+            recalls, "Completeness", pos_baselines)
+        self.plot_mc_performance(
+            specificities, "Completeness of Negative Class Presence", neg_baselines)
+        self.plot_mc_performance(precisions, "Purity", precision_baselines)
+        print('using acc baselines')
+        print(accuracy_baselines)
+        self.plot_mc_performance(corr, "Accuracy", accuracy_baselines)
+        # self.basic_plot(briers, "Brier Score",   self.class_labels)
+        # self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
