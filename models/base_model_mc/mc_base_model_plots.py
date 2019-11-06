@@ -275,17 +275,6 @@ class MCBaseModelVisualization:
                 raise ValueError("Priors not set.")
 
             for class_name in cur_level_classes:
-                # Compute baselines
-                class_freq = class_counts[class_name] / total_count
-                pos_baselines[class_name] = class_priors[class_name]
-
-                neg_baselines[class_name] = (1 - class_priors[class_name])
-
-                precision_baselines[class_name] = class_freq
-
-                accuracy_baselines[class_name] = (metrics[
-                    "TP"] + metrics["FN"]) / total_count
-
                 # Compute metrics
                 metrics = agg_metrics[class_name]
                 den = metrics["TP"] + metrics["FP"]
@@ -298,6 +287,17 @@ class MCBaseModelVisualization:
                 # specificity = true negative rate
                 specificities["Not " + class_name] = metrics["TN"] / \
                     (metrics["TN"] + metrics["FP"])
+
+                # Compute baselines
+                class_freq = class_counts[class_name] / total_count
+                pos_baselines[class_name] = class_priors[class_name]
+
+                neg_baselines[class_name] = (1 - class_priors[class_name])
+
+                precision_baselines[class_name] = class_freq
+
+                accuracy_baselines[class_name] = (metrics[
+                    "TP"] + metrics["FN"]) / total_count
 
         self.plot_mc_performance(
             recalls, "Completeness", pos_baselines)
