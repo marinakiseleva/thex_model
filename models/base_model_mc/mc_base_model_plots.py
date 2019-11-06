@@ -276,12 +276,12 @@ class MCBaseModelVisualization:
 
             for class_name in cur_level_classes:
                 # Compute baselines
-                pos_count = class_counts[class_name]
-                pos_baselines[class_name] = class_priors[class_name] ** 2
+                class_freq = class_counts[class_name] / total_count
+                pos_baselines[class_name] = class_priors[class_name]
 
-                neg_baselines[class_name] = (1 - class_priors[class_name]) ** 2
+                neg_baselines[class_name] = (1 - class_priors[class_name])
 
-                precision_baselines[class_name] = class_priors[class_name]
+                precision_baselines[class_name] = class_freq
 
                 accuracy_baselines[class_name] = (
                     pos_baselines[class_name] + neg_baselines[class_name]) / total_count
@@ -298,15 +298,13 @@ class MCBaseModelVisualization:
                 # specificity = true negative rate
                 specificities["Not " + class_name] = metrics["TN"] / \
                     (metrics["TN"] + metrics["FP"])
-        print("pos baselines")
-        print(pos_baselines)
+
         self.plot_mc_performance(
             recalls, "Completeness", pos_baselines)
         self.plot_mc_performance(
             specificities, "Completeness of Negative Class Presence", neg_baselines)
-        self.plot_mc_performance(precisions, "Purity", precision_baselines)
-        print('using acc baselines')
-        print(accuracy_baselines)
+        self.plot_mc_performance(precisions, "Purity")
         self.plot_mc_performance(corr, "Accuracy", accuracy_baselines)
+
         # self.basic_plot(briers, "Brier Score",   self.class_labels)
         # self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
