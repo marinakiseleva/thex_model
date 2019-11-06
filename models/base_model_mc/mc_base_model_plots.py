@@ -283,8 +283,8 @@ class MCBaseModelVisualization:
 
                 precision_baselines[class_name] = class_freq
 
-                accuracy_baselines[class_name] = (
-                    pos_baselines[class_name] + neg_baselines[class_name]) / total_count
+                accuracy_baselines[class_name] = (metrics[
+                    "TP"] + metrics["FN"]) / total_count
 
                 # Compute metrics
                 metrics = agg_metrics[class_name]
@@ -303,7 +303,7 @@ class MCBaseModelVisualization:
             recalls, "Completeness", pos_baselines)
         self.plot_mc_performance(
             specificities, "Completeness of Negative Class Presence", neg_baselines)
-        self.plot_mc_performance(precisions, "Purity")
+        self.plot_mc_performance(precisions, "Purity", precision_baselines)
         self.plot_mc_performance(corr, "Accuracy", accuracy_baselines)
 
         # self.basic_plot(briers, "Brier Score",   self.class_labels)
