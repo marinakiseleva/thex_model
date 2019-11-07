@@ -7,7 +7,7 @@ from scipy import interp
 
 
 from thex_data.data_clean import convert_class_vectors, relabel
-from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, TARGET_LABEL, ROOT_DIR
+from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, TARGET_LABEL, ROOT_DIR, UNDEF_CLASS, class_to_subclass
 
 from sklearn.model_selection import StratifiedKFold
 
@@ -190,58 +190,108 @@ class MCBaseModelVisualization:
             self.save_plot(title="Legend", ax=legend_ax,
                            bbox_inches='tight', fig=legend_fig, extra_artists=(legend,))
 
-    def plot_mc_performance(self, class_metrics, xlabel, base_lines=None, annotations=None):
+    def plot_mc_performance(self, class_metrics, xlabel, baselines=None):
         """
         Visualizes accuracy per class with bar graph; with random baseline based on class level in hierarchy.
         :param class_metrics: Mapping from class name to metric value.
         :param xlabel: Label to assign to y-axis
-        :[optional] param base_lines: Mapping from class name to random-baseline performance
+        :[optional] param baselines: Mapping from class name to random-baseline performance
         :[optional] param annotations: List of # of samples in each class (get plotted atop the bars)
         """
-        class_names = list(class_metrics.keys())
-        metrics = list(class_metrics.values())
-        # Sort by class names, so the metrics, baselines, and annotations show up
-        # consistently
-        if base_lines is not None:
-            base_lines = list(base_lines.values())
-            if annotations is not None:
-                class_names, metrics, base_lines, annotations = zip(
-                    *sorted(zip(class_names, metrics, base_lines, annotations)))
-            else:
-                class_names, metrics, base_lines = zip(
-                    *sorted(zip(class_names, metrics, base_lines)))
-        elif annotations is not None:
-            class_names, metrics, annotations = zip(
-                *sorted(zip(class_names, metrics, annotations)))
-        else:
-            class_names, metrics = zip(*sorted(zip(class_names, metrics)))
 
-        # Class names will be assigned in same order as these indices
-        mpl.rcParams['ytick.major.pad'] = '14'
-        mpl.rcParams['ytick.minor.pad'] = '14'
-        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+        class_names, metrics, baselines = self.get_ordered_metrics(
+            class_metrics, baselines)
+
+        # Set constants
+        tick_size = 8
+        bar_width = 0.8
+        fig = plt.figure(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI, tight_layout=True)
+        ax = plt.subplot()
 
         y_indices = np.arange(len(metrics))
-        bar_width = 0.8
-        ax.barh(y=y_indices, width=metrics, height=bar_width)
-        ax.set_xlim(0, 1)
-        plt.xticks(list(np.linspace(0, 1, 11)), [
-                   str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
-        plt.yticks(y_indices, class_names,  fontsize='xx-small')
-        plt.ylabel('Transient Class', fontsize=10)
-        plt.xlabel(xlabel, fontsize=10)
 
-        # Plot base lines
-        # Map each level to the total # of classes at that level
-        if base_lines is not None:
-            # passed in specific baselines
-            for index, baseline in enumerate(base_lines):
+        # Plot metrics
+        ax.barh(y=y_indices, width=metrics, height=bar_width)
+
+        # Plot random baselines
+        if baselines is not None:
+            for index, baseline in enumerate(baselines):
                 plt.vlines(x=baseline, ymin=index - (bar_width / 2),
                            ymax=index + (bar_width / 2), linestyles='--', colors='red')
 
-        if annotations is not None:
-            self.add_bar_counts(y_indices, metrics, annotations, ax)
+        # Format Axes, Labels, and Ticks
+        ax.set_xlim(0, 1)
+        plt.xticks(list(np.linspace(0, 1, 11)), [
+                   str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
+        plt.xlabel(xlabel, fontsize=10)
+        plt.yticks(y_indices, class_names,  fontsize=tick_size,
+                   horizontalalignment='left')
+        plt.ylabel('Transient Class', fontsize=10)
+        max_tick_width = 0
+        for i in class_names:
+            bb = mpl.textpath.TextPath((0, 0), i, size=tick_size).get_extents()
+            max_tick_width = max(bb.width, max_tick_width)
+        yax = ax.get_yaxis()
+        yax.set_tick_params(pad=max_tick_width)
+
+        # if annotations is not None:
+        #     self.add_bar_counts(y_indices, metrics, annotations, ax)
         self.display_and_save_plot(xlabel, ax)
+
+    def get_classes_ordered(self, class_set=None, ordered_names=[]):
+        """
+        Get list of class names ordered by place in hierarchy, so it would be for example: Ia, Ia 91BG, CC, etc. Properly ordered how we'd like them to show up in the plots.
+        :param class_set: Set of classes to try adding to the list. We need to recurse on this list so subclasses are added right after parents. None at the start, and set manually to level 2 (top level after root)
+        :param ordered_names: List of class names in correct, hierarchical order.
+        """
+        levels = list(self.level_classes.keys())[1:]
+
+        if class_set is None:
+            class_set = list(set(self.level_classes[2]).intersection(
+                set(self.class_labels)))
+        for class_name in class_set:
+            ordered_names.append(class_name)
+            if class_name in class_to_subclass:
+                subclasses = class_to_subclass[class_name]
+                valid_subclasses = list(set(subclasses).intersection(
+                    set(self.class_labels)))
+                if len(valid_subclasses) > 0:
+                    ordered_names = self.get_classes_ordered(
+                        valid_subclasses,
+                        ordered_names)
+
+        return ordered_names
+
+    def get_ordered_metrics(self, class_metrics, baselines=None):
+        """
+        Reorder metrics and reformat class names in hierarchy groupings
+        :param class_metrics: Mapping from class name to metric value.
+        :[optional] param baselines: Mapping from class name to random-baseline performance
+        """
+
+        ordered_names = self.get_classes_ordered()
+        ordered_formatted_names = []
+        ordered_metrics = []
+        ordered_baselines = []
+        for class_name in ordered_names:
+            # Add to metrics and baselines
+            ordered_metrics.append(class_metrics[class_name])
+            if baselines is not None:
+                ordered_baselines.append(baselines[class_name])
+
+            # Reformat class name based on depth and add to names
+            pretty_class_name = class_name
+            if UNDEF_CLASS in class_name:
+                pretty_class_name = class_name.replace(UNDEF_CLASS, "")
+                pretty_class_name = pretty_class_name + " (unspec.)"
+            level = self.class_levels[class_name]
+            if level > 2:
+                indent = " " * (level - 1)
+                symbol = ">"
+                pretty_class_name = indent + symbol + pretty_class_name
+            ordered_formatted_names.append(pretty_class_name)
+
+        return [ordered_formatted_names, ordered_metrics, ordered_baselines]
 
     def plot_metrics(self, agg_metrics, class_counts, prior):
         """
@@ -250,16 +300,15 @@ class MCBaseModelVisualization:
         corr = {}
         precisions = {}
         recalls = {}
-        briers = {}
-        loglosses = {}
-        specificities = {}
+        specificities = {}  # specificity = true negative rate
         pos_baselines = {}
         neg_baselines = {}
         precision_baselines = {}
         accuracy_baselines = {}
 
         # Calculate baselines per level of the class hierarchy.
-        for level in list(self.level_classes.keys())[1:]:
+        levels = list(self.level_classes.keys())[1:]
+        for level_index, level in enumerate(levels):
             cur_level_classes = list(set(self.level_classes[level]).intersection(
                 set(self.class_labels)))
 
@@ -281,21 +330,16 @@ class MCBaseModelVisualization:
                 precisions[class_name] = metrics["TP"] / den if den > 0 else 0
                 den = metrics["TP"] + metrics["FN"]
                 recalls[class_name] = metrics["TP"] / den if den > 0 else 0
-                briers[class_name] = metrics["BS"]
-                loglosses[class_name] = metrics["LL"]
+
                 corr[class_name] = (metrics["TP"] + metrics["TN"]) / total_count
-                # specificity = true negative rate
-                specificities["Not " + class_name] = metrics["TN"] / \
+                specificities[class_name] = metrics["TN"] / \
                     (metrics["TN"] + metrics["FP"])
 
                 # Compute baselines
                 class_freq = class_counts[class_name] / total_count
                 pos_baselines[class_name] = class_priors[class_name]
-
                 neg_baselines[class_name] = (1 - class_priors[class_name])
-
                 precision_baselines[class_name] = class_freq
-
                 accuracy_baselines[class_name] = (metrics[
                     "TP"] + metrics["FN"]) / total_count
 
@@ -303,8 +347,6 @@ class MCBaseModelVisualization:
             recalls, "Completeness", pos_baselines)
         self.plot_mc_performance(
             specificities, "Completeness of Negative Class Presence", neg_baselines)
-        self.plot_mc_performance(precisions, "Purity", precision_baselines)
+        self.plot_mc_performance(precisions, "Purity",
+                                 precision_baselines)
         self.plot_mc_performance(corr, "Accuracy", accuracy_baselines)
-
-        # self.basic_plot(briers, "Brier Score",   self.class_labels)
-        # self.basic_plot(loglosses,  "Neg Log Loss",  self.class_labels)
