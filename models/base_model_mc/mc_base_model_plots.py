@@ -241,9 +241,9 @@ class MCBaseModelVisualization:
         max_tick_width = 0
         for i in class_names:
             bb = mpl.textpath.TextPath((0, 0), i, size=tick_size).get_extents()
-            max_tick_width = max(bb.width, max_tick_width + 1)
+            max_tick_width = max(bb.width, max_tick_width)
         yax = ax.get_yaxis()
-        yax.set_tick_params(pad=max_tick_width)
+        yax.set_tick_params(pad=max_tick_width + 2)
 
         # if annotations is not None:
         #     self.add_bar_counts(y_indices, metrics, annotations, ax)
