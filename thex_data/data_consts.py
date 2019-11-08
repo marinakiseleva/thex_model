@@ -51,6 +51,7 @@ PRED_LABEL = 'predicted_class'
 UNDEF_CLASS = 'Unspecified '
 TREE_ROOT = "_ROOT"
 
+
 """
 class_to_subclass
 {Parent : [Child1, child2, ...] }
@@ -91,13 +92,13 @@ class_to_subclass = {
 
     "TDE":                   ["XrayTDE", "UVOptTDE"],
     "XrayTDE":               ["LikelyXrayTDE", "PossibleXrayTDE"],
-    "_ROOT":                 ["Ia", "CC", "GRB", "TDE",
+    "_ROOT":                 ["Ia", "CC",  "TDE", "GRB",
                               "FRB", "GW", "Kilonova"],
 
     # "MiscRadio":             ["Radio", "maser"],
     # "Other":                 ["NT", "MiscRadio"],
     # "Impostor":              ["Star", "SolarSystem", "AGN", "Galaxy",
-                              # "Galactic", "blue"],
+    # "Galactic", "blue"],
     # "Star":                  ["Variable"],
     # "Variable":              ["CV", "LBV", "LRV", "LRV", "LPV", "XRB", "YSO",
     #                           "Nova"],
@@ -738,5 +739,5 @@ mag_cols = ['GALEXAIS_FUV',
             'NED_SDSS_z',
             'AllWISE_Jmag',
             'AllWISE_Hmag',
-            'AllWISE_Kmag'
+            'AllWISE_Kmag',
             ]
