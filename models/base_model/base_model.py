@@ -1,4 +1,5 @@
 import os
+import shutil
 from abc import ABC, abstractmethod
 from sklearn.model_selection import StratifiedKFold
 from sklearn.decomposition import PCA
@@ -12,11 +13,10 @@ from thex_data.data_print import *
 
 from models.base_model.base_model_performance import BaseModelPerformance
 from models.base_model.base_model_plots import BaseModelVisualization
-
 from models.base_model.base_model_custom import BaseModelCustom
 
 
-class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCustom):
+class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization,  BaseModelCustom):
     """
     Abstract Class representing base functionality of all models. Subclasses of models implement their own training and testing functions.
     """
@@ -26,9 +26,15 @@ class BaseModel(ABC, BaseModelPerformance,  BaseModelVisualization,  BaseModelCu
         Collects data based on column parameters, trains, and tests model. 
         """
 
-        # create output directories
+        # Create output directory
         if not os.path.exists(ROOT_DIR + "/output"):
             os.mkdir(ROOT_DIR + "/output")
+
+        file_dir = ROOT_DIR + "/output/" + self.prep_file_name(self.name)
+        # Clear old output directories, if they exist
+        if os.path.exists(file_dir):
+            shutil.rmtree(file_dir)
+        os.mkdir(file_dir)
 
         # Set defaults on filters
         data_filters = {'cols': None,  # Names of columns to filter on; default is all numeric cols
