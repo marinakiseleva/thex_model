@@ -105,9 +105,9 @@ class EnsembleModel(MCBaseModel, ABC):
         """
         # 1. Normalize across disjoint sets of siblings
         probabilities = self.norm_siblings(probabilities)
-        return probabilities
+
         # 2. Compute conditional probabilities based on hierarchy
-        # return self.norm_top_down(probabilities)
+        return self.norm_top_down(probabilities)
 
     def norm_top_down(self, probabilities):
         """
