@@ -2,7 +2,7 @@
 data_transform
 Enhance features by scaling and transforming them
 """
-from thex_data.data_consts import mag_cols
+from thex_data.data_consts import adjacent_mags
 
 
 def transform_features(df):
@@ -35,13 +35,12 @@ def derive_diffs(df):
     """
     features = list(df)
     for index, colname1 in enumerate(features):
-        if index < len(features) - 1:
-            colname2 = df.columns[index + 1]  # Get next column
-            if (colname1 in mag_cols or 'mag' in colname1) and (colname2 in mag_cols or 'mag' in colname2):
-                val1 = df[colname1]
-                val2 = df[colname2]
-                new_col_name = colname2 + "_minus_" + colname1
-                print("Adding new column " + new_col_name)
-                df[new_col_name] = val2 - val1
+        if colname1 in adjacent_mags:
+            colname2 = adjacent_mags[colname1]
+            primary_mag = df[colname1]
+            next_mag = df[colname2]
+            new_col_name = colname2 + "_minus_" + colname1
+            print("Adding new column " + new_col_name)
+            df[new_col_name] = next_mag - primary_mag
 
     return df
