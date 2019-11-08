@@ -37,10 +37,11 @@ def derive_diffs(df):
     for index, colname1 in enumerate(features):
         if index < len(features) - 1:
             colname2 = df.columns[index + 1]  # Get next column
-            if colname1 in mag_cols and colname2 in mag_cols:
+            if (colname1 in mag_cols or 'mag' in colname1) and (colname2 in mag_cols or 'mag' in colname2):
                 val1 = df[colname1]
                 val2 = df[colname2]
                 new_col_name = colname2 + "_minus_" + colname1
+                print("Adding new column " + new_col_name)
                 df[new_col_name] = val2 - val1
 
     return df
