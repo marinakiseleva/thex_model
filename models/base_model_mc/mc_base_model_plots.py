@@ -2,6 +2,7 @@ import os
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 from sklearn.metrics import roc_curve, auc
 from scipy import interp
 
@@ -171,12 +172,23 @@ class MCBaseModelVisualization:
         avg_ax.set_title(self.name + " ROC Curves")
         avg_ax.set_xlabel('False Positive Rate')
         avg_ax.set_ylabel('True Positive Rate')
+        NUM_COLORS = len(self.class_labels)
+        colors1 = plt.get_cmap('tab20b').colors
+        colors2 = plt.get_cmap('tab20c').colors
+        # combine them and build a new colormap
+        colors = np.vstack((colors1, colors2))
+        cm = ListedColormap(colors)
+        ax.set_prop_cycle('color', [cm(1. * i / NUM_COLORS)
+                                    for i in range(NUM_COLORS)])
+
+        avg_ax.legend(loc='best',  prop={'size': 3})
+
         self.display_and_save_plot(title="ROC Summary", ax=avg_ax,
                                    bbox_inches=None, fig=avg_fig)
 
-        # Save legend separately - only if classes < 20, otherwise repeat colors
-        # are useless.
-        if len(self.class_labels) < 20:
+        # Save legend separately if classes < 20
+        if len(self.class_labels) < 40:
+
             handles, labels = avg_ax.get_legend_handles_labels()
             legend_fig, legend_ax = plt.subplots(
                 figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
@@ -198,7 +210,6 @@ class MCBaseModelVisualization:
         :[optional] param baselines: Mapping from class name to random-baseline performance
         :[optional] param annotations: List of # of samples in each class (get plotted atop the bars)
         """
-
         class_names, metrics, baselines = self.get_ordered_metrics(
             class_metrics, baselines)
 
@@ -230,7 +241,7 @@ class MCBaseModelVisualization:
         max_tick_width = 0
         for i in class_names:
             bb = mpl.textpath.TextPath((0, 0), i, size=tick_size).get_extents()
-            max_tick_width = max(bb.width, max_tick_width)
+            max_tick_width = max(bb.width, max_tick_width + 4)
         yax = ax.get_yaxis()
         yax.set_tick_params(pad=max_tick_width)
 
@@ -238,14 +249,14 @@ class MCBaseModelVisualization:
         #     self.add_bar_counts(y_indices, metrics, annotations, ax)
         self.display_and_save_plot(xlabel, ax)
 
-    def get_classes_ordered(self, class_set=None, ordered_names=[]):
+    def get_classes_ordered(self, class_set, ordered_names):
         """
         Get list of class names ordered by place in hierarchy, so it would be for example: Ia, Ia 91BG, CC, etc. Properly ordered how we'd like them to show up in the plots.
         :param class_set: Set of classes to try adding to the list. We need to recurse on this list so subclasses are added right after parents. None at the start, and set manually to level 2 (top level after root)
         :param ordered_names: List of class names in correct, hierarchical order.
         """
-        levels = list(self.level_classes.keys())[1:]
 
+        levels = list(self.level_classes.keys())[1:]
         if class_set is None:
             class_set = list(set(self.level_classes[2]).intersection(
                 set(self.class_labels)))
@@ -269,10 +280,10 @@ class MCBaseModelVisualization:
         :[optional] param baselines: Mapping from class name to random-baseline performance
         """
 
-        ordered_names = self.get_classes_ordered()
+        ordered_names = self.get_classes_ordered(None, [])
         ordered_formatted_names = []
         ordered_metrics = []
-        ordered_baselines = []
+        ordered_baselines = [] if baselines is not None else None
         for class_name in ordered_names:
             # Add to metrics and baselines
             ordered_metrics.append(class_metrics[class_name])
@@ -291,6 +302,10 @@ class MCBaseModelVisualization:
                 pretty_class_name = indent + symbol + pretty_class_name
             ordered_formatted_names.append(pretty_class_name)
 
+        ordered_formatted_names.reverse()
+        ordered_metrics.reverse()
+        if baselines is not None:
+            ordered_baselines.reverse()
         return [ordered_formatted_names, ordered_metrics, ordered_baselines]
 
     def plot_metrics(self, agg_metrics, class_counts, prior):
