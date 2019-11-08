@@ -38,9 +38,9 @@ def derive_diffs(df):
         if colname1 in adjacent_mags:
             colname2 = adjacent_mags[colname1]
             primary_mag = df[colname1]
-            next_mag = df[colname2]
+            prev_mag = df[colname2]
             new_col_name = colname2 + "_minus_" + colname1
             print("Adding new column " + new_col_name)
-            df[new_col_name] = next_mag - primary_mag
+            df[new_col_name] = primary_mag - prev_mag
 
     return df
