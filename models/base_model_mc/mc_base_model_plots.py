@@ -135,6 +135,14 @@ class MCBaseModelVisualization:
         :param num_folds: Number of folds use in K-fold CV, used in title
         """
         avg_fig, avg_ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+        NUM_COLORS = len(self.class_labels)
+        colors1 = plt.get_cmap('tab20b').colors
+        colors2 = plt.get_cmap('tab20c').colors
+        # combine them and build a new colormap
+        colors = np.vstack((colors1, colors2))
+        cm = ListedColormap(colors)
+        avg_ax.set_prop_cycle('color', [cm(1. * i / NUM_COLORS)
+                                        for i in range(NUM_COLORS)])
 
         for class_name in self.class_labels:
             fig, ax, tprs, aucs = roc_plots[class_name]
@@ -172,14 +180,6 @@ class MCBaseModelVisualization:
         avg_ax.set_title(self.name + " ROC Curves")
         avg_ax.set_xlabel('False Positive Rate')
         avg_ax.set_ylabel('True Positive Rate')
-        NUM_COLORS = len(self.class_labels)
-        colors1 = plt.get_cmap('tab20b').colors
-        colors2 = plt.get_cmap('tab20c').colors
-        # combine them and build a new colormap
-        colors = np.vstack((colors1, colors2))
-        cm = ListedColormap(colors)
-        ax.set_prop_cycle('color', [cm(1. * i / NUM_COLORS)
-                                    for i in range(NUM_COLORS)])
 
         avg_ax.legend(loc='best',  prop={'size': 3})
 
@@ -235,13 +235,13 @@ class MCBaseModelVisualization:
         plt.xticks(list(np.linspace(0, 1, 11)), [
                    str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
         plt.xlabel(xlabel, fontsize=10)
-        plt.yticks(y_indices, class_names,  fontsize=tick_size,
+        plt.yticks(y_indices, class_names,  fontsize='xx-small',
                    horizontalalignment='left')
         plt.ylabel('Transient Class', fontsize=10)
         max_tick_width = 0
         for i in class_names:
             bb = mpl.textpath.TextPath((0, 0), i, size=tick_size).get_extents()
-            max_tick_width = max(bb.width, max_tick_width + 4)
+            max_tick_width = max(bb.width, max_tick_width + 1)
         yax = ax.get_yaxis()
         yax.set_tick_params(pad=max_tick_width)
 
