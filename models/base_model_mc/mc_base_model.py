@@ -230,12 +230,13 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         Visualize distribution of data used to train and test
         """
-        plot_class_hist(y, True, class_counts)
+        plot_class_hist(y, self.prep_file_name(self.name), True, class_counts)
         # Combine X and y for plotting feature dist
         df = pd.concat([X, y], axis=1)
         features = list(df)
         if 'redshift' in features:
-            plot_feature_distribution(df, 'redshift', self.class_labels, class_counts)
+            plot_feature_distribution(df, self.prep_file_name(
+                self.name), 'redshift', self.class_labels, class_counts)
 
     def evaluate_model(self, roc_plots, class_metrics, acc_metrics, data_filters, class_counts, class_probabilities, X, y):
         """

@@ -14,10 +14,11 @@ from .data_consts import code_cat, TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT
 from .data_clean import convert_str_to_list
 
 
-def plot_feature_distribution(df, feature, class_labels, class_counts):
+def plot_feature_distribution(df, model_dir, feature, class_labels, class_counts):
     """
     Plots the distribution of each transient type in df over 'feature'
     :param df: DataFrame with both feature column and TARGET_LABEL column
+    :param model_dir: directory name of model
     :param feature: Name of feature to plot distribution over
     :param class_labels: list of class names to show in legend
     :param class_counts: map fro class names to count
@@ -64,7 +65,7 @@ def plot_feature_distribution(df, feature, class_labels, class_counts):
     plt.xlim(left=0, right=max_value)
     plt.yscale('log', nonposy='clip')
     ax.legend(loc='best',  prop={'size': 5})
-    plt.savefig(ROOT_DIR + "/output/" + title)
+    plt.savefig(ROOT_DIR + "/output/" + model_dir + "/" + title)
     plt.show()
 
 
@@ -97,10 +98,11 @@ def count_classes(df):
 from matplotlib.ticker import FormatStrFormatter
 
 
-def plot_class_hist(df, target_is_name=False, class_counts=None):
+def plot_class_hist(df, model_dir, target_is_name=False, class_counts=None):
     """
     Plots histogram of class sizes
     :param df: DataFrame with TARGET_LABEL column
+    :param model_dir: directory name of model
     :param target_is_name: Boolean to use keys in count_classes dictionary as class labels.
     Can be True if TARGET_LABEL contains real class names and not codes.
     :param class_counts: Map from class name to counts, if pre-computed
@@ -142,5 +144,5 @@ def plot_class_hist(df, target_is_name=False, class_counts=None):
     title = "Distribution of Transient Types in Data Sample"
     plt.title(title, fontsize=12)
     plt.tight_layout()
-    plt.savefig(ROOT_DIR + "/output/" + title.replace(" ", "_"))
+    plt.savefig(ROOT_DIR + "/output/" + model_dir + "/" + title.replace(" ", "_"))
     plt.show()
