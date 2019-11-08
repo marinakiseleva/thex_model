@@ -34,7 +34,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         Set custom attributes for Multiclass classifiers: test_level (level of class hierarchy over which to get probabilities, for MCKDEModel), and class_labels (specific classes to run model on)
         """
         for parent in hierarchy.keys():
-            hierarchy[parent].append(UNDEF_CLASS + parent)
+            hierarchy[parent].insert(0, UNDEF_CLASS + parent)
         self.tree = init_tree(hierarchy)
         # Root is level 1 in self.class_levels
         self.class_levels = assign_levels(self.tree, {}, self.tree.root, 1)
