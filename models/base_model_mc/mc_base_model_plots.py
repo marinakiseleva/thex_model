@@ -256,16 +256,24 @@ class MCBaseModelVisualization:
         :param ordered_names: List of class names in correct, hierarchical order.
         """
 
+        def get_ordered_intersection(level_classes):
+            """
+            Get classes at interesction between this hierarchy level and self.class_labels, while maintaining order given in hierarchy 
+            """
+            intersection_classes = []
+            for class_name in level_classes:
+                if class_name in self.class_labels:
+                    intersection_classes.append(class_name)
+            return intersection_classes
         levels = list(self.level_classes.keys())[1:]
         if class_set is None:
-            class_set = list(set(self.level_classes[2]).intersection(
-                set(self.class_labels)))
+            class_set = get_ordered_intersection(self.level_classes[2])
+
         for class_name in class_set:
             ordered_names.append(class_name)
             if class_name in class_to_subclass:
                 subclasses = class_to_subclass[class_name]
-                valid_subclasses = list(set(subclasses).intersection(
-                    set(self.class_labels)))
+                valid_subclasses = get_ordered_intersection(subclasses)
                 if len(valid_subclasses) > 0:
                     ordered_names = self.get_classes_ordered(
                         valid_subclasses,
