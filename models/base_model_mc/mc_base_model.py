@@ -263,6 +263,9 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         # Collect overall metrics
         agg_metrics = self.aggregate_mc_class_metrics(acc_metrics)
 
+        print('debug: Aggregated metrics')
+        print(agg_metrics)
+
         # Plot overall metrics
         self.plot_metrics(agg_metrics, class_counts, data_filters['prior'])
 
