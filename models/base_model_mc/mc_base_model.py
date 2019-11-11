@@ -257,7 +257,8 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         # Plot probability vs positive rate for each class
         self.plot_mc_probability_pos_rates(class_metrics)
 
-        self.plot_probability_dists(class_probabilities, k, X, y)
+        # self.plot_probability_dists(
+        #     class_probabilities, data_filters['num_runs'], k, X, y)
 
         # Collect overall metrics
         agg_metrics = self.aggregate_mc_class_metrics(acc_metrics)
@@ -269,7 +270,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         Run k-fold cross validation
         """
-        kf = StratifiedKFold(n_splits=k, shuffle=True, random_state=10)
+        kf = StratifiedKFold(n_splits=k, shuffle=True)
         for train_index, test_index in kf.split(X, y):
             self.X_train, self.X_test = X.iloc[train_index].reset_index(
                 drop=True), X.iloc[test_index].reset_index(drop=True)
@@ -331,7 +332,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         # 6. Run Cross-fold validation model.
         # Initialize maps of class names to metrics
         roc_plots = {}
-        class_metrics = {}
+        class_metrics = {}  # Probability vs precision
         for class_name in self.class_labels:
             roc_fig, roc_ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
             # roc_plots[class_name] = [fig  ax   TPRS  AUCS]
