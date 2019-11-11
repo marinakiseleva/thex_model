@@ -18,8 +18,9 @@ class MCBaseModelVisualization:
     Mixin Class for Multiclass BaseModel performance visualization
     """
 
-    def plot_probability_dists(self, class_probabilities, k, X, y):
+    def plot_probability_dists(self, class_probabilities, num_runs, k, X, y):
         """
+        NEED TO UPDATE TO WORK WITH MULTIPLE RUNS.
         Plots the distribution of probabilities per class as scatter plot
         :param class_probabilities: List of Numpy matrices returned from get_all_class_probabilities for each run;
         each matrix has rows corresponding to samples, and each column the probability of that class
@@ -55,11 +56,13 @@ class MCBaseModelVisualization:
                     class_count += 1
                 else:
                     not_class_probs.append(class_probs[index])
+            # class_count *= num_runs
 
             x_vals = [class_index] * (total_num_samples - class_count)
             ax.scatter(not_class_probs, x_vals, s=2, c="red")
 
             x_vals = [class_index] * class_count
+
             ax.scatter(is_class_probs, x_vals, s=2, c="green")
 
         plt.yticks(np.arange(len(self.class_labels)),
@@ -319,15 +322,16 @@ class MCBaseModelVisualization:
     def plot_metrics(self, agg_metrics, class_counts, prior):
         """
         Plot performance metrics for model
+        :param agg_metrics: Returned from aggregate_mc_class_metrics; 2D list of names and metrics
         """
-        corr = {}
+        # corr = {}
         precisions = {}
         recalls = {}
         specificities = {}  # specificity = true negative rate
         pos_baselines = {}
         neg_baselines = {}
         precision_baselines = {}
-        accuracy_baselines = {}
+        # accuracy_baselines = {}
 
         # Calculate baselines per level of the class hierarchy.
         levels = list(self.level_classes.keys())[1:]
@@ -354,7 +358,8 @@ class MCBaseModelVisualization:
                 den = metrics["TP"] + metrics["FN"]
                 recalls[class_name] = metrics["TP"] / den if den > 0 else 0
 
-                corr[class_name] = (metrics["TP"] + metrics["TN"]) / total_count
+                # corr[class_name] = (metrics["TP"] + metrics["TN"]) / \
+                #     (metrics["TP"] + metrics["TN"] + metrics["FP"] + metrics["FN"])
                 specificities[class_name] = metrics["TN"] / \
                     (metrics["TN"] + metrics["FP"])
 
@@ -363,8 +368,8 @@ class MCBaseModelVisualization:
                 pos_baselines[class_name] = class_priors[class_name]
                 neg_baselines[class_name] = (1 - class_priors[class_name])
                 precision_baselines[class_name] = class_freq
-                accuracy_baselines[class_name] = (metrics[
-                    "TP"] + metrics["FN"]) / total_count
+                # accuracy_baselines[class_name] = (metrics[
+                #     "TP"] + metrics["FN"]) / total_count
 
         self.plot_mc_performance(
             recalls, "Completeness", pos_baselines)
@@ -372,4 +377,4 @@ class MCBaseModelVisualization:
             specificities, "Completeness of Negative Class Presence", neg_baselines)
         self.plot_mc_performance(precisions, "Purity",
                                  precision_baselines)
-        self.plot_mc_performance(corr, "Accuracy", accuracy_baselines)
+        # self.plot_mc_performance(corr, "Accuracy", accuracy_baselines)
