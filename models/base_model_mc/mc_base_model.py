@@ -20,9 +20,10 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
     Abstract Class representing base functionality of all multiclass models. Inherits from BaseModel, and uses Mixins from other classes. Subclasses of models must implement all BaseModel abstract methods PLUS get_all_class_probabilities
     """
     @abstractmethod
-    def get_all_class_probabilities(self):
+    def get_all_class_probabilities(self, normalized):
         """
         Get class probability for each sample, for each class.
+        :param normalized: Normalization technique
         :return: Numpy Matrix with each row corresponding to sample, and each column the probability of that class
         """
         pass
@@ -290,7 +291,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             # Run model
             self.train_model()
 
-            probabilities = self.get_all_class_probabilities(normalized=True)
+            probabilities = self.get_all_class_probabilities()
             # Save all probabilities for later analysis/plotting
             cps.append(probabilities)
 
@@ -298,7 +299,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             roc_plots = self.save_roc_curve(roc_plots, probabilities)
 
             # Record metrics for prob vs. accuracy plots
-            X_accs = self.get_mc_probability_matrix(normalized=True)
+            X_accs = self.get_mc_probability_matrix()
 
             for class_name in self.class_labels:
                 class_metrics[class_name].append(self.get_mc_metrics_by_ranges(

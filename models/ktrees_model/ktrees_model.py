@@ -27,7 +27,7 @@ class KTreesModel(MCBaseModel, KTreesTrain):
             self.class_labels = self.get_mc_unique_classes(self.y_train)
         return self.train()
 
-    def get_all_class_probabilities(self):
+    def get_all_class_probabilities(self, normalized):
         """
         Get class probability for each sample, from each Tree. Reconstruct class vectors for samples, with 1 if class was predicted and 0 otherwise.
         :return m_predictions: Numpy Matrix with each row corresponding to sample, and each column the probability of that class
@@ -44,10 +44,11 @@ class KTreesModel(MCBaseModel, KTreesTrain):
             m_predictions = np.append(m_predictions, col_predictions, axis=1)
         return m_predictions
 
-    def get_class_probabilities(self, x):
+    def get_class_probabilities(self, x, normalized='independent'):
         """
         Calculates probability of each transient class for the single test data point (x).
         :param x: Single row of features
+        :param normalized: Normalization technique; defaults to 'independent' which normalizes by summing over probabilities of ALL classes; ignores class hierarchy
         :return: map from class_name to probabilities
         """
         probabilities = {}

@@ -64,14 +64,14 @@ class EnsembleModel(MCBaseModel, ABC):
         relabeled_y = pd.DataFrame(labels, columns=[TARGET_LABEL])
         return relabeled_y
 
-    def get_all_class_probabilities(self, normalized=True):
+    def get_all_class_probabilities(self, normalized='independent'):
         """
         Get class probabilities for all test data.
         :return probabilities: Numpy Matrix with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels
         """
         all_probs = np.empty((0, len(self.class_labels)))
         for index, row in self.X_test.iterrows():
-            row_p = self.get_class_probabilities(row, normalized=normalized)
+            row_p = self.get_class_probabilities(row)
             all_probs = np.append(all_probs, [list(row_p.values())], axis=0)
 
         return all_probs
@@ -80,6 +80,7 @@ class EnsembleModel(MCBaseModel, ABC):
         """
         Calculates probability of each transient class for the single test data point (x).
         :param x: Pandas DF row of features
+        :param normalized: Normalization technique; defaults to 'independent' which normalizes by summing over probabilities of ALL classes; ignores class hierarchy
         :return: map from class_name to probabilities
         """
         probabilities = {}
@@ -129,6 +130,7 @@ class EnsembleModel(MCBaseModel, ABC):
         total = sum(probabilities.values())
         norm_probabilities = {class_name: prob /
                               total for class_name, prob in probabilities.items()}
+
         return norm_probabilities
 
     def norm_top_down(self, probabilities):
