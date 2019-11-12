@@ -177,7 +177,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         """
         Remove rows that do not contain data that is in self.class_labels. Keep if deepest-level node is in self.class_labels, or unspecified node in self.class_labels
         :param X: all features in DataFrame
-        :param y: DataFrame of TARGET_LABEL column for all data
+        :param y: DataFrame of TARGET_LABEL column for all data, with unspecified labels added to TARGET_LABEL
         """
         # Keep rows that have an Unspecified label in self.class_labels.
 
@@ -192,8 +192,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
                 if c in self.class_levels and self.class_levels[c] > deepest_level:
                     deepest_level = self.class_levels[c]
                     deepest_class = c
-                # Keep if undefined
-                if UNDEF_CLASS in c and c in self.class_labels:
+                if c in self.class_labels:
                     keep = True
 
             # Keep if deepest is in class_labels
