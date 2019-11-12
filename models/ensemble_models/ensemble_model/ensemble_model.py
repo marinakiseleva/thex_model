@@ -76,7 +76,7 @@ class EnsembleModel(MCBaseModel, ABC):
 
         return all_probs
 
-    def get_class_probabilities(self, x, normalized=True):
+    def get_class_probabilities(self, x, normalized='independent'):
         """
         Calculates probability of each transient class for the single test data point (x).
         :param x: Pandas DF row of features
@@ -95,26 +95,41 @@ class EnsembleModel(MCBaseModel, ABC):
                 probabilities[class_name] = 0.001
 
         if normalized:
-            probabilities = self.normalize_probabilities(probabilities)
+            probabilities = self.normalize_probabilities(probabilities, normalized)
         return probabilities
 
-    def normalize_probabilities(self, probabilities):
+    def normalize_probabilities(self, probabilities, normalization_type):
         """
         Based on strategy
         :param probabilities: Dictionary from class names to likelihoods for single sample
+        :param normalization_type: Type of normalization to apply.
+            'unique' = each class is one versus all classifier, normalized altogether. disregards hierarchy
         """
-        # 1. Normalize across disjoint sets of siblings
-        probabilities = self.norm_siblings(probabilities)
+        if normalization_type == 'independent':
+            return self.norm_independent(probabilities)
+            # 3. OPTIONAL: Cutoff probabilites below certain threshold
+            # threshold = .9
+            # for class_name in probabilities.keys():
+            #     if probabilities[class_name] < threshold:
+            #         probabilities[class_name] = 0
+            # return probabilities
+        elif normalization_type == 'conditional_siblings':
+            # 1. Normalize across disjoint sets of siblings
+            probabilities = self.norm_siblings(probabilities)
 
-        # 2. Compute conditional probabilities based on hierarchy
-        probabilities = self.norm_top_down(probabilities)
+            # 2. Compute conditional probabilities based on hierarchy
+            probabilities = self.norm_top_down(probabilities)
+            return probabilities
 
-        # 3. OPTIONAL: Cutoff probabilites below certain threshold
-        threshold = .9
-        for class_name in probabilities.keys():
-            if probabilities[class_name] < threshold:
-                probabilities[class_name] = 0
-        return probabilities
+    def norm_independent(self, probabilities):
+        """
+        Normalize across probabilities, treating each as independent. So, each is normalized by dividing by the sum of all probabilities.
+        :param probabilities: Dict from class names to probabilities, already normalized across disjoint sets
+        """
+        total = sum(probabilities.values())
+        norm_probabilities = {class_name: prob /
+                              total for class_name, prob in probabilities.items()}
+        return norm_probabilities
 
     def norm_top_down(self, probabilities):
         """
