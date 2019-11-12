@@ -110,7 +110,7 @@ class EnsembleModel(MCBaseModel, ABC):
         probabilities = self.norm_top_down(probabilities)
 
         # 3. OPTIONAL: Cutoff probabilites below certain threshold
-        threshold = .5
+        threshold = .9
         for class_name in probabilities.keys():
             if probabilities[class_name] < threshold:
                 probabilities[class_name] = 0
