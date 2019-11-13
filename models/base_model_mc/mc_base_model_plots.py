@@ -99,7 +99,7 @@ class MCBaseModelVisualization:
             ax = self.plot_bar_with_annotations(
                 axis=ax, x_vals=perc_ranges, y_vals=perc_actual, annotations=TOTAL_ranges, bar_colors=colors)
             plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
-            plt.ylabel('Class Presence Rate (Positive/Total)', fontsize=12)
+            plt.ylabel('Purity', fontsize=12)
             self.display_and_save_plot("Probability vs Positive Rate: " + class_name, ax)
 
     def save_roc_curve(self, roc_plots, class_probabilities):
