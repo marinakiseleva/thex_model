@@ -115,12 +115,33 @@ class EnsembleModel(MCBaseModel, ABC):
             #         probabilities[class_name] = 0
             # return probabilities
         elif normalization_type == 'conditional_siblings':
-            # 1. Normalize across disjoint sets of siblings
+            # Normalize across disjoint sets of siblings
             probabilities = self.norm_siblings(probabilities)
-
-            # 2. Compute conditional probabilities based on hierarchy
+            # Compute conditional probabilities based on hierarchy
             probabilities = self.norm_top_down(probabilities)
             return probabilities
+
+        elif normalization_type == 'level_based':
+            return self.norm_level(probabilities)
+
+    def norm_level(self, probabilities):
+        """
+        Normalize across the class hierarchy levels. So, each is normalized by dividing by the sum of all probabilities at its level of the class hierarchy
+        """
+
+        levels = list(self.level_classes.keys())[1:]
+        for level in levels:
+            cur_level_classes = set(self.level_classes[level]).intersection(
+                set(probabilities.keys()))
+            level_total = 0
+            for class_name in cur_level_classes:
+                level_total += probabilities[class_name]
+
+            # Normalize over level sum
+            for class_name in cur_level_classes:
+                probabilities[class_name] = probabilities[class_name] / level_total
+
+        return probabilities
 
     def norm_independent(self, probabilities):
         """

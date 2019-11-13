@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from sklearn.model_selection import StratifiedKFold
+from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -286,6 +287,13 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
             # Apply PCA
             if data_filters['pca'] is not None:
                 self.X_train, self.X_test = self.apply_pca(data_filters['pca'])
+            elif data_filters['scale'] is not None:
+                # Scale data z = (x - mean) / stdev
+                scaler = StandardScaler()
+                self.X_train[list(self.X_train)] = scaler.fit_transform(
+                    self.X_train[list(self.X_train)])
+                self.X_test[list(self.X_test)] = scaler.transform(
+                    self.X_test[list(self.X_test)])
 
             # Run model
             self.train_model()

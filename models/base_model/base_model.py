@@ -52,6 +52,7 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization,  BaseModelCus
                         'incl_redshift': False,
                         'min_class_size': 6,
                         'pca': None,  # Number of principal components
+                        'scale': None,  # Boolean to scale
                         'prior': 'uniform'
                         }
 
