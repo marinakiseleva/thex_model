@@ -213,8 +213,10 @@ class MCBaseModelVisualization:
         :[optional] param baselines: Mapping from class name to random-baseline performance
         :[optional] param annotations: List of # of samples in each class (get plotted atop the bars)
         """
-        class_names, metrics, baselines = self.get_ordered_metrics(
-            class_metrics, baselines)
+        # class_names, metrics, baselines = self.get_ordered_metrics(
+        #     class_metrics, baselines)
+        class_names = list(class_metrics.keys())
+        metrics = list(class_metrics.values())
 
         # Set constants
         tick_size = 8
