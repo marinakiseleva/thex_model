@@ -686,4 +686,14 @@ adjacent_mags = {
     'W2_mag': 'W1_mag',
     'W3_mag': 'W2_mag',
     'W4_mag': 'W3_mag',
+    'GALEXAIS_NUV': 'GALEXAIS_FUV',
+    'PS1_gmag':  'GALEXAIS_NUV',
+    'PS1_rmag': 'PS1_gmag',
+    'PS1_imag': 'PS1_rmag',
+    'PS1_zmag': 'PS1_imag',
+    'PS1_ymag': 'PS1_zmag',
+    'AllWISE_W1mag': 'PS1_ymag',
+    'AllWISE_W2mag': 'AllWISE_W1mag',
+    'AllWISE_W3mag': 'AllWISE_W2mag',
+    'AllWISE_W4mag': 'AllWISE_W3mag'
 }
