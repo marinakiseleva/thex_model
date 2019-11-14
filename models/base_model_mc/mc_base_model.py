@@ -268,7 +268,7 @@ class MCBaseModel(BaseModel, MCBaseModelPerformance, MCBaseModelVisualization):
         print(agg_metrics)
 
         # Plot overall metrics
-        self.plot_metrics(agg_metrics, class_counts, data_filters['prior'])
+        self.plot_metrics(agg_metrics, class_counts, data_filters['prior'], y)
 
     def run_cross_validation(self, k, X, y, roc_plots, class_metrics, acc_metrics, cps, data_filters):
         """

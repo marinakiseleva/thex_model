@@ -320,62 +320,73 @@ class MCBaseModelVisualization:
             ordered_baselines.reverse()
         return [ordered_formatted_names, ordered_metrics, ordered_baselines]
 
-    def plot_metrics(self, agg_metrics, class_counts, prior):
+    def compute_baselines(self, prior, class_counts, y):
         """
-        Plot performance metrics for model
-        :param agg_metrics: Returned from aggregate_mc_class_metrics; 2D list of names and metrics
         """
-        # corr = {}
-        precisions = {}
-        recalls = {}
-        specificities = {}  # specificity = true negative rate
         pos_baselines = {}
         neg_baselines = {}
         precision_baselines = {}
-        # accuracy_baselines = {}
 
-        # Calculate baselines per level of the class hierarchy.
-        levels = list(self.level_classes.keys())[1:]
-        for level_index, level in enumerate(levels):
-            cur_level_classes = list(set(self.level_classes[level]).intersection(
-                set(self.class_labels)))
+        total_count = y.shape[0]
 
-            # Get level total
-            total_count = sum(class_counts[c] for c in cur_level_classes)
+        if prior == 'uniform':
+            class_priors = {c: 1 / len(self.class_labels)
+                            for c in self.class_labels}
+        elif prior == 'frequency':
+            class_priors = {c: class_counts[c] /
+                            total_count for c in self.class_labels}
+        else:
+            raise ValueError("Priors not set.")
 
-            if prior == 'uniform':
-                class_priors = {c: 1 / len(cur_level_classes) for c in cur_level_classes}
-            elif prior == 'frequency':
-                class_priors = {c: class_counts[c] /
-                                total_count for c in cur_level_classes}
-            else:
-                raise ValueError("Priors not set.")
+        for class_name in self.class_labels:
+            # Compute baselines
+            class_freq = class_counts[class_name] / total_count
+            pos_baselines[class_name] = class_priors[class_name]
+            neg_baselines[class_name] = (1 - class_priors[class_name])
+            precision_baselines[class_name] = class_freq
 
-            for class_name in cur_level_classes:
-                # Compute metrics
-                metrics = agg_metrics[class_name]
-                den = metrics["TP"] + metrics["FP"]
-                precisions[class_name] = metrics["TP"] / den if den > 0 else 0
-                den = metrics["TP"] + metrics["FN"]
-                recalls[class_name] = metrics["TP"] / den if den > 0 else 0
+        # TODO: need to recompute for level-based comparison.unclear if this is right.
+        # elif normalized == 'level_based':
+        #     # Calculate baselines per level of the class hierarchy.
+        #     levels = list(self.level_classes.keys())[1:]
+        #     for level_index, level in enumerate(levels):
+        #         cur_level_classes = list(set(self.level_classes[level]).intersection(
+        #             set(self.class_labels)))
+        #         # Get level total
+        #         total_count = sum(class_counts[c] for c in cur_level_classes)
 
-                # corr[class_name] = (metrics["TP"] + metrics["TN"]) / \
-                #     (metrics["TP"] + metrics["TN"] + metrics["FP"] + metrics["FN"])
-                specificities[class_name] = metrics["TN"] / \
-                    (metrics["TN"] + metrics["FP"])
+        return pos_baselines, neg_baselines, precision_baselines
 
-                # Compute baselines
-                class_freq = class_counts[class_name] / total_count
-                pos_baselines[class_name] = class_priors[class_name]
-                neg_baselines[class_name] = (1 - class_priors[class_name])
-                precision_baselines[class_name] = class_freq
-                # accuracy_baselines[class_name] = (metrics[
-                #     "TP"] + metrics["FN"]) / total_count
+    def compute_performance(self, agg_metrics):
+        """
+        :param agg_metrics: Returned from aggregate_mc_class_metrics; Map from class name to map of performance metrics
+        """
+        precisions = {}
+        recalls = {}
+        specificities = {}  # specificity = true negative rate
+        for class_name in agg_metrics.keys():
+            metrics = agg_metrics[class_name]
+            den = metrics["TP"] + metrics["FP"]
+            precisions[class_name] = metrics["TP"] / den if den > 0 else 0
+            den = metrics["TP"] + metrics["FN"]
+            recalls[class_name] = metrics["TP"] / den if den > 0 else 0
+
+            specificities[class_name] = metrics["TN"] / \
+                (metrics["TN"] + metrics["FP"])
+        return recalls, precisions, specificities
+
+    def plot_metrics(self, agg_metrics, class_counts, prior, y):
+        """
+        Plot performance metrics for model
+        :param agg_metrics: Returned from aggregate_mc_class_metrics; Map from class name to map of performance metrics
+        """
+
+        recalls, precisions, specificities = self.compute_performance(agg_metrics)
+        pos_baselines, neg_baselines, precision_baselines = self.compute_baselines(
+            prior, class_counts, y)
 
         self.plot_mc_performance(
             recalls, "Completeness", pos_baselines)
         self.plot_mc_performance(
             specificities, "Completeness of Negative Class Presence", neg_baselines)
-        self.plot_mc_performance(precisions, "Purity",
-                                 precision_baselines)
-        # self.plot_mc_performance(corr, "Accuracy", accuracy_baselines)
+        self.plot_mc_performance(precisions, "Purity", precision_baselines)
