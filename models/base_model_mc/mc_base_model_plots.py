@@ -211,12 +211,11 @@ class MCBaseModelVisualization:
         :param class_metrics: Mapping from class name to metric value.
         :param xlabel: Label to assign to y-axis
         :[optional] param baselines: Mapping from class name to random-baseline performance
-        :[optional] param annotations: List of # of samples in each class (get plotted atop the bars)
+        # of samples in each class (get plotted atop the bars)
+        :[optional] param annotations: List of
         """
-        # class_names, metrics, baselines = self.get_ordered_metrics(
-        #     class_metrics, baselines)
-        class_names = list(class_metrics.keys())
-        metrics = list(class_metrics.values())
+        class_names, metrics, baselines = self.get_ordered_metrics(
+            class_metrics, baselines)
 
         # Set constants
         tick_size = 8
@@ -263,7 +262,7 @@ class MCBaseModelVisualization:
 
         def get_ordered_intersection(level_classes):
             """
-            Get classes at interesction between this hierarchy level and self.class_labels, while maintaining order given in hierarchy 
+            Get classes at interesction between this hierarchy level and self.class_labels, while maintaining order given in hierarchy
             """
             intersection_classes = []
             for class_name in level_classes:
@@ -308,11 +307,11 @@ class MCBaseModelVisualization:
             if UNDEF_CLASS in class_name:
                 pretty_class_name = class_name.replace(UNDEF_CLASS, "")
                 pretty_class_name = pretty_class_name + " (unspec.)"
-            level = self.class_levels[class_name]
-            if level > 2:
-                indent = " " * (level - 1)
-                symbol = ">"
-                pretty_class_name = indent + symbol + pretty_class_name
+            # level = self.class_levels[class_name]
+            # if level > 2:
+            #     indent = " " * (level - 1)
+            #     symbol = ">"
+            #     pretty_class_name = indent + symbol + pretty_class_name
             ordered_formatted_names.append(pretty_class_name)
 
         ordered_formatted_names.reverse()
