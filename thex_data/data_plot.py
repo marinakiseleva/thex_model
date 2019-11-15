@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.colors import ListedColormap
 from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import FormatStrFormatter
 import matplotlib.pyplot as plt
 from sklearn.neighbors.kde import KernelDensity
 
@@ -69,57 +70,27 @@ def plot_feature_distribution(df, model_dir, feature, class_labels, class_counts
     plt.show()
 
 
-def plot_lsst_distribution(ax):
-    """
-    Plot LSST Redshift distribution per class. Hard-coded based on collected
-    expectations of redshift dists.
-    """
-    def plot_norm_class_dist(mu, sigma, label, ax):
-        x = np.linspace(0, 1, 100)
-        const = 1.0 / np.sqrt(2 * np.pi * (sigma**2))
-        y = const * np.exp(-((x - mu)**2) / (2.0 * (sigma**2)))
-        ax.plot(x, y, label=label)
-    plot_norm_class_dist(mu=0.45, sigma=0.1, label="LSST Ia", ax=ax)
+# def plot_lsst_distribution(ax):
+#     """
+#     Plot LSST Redshift distribution per class. Hard-coded based on collected
+#     expectations of redshift dists.
+#     """
+#     def plot_norm_class_dist(mu, sigma, label, ax):
+#         x = np.linspace(0, 1, 100)
+#         const = 1.0 / np.sqrt(2 * np.pi * (sigma**2))
+#         y = const * np.exp(-((x - mu)**2) / (2.0 * (sigma**2)))
+#         ax.plot(x, y, label=label)
+#     plot_norm_class_dist(mu=0.45, sigma=0.1, label="LSST Ia", ax=ax)
 
 
-def count_classes(df):
-    """
-    Returns count of each distinct value in TARGET_LABEL of df
-    :param df: Pandas DataFrame with TARGET_LABEL column
-    :return class_counts: Map of {class_code : count, ...}
-    """
-    class_sizes = pd.DataFrame(df.groupby(TARGET_LABEL).size())
-    class_counts = {}
-    for class_code, row in class_sizes.iterrows():
-        if class_code != '':
-            class_counts[class_code] = int(row[0])
-    return class_counts
-
-from matplotlib.ticker import FormatStrFormatter
-
-
-def plot_class_hist(df, model_dir, target_is_name=False, class_counts=None):
+def plot_class_hist(class_counts, model_dir):
     """
     Plots histogram of class sizes
-    :param df: DataFrame with TARGET_LABEL column
-    :param model_dir: directory name of model
-    :param target_is_name: Boolean to use keys in count_classes dictionary as class labels.
-    Can be True if TARGET_LABEL contains real class names and not codes.
-    :param class_counts: Map from class name to counts, if pre-computed
+    :param class_counts: Map from class name to counts
+    :param model_dir: directory name of model to save figure
     """
-    if class_counts is None:
-        class_counts = count_classes(df)
-        class_names = []
-        for c in class_counts.keys():
-            if target_is_name:
-                class_names.append(str(c))
-            else:
-                class_names.append(code_cat[c])
-    else:
-        class_names = list(class_counts.keys())
-
-    num_classes = len(class_names)
-    class_indices = np.arange(num_classes)
+    class_names = list(class_counts.keys())
+    class_indices = np.arange(len(class_names))
 
     f, ax = plt.subplots(figsize=(6, 6), dpi=DPI)
     # Plot data horizontally
