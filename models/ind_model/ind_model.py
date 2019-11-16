@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from mainmodel.mainmodel import MainModel
 from classifiers.optbinary import OptimalBinaryClassifier
-from utilities.utilities import *
+import utilities.utilities as util
 from thex_data.data_consts import TARGET_LABEL
 
 
@@ -28,7 +28,7 @@ class IndModel(MainModel):
         """
         labels = []  # Relabeled y
         for df_index, row in y.iterrows():
-            cur_classes = convert_str_to_list(row[TARGET_LABEL])
+            cur_classes = util.convert_str_to_list(row[TARGET_LABEL])
             label = 1 if class_name in cur_classes else 0
             labels.append(label)
         relabeled_y = pd.DataFrame(labels, columns=[TARGET_LABEL])
@@ -36,20 +36,12 @@ class IndModel(MainModel):
 
     def train_model(self, X_train, y_train):
         """
-        Train model using training data
+        Train model using training data. All classes are a single disjoint set, so create a binary classifier for each one
         """
-        # All classes are a single disjoint set, so create a binary classifier for
-        # each one
 
         self.models = {}
         for class_index, class_name in enumerate(self.class_labels):
             y_relabeled = self.get_class_data(class_name, y_train)
-
-            # TODO! Need to do this in thex_data instead of here.
-            positive_count = y_relabeled.loc[y_relabeled[TARGET_LABEL] == 1].shape[0]
-            if positive_count < 9:
-                print("WARNING: No model for " + class_name)
-                continue
 
             print("\nClass Model: " + class_name)
             self.models[class_name] = OptimalBinaryClassifier(
@@ -89,3 +81,59 @@ class IndModel(MainModel):
                               total for class_name, prob in probabilities.items()}
 
         return norm_probabilities
+
+    def get_label(self, labels):
+        """
+        Gets label at maximum depth in class hierarchy from string of labels.
+        """
+        labels = util.convert_str_to_list(labels)
+        max_depth = 0
+        max_label = None
+        for label in labels:
+            if label in self.class_levels and self.class_levels[label] > max_depth:
+                max_depth = self.class_levels[label]
+                max_label = label
+        print('from all labels')
+        print(labels)
+        print("max label")
+        print(max_label)
+        return max_label
+
+    def compute_metrics(self, results):
+        """
+        Compute TP, FP, TN, and FN per class. Each sample is assigned its lowest-level class hierarchy label as its label.
+        """
+        # Last column is label
+        label_index = len(self.class_labels)
+        class_metrics = {cn: {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
+                         for cn in self.class_labels}
+        for result_set in results:
+            for row in result_set:
+                print("for row ")
+                print(row)
+
+                # class_probability = row[class_index]
+                labels = row[label_index]
+                # Need to get single label by which to compare... Otherwise penalties
+                # will go across classes.
+                actual_label = self.get_label(labels)
+                # Get class index of max prob; exclude last column since it is label
+                max_class_index = np.argmax(row[:len(row) - 1])
+                max_class_name = self.class_labels[max_class_index]
+                print("Max Prob Class = Actual Class ?")
+                print(str(max_class_name) + " = " + str(actual_label) + " ?")
+
+                if max_class_name == actual_label:
+                    # Correct prediction!
+                    class_metrics[max_class_name]["TP"] += 1
+                    print('this class is TP!')
+                    for class_name in self.class_labels:
+                        class_metrics[class_name]["TN"] += 1
+                else:
+                    # Incorrect prediction!
+                    class_metrics[max_class_name]["FP"] += 1
+                    class_metrics[actual_label]["FN"] += 1
+                    for class_name in self.class_labels:
+                        class_metrics[class_name]["TN"] += 1
+        print(class_metrics)
+        return class_metrics

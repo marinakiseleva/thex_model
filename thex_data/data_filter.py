@@ -11,7 +11,26 @@ import pandas as pd
 
 from .data_consts import cat_code, TARGET_LABEL
 from .data_print import *
-from .data_clean import convert_str_to_list
+import utilities.utilities as util
+
+
+def filter_class_labels(df, class_labels):
+    """
+    Keep rows that have label in self.class_labels
+    :param df: DataFrame of features and TARGET_LABEL
+    """
+    # Keep rows that have a label in self.class_labels.
+    if class_labels is None:
+        return df
+    keep_indices = []
+    for df_index, row in df.iterrows():
+        list_classes = util.convert_str_to_list(row[TARGET_LABEL])
+        for c in list_classes:
+            if c in class_labels:
+                keep_indices.append(df_index)
+                break
+
+    return df.loc[keep_indices, :].reset_index(drop=True)
 
 
 def drop_conflicts(df):
@@ -22,7 +41,7 @@ def drop_conflicts(df):
                        "__CONFLICT_CASES", "_UNCLEAR_LABELS", "_IGNORED_LABELS"]
     keep_indices = []
     for df_index, row in df.iterrows():
-        list_classes = convert_str_to_list(row[TARGET_LABEL])
+        list_classes = util.convert_str_to_list(row[TARGET_LABEL])
         keep = True
         for c in list_classes:
             if c in conflict_labels:

@@ -89,21 +89,21 @@ class BaseModel(ABC, BaseModelPerformance, BaseModelVisualization,  BaseModelCus
         """
         pass
 
-    def set_model_data(self, col_list, data_filters):
-        """
-        Collects data for model
-        :param col_list: List of columns to filter on
-        :param test_on_train: Boolean to test on training data.
-        :param data_filters: Dict of data filters user passed in.
-        """
-        self.X_train, self.X_test, self.y_train, self.y_test = get_train_test(
-            col_list, **data_filters)
-        if data_filters['test_on_train'] == True:
-            self.X_test = X_train.copy()
-            self.y_test = y_train.copy()
-        # Apply PCA
-        if data_filters['pca'] is not None:
-            self.X_train, self.X_test = self.apply_pca(data_filters['pca'])
+    # def set_model_data(self, col_list, data_filters):
+    #     """
+    #     Collects data for model
+    #     :param col_list: List of columns to filter on
+    #     :param test_on_train: Boolean to test on training data.
+    #     :param data_filters: Dict of data filters user passed in.
+    #     """
+    #     self.X_train, self.X_test, self.y_train, self.y_test = get_train_test(
+    #         col_list, **data_filters)
+    #     if data_filters['test_on_train'] == True:
+    #         self.X_test = X_train.copy()
+    #         self.y_test = y_train.copy()
+    #     # Apply PCA
+    #     if data_filters['pca'] is not None:
+    #         self.X_train, self.X_test = self.apply_pca(data_filters['pca'])
 
     def apply_pca(self, k):
         """

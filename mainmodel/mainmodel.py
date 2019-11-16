@@ -6,17 +6,17 @@ Evaluation strategy (k-fold cross validation)
 Performance aggregation
 
 """
-import os
-import shutil
+
 from abc import ABC, abstractmethod
 
 from sklearn.model_selection import StratifiedKFold
 
+from hmc import hmc
 
 from thex_data.data_init import *
 from thex_data.data_prep import get_source_target_data
 from thex_data.data_plot import *
-from thex_data.data_consts import TARGET_LABEL
+from thex_data.data_consts import TARGET_LABEL, TREE_ROOT
 from thex_data.data_consts import class_to_subclass as class_hier
 
 import utilities.utilities as util
@@ -28,7 +28,12 @@ class MainModel(ABC):
         """
         Initialize model based on user arguments
         """
-        self.init_file_directories()
+        util.init_file_directories(self.name)
+
+        # for parent in class_hier.keys():
+        #     class_hier[parent].insert(0, UNDEF_CLASS + parent)
+        self.tree = self.init_tree(class_hier)
+        self.class_levels = self.assign_levels(self.tree, {}, self.tree.root, 1)
 
         data_filters = {'cols': None,  # Names of columns to filter on; default is all numeric cols
                         'col_matches': None,  # String by which columns will be selected
@@ -58,16 +63,31 @@ class MainModel(ABC):
 
         results = self.run_cfv(X, y, data_filters['folds'], data_filters['num_runs'])
 
-    def init_file_directories(self):
-        # Create output directory
-        if not os.path.exists(ROOT_DIR + "/output"):
-            os.mkdir(ROOT_DIR + "/output")
+        self.visualize_performance(results)
 
-        file_dir = ROOT_DIR + "/output/" + util.clean_str(self.name)
-        # Clear old output directories, if they exist
-        if os.path.exists(file_dir):
-            shutil.rmtree(file_dir)
-        os.mkdir(file_dir)
+    def init_tree(self, hierarchy):
+        print("\n\nConstructing Class Hierarchy Tree...")
+        hmc_hierarchy = hmc.ClassHierarchy(TREE_ROOT)
+        for parent in hierarchy.keys():
+            # hierarchy maps parents to children, so get all children
+            list_children = hierarchy[parent]
+            for child in list_children:
+                # Nodes are added with child parent pairs
+                try:
+                    hmc_hierarchy.add_node(child, parent)
+                except ValueError as e:
+                    print(e)
+        return hmc_hierarchy
+
+    def assign_levels(self, tree, mapping, node, level):
+        """
+        Assigns level to each node based on level in hierarchical tree. The lower it is in the tree, the larger the level. The level at the root is 1. 
+        :return: Dict from class name to level number.
+        """
+        mapping[str(node)] = level
+        for child in tree._get_children(node):
+            self.assign_levels(tree, mapping, child, level + 1)
+        return mapping
 
     def get_class_labels(self, user_defined_labels, y):
         """
@@ -125,8 +145,11 @@ class MainModel(ABC):
     def visualize_performance(self, results):
         """
         Visualize performance
+        :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         """
+        self.compute_metrics(results)
         print("visualize_performance not yet implemented")
+        print(results)
         return -1
 
     def run_cfv(self, X, y, k, runs):
@@ -148,7 +171,9 @@ class MainModel(ABC):
 
             # Test model
             probabilities = self.get_all_class_probabilities(X_test)
-            # TODO: Save probabilities + self.y_test labels! for later evaluation.
+            # Add labels as column to probabilities, for later evaluation
+            label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
+            probabilities = np.hstack((probabilities, label_column))
             results.append(probabilities)
         return results
 
@@ -176,5 +201,14 @@ class MainModel(ABC):
     def train_model(self, X_train, X_test):
         """
         Train model using training data
+        """
+        pass
+
+    @abstractmethod
+    def compute_metrics(self, results):
+        """
+        Compute TP, FP, TN, and FN per class.
+        May need to do this per model, since assumptions are different.
+        Currently implemented such that each sample is assigned its lowest-level class hierarchy label as its label.
         """
         pass

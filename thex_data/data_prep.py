@@ -47,6 +47,8 @@ def get_data(col_list, **data_filters):
         print("\n\nNo data to run model on. Try changing data filters or limiting number of features. Note: Running on all columns will not work since no data spans all features.\n\n")
         sys.exit()
 
+    df = filter_class_labels(df, data_filters['class_labels'])
+
     return df.reset_index(drop=True)
 
 
