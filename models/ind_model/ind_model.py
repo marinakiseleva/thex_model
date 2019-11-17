@@ -84,56 +84,49 @@ class IndModel(MainModel):
 
     def get_label(self, labels):
         """
-        Gets label at maximum depth in class hierarchy from string of labels.
+        Gets label at maximum depth in class hierarchy that is also in self.class_labels, from string of labels.
+        :param labels: string of labels from TARGET_LABEL
         """
         labels = util.convert_str_to_list(labels)
         max_depth = 0
         max_label = None
         for label in labels:
-            if label in self.class_levels and self.class_levels[label] > max_depth:
+            if label in self.class_levels and self.class_levels[label] > max_depth and label in self.class_labels:
                 max_depth = self.class_levels[label]
                 max_label = label
-        print('from all labels')
-        print(labels)
-        print("max label")
-        print(max_label)
         return max_label
 
     def compute_metrics(self, results):
         """
-        Compute TP, FP, TN, and FN per class. Each sample is assigned its lowest-level class hierarchy label as its label.
+        Compute TP, FP, TN, and FN per class. Each sample is assigned its lowest-level class hierarchy label as its label. This is important, otherwise penalties will go across classes.
+        :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
+        :return class_metrics: Map from class name to map of {"TP": w, "FP": x, "FN": y, "TN": z}
         """
-        # Last column is label
-        label_index = len(self.class_labels)
+
+        label_index = len(self.class_labels)  # Last column is label
         class_metrics = {cn: {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
                          for cn in self.class_labels}
         for result_set in results:
             for row in result_set:
-                print("for row ")
-                print(row)
-
-                # class_probability = row[class_index]
                 labels = row[label_index]
-                # Need to get single label by which to compare... Otherwise penalties
-                # will go across classes.
+
                 actual_label = self.get_label(labels)
                 # Get class index of max prob; exclude last column since it is label
                 max_class_index = np.argmax(row[:len(row) - 1])
                 max_class_name = self.class_labels[max_class_index]
-                print("Max Prob Class = Actual Class ?")
-                print(str(max_class_name) + " = " + str(actual_label) + " ?")
 
                 if max_class_name == actual_label:
                     # Correct prediction!
                     class_metrics[max_class_name]["TP"] += 1
-                    print('this class is TP!')
                     for class_name in self.class_labels:
-                        class_metrics[class_name]["TN"] += 1
+                        if class_name != max_class_name:
+                            class_metrics[class_name]["TN"] += 1
                 else:
                     # Incorrect prediction!
                     class_metrics[max_class_name]["FP"] += 1
                     class_metrics[actual_label]["FN"] += 1
                     for class_name in self.class_labels:
-                        class_metrics[class_name]["TN"] += 1
-        print(class_metrics)
+                        if class_name != max_class_name and class_name != actual_label:
+                            class_metrics[class_name]["TN"] += 1
+
         return class_metrics
