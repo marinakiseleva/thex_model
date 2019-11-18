@@ -1,6 +1,48 @@
 import os
 import shutil
+from textwrap import wrap
+import matplotlib.pyplot as plt
 from thex_data.data_consts import ROOT_DIR
+
+
+def save_plot(model_name, title, ax, bbox_inches=None, fig=None, extra_artists=None):
+    """
+    Saves plot (by model name and passed-in title)
+    :param title: String title of plot, used to save 
+    :param ax: Axis
+    :[optional] param bbox_inches: Optional parameter for savefig
+    :[optional] param fig: will do fig.savefig instead of plt.savefig
+    """
+    if ax is None:
+        plt.title('\n'.join(wrap(title, 60)))
+    else:
+        ax.set_title('\n'.join(wrap(title, 60)))
+    title = clean_str(title)
+    plt.tight_layout()
+
+    file_dir = ROOT_DIR + "/output/" + clean_str(model_name)
+    if not os.path.exists(file_dir):
+        os.mkdir(file_dir)
+
+    if fig is not None:
+        fig.savefig(file_dir + "/" + title, bbox_inches=bbox_inches)
+        fig.savefig('samplefigure', bbox_extra_artists=extra_artists,
+                    bbox_inches='tight')
+
+    else:
+        plt.savefig(file_dir + "/" + title, bbox_inches=bbox_inches)
+
+
+def display_and_save_plot(title, ax, bbox_inches=None, fig=None):
+    """
+    Saves plot (by model name and passed-in title) and displays.
+    :param title: String title of plot, used to save 
+    :param ax: Axis
+    :[optional] param bbox_inches: Optional parameter for savefig
+    :[optional] param fig: will do fig.savefig instead of plt.savefig
+    """
+    save_plot(title, ax, bbox_inches, fig)
+    plt.show()
 
 
 def init_file_directories(name):

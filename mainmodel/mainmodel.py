@@ -19,10 +19,11 @@ from thex_data.data_plot import *
 from thex_data.data_consts import TARGET_LABEL, TREE_ROOT
 from thex_data.data_consts import class_to_subclass as class_hier
 
+from mainmodel.performance_plots import MainModelVisualization
 import utilities.utilities as util
 
 
-class MainModel(ABC):
+class MainModel(ABC, MainModelVisualization):
 
     def __init__(self, **user_data_filters):
         """
@@ -63,7 +64,7 @@ class MainModel(ABC):
 
         results = self.run_cfv(X, y, data_filters['folds'], data_filters['num_runs'])
 
-        self.visualize_performance(results)
+        self.visualize_performance(results, y)
 
     def init_tree(self, hierarchy):
         print("\n\nConstructing Class Hierarchy Tree...")
@@ -142,14 +143,14 @@ class MainModel(ABC):
             plot_feature_distribution(df, util.clean_str(
                 self.name), 'redshift', self.class_labels, class_counts)
 
-    def visualize_performance(self, results):
+    def visualize_performance(self, results, y):
         """
         Visualize performance
         :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         """
-        self.compute_metrics(results)
-        print("visualize_performance not yet implemented")
-        print(results)
+        class_metrics = self.compute_metrics(results)
+        self.plot_all_metrics(class_metrics, y)
+
         return -1
 
     def run_cfv(self, X, y, k, runs):
@@ -210,5 +211,13 @@ class MainModel(ABC):
         Compute TP, FP, TN, and FN per class.
         May need to do this per model, since assumptions are different.
         Currently implemented such that each sample is assigned its lowest-level class hierarchy label as its label.
+        """
+        pass
+
+    @abstractmethod
+    def compute_baselines(self, class_counts, y):
+        """
+        Get random classifier baselines for recall, specificity (negative recall), and precision
+        :param prior: NEED TO REINCORPORATE.
         """
         pass
