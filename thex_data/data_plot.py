@@ -14,12 +14,14 @@ from sklearn.neighbors.kde import KernelDensity
 from .data_consts import code_cat, TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI, cat_code
 from .data_clean import convert_str_to_list
 
+import utilities.utilities as thex_utils
 
-def plot_feature_distribution(df, model_dir, feature, class_labels, class_counts):
+
+def plot_feature_distribution(model_name, df, feature, class_labels, class_counts):
     """
     Plots the distribution of each transient type in df over 'feature'
+    :param model_name: name of model
     :param df: DataFrame with both feature column and TARGET_LABEL column
-    :param model_dir: directory name of model
     :param feature: Name of feature to plot distribution over
     :param class_labels: list of class names to show in legend
     :param class_counts: map fro class names to count
@@ -66,8 +68,8 @@ def plot_feature_distribution(df, model_dir, feature, class_labels, class_counts
     plt.xlim(left=0, right=max_value)
     plt.yscale('log', nonposy='clip')
     ax.legend(loc='best',  prop={'size': 5})
-    plt.savefig(ROOT_DIR + "/output/" + model_dir + "/" + title)
-    plt.show()
+
+    thex_utils.display_and_save_plot(model_name, title, ax)
 
 
 # def plot_lsst_distribution(ax):
@@ -83,11 +85,12 @@ def plot_feature_distribution(df, model_dir, feature, class_labels, class_counts
 #     plot_norm_class_dist(mu=0.45, sigma=0.1, label="LSST Ia", ax=ax)
 
 
-def plot_class_hist(class_counts, model_dir):
+def plot_class_hist(model_name, class_counts):
     """
     Plots histogram of class sizes
+    :param model_name: directory name of model to save figure
     :param class_counts: Map from class name to counts
-    :param model_dir: directory name of model to save figure
+
     """
     class_names = list(class_counts.keys())
     class_indices = np.arange(len(class_names))
@@ -115,5 +118,5 @@ def plot_class_hist(class_counts, model_dir):
     title = "Distribution of Transient Types in Data Sample"
     plt.title(title, fontsize=12)
     plt.tight_layout()
-    plt.savefig(ROOT_DIR + "/output/" + model_dir + "/" + title.replace(" ", "_"))
-    plt.show()
+
+    thex_utils.display_and_save_plot(model_name, title, ax)

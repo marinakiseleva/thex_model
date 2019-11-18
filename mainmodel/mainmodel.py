@@ -135,13 +135,13 @@ class MainModel(ABC, MainModelVisualization):
         """
         """
         class_counts = self.get_class_counts(y)
-        plot_class_hist(class_counts, util.clean_str(self.name))
+        plot_class_hist(self.name, class_counts)
         # Combine X and y for plotting feature dist
         df = pd.concat([X, y], axis=1)
         features = list(df)
         if 'redshift' in features:
-            plot_feature_distribution(df, util.clean_str(
-                self.name), 'redshift', self.class_labels, class_counts)
+            plot_feature_distribution(self.name,  df, 'redshift',
+                                      self.class_labels, class_counts)
 
     def visualize_performance(self, results, y):
         """

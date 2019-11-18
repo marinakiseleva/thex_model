@@ -33,7 +33,7 @@ def save_plot(model_name, title, ax, bbox_inches=None, fig=None, extra_artists=N
         plt.savefig(file_dir + "/" + title, bbox_inches=bbox_inches)
 
 
-def display_and_save_plot(title, ax, bbox_inches=None, fig=None):
+def display_and_save_plot(model_name, title, ax, bbox_inches=None, fig=None):
     """
     Saves plot (by model name and passed-in title) and displays.
     :param title: String title of plot, used to save 
@@ -41,7 +41,7 @@ def display_and_save_plot(title, ax, bbox_inches=None, fig=None):
     :[optional] param bbox_inches: Optional parameter for savefig
     :[optional] param fig: will do fig.savefig instead of plt.savefig
     """
-    save_plot(title, ax, bbox_inches, fig)
+    save_plot(model_name, title, ax, bbox_inches, fig)
     plt.show()
 
 
