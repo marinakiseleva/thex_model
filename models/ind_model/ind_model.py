@@ -96,6 +96,44 @@ class IndModel(MainModel):
                 max_label = label
         return max_label
 
+    def compute_probability_range_metrics(self, results):
+        """
+        Computes True Positive & Total metrics, split by probability assigned to class for ranges of 10% from 0 to 100. Used to plot probability assigned vs completeness.
+        :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
+        :return range_metrics: Map of classes to [TP_range_sums, total_range_sums]
+            total_range_sums: # of samples with probability in range for this class
+            TP_range_sums: true positives per range 
+        """
+        range_metrics = {}
+        label_index = len(self.class_labels)  # Last column is label
+        for class_index, class_name in enumerate(self.class_labels):
+            tp_probabilities = []
+            total_probabilities = []
+            for result_set in results:
+                for row in result_set:
+                    labels = row[label_index]
+
+                    actual_label = self.get_label(labels)
+                    # Get class index of max prob; exclude last column since it is label
+                    max_class_prob = np.max(row[:len(row) - 1])
+                    max_class_index = np.argmax(row[:len(row) - 1])
+                    max_class_name = self.class_labels[max_class_index]
+
+                    # tp_probabilities Numpy arary of all probabilities assigned to this
+                    # class that were True Positives
+                    if class_name == actual_label and max_class_name == actual_label:
+                        tp_probabilities.append(max_class_prob)
+
+                    total_probabilities.append(row[class_index])
+
+            # left inclusive, first bin is 0 <= x < .1. ; except last bin <=1
+            bins = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]
+            tp_range_counts = np.histogram(tp_probabilities, bins=bins)[0].tolist()
+            total_range_counts = np.histogram(total_probabilities, bins=bins)[0].tolist()
+
+            range_metrics[class_name] = [tp_range_counts, total_range_counts]
+        return range_metrics
+
     def compute_metrics(self, results):
         """
         Compute TP, FP, TN, and FN per class. Each sample is assigned its lowest-level class hierarchy label as its label. This is important, otherwise penalties will go across classes.

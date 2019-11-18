@@ -148,6 +148,8 @@ class MainModel(ABC, MainModelVisualization):
         Visualize performance
         :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         """
+        self.plot_probability_vs_accuracy(results)
+
         class_metrics = self.compute_metrics(results)
         self.plot_all_metrics(class_metrics, y)
 
@@ -206,11 +208,21 @@ class MainModel(ABC, MainModelVisualization):
         pass
 
     @abstractmethod
+    def compute_probability_range_metrics(self, results):
+        """
+        Computes True Positive & Total metrics, split by probability assigned to class for ranges of 10% from 0 to 100. Used to plot probability assigned vs completeness.
+        :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
+        :return range_metrics: Map of classes to [TP_range_sums, total_range_sums]
+            total_range_sums: # of samples with probability in range for this class
+            TP_range_sums: true positives per range 
+        """
+        pass
+
+    @abstractmethod
     def compute_metrics(self, results):
         """
         Compute TP, FP, TN, and FN per class.
-        May need to do this per model, since assumptions are different.
-        Currently implemented such that each sample is assigned its lowest-level class hierarchy label as its label.
+        :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         """
         pass
 

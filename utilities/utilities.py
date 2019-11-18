@@ -5,6 +5,21 @@ import matplotlib.pyplot as plt
 from thex_data.data_consts import ROOT_DIR
 
 
+# Plotting Utilities
+
+def annotate_plot(ax, x, y, annotations):
+    """
+    Adds count to top of each bar in bar plot
+    """
+    class_index = 0
+    for xy in zip(x, y):
+        # Get class count of current class_index
+        count = str(annotations[class_index])
+        ax.annotate(count, xy=xy, textcoords='data', ha='center',
+                    va='bottom', fontsize=8, rotation=-90)
+        class_index += 1
+
+
 def save_plot(model_name, title, ax, bbox_inches=None, fig=None, extra_artists=None):
     """
     Saves plot (by model name and passed-in title)
@@ -45,6 +60,7 @@ def display_and_save_plot(model_name, title, ax, bbox_inches=None, fig=None):
     plt.show()
 
 
+# File utilities
 def init_file_directories(name):
     # Create output directory
     if not os.path.exists(ROOT_DIR + "/output"):

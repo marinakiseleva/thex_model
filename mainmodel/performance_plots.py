@@ -132,10 +132,7 @@ class MainModelVisualization:
         :param class_metrics: Mapping from class name to metric value.
         :[optional] param baselines: Mapping from class name to random-baseline performance
         """
-
         ordered_names = self.get_classes_ordered(None, [])
-        print("Ordered classes")
-        print(ordered_names)
         ordered_formatted_names = []
         ordered_metrics = []
         ordered_baselines = [] if baselines is not None else None
@@ -162,3 +159,42 @@ class MainModelVisualization:
         if baselines is not None:
             ordered_baselines.reverse()
         return [ordered_formatted_names, ordered_metrics, ordered_baselines]
+
+    def plot_probability_vs_accuracy(self, results):
+        """
+        Plots accuracy of class (y-axis) vs. probability assigned to class (x-axis). Accuracy is measured as the number of true positives (samples with this class as label) divided by all samples with probabilities assigned in this range. 
+        :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
+
+        """
+        range_metrics = self.compute_probability_range_metrics(results)
+
+        for index, class_name in enumerate(range_metrics.keys()):
+            true_positives, totals = range_metrics[class_name]
+            f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+
+            accuracies = []  # Accuracy per range (true positive/total)
+            for index, TP in enumerate(true_positives):
+                p = 0
+                total_predicted = totals[index]
+                if total_predicted != 0:
+                    # positive class samples / totals # with prob in range
+                    p = TP / total_predicted
+                accuracies.append(p)
+
+            normalize = plt.Normalize(min(true_positives), max(true_positives))
+            colors = plt.cm.Blues(normalize(true_positives))
+
+            perc_ranges = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]
+
+            x_indices = np.arange(len(accuracies))
+            ax.bar(x_indices, accuracies)  # color=bar_colors
+
+            thex_utils.annotate_plot(ax, x_indices, accuracies, totals)
+
+            plt.yticks(list(np.linspace(0, 1, 11)), [
+                       str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
+            plt.xticks(x_indices, perc_ranges, fontsize=10)
+            plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
+            plt.ylabel('Purity', fontsize=12)
+            thex_utils.display_and_save_plot(self.name,
+                                             "Probability vs Positive Rate: " + class_name, ax)
