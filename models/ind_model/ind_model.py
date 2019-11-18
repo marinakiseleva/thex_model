@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from mainmodel.mainmodel import MainModel
 from classifiers.optbinary import OptimalBinaryClassifier
-import utilities.utilities as util
+import utilities.utilities as thex_utils
 from thex_data.data_consts import TARGET_LABEL
 
 
@@ -28,7 +28,7 @@ class IndModel(MainModel):
         """
         labels = []  # Relabeled y
         for df_index, row in y.iterrows():
-            cur_classes = util.convert_str_to_list(row[TARGET_LABEL])
+            cur_classes = thex_utils.convert_str_to_list(row[TARGET_LABEL])
             label = 1 if class_name in cur_classes else 0
             labels.append(label)
         relabeled_y = pd.DataFrame(labels, columns=[TARGET_LABEL])
@@ -87,7 +87,7 @@ class IndModel(MainModel):
         Gets label at maximum depth in class hierarchy that is also in self.class_labels, from string of labels.
         :param labels: string of labels from TARGET_LABEL
         """
-        labels = util.convert_str_to_list(labels)
+        labels = thex_utils.convert_str_to_list(labels)
         max_depth = 0
         max_label = None
         for label in labels:
