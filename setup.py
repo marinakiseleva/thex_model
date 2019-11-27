@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
 from distutils.core import setup
 
-setup(name='thex',
-      # packages=find_packages('thex_model'),
-      packages=['thex_data', 'models'],
-      version='2.3',
+setup(name='thex_model',
+      packages=find_packages(),
+      #packages=['thex_data', 'models', 'mainmodel', 'classifiers', 'utilities'],
+      version='2.4',
       description='THEx Model',
-      author='Marina Kiseleva',
+      author='Marina Kisley',
       author_email='marinaki@email.arizona.edu'
       )
