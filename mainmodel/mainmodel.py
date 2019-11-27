@@ -5,6 +5,8 @@ Initial data collection class
 Evaluation strategy (k-fold cross validation)
 Performance aggregation
 
+Subclasses differ in how they normalize across the class hierarchy.
+
 """
 
 from abc import ABC, abstractmethod
@@ -148,7 +150,9 @@ class MainModel(ABC, MainModelVisualization):
         Visualize performance
         :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         """
-        self.plot_probability_vs_accuracy(results)
+
+        range_metrics = self.compute_probability_range_metrics(results)
+        self.plot_probability_vs_accuracy(range_metrics)
 
         class_metrics = self.compute_metrics(results)
         self.plot_all_metrics(class_metrics, y)

@@ -1,4 +1,8 @@
 
+"""
+Class Mixin for MainModel which contains all performance plotting functionality 
+"""
+
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -160,13 +164,14 @@ class MainModelVisualization:
             ordered_baselines.reverse()
         return [ordered_formatted_names, ordered_metrics, ordered_baselines]
 
-    def plot_probability_vs_accuracy(self, results):
+    def plot_probability_vs_accuracy(self, range_metrics):
         """
         Plots accuracy of class (y-axis) vs. probability assigned to class (x-axis). Accuracy is measured as the number of true positives (samples with this class as label) divided by all samples with probabilities assigned in this range. 
-        :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
+        :param range_metrics: Map of classes to [TP_range_sums, total_range_sums]
+            total_range_sums: # of samples with probability in range for this class
+            TP_range_sums: true positives per range 
 
         """
-        range_metrics = self.compute_probability_range_metrics(results)
 
         for index, class_name in enumerate(range_metrics.keys()):
             true_positives, totals = range_metrics[class_name]

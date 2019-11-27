@@ -107,7 +107,7 @@ class IndModel(MainModel):
         range_metrics = {}
         label_index = len(self.class_labels)  # Last column is label
         for class_index, class_name in enumerate(self.class_labels):
-            tp_probabilities = []
+            tp_probabilities = []  # probabilities for True Positive samples
             total_probabilities = []
             for result_set in results:
                 for row in result_set:
@@ -119,7 +119,7 @@ class IndModel(MainModel):
                     max_class_index = np.argmax(row[:len(row) - 1])
                     max_class_name = self.class_labels[max_class_index]
 
-                    # tp_probabilities Numpy arary of all probabilities assigned to this
+                    # tp_probabilities Numpy array of all probabilities assigned to this
                     # class that were True Positives
                     if class_name == actual_label and max_class_name == actual_label:
                         tp_probabilities.append(max_class_prob)
