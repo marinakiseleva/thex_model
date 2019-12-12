@@ -5,7 +5,7 @@ Constant data-based information needed in THEx data program. Includes file locat
 
 import os
 
-CPU_COUNT = 6
+CPU_COUNT = 2
 
 # Plotting Specifications
 FIG_WIDTH = 6

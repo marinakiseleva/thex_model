@@ -12,9 +12,7 @@ import matplotlib.pyplot as plt
 from sklearn.neighbors.kde import KernelDensity
 
 from .data_consts import code_cat, TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI, cat_code
-from .data_clean import convert_str_to_list
-
-import utilities.utilities as thex_utils
+import utilities.utilities as util
 
 
 def plot_feature_distribution(model_name, df, feature, class_labels, class_counts):
@@ -46,7 +44,7 @@ def plot_feature_distribution(model_name, df, feature, class_labels, class_count
     for class_name in ordered_classes:
         keep_indices = []
         for index, row in df.iterrows():
-            classes = convert_str_to_list(row[TARGET_LABEL])
+            classes = util.convert_str_to_list(row[TARGET_LABEL])
             if class_name in classes and row[feature] is not None:
                 keep_indices.append(index)
 
@@ -69,7 +67,7 @@ def plot_feature_distribution(model_name, df, feature, class_labels, class_count
     plt.yscale('log', nonposy='clip')
     ax.legend(loc='best',  prop={'size': 5})
 
-    thex_utils.display_and_save_plot(model_name, title, ax)
+    util.display_and_save_plot(model_name, title, ax)
 
 
 # def plot_lsst_distribution(ax):
@@ -119,4 +117,4 @@ def plot_class_hist(model_name, class_counts):
     plt.title(title, fontsize=12)
     plt.tight_layout()
 
-    thex_utils.display_and_save_plot(model_name, title, ax)
+    util.display_and_save_plot(model_name, title, ax)

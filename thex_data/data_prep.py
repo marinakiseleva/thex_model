@@ -2,16 +2,13 @@
 data_prep
 Prepares data before running through a classifier. Contains functionality to pull down data, filter data, enhances features, and split into training and testing sets.
 """
-import sys
+
 from sklearn.model_selection import train_test_split
 
-from .data_clean import *
-from .data_consts import TARGET_LABEL
-from .data_filter import *
 from .data_init import collect_data
-from .data_plot import *
+from .data_filter import *
 from .data_transform import transform_features
-from .data_print import *
+from .data_consts import TARGET_LABEL, ORIG_TARGET_LABEL
 
 
 def get_data(col_list, **data_filters):
@@ -45,8 +42,8 @@ def get_data(col_list, **data_filters):
                     classes=data_filters['class_labels'])
 
     if df.shape[0] == 0:
-        print("\n\nNo data to run model on. Try changing data filters or limiting number of features. Note: Running on all columns will not work since no data spans all features.\n\n")
-        sys.exit()
+        raise ValueError(
+            "\nNo data to run model on. Try changing data filters or limiting number of features. Note: Running on all columns will not work since no data spans all features.\n")
 
     df = filter_class_labels(df, data_filters['class_labels'])
 

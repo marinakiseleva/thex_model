@@ -18,8 +18,7 @@ from hmc import hmc
 from thex_data.data_init import *
 from thex_data.data_prep import get_source_target_data
 from thex_data.data_plot import *
-from thex_data.data_consts import TARGET_LABEL, TREE_ROOT, UNDEF_CLASS
-from thex_data.data_consts import class_to_subclass as orig_class_hier
+from thex_data.data_consts import TARGET_LABEL, TREE_ROOT, UNDEF_CLASS, class_to_subclass as orig_class_hier
 
 from mainmodel.performance_plots import MainModelVisualization
 import utilities.utilities as util
@@ -136,13 +135,13 @@ class MainModel(ABC, MainModelVisualization):
         for index, row in y.iterrows():
             # Iterate through all class labels for this label
             max_depth = 0  # Set max depth to determine what level is undefined
-            for label in convert_str_to_list(row[TARGET_LABEL]):
+            for label in util.convert_str_to_list(row[TARGET_LABEL]):
                 if label in self.class_levels:
                     max_depth = max(self.class_levels[label], max_depth)
             # Max depth will be 0 for classes unhandled in hierarchy.
             if max_depth > 0:
                 # Add Undefined label for any nodes at max depth
-                for label in convert_str_to_list(row[TARGET_LABEL]):
+                for label in util.convert_str_to_list(row[TARGET_LABEL]):
                     if label in self.class_levels and self.class_levels[label] == max_depth:
                         add = ", " + UNDEF_CLASS + label
                         y.iloc[index] = y.iloc[index] + add

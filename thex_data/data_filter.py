@@ -10,7 +10,7 @@ Functionality for filtering data
 import pandas as pd
 
 from .data_consts import cat_code, TARGET_LABEL
-from .data_print import *
+# from .data_print import *
 import utilities.utilities as util
 
 
@@ -129,7 +129,8 @@ def filter_class_size(df, N):
                 class_indices.append(index)
         df_class = df.loc[class_indices, :].reset_index(drop=True)
         num_rows = df_class.shape[0]  # number of rows
-        if num_rows > N:
+        print("number of rows in " + str(class_label) + " : " + str(num_rows))
+        if num_rows >= N:
             # Keep since it has enough rows
             filtered_df = pd.concat([filtered_df, df_class])
 
