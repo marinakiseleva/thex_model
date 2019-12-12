@@ -33,7 +33,12 @@ class DTClassifier():
             'class_weight': ['balanced', class_weights]
         }
         clf_optimize = GridSearchCV(
-            estimator=DecisionTreeClassifier(), param_grid=grid, scoring='brier_score_loss', cv=3, iid=True, n_jobs=CPU_COUNT)
+            estimator=DecisionTreeClassifier(),
+            param_grid=grid,
+            scoring='brier_score_loss',
+            cv=3,
+            iid=True,
+            n_jobs=CPU_COUNT)
 
         # Fit the random search model
         clf_optimize.fit(X, y, sample_weight=sample_weights)
