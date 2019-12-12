@@ -52,18 +52,36 @@ def drop_conflicts(df):
     return df.loc[keep_indices, :]
 
 
-def sub_sample(df, count):
+def sub_sample(df, count, classes):
     """
     Sub-samples over-represented class
     :param df: DataFrame to subsample
     :param count: Randomly subsample all classes to this #; if class has less than or equal to this #, then just leave it
+    :param classes: classes to filter on.
     """
     if count is None:
         return df
+
+    if classes is None:
+        # Infer unique classes from data
+        unique_class_groups = list(df[TARGET_LABEL].unique())
+        unique_classes = set()
+        for group in unique_class_groups:
+            for class_name in group:
+                unique_classes.add(class_name)
+        unique_class_list = list(unique_classes)
+    else:
+        unique_class_list = classes
+
+    # Filter each class in list
     subsampled_df = pd.DataFrame()
-    unique_classes = list(df[TARGET_LABEL].unique())
-    for class_label in unique_classes:
-        df_class = df[df[TARGET_LABEL] == class_label]
+    for class_label in unique_class_list:
+        keep_indices = []
+        for index, row in df.iterrows():
+            class_list = util.convert_str_to_list(row[TARGET_LABEL])
+            if class_label in class_list:
+                keep_indices.append(index)
+        df_class = df.loc[keep_indices, :].reset_index(drop=True)
         num_rows = df_class.shape[0]  # number of rows
         if num_rows > count:
             # Reduce to the count number

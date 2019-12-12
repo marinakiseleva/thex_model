@@ -37,11 +37,12 @@ def get_data(col_list, **data_filters):
     # Keep classes with minimum number of samples
     df = filter_class_size(df, data_filters['min_class_size'])
 
-    # Randomly subsample any over-represented classes down to passed-in value
-    df = sub_sample(df, count=data_filters['subsample'])
-
     # Drop empty class labels
     df = df[df[TARGET_LABEL] != ""]
+
+    # Randomly subsample any over-represented classes down to passed-in value
+    df = sub_sample(df, count=data_filters['subsample'],
+                    classes=data_filters['class_labels'])
 
     if df.shape[0] == 0:
         print("\n\nNo data to run model on. Try changing data filters or limiting number of features. Note: Running on all columns will not work since no data spans all features.\n\n")
