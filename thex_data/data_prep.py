@@ -25,27 +25,32 @@ def get_data(col_list, **data_filters):
     # Remove rows with NULL labels
     df = df[~df[TARGET_LABEL].isnull()]
 
-    df = filter_columns(df.copy(), col_list, data_filters['incl_redshift'])
-
-    df = drop_conflicts(df)
-
-    df.dropna(axis=0, inplace=True)
-
-    # Keep classes with minimum number of samples
-    df = filter_class_size(df, data_filters['min_class_size'])
-
     # Drop empty class labels
     df = df[df[TARGET_LABEL] != ""]
 
+    df = filter_columns(df.copy(), col_list, data_filters['incl_redshift'])
+
+    # Drop row with any NULL values (after columns have been filtered)
+    df.dropna(axis=0, inplace=True)
+
+    df = drop_conflicts(df)
+
+    df = filter_class_labels(df, data_filters['class_labels'])
+
+    # Keep classes with minimum number of samples (Not too few)
+    df = filter_class_size(df,
+                           data_filters['min_class_size'],
+                           data_filters['class_labels'])
+
     # Randomly subsample any over-represented classes down to passed-in value
-    df = sub_sample(df, count=data_filters['subsample'],
-                    classes=data_filters['class_labels'])
+    # (Not too many)
+    df = sub_sample(df,
+                    data_filters['subsample'],
+                    data_filters['class_labels'])
 
     if df.shape[0] == 0:
         raise ValueError(
             "\nNo data to run model on. Try changing data filters or limiting number of features. Note: Running on all columns will not work since no data spans all features.\n")
-
-    df = filter_class_labels(df, data_filters['class_labels'])
 
     return df.reset_index(drop=True)
 

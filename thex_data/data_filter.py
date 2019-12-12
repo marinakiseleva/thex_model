@@ -1,25 +1,19 @@
 """
 data_filter
 Functionality for filtering data
- - sub_sample: sub sampling over-represented classes
- - one_all: Keep only certain classes unique and convert rest to 'Other', in order to attempt a pseudo one-vs-all classification
- - filter_columns: keeps only certain columns; feature selection
- - filter_top_classes: keep only X most popular classes to reduce # of classes and ensure all classes have enough data
 """
 
 import pandas as pd
 
 from .data_consts import cat_code, TARGET_LABEL
-# from .data_print import *
 import utilities.utilities as util
 
 
 def filter_class_labels(df, class_labels):
     """
-    Keep rows that have label in self.class_labels
+    Keep rows that have label in class_labels
     :param df: DataFrame of features and TARGET_LABEL
     """
-    # Keep rows that have a label in self.class_labels.
     if class_labels is None:
         return df
     keep_indices = []
@@ -35,7 +29,7 @@ def filter_class_labels(df, class_labels):
 
 def drop_conflicts(df):
     """
-    Drop rows where classes belong to classes in different disjoint groups. This requires special handling not yet implemented. 
+    Drop rows where classes belong to classes in different disjoint groups. This requires special handling not yet implemented.
     """
     conflict_labels = ["_CONFUSION", "_CONFLICT",
                        "__CONFLICT_CASES", "_UNCLEAR_LABELS", "_IGNORED_LABELS"]
@@ -54,7 +48,7 @@ def drop_conflicts(df):
 
 def infer_data_classes(df):
     """
-    Infer unique classes from data
+    Helper function to infer unique classes from data
     """
     unique_class_groups = list(df[TARGET_LABEL].unique())
     unique_classes = set()
@@ -62,39 +56,6 @@ def infer_data_classes(df):
         for class_name in util.convert_str_to_list(group):
             unique_classes.add(class_name)
     return list(unique_classes)
-
-
-def sub_sample(df, count, classes):
-    """
-    Sub-samples over-represented class
-    :param df: DataFrame to subsample
-    :param count: Randomly subsample all classes to this #; if class has less than or equal to this #, then just leave it
-    :param classes: classes to filter on.
-    """
-    if count is None:
-        return df
-
-    if classes is None:
-        # Infer unique classes from data
-        unique_class_list = infer_data_classes(df)
-    else:
-        unique_class_list = classes
-    # Filter each class in list
-    subsampled_df = pd.DataFrame()
-    for class_label in unique_class_list:
-        keep_indices = []
-        for index, row in df.iterrows():
-            class_list = util.convert_str_to_list(row[TARGET_LABEL])
-            if class_label in class_list:
-                keep_indices.append(index)
-        df_class = df.loc[keep_indices, :].reset_index(drop=True)
-        num_rows = df_class.shape[0]  # number of rows
-        if num_rows > count:
-            # Reduce to the count number
-            df_class = df_class.sample(n=count)
-        subsampled_df = pd.concat([subsampled_df, df_class])
-
-    return subsampled_df
 
 
 def filter_columns(df, col_list, incl_redshift):
@@ -109,7 +70,44 @@ def filter_columns(df, col_list, incl_redshift):
     return df
 
 
-def filter_class_size(df, N):
+def sub_sample(df, count, classes):
+    """
+    Sub-samples over-represented class
+    :param df: DataFrame to subsample count, if class has less than or equal to this count, then just leave it
+    :param count: Randomly subsample all classes to this
+    :param classes: classes to filter on.
+    """
+    if count is None:
+        return df
+
+    if classes is None:
+        # Infer unique classes from data
+        classes = infer_data_classes(df)
+
+    # Filter each class in list, by indices. Save indices of samples to keep.
+    keep_indices = []
+    for class_label in classes:
+        class_indices = []
+        for index, row in df.iterrows():
+            class_list = util.convert_str_to_list(row[TARGET_LABEL])
+            if class_label in class_list:
+                class_indices.append(index)
+        df_class = df.loc[class_indices, :]
+        num_rows = df_class.shape[0]  # number of rows
+
+        if num_rows > count:
+            # Reduce to the count number
+            sampled_class_indices = list(df_class.sample(n=count).index)
+            keep_indices += sampled_class_indices
+        else:
+            keep_indices += class_indices
+
+    unique_indices = list(set(keep_indices))
+
+    return df.loc[keep_indices, :].reset_index(drop=True)
+
+
+def filter_class_size(df, N, classes):
     """
     Keep classes with at least N points
     :param df: DataFrame of features and TARGET_LABEL
@@ -119,38 +117,24 @@ def filter_class_size(df, N):
     if N is None:
         return df
 
-    unique_class_list = infer_data_classes(df)
-    filtered_df = pd.DataFrame()
-    for class_label in unique_class_list:
+    if classes is None:
+        # Infer unique classes from data
+        classes = infer_data_classes(df)
+
+    # Filter each class in list, by indices. Save indices of samples to keep.
+    keep_indices = []
+
+    for class_label in classes:
         class_indices = []
         for index, row in df.iterrows():
             class_list = util.convert_str_to_list(row[TARGET_LABEL])
             if class_label in class_list:
                 class_indices.append(index)
-        df_class = df.loc[class_indices, :].reset_index(drop=True)
+        df_class = df.loc[class_indices, :]
         num_rows = df_class.shape[0]  # number of rows
-        print("number of rows in " + str(class_label) + " : " + str(num_rows))
+
         if num_rows >= N:
-            # Keep since it has enough rows
-            filtered_df = pd.concat([filtered_df, df_class])
+            keep_indices += class_indices
 
-    return filtered_df
-
-
-def filter_data(df):
-    """
-    Filters DataFrame to keep only rows that have at least 1 valid value in the features
-    :param df: DataFrame of features and TARGET_LABEL
-    """
-    df = df.reset_index(drop=True)
-    cols = list(df)
-    if 'redshift' in cols:
-        cols.remove('redshift')
-    cols.remove(TARGET_LABEL)
-    # Only check for NULLs on real feature columns
-    df_filtered = pd.DataFrame(df[cols].reset_index(drop=True))
-    # Indices of data that do not have all NULL or 0 values
-    non_null_indices = df_filtered.loc[
-        (~df_filtered.isnull().all(1)) & (~(df_filtered == 0).all(1))].index
-
-    return df.iloc[non_null_indices]
+    unique_indices = list(set(keep_indices))
+    return df.loc[unique_indices, :].reset_index(drop=True)
