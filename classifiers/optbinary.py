@@ -78,8 +78,8 @@ class OptimalBinaryClassifier():
         :param y: Pandas DataFrame labels
         """
         predictions = self.get_class_probabilities(clf, X)
-        score = brier_score_loss(y.values.flatten(), predictions)
-        return score
+        loss = brier_score_loss(y.values.flatten(), predictions)
+        return loss
 
     def get_best_classifier(self, X, y):
         """
