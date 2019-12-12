@@ -18,7 +18,7 @@ from hmc import hmc
 from thex_data.data_init import *
 from thex_data.data_prep import get_source_target_data
 from thex_data.data_plot import *
-from thex_data.data_consts import TARGET_LABEL, TREE_ROOT
+from thex_data.data_consts import TARGET_LABEL, TREE_ROOT, UNDEF_CLASS
 from thex_data.data_consts import class_to_subclass as class_hier
 
 from mainmodel.performance_plots import MainModelVisualization
@@ -33,8 +33,10 @@ class MainModel(ABC, MainModelVisualization):
         """
         util.init_file_directories(self.name)
 
-        # for parent in class_hier.keys():
-        #     class_hier[parent].insert(0, UNDEF_CLASS + parent)
+        # Must add Unspecifieds to tree, so that when searching for lowest-level
+        # label, the UNDEF one returns.
+        for parent in class_hier.keys():
+            class_hier[parent].insert(0, UNDEF_CLASS + parent)
         self.tree = self.init_tree(class_hier)
         self.class_levels = self.assign_levels(self.tree, {}, self.tree.root, 1)
 
@@ -66,6 +68,8 @@ class MainModel(ABC, MainModelVisualization):
 
         self.class_labels = self.get_class_labels(data_filters['class_labels'], y)
 
+        # Redefine labels with Unspecifieds
+        y = self.add_unspecified_labels_to_data(y)
         self.visualize_data(X, y)
         print("Class labels " + str(self.class_labels))
 
@@ -121,6 +125,25 @@ class MainModel(ABC, MainModelVisualization):
                 data_labels.append(label)
         data_labels = set(data_labels)
         return list(data_labels.intersection(defined_classes))
+
+    def add_unspecified_labels_to_data(self, y):
+        """
+        Add unspecified label for each tree parent in data's list of labels
+        """
+        for index, row in y.iterrows():
+            # Iterate through all class labels for this label
+            max_depth = 0  # Set max depth to determine what level is undefined
+            for label in convert_str_to_list(row[TARGET_LABEL]):
+                if label in self.class_levels:
+                    max_depth = max(self.class_levels[label], max_depth)
+            # Max depth will be 0 for classes unhandled in hierarchy.
+            if max_depth > 0:
+                # Add Undefined label for any nodes at max depth
+                for label in convert_str_to_list(row[TARGET_LABEL]):
+                    if label in self.class_levels and self.class_levels[label] == max_depth:
+                        add = ", " + UNDEF_CLASS + label
+                        y.iloc[index] = y.iloc[index] + add
+        return y
 
     def get_class_counts(self, y):
         """
@@ -182,6 +205,7 @@ class MainModel(ABC, MainModelVisualization):
         :param k: Number of folds
         :param runs: Number of runs to aggregate results over
         """
+
         kf = StratifiedKFold(n_splits=k, shuffle=True)
 
         results = []
