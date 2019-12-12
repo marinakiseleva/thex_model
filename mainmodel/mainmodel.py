@@ -48,7 +48,8 @@ class MainModel(ABC, MainModelVisualization):
                         'min_class_size': 9,
                         'pca': None,  # Number of principal components
                         'class_labels': None,
-                        'prior': 'uniform'
+                        'prior': 'uniform',
+                        'data': None
                         }
 
         for data_filter in user_data_filters.keys():
@@ -57,7 +58,11 @@ class MainModel(ABC, MainModelVisualization):
         # list of features to use from database
         features = collect_cols(data_filters['cols'], data_filters['col_matches'])
 
-        X, y = get_source_target_data(features, **data_filters)
+        if data_filters['data'] is None:
+            X, y = get_source_target_data(features, **data_filters)
+        else:
+            X = data_filters['data'][0]
+            y = data_filters['data'][1]
 
         self.class_labels = self.get_class_labels(data_filters['class_labels'], y)
 
@@ -159,6 +164,18 @@ class MainModel(ABC, MainModelVisualization):
 
         return -1
 
+    def scale_data(self, X_train, y_train, X_test, y_test):
+        """
+        Fit scaling to training data and apply to both training and testing
+        """
+        return None
+
+    def apply_PCA(self, X_train, y_train, X_test, y_test):
+        """
+        Fit PCA to training data and apply to both training and testing
+        """
+        return None
+
     def run_cfv(self, X, y, k, runs):
         """
         Run k-fold cross validation over a number of runs
@@ -173,6 +190,8 @@ class MainModel(ABC, MainModelVisualization):
                 drop=True), X.iloc[test_index].reset_index(drop=True)
             y_train, y_test = y.iloc[train_index].reset_index(
                 drop=True), y.iloc[test_index].reset_index(drop=True)
+
+            # TODO: Scale and/or apply PCA here.
 
             self.train_model(X_train, y_train)
 
