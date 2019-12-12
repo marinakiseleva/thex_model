@@ -67,12 +67,11 @@ def sub_sample(df, count, classes):
         unique_class_groups = list(df[TARGET_LABEL].unique())
         unique_classes = set()
         for group in unique_class_groups:
-            for class_name in group:
+            for class_name in util.convert_str_to_list(group):
                 unique_classes.add(class_name)
         unique_class_list = list(unique_classes)
     else:
         unique_class_list = classes
-
     # Filter each class in list
     subsampled_df = pd.DataFrame()
     for class_label in unique_class_list:
