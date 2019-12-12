@@ -1,38 +1,36 @@
-
-import pandas as pd
+import numpy as np
+from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
-from sklearn.tree import DecisionTreeClassifier
 
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
 
 
-class DTClassifier():
+class SVMClassifier():
     """
-    Decision tree classifier
+    Support vector machine classifier
     """
 
     def __init__(self, X, y, sample_weights, class_weights):
         """
         Init classifier through training
         """
-        self.name = "Decision Tree"
+        self.name = "SVM"
         self.clf = self.train(X, y, sample_weights, class_weights)
 
     def train(self, X, y, sample_weights, class_weights):
 
-        grid = {'criterion': ['entropy', 'gini'],
-                'splitter': ['best', 'random'],
+        # Set the parameters by cross-validation
+
+        grid = {'kernel': ['rbf', 'linear'],
+                'gamma': [1e-3, 1e-4, 'auto'],
+                'C': [1, 10, 100, 1000],
                 'class_weight': ['balanced', class_weights]
-                #         'max_depth': [20, 50, None],
-                #         'min_samples_split': [2, 4, 8, 0.05],
-                #         'min_samples_leaf': [1, 2, 4, 8],
-                #         'min_weight_fraction_leaf': [0, 0.001, 0.01],
-                #         'max_features': [0.3, 0.5, None],
                 }
+
         clf_optimize = GridSearchCV(
-            estimator=DecisionTreeClassifier(),
+            estimator=SVC(),
             param_grid=grid,
-            scoring='brier_score_loss',
+            scoring='average_precision',
             cv=3,
             iid=True,
             n_jobs=CPU_COUNT)
@@ -44,5 +42,7 @@ class DTClassifier():
         return clf
 
     def get_class_probability(self, x):
-        # Return probability of class at index 1 (==1, positive class)
-        return self.clf.predict_proba([x.values])[0][1]
+        """
+        Note: SVM returns 0 or 1, not probability. We access this 0 or 1 prediction as probability though.
+        """
+        return self.clf.predict([x.values])[0]

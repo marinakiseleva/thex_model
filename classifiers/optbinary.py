@@ -10,6 +10,8 @@ import numpy as np
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
 from classifiers.kdeclassifier import KDEClassifier
 from classifiers.dtclassifier import DTClassifier
+from classifiers.svmclassifier import SVMClassifier
+from classifiers.adatreeclassifier import ADAClassifier
 
 from sklearn.metrics import average_precision_score, brier_score_loss
 
@@ -81,6 +83,19 @@ class OptimalBinaryClassifier():
         loss = brier_score_loss(y.values.flatten(), predictions)
         return loss
 
+    def train_classifiers(self, X, y, sample_weights, class_weights):
+        """
+        Train variety of classifiers
+        """
+        classifiers = [KDEClassifier(X, y),
+                       DTClassifier(X, y, sample_weights, class_weights),
+                       SVMClassifier(X, y, sample_weights, class_weights)]
+        # Train ADA on already defined classifiers
+        adadt = ADAClassifier(X, y, sample_weights, class_weights,
+                              classifiers[1].clf, "ADA Boosted Decision Tree")
+        classifiers.append(adadt)
+        return classifiers
+
     def get_best_classifier(self, X, y):
         """
         Get best classifier 
@@ -89,8 +104,8 @@ class OptimalBinaryClassifier():
         sample_weights = self.get_sample_weights(labeled_samples)
         class_weights = self.get_class_weights(labeled_samples)
 
-        classifiers = [KDEClassifier(X, y),
-                       DTClassifier(X, y, sample_weights, class_weights)]
+        classifiers = self.train_classifiers(X, y, sample_weights, class_weights)
+
         min_loss = 100000
         best_clf = None
         for clf in classifiers:
