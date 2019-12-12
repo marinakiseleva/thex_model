@@ -47,6 +47,4 @@ class ADAClassifier():
         """
         Return probability of class at index 1 (probability of 1, positive class)
         """
-        print('prob ')
-        print(self.clf.predict_proba([x.values]))
         return self.clf.predict_proba([x.values])[0][1]
