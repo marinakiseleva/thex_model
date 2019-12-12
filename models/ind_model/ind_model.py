@@ -1,6 +1,6 @@
 """
 Independent Model
-Assumes all classes are independent and are not related by any class hierarchy.
+Assumes all classes are independent and are not related by any class hierarchy. 
 
 """
 
@@ -82,23 +82,19 @@ class IndModel(MainModel):
 
         return norm_probabilities
 
-    def get_label(self, labels):
+    def is_class(self, class_name, labels):
         """
-        Gets label at maximum depth in class hierarchy that is also in self.class_labels, from string of labels.
-        :param labels: string of labels from TARGET_LABEL
+        Boolean which returns True if class name is in the list of labels, and False otherwise.
+
         """
-        labels = thex_utils.convert_str_to_list(labels)
-        max_depth = 0
-        max_label = None
-        for label in labels:
-            if label in self.class_levels and self.class_levels[label] > max_depth and label in self.class_labels:
-                max_depth = self.class_levels[label]
-                max_label = label
-        return max_label
+        if class_name in labels:
+            return True
+        else:
+            return False
 
     def compute_probability_range_metrics(self, results):
         """
-        Computes True Positive & Total metrics, split by probability assigned to class for ranges of 10% from 0 to 100. Used to plot probability assigned vs completeness.
+        Computes True Positive & Total metrics, split by probability assigned to class for ranges of 10% from 0 to 100. Used to plot probability assigned vs completeness (TP/total, per bin).
         :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         :return range_metrics: Map of classes to [TP_range_sums, total_range_sums]
             total_range_sums: # of samples with probability in range for this class
@@ -113,7 +109,9 @@ class IndModel(MainModel):
                 for row in result_set:
                     labels = row[label_index]
 
-                    actual_label = self.get_label(labels)
+                    # Sample is an instance of this current class.
+                    is_class = self.is_class(class_name, labels)
+
                     # Get class index of max prob; exclude last column since it is label
                     max_class_prob = np.max(row[:len(row) - 1])
                     max_class_index = np.argmax(row[:len(row) - 1])
@@ -121,7 +119,7 @@ class IndModel(MainModel):
 
                     # tp_probabilities Numpy array of all probabilities assigned to this
                     # class that were True Positives
-                    if class_name == actual_label and max_class_name == actual_label:
+                    if is_class and max_class_name == class_name:
                         tp_probabilities.append(max_class_prob)
 
                     total_probabilities.append(row[class_index])
@@ -141,31 +139,33 @@ class IndModel(MainModel):
         :return class_metrics: Map from class name to map of {"TP": w, "FP": x, "FN": y, "TN": z}
         """
 
-        label_index = len(self.class_labels)  # Last column is label
+        # Combine sets in results
+        results = np.concatenate(results)
+
+        # Last column is label
+        label_index = len(self.class_labels)
         class_metrics = {cn: {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
                          for cn in self.class_labels}
-        for result_set in results:
-            for row in result_set:
-                labels = row[label_index]
 
-                actual_label = self.get_label(labels)
+        for class_name in self.class_labels:
+            for row in results:
+                labels = row[label_index]
+                # Sample is an instance of this current class.
+                is_class = self.is_class(class_name, labels)
                 # Get class index of max prob; exclude last column since it is label
                 max_class_index = np.argmax(row[:len(row) - 1])
                 max_class_name = self.class_labels[max_class_index]
 
-                if max_class_name == actual_label:
-                    # Correct prediction!
-                    class_metrics[max_class_name]["TP"] += 1
-                    for class_name in self.class_labels:
-                        if class_name != max_class_name:
-                            class_metrics[class_name]["TN"] += 1
+                if class_name == max_class_name:
+                    if is_class:
+                        class_metrics[class_name]["TP"] += 1
+                    else:
+                        class_metrics[class_name]["FP"] += 1
                 else:
-                    # Incorrect prediction!
-                    class_metrics[max_class_name]["FP"] += 1
-                    class_metrics[actual_label]["FN"] += 1
-                    for class_name in self.class_labels:
-                        if class_name != max_class_name and class_name != actual_label:
-                            class_metrics[class_name]["TN"] += 1
+                    if is_class:
+                        class_metrics[class_name]["FN"] += 1
+                    else:
+                        class_metrics[class_name]["TN"] += 1
 
         return class_metrics
 
