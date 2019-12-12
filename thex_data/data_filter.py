@@ -52,6 +52,18 @@ def drop_conflicts(df):
     return df.loc[keep_indices, :]
 
 
+def infer_data_classes(df):
+    """
+    Infer unique classes from data
+    """
+    unique_class_groups = list(df[TARGET_LABEL].unique())
+    unique_classes = set()
+    for group in unique_class_groups:
+        for class_name in util.convert_str_to_list(group):
+            unique_classes.add(class_name)
+    return list(unique_classes)
+
+
 def sub_sample(df, count, classes):
     """
     Sub-samples over-represented class
@@ -64,12 +76,7 @@ def sub_sample(df, count, classes):
 
     if classes is None:
         # Infer unique classes from data
-        unique_class_groups = list(df[TARGET_LABEL].unique())
-        unique_classes = set()
-        for group in unique_class_groups:
-            for class_name in util.convert_str_to_list(group):
-                unique_classes.add(class_name)
-        unique_class_list = list(unique_classes)
+        unique_class_list = infer_data_classes(df)
     else:
         unique_class_list = classes
     # Filter each class in list
@@ -102,21 +109,27 @@ def filter_columns(df, col_list, incl_redshift):
     return df
 
 
-def filter_class_size(df, X):
+def filter_class_size(df, N):
     """
-    Keep classes with at least X points
+    Keep classes with at least N points
     :param df: DataFrame of features and TARGET_LABEL
-    :param X: Number of classes to keep
-    :return: DataFrame of original format, with only top X classes of data
+    :param N: Number of classes to keep
+    :return: DataFrame of original format, with only top N classes of data
     """
-    if X is None:
+    if N is None:
         return df
+
+    unique_class_list = infer_data_classes(df)
     filtered_df = pd.DataFrame()
-    unique_classes = list(df[TARGET_LABEL].unique())
-    for class_label in unique_classes:
-        df_class = df[df[TARGET_LABEL] == class_label]
+    for class_label in unique_class_list:
+        class_indices = []
+        for index, row in df.iterrows():
+            class_list = util.convert_str_to_list(row[TARGET_LABEL])
+            if class_label in class_list:
+                class_indices.append(index)
+        df_class = df.loc[class_indices, :].reset_index(drop=True)
         num_rows = df_class.shape[0]  # number of rows
-        if num_rows > X:
+        if num_rows > N:
             # Keep since it has enough rows
             filtered_df = pd.concat([filtered_df, df_class])
 
