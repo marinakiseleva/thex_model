@@ -10,7 +10,7 @@ import pandas as pd
 from mainmodel.mainmodel import MainModel
 from classifiers.optbinary import OptimalBinaryClassifier
 import utilities.utilities as thex_utils
-from thex_data.data_consts import TARGET_LABEL
+from thex_data.data_consts import TARGET_LABEL, UNDEF_CLASS
 
 
 class IndModel(MainModel):
@@ -20,6 +20,24 @@ class IndModel(MainModel):
         """
         self.name = "Independent Model"
         super(IndModel, self).__init__(**data_args)
+
+        # Filter classes based on Independent model structure
+        self.class_labels = self.filter_labels(self.class_labels)
+
+    def filter_labels(self, class_labels):
+        """
+        Remove labels such that class are all unique (IE. Remove labels that have subclasses, such as Ia and CC)
+        Keeps all lowest-level classes (may be identified as either Unspecified, or a class name which doesn't have an unspecified version, meaning it is the lowest-level)
+        :param class_labels: List of class names
+        """
+
+        filtered_labels = []
+        for class_name in class_labels:
+            if UNDEF_CLASS in class_name:
+                filtered_labels.append(class_name)
+            elif UNDEF_CLASS + class_name not in class_labels:
+                filtered_labels.append(class_name)
+        return filtered_labels
 
     def get_class_data(self, class_name, y):
         """

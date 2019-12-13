@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import utilities.utilities as thex_utils
 
 
-from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, TREE_ROOT, UNDEF_CLASS, class_to_subclass
+from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, TREE_ROOT, UNDEF_CLASS
 
 
 class MainModelVisualization:
@@ -62,7 +62,6 @@ class MainModelVisualization:
         """
         class_names, metrics, baselines = self.get_ordered_metrics(
             class_metrics, baselines)
-
         # Set constants
         tick_size = 8
         bar_width = 0.8
@@ -97,46 +96,13 @@ class MainModelVisualization:
 
         thex_utils.display_and_save_plot(self.name, xlabel, ax)
 
-    def get_classes_ordered(self, class_set, ordered_names):
-        """
-        Recursive function to get list of class names properly ordered, how we'd like them to show up in the plots. Ordered by place in hierarchy, for example: Ia, Ia 91BG, CC, etc. 
-        :param class_set: Set of classes to try adding to the list. We need to recurse on this list so subclasses are added right after parents. None at the start, and set manually to level 2 (top level after root)
-        :param ordered_names: List of class names in correct, hierarchical order.
-        """
-
-        def get_ordered_intersection(classes):
-            """
-            Get classes at intersection between list of classes and self.class_labels
-            :param classes: List of classes 
-            """
-            intersection_classes = []
-            for class_name in classes:
-                if class_name in self.class_labels:
-                    intersection_classes.append(class_name)
-            return intersection_classes
-
-        if class_set is None:
-            class_set = get_ordered_intersection(class_to_subclass[TREE_ROOT])
-
-        for class_name in class_set:
-            ordered_names.append(class_name)
-            if class_name in class_to_subclass:
-                subclasses = class_to_subclass[class_name]
-                valid_subclasses = get_ordered_intersection(subclasses)
-                if len(valid_subclasses) > 0:
-                    ordered_names = self.get_classes_ordered(
-                        valid_subclasses,
-                        ordered_names)
-
-        return ordered_names
-
     def get_ordered_metrics(self, class_metrics, baselines=None):
         """
         Reorder metrics and reformat class names in hierarchy groupings
         :param class_metrics: Mapping from class name to metric value.
         :[optional] param baselines: Mapping from class name to random-baseline performance
         """
-        ordered_names = self.get_classes_ordered(None, [])
+        ordered_names = sorted(self.class_labels)
         ordered_formatted_names = []
         ordered_metrics = []
         ordered_baselines = [] if baselines is not None else None

@@ -72,12 +72,22 @@ class MainModel(ABC, MainModelVisualization):
 
         self.class_labels = self.get_class_labels(data_filters['class_labels'], y)
 
-        self.visualize_data(X, y)
+        self.X = X
+        self.y = y
+
+        self.num_folds = data_filters['folds']
+        self.num_runs = data_filters['num_runs']
+
+    def run_model(self):
+        """
+        Visualize data, run analysis, and record results.
+        """
+        self.visualize_data(self.X, self.y)
         print("Class labels " + str(self.class_labels))
 
-        results = self.run_cfv(X, y, data_filters['folds'], data_filters['num_runs'])
+        results = self.run_cfv(self.X, self.y, self.num_folds, self.num_runs)
 
-        self.visualize_performance(results, y)
+        self.visualize_performance(results, self.y)
 
     def init_tree(self, hierarchy):
         print("\n\nConstructing Class Hierarchy Tree...")
@@ -183,7 +193,6 @@ class MainModel(ABC, MainModelVisualization):
 
         range_metrics = self.compute_probability_range_metrics(results)
         self.plot_probability_vs_accuracy(range_metrics)
-
         class_metrics = self.compute_metrics(results)
         self.plot_all_metrics(class_metrics, y)
 
