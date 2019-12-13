@@ -12,6 +12,7 @@ from classifiers.kdeclassifier import KDEClassifier
 from classifiers.dtclassifier import DTClassifier
 from classifiers.svmclassifier import SVMClassifier
 from classifiers.adatreeclassifier import ADAClassifier
+from classifiers.gaussiannb import GNBClassifier
 
 from sklearn.metrics import average_precision_score, brier_score_loss
 
@@ -89,11 +90,16 @@ class OptimalBinaryClassifier():
         """
         classifiers = [KDEClassifier(X, y),
                        DTClassifier(X, y, sample_weights, class_weights),
-                       SVMClassifier(X, y, sample_weights, class_weights)]
+                       SVMClassifier(X, y, sample_weights, class_weights),
+                       GNBClassifier(X, y, sample_weights)]
         # Train ADA on already defined classifiers
-        adadt = ADAClassifier(X, y, sample_weights, class_weights,
-                              classifiers[1].clf, "ADA Boosted Decision Tree")
-        classifiers.append(adadt)
+        ada_dt = ADAClassifier(X, y, sample_weights,
+                               classifiers[1].clf, "ADA Boosted Decision Tree")
+        classifiers.append(ada_dt)
+
+        ada_gnb = ADAClassifier(X, y, sample_weights,
+                                classifiers[1].clf, "ADA Boosted Gaussian NB")
+        classifiers.append(ada_gnb)
         return classifiers
 
     def get_best_classifier(self, X, y):
@@ -109,12 +115,11 @@ class OptimalBinaryClassifier():
         min_loss = 100000
         best_clf = None
         for clf in classifiers:
-            tlpd = self.get_clf_loss(clf, X, y)
-            if tlpd < min_loss:
-                min_loss = tlpd
+            loss = self.get_clf_loss(clf, X, y)
+            if loss < min_loss:
+                min_loss = loss
                 best_clf = clf
 
-        print("best clf " + str(best_clf.name))
-        print('with score ' + str(min_loss))
+        print("\nBest Classifier " + str(best_clf.name) + ' with score ' + str(min_loss))
 
         return best_clf, best_clf.name

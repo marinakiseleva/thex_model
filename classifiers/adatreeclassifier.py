@@ -11,14 +11,14 @@ class ADAClassifier():
     ADA Boosted Decision Tree
     """
 
-    def __init__(self,  X, y, sample_weights, class_weights, base_clf, name):
+    def __init__(self,  X, y, sample_weights, base_clf, name):
         """
         Init classifier through training
         """
         self.name = name
-        self.clf = self.train(base_clf, X, y, sample_weights, class_weights)
+        self.clf = self.train(base_clf, X, y, sample_weights)
 
-    def train(self, base_clf, X, y, sample_weights, class_weights):
+    def train(self, base_clf, X, y, sample_weights):
 
         # Set the parameters by cross-validation
 
