@@ -37,17 +37,6 @@ def get_data(col_list, **data_filters):
 
     df = filter_class_labels(df, data_filters['class_labels'])
 
-    # Keep classes with minimum number of samples (Not too few)
-    df = filter_class_size(df,
-                           data_filters['min_class_size'],
-                           data_filters['class_labels'])
-
-    # Randomly subsample any over-represented classes down to passed-in value
-    # (Not too many)
-    df = sub_sample(df,
-                    data_filters['subsample'],
-                    data_filters['class_labels'])
-
     if df.shape[0] == 0:
         raise ValueError(
             "\nNo data to run model on. Try changing data filters or limiting number of features. Note: Running on all columns will not work since no data spans all features.\n")

@@ -12,11 +12,12 @@ Subclasses differ in how they normalize across the class hierarchy.
 from abc import ABC, abstractmethod
 
 from sklearn.model_selection import StratifiedKFold
-
+import pandas as pd
 from hmc import hmc
 
 from thex_data.data_init import *
 from thex_data.data_prep import get_source_target_data
+from thex_data.data_filter import filter_class_size, sub_sample
 from thex_data.data_plot import *
 from thex_data.data_consts import TARGET_LABEL, TREE_ROOT, UNDEF_CLASS, class_to_subclass as orig_class_hier
 
@@ -72,11 +73,33 @@ class MainModel(ABC, MainModelVisualization):
 
         self.class_labels = self.get_class_labels(data_filters['class_labels'], y)
 
+        X, y = self.filter_data(X, y,
+                                data_filters['min_class_size'],
+                                data_filters['subsample'])
+
         self.X = X
         self.y = y
 
         self.num_folds = data_filters['folds']
         self.num_runs = data_filters['num_runs']
+
+    def filter_data(self, X, y, min_class_size, max_class_size):
+        """
+        Filter data now that class labels are known.
+        """
+        # Filter data (keep only classes that are > min class size)
+        data = pd.concat([X, y], axis=1)
+        filtered_data = filter_class_size(data,
+                                          min_class_size,
+                                          self.class_labels)
+        if max_class_size is not None:
+              # Randomly subsample any over-represented classes down to passed-in value
+            filtered_data = sub_sample(filtered_data,
+                                       max_class_size,
+                                       self.class_labels)
+        X = filtered_data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
+        y = filtered_data[[TARGET_LABEL]]
+        return X, y
 
     def run_model(self):
         """
