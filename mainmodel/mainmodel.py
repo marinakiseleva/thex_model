@@ -74,6 +74,7 @@ class MainModel(ABC, MainModelVisualization):
         self.class_labels = self.get_class_labels(
             data_filters['class_labels'], y, data_filters['min_class_size'])
 
+        print("Running on classes: " + str(self.class_labels))
         X, y = self.filter_data(X, y,
                                 data_filters['min_class_size'],
                                 data_filters['subsample'],
@@ -180,6 +181,9 @@ class MainModel(ABC, MainModelVisualization):
             if y.loc[class_indices, :].shape[0] >= N:
                 # Keep class because count is >= N
                 keep_classes.append(class_label)
+
+        if TREE_ROOT in keep_classes:
+            keep_classes.remove(TREE_ROOT)
 
         return keep_classes
 
