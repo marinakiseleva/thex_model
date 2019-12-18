@@ -23,19 +23,18 @@ class DTClassifier():
         grid = {'criterion': ['entropy', 'gini'],
                 'splitter': ['best', 'random'],
                 'class_weight': ['balanced', class_weights]
-                #         'max_depth': [20, 50, None],
-                #         'min_samples_split': [2, 4, 8, 0.05],
-                #         'min_samples_leaf': [1, 2, 4, 8],
-                #         'min_weight_fraction_leaf': [0, 0.001, 0.01],
-                #         'max_features': [0.3, 0.5, None],
+                # 'max_depth': [20, 50, None],
+                # 'min_samples_split': [2, 4, 8, 0.05],
+                # 'min_samples_leaf': [1, 2, 4, 8],
+                # 'min_weight_fraction_leaf': [0, 0.001, 0.01],
+                # 'max_features': [0.3, 0.5, None],
                 }
         clf_optimize = GridSearchCV(
             estimator=DecisionTreeClassifier(),
             param_grid=grid,
             scoring='brier_score_loss',
             cv=3,
-            iid=True,
-            n_jobs=CPU_COUNT)
+            iid=True)
 
         # Fit the random search model
         clf_optimize.fit(X, y, sample_weight=sample_weights)

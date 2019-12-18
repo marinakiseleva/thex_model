@@ -32,8 +32,7 @@ class SVMClassifier():
             param_grid=grid,
             scoring='average_precision',
             cv=3,
-            iid=True,
-            n_jobs=CPU_COUNT)
+            iid=True)
 
         # Fit the random search model
         clf_optimize.fit(X, y, sample_weight=sample_weights)

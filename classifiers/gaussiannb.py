@@ -30,8 +30,7 @@ class GNBClassifier():
             param_grid=grid,
             scoring='brier_score_loss',
             cv=3,
-            iid=True,
-            n_jobs=CPU_COUNT)
+            iid=True)
 
         # Fit the random search model
         clf_optimize.fit(X, y, sample_weight=sample_weights)
