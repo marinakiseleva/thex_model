@@ -71,11 +71,13 @@ class MainModel(ABC, MainModelVisualization):
         # Redefine labels with Unspecifieds
         y = self.add_unspecified_labels_to_data(y)
 
-        self.class_labels = self.get_class_labels(data_filters['class_labels'], y)
+        self.class_labels = self.get_class_labels(
+            data_filters['class_labels'], y, data_filters['min_class_size'])
 
         X, y = self.filter_data(X, y,
                                 data_filters['min_class_size'],
-                                data_filters['subsample'])
+                                data_filters['subsample'],
+                                self.class_labels)
 
         self.X = X
         self.y = y
@@ -83,7 +85,7 @@ class MainModel(ABC, MainModelVisualization):
         self.num_folds = data_filters['folds']
         self.num_runs = data_filters['num_runs']
 
-    def filter_data(self, X, y, min_class_size, max_class_size):
+    def filter_data(self, X, y, min_class_size, max_class_size, class_labels):
         """
         Filter data now that class labels are known.
         """
@@ -91,14 +93,16 @@ class MainModel(ABC, MainModelVisualization):
         data = pd.concat([X, y], axis=1)
         filtered_data = filter_class_size(data,
                                           min_class_size,
-                                          self.class_labels)
+                                          class_labels)
+
         if max_class_size is not None:
               # Randomly subsample any over-represented classes down to passed-in value
             filtered_data = sub_sample(filtered_data,
                                        max_class_size,
-                                       self.class_labels)
+                                       class_labels)
         X = filtered_data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
         y = filtered_data[[TARGET_LABEL]]
+
         return X, y
 
     def run_model(self):
@@ -136,20 +140,20 @@ class MainModel(ABC, MainModelVisualization):
             self.assign_levels(tree, mapping, child, level + 1)
         return mapping
 
-    def get_class_labels(self, user_defined_labels, y):
+    def get_class_labels(self, user_defined_labels, y, N):
         """
         Get class labels over which to run analysis, either from the user defined parameter, or from the data itself. If there are no user defined labels, we compile a list of unique transient type labels based on what is known in the hierarchy.
         :param user_defined_labels: None, or valid list of class labels
         :param y: DataFrame with TARGET_LABEL column
+        :param N: Minimum # of samples per class to keep it
         """
-        if user_defined_labels is not None:
-            return user_defined_labels
-
+        # defined_classes : classes defined in hierarchy
         defined_classes = set()
         for k, class_list in self.class_hier.items():
             defined_classes.add(k)
             for c in class_list:
                 defined_classes.add(c)
+
         # Only keep classes that exist in data
         data_labels = set()
         for index, row in y.iterrows():
@@ -157,9 +161,27 @@ class MainModel(ABC, MainModelVisualization):
             for label in labels:
                 data_labels.add(label)
 
-        class_labels = list(data_labels.intersection(defined_classes))
+        class_labels_set = data_labels.intersection(defined_classes)
+        class_labels = list(class_labels_set)
 
-        return list(data_labels.intersection(defined_classes))
+        if user_defined_labels is not None:
+            class_labels = class_labels_set.intersection(set(user_defined_labels))
+
+        # Filter based on the numbers in the data - must have at least X data
+        # points in each class
+        keep_classes = []
+        for class_label in class_labels:
+            class_indices = []
+            for index, row in y.iterrows():
+                class_list = util.convert_str_to_list(row[TARGET_LABEL])
+                if class_label in class_list:
+                    class_indices.append(index)
+
+            if y.loc[class_indices, :].shape[0] >= N:
+                # Keep class because count is >= N
+                keep_classes.append(class_label)
+
+        return keep_classes
 
     def add_unspecified_labels_to_data(self, y):
         """
