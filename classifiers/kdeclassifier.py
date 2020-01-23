@@ -46,7 +46,6 @@ class KDEClassifier():
         # print(clf_optimize.best_params_)
 
         clf = clf_optimize.best_estimator_
-
         return clf
 
     def get_class_probability(self, x):
@@ -56,5 +55,9 @@ class KDEClassifier():
         """
         pos_density = np.exp(self.pos_model.score_samples([x.values]))[0]
         neg_density = np.exp(self.neg_model.score_samples([x.values]))[0]
-        pos_prob = pos_density / (pos_density + neg_density)
+        d = pos_density + neg_density
+        if d == 0:
+            pos_prob = 0
+        else:
+            pos_prob = pos_density / (pos_density + neg_density)
         return pos_prob

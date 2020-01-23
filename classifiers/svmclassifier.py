@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
 
-from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
+from thex_data.data_consts import TARGET_LABEL, CPU_COUNT, LOSS_FUNCTION
 
 
 class SVMClassifier():
@@ -28,14 +28,14 @@ class SVMClassifier():
                 }
 
         clf_optimize = GridSearchCV(
-            estimator=SVC(),
+            estimator=SVC(probability=True),
             param_grid=grid,
-            scoring='average_precision',
+            scoring=LOSS_FUNCTION,
             cv=3,
             iid=True)
 
         # Fit the random search model
-        clf_optimize.fit(X, y, sample_weight=sample_weights)
+        clf_optimize.fit(X.values, y.values.T[0], sample_weight=sample_weights)
         clf = clf_optimize.best_estimator_
 
         return clf

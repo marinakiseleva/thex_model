@@ -2,7 +2,7 @@
 import pandas as pd
 from sklearn.model_selection import GridSearchCV
 from sklearn.naive_bayes import GaussianNB
-from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
+from thex_data.data_consts import TARGET_LABEL, CPU_COUNT, LOSS_FUNCTION
 
 
 class GNBClassifier():
@@ -28,12 +28,12 @@ class GNBClassifier():
         clf_optimize = GridSearchCV(
             estimator=GaussianNB(),
             param_grid=grid,
-            scoring='brier_score_loss',
+            scoring=LOSS_FUNCTION,
             cv=3,
             iid=True)
 
         # Fit the random search model
-        clf_optimize.fit(X, y, sample_weight=sample_weights)
+        clf_optimize.fit(X.values, y.values.T[0], sample_weight=sample_weights)
         clf = clf_optimize.best_estimator_
 
         return clf

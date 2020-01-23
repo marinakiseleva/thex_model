@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.model_selection import GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 
-from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
+from thex_data.data_consts import TARGET_LABEL, CPU_COUNT, LOSS_FUNCTION
 
 
 class DTClassifier():
@@ -32,12 +32,12 @@ class DTClassifier():
         clf_optimize = GridSearchCV(
             estimator=DecisionTreeClassifier(),
             param_grid=grid,
-            scoring='brier_score_loss',
+            scoring=LOSS_FUNCTION,
             cv=3,
             iid=True)
 
         # Fit the random search model
-        clf_optimize.fit(X, y, sample_weight=sample_weights)
+        clf_optimize.fit(X.values, y.values.T[0], sample_weight=sample_weights)
         clf = clf_optimize.best_estimator_
 
         return clf

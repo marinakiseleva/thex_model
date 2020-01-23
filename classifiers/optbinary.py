@@ -1,7 +1,13 @@
 """
-Construct optimal binary classifier for the data passed in 
+Construct optimal binary classifier for the data passed in. Compares performance of:
 
-For right now: Just optimal KDE
+Kernel Density Estimate (KDE) classifier
+Decision Tree classifier
+SVM Classifier
+Gaussian Naive Bayes classifier
+
+for the given class, and keeps the best-performing one. Determines best parameters for each classifier using 3-fold cross validation.
+
 """
 from sklearn.utils.class_weight import compute_class_weight
 import pandas as pd

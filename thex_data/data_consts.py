@@ -52,6 +52,9 @@ UNDEF_CLASS = 'Unspecified '
 TREE_ROOT = "_ROOT"
 
 
+LOSS_FUNCTION = "brier_score_loss"
+
+
 """
 class_to_subclass
 {Parent : [Child1, child2, ...] }
