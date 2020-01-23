@@ -49,7 +49,7 @@ def plot_feature_distribution(model_name, df, feature, class_labels, class_count
                 keep_indices.append(index)
 
         values = df.loc[keep_indices, :][feature].values
-        vector_values = np.sort(np.matrix(values).T, axis=0)
+        vector_values = np.sort(np.array(values), axis=0)
         n, x, _ = ax.hist(vector_values, bins=np.linspace(
             0, max_value, 50), alpha=0.7, label=class_name)
 
