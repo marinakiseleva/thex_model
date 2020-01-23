@@ -40,6 +40,8 @@ class KDEClassifier():
         clf_optimize = GridSearchCV(estimator=KernelDensity(),
                                     param_grid=grid,
                                     cv=3,  # number of folds in a (Stratified)KFold
+                                    iid=True,
+                                    n_jobs=CPU_COUNT
                                     )
         clf_optimize.fit(X)
         # print("Optimal Parameters:")

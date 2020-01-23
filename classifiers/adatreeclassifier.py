@@ -24,7 +24,6 @@ class ADAClassifier():
 
         grid = {'base_estimator': [base_clf],
                 'algorithm': ['SAMME'],
-                # 'probability': [True],
                 'n_estimators': [50, 100],
                 'learning_rate': [.1, 1, 10]
                 }
@@ -34,7 +33,8 @@ class ADAClassifier():
             param_grid=grid,
             scoring=LOSS_FUNCTION,
             cv=3,
-            iid=True)
+            iid=True,
+            n_jobs=CPU_COUNT)
 
         # Fit the random search model
         clf_optimize.fit(X.values, y.values.T[0], sample_weight=sample_weights)
