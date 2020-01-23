@@ -19,17 +19,20 @@ class ADAClassifier():
         self.clf = self.train(base_clf, X, y, sample_weights)
 
     def train(self, base_clf, X, y, sample_weights):
+        print("Training ADA on " + str(base_clf.name))
+        print("with X data ")
+        print(str(X))
+        print("y data ")
+        print(str(y))
 
         # Set the parameters by cross-validation
 
-        grid = {'base_estimator': [base_clf],
-                'algorithm': ['SAMME'],
-                'n_estimators': [50, 100],
+        grid = {'n_estimators': [50, 100],
                 'learning_rate': [.1, 1, 10]
                 }
 
         clf_optimize = GridSearchCV(
-            estimator=AdaBoostClassifier(),
+            estimator=AdaBoostClassifier(base_estimator=base_clf, algorithm='SAMME'),
             param_grid=grid,
             scoring=LOSS_FUNCTION,
             cv=3,
@@ -37,6 +40,7 @@ class ADAClassifier():
             n_jobs=CPU_COUNT)
 
         # Fit the random search model
+
         clf_optimize.fit(X.values, y.values.T[0], sample_weight=sample_weights)
         clf = clf_optimize.best_estimator_
 
