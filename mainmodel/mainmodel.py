@@ -74,7 +74,7 @@ class MainModel(ABC, MainModelVisualization):
         self.class_labels = self.get_class_labels(
             data_filters['class_labels'], y, data_filters['min_class_size'])
 
-        print("Running on classes: " + str(self.class_labels))
+        print("Classes in model: " + str(self.class_labels))
         X, y = self.filter_data(X, y,
                                 data_filters['min_class_size'],
                                 data_filters['subsample'],
@@ -111,7 +111,6 @@ class MainModel(ABC, MainModelVisualization):
         Visualize data, run analysis, and record results.
         """
         self.visualize_data(self.X, self.y)
-        print("Class labels " + str(self.class_labels))
 
         results = self.run_cfv(self.X, self.y, self.num_folds, self.num_runs)
 
