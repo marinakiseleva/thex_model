@@ -104,7 +104,7 @@ class OptimalBinaryClassifier():
         classifiers.append(ada_dt)
 
         ada_gnb = ADAClassifier(X, y, sample_weights,
-                                classifiers[1].clf, "ADA Boosted Gaussian NB")
+                                classifiers[3].clf, "ADA Boosted Gaussian NB")
         classifiers.append(ada_gnb)
         return classifiers
 
