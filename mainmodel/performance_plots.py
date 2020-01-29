@@ -39,7 +39,7 @@ class MainModelVisualization:
     def plot_all_metrics(self, class_metrics, y):
         """
         Plot performance metrics for model
-        :param class_metrics: Returned from aggregate_mc_class_metrics; Map from class name to map of performance metrics
+        :param class_metrics: Returned from compute_metrics; Map from class name to map of performance metrics
         """
         class_counts = self.get_class_counts(y)
         recalls, precisions, specificities = self.compute_performance(class_metrics)
