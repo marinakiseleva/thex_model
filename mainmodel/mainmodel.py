@@ -12,6 +12,8 @@ Subclasses differ in how they normalize across the class hierarchy.
 from abc import ABC, abstractmethod
 
 from sklearn.model_selection import StratifiedKFold
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 import pandas as pd
 from hmc import hmc
 
@@ -246,17 +248,44 @@ class MainModel(ABC, MainModelVisualization):
 
         return -1
 
-    def scale_data(self, X_train, y_train, X_test, y_test):
+    def scale_data(self, X_train, X_test):
         """
         Fit scaling to training data and apply to both training and testing
         """
-        return None
+        # Rescale data before PCA, z = (x - mean) / stdev
+        scaler = StandardScaler()
+        scaled_X_train = scaler.fit_transform(X_train)
+        scaled_X_test = scaler.transform(X_test)
 
-    def apply_PCA(self, X_train, y_train, X_test, y_test):
+        return scaled_X_train, scaled_X_test
+
+    def apply_PCA(self, X_train, X_test, k=8):
         """
         Fit PCA to training data and apply to both training and testing
         """
-        return None
+        def convert_to_df(data, k):
+            """
+            Convert Numpy 2D array to DataFrame with k PCA columns
+            :param data: Numpy 2D array of data features
+            :param k: Number of PCA components to label cols
+            """
+            reduced_columns = []
+            for i in range(k):
+                new_column = "PC" + str(i + 1)
+                reduced_columns.append(new_column)
+            df = pd.DataFrame(data=data, columns=reduced_columns)
+
+            return df
+
+        pca = PCA(n_components=k)
+        reduced_training = pca.fit_transform(X_train)
+        reduced_testing = pca.transform(X_test)
+        print("\nPCA Analysis: Explained Variance Ratio")
+        print(pca.explained_variance_ratio_)
+
+        reduced_training = convert_to_df(reduced_training, k)
+        reduced_testing = convert_to_df(reduced_testing, k)
+        return reduced_training, reduced_testing
 
     def run_cfv(self, X, y, k, runs):
         """
@@ -274,8 +303,10 @@ class MainModel(ABC, MainModelVisualization):
             y_train, y_test = y.iloc[train_index].reset_index(
                 drop=True), y.iloc[test_index].reset_index(drop=True)
 
-            # TODO: Scale and/or apply PCA here.
-
+            # Scale and apply PCA
+            X_train, X_test = self.scale_data(X_train, X_test)
+            X_train, X_test = self.apply_PCA(X_train, X_test)
+            # Train
             self.train_model(X_train, y_train)
 
             # Test model

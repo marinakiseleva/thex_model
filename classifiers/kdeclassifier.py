@@ -31,7 +31,7 @@ class KDEClassifier():
         :return: best fitting KDE
         """
         # Create grid to get optimal bandwidth
-        range_bws = np.linspace(0.01, 5, 200)
+        range_bws = np.linspace(0.01, 6, 1000)
         grid = {
             'bandwidth': range_bws,
             'kernel': ['gaussian'],
@@ -44,10 +44,12 @@ class KDEClassifier():
                                     n_jobs=CPU_COUNT
                                     )
         clf_optimize.fit(X)
-        # print("Optimal Parameters:")
-        # print(clf_optimize.best_params_)
-
         clf = clf_optimize.best_estimator_
+
+        print("Optimal Parameters:")
+        print(clf_optimize.best_params_)
+        print("Fit with score of : " + str(clf.score(X)))
+
         return clf
 
     def get_class_probability(self, x):
