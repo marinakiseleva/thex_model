@@ -112,6 +112,8 @@ class MainModel(ABC, MainModelVisualization):
         """
         Visualize data, run analysis, and record results.
         """
+        print("\nRunning " + str(self.name))
+
         self.visualize_data(self.X, self.y)
 
         results = self.run_cfv(self.X, self.y, self.num_folds, self.num_runs)
