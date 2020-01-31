@@ -252,18 +252,30 @@ class MainModel(ABC, MainModelVisualization):
 
     def scale_data(self, X_train, X_test):
         """
-        Fit scaling to training data and apply to both training and testing
+        Fit scaling to training data and apply to both training and testing; 
+        Returns X_train and X_test as Pandas DataFrames
+        :param X_train: Pandas DataFrame of training data
+        :param X_test: Pandas DataFrame of testing data
+
         """
-        # Rescale data before PCA, z = (x - mean) / stdev
+
+        features_list = list(X_train)
+
+        # Rescale data: z = (x - mean) / stdev
         scaler = StandardScaler()
-        scaled_X_train = scaler.fit_transform(X_train)
-        scaled_X_test = scaler.transform(X_test)
+        scaled_X_train = pd.DataFrame(
+            data=scaler.fit_transform(X_train), columns=features_list)
+        scaled_X_test = pd.DataFrame(
+            data=scaler.transform(X_test), columns=features_list)
 
         return scaled_X_train, scaled_X_test
 
-    def apply_PCA(self, X_train, X_test, k=8):
+    def apply_PCA(self, X_train, X_test, k=5):
         """
-        Fit PCA to training data and apply to both training and testing
+        Fit PCA to training data and apply to both training and testing; 
+        Returns X_train and X_test as Pandas DataFrames
+        :param X_train: Pandas DataFrame of training data
+        :param X_test: Pandas DataFrame of testing data
         """
         def convert_to_df(data, k):
             """
@@ -278,6 +290,10 @@ class MainModel(ABC, MainModelVisualization):
             df = pd.DataFrame(data=data, columns=reduced_columns)
 
             return df
+
+        # Return original if # features <= # PCA components
+        if len(list(X_train)) <= k:
+            return X_train, X_test
 
         pca = PCA(n_components=k)
         reduced_training = pca.fit_transform(X_train)
@@ -297,7 +313,6 @@ class MainModel(ABC, MainModelVisualization):
         """
 
         kf = StratifiedKFold(n_splits=k, shuffle=True)
-
         results = []
         for train_index, test_index in kf.split(X, y):
             X_train, X_test = X.iloc[train_index].reset_index(
@@ -308,6 +323,7 @@ class MainModel(ABC, MainModelVisualization):
             # Scale and apply PCA
             X_train, X_test = self.scale_data(X_train, X_test)
             X_train, X_test = self.apply_PCA(X_train, X_test)
+
             # Train
             self.train_model(X_train, y_train)
 
