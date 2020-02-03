@@ -33,7 +33,7 @@ class MainModel(ABC, MainModelVisualization):
         """
         Initialize model based on user arguments
         """
-        util.init_file_directories(self.name)
+        self.dir = util.init_file_directories(self.name)
 
         # Must add Unspecifieds to tree, so that when searching for lowest-level
         # label, the UNDEF one returns.
@@ -231,12 +231,12 @@ class MainModel(ABC, MainModelVisualization):
         """
         """
         class_counts = self.get_class_counts(y)
-        plot_class_hist(self.name, class_counts)
+        plot_class_hist(self.dir, class_counts)
         # Combine X and y for plotting feature dist
         df = pd.concat([X, y], axis=1)
         features = list(df)
         if 'redshift' in features:
-            plot_feature_distribution(self.name,  df, 'redshift',
+            plot_feature_distribution(self.dir,  df, 'redshift',
                                       self.class_labels, class_counts)
 
     def visualize_performance(self, results, y):

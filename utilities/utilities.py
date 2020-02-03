@@ -20,9 +20,10 @@ def annotate_plot(ax, x, y, annotations):
         class_index += 1
 
 
-def save_plot(model_name, title, ax, bbox_inches=None, fig=None, extra_artists=None):
+def save_plot(model_dir, title, ax, bbox_inches=None, fig=None, extra_artists=None):
     """
     Saves plot (by model name and passed-in title)
+    :param model_dir: Directory name to save to
     :param title: String title of plot, used to save 
     :param ax: Axis
     :[optional] param bbox_inches: Optional parameter for savefig
@@ -35,42 +36,53 @@ def save_plot(model_name, title, ax, bbox_inches=None, fig=None, extra_artists=N
     title = clean_str(title)
     plt.tight_layout()
 
-    file_dir = ROOT_DIR + "/output/" + clean_str(model_name)
-    if not os.path.exists(file_dir):
-        os.mkdir(file_dir)
-
     if fig is not None:
-        fig.savefig(file_dir + "/" + title, bbox_inches=bbox_inches)
+        fig.savefig(model_dir + "/" + title, bbox_inches=bbox_inches)
         fig.savefig('samplefigure', bbox_extra_artists=extra_artists,
                     bbox_inches='tight')
 
     else:
-        plt.savefig(file_dir + "/" + title, bbox_inches=bbox_inches)
+        plt.savefig(model_dir + "/" + title, bbox_inches=bbox_inches)
 
 
-def display_and_save_plot(model_name, title, ax, bbox_inches=None, fig=None):
+def display_and_save_plot(model_dir, title, ax, bbox_inches=None, fig=None):
     """
     Saves plot (by model name and passed-in title) and displays.
+    :param model_dir: Directory name to save to
     :param title: String title of plot, used to save 
     :param ax: Axis
     :[optional] param bbox_inches: Optional parameter for savefig
     :[optional] param fig: will do fig.savefig instead of plt.savefig
     """
-    save_plot(model_name, title, ax, bbox_inches, fig)
+    save_plot(model_dir, title, ax, bbox_inches, fig)
     plt.show()
 
 
 # File utilities
 def init_file_directories(name):
+    """
+    Initialize new directory by incrementing value of last directory.
+    """
     # Create output directory
-    if not os.path.exists(ROOT_DIR + "/output"):
-        os.mkdir(ROOT_DIR + "/output")
+    name = clean_str(name)
+    output_dir = ROOT_DIR + "/output"
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
 
-    file_dir = ROOT_DIR + "/output/" + clean_str(name)
-    # Clear old output directories, if they exist
-    if os.path.exists(file_dir):
-        shutil.rmtree(file_dir)
-    os.mkdir(file_dir)
+    dirs = os.listdir(output_dir)
+
+    max_num = 0
+    for directory in dirs:
+        if name in directory:
+            num = directory.split(name)[1]
+            # Numeric value of that output dir
+            num = int(num) if num != '' and num.isdigit() else 0
+            max_num = max(max_num, num)
+
+    # Create new dir with next number
+    new_dir = output_dir + "/" + name + str(max_num + 1)
+    os.mkdir(new_dir)
+    return new_dir
 
 
 def convert_str_to_list(input_string):

@@ -15,7 +15,7 @@ from .data_consts import code_cat, TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT
 import utilities.utilities as util
 
 
-def plot_feature_distribution(model_name, df, feature, class_labels, class_counts):
+def plot_feature_distribution(model_dir, df, feature, class_labels, class_counts):
     """
     Plots the distribution of each transient type in df over 'feature'
     :param model_name: name of model
@@ -67,7 +67,7 @@ def plot_feature_distribution(model_name, df, feature, class_labels, class_count
     plt.yscale('log', nonposy='clip')
     ax.legend(loc='best',  prop={'size': 5})
 
-    util.display_and_save_plot(model_name, title, ax)
+    util.display_and_save_plot(model_dir, title, ax)
 
 
 # def plot_lsst_distribution(ax):
@@ -83,10 +83,10 @@ def plot_feature_distribution(model_name, df, feature, class_labels, class_count
 #     plot_norm_class_dist(mu=0.45, sigma=0.1, label="LSST Ia", ax=ax)
 
 
-def plot_class_hist(model_name, class_counts):
+def plot_class_hist(model_dir, class_counts):
     """
     Plots histogram of class sizes
-    :param model_name: directory name of model to save figure
+    :param model_dir: directory of model to save figure
     :param class_counts: Map from class name to counts
 
     """
@@ -117,4 +117,4 @@ def plot_class_hist(model_name, class_counts):
     plt.title(title, fontsize=12)
     plt.tight_layout()
 
-    util.display_and_save_plot(model_name, title, ax)
+    util.display_and_save_plot(model_dir, title, ax)

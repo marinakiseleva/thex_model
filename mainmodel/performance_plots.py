@@ -94,7 +94,7 @@ class MainModelVisualization:
         yax = ax.get_yaxis()
         yax.set_tick_params(pad=max_tick_width + 2)
 
-        thex_utils.display_and_save_plot(self.name, xlabel, ax)
+        thex_utils.display_and_save_plot(self.dir, xlabel, ax)
 
     def get_ordered_metrics(self, class_metrics, baselines=None):
         """
@@ -167,5 +167,5 @@ class MainModelVisualization:
             plt.xticks(x_indices, perc_ranges, fontsize=10)
             plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
             plt.ylabel('Purity', fontsize=12)
-            thex_utils.display_and_save_plot(self.name,
+            thex_utils.display_and_save_plot(self.dir,
                                              "Probability vs Positive Rate: " + class_name, ax)
