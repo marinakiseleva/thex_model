@@ -9,9 +9,11 @@ Gaussian Naive Bayes classifier
 for the given class, and keeps the best-performing one. Determines best parameters for each classifier using 3-fold cross validation.
 
 """
-from sklearn.utils.class_weight import compute_class_weight
 import pandas as pd
 import numpy as np
+
+from sklearn.utils.class_weight import compute_class_weight
+from sklearn.metrics import brier_score_loss
 
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
 from classifiers.kdeclassifier import KDEClassifier
@@ -19,8 +21,6 @@ from classifiers.dtclassifier import DTClassifier
 from classifiers.svmclassifier import SVMClassifier
 from classifiers.adatreeclassifier import ADAClassifier
 from classifiers.gaussiannb import GNBClassifier
-
-from sklearn.metrics import average_precision_score, brier_score_loss
 
 
 class OptimalBinaryClassifier():
@@ -82,7 +82,7 @@ class OptimalBinaryClassifier():
 
     def get_clf_loss(self, clf, X, y):
         """
-        Evaluate classifier, return average_precision_score
+        Evaluate classifier, return brier_score_loss
         :param X: Pandas DataFrame features
         :param y: Pandas DataFrame labels
         """
@@ -99,13 +99,13 @@ class OptimalBinaryClassifier():
                        #SVMClassifier(X, y, sample_weights, class_weights),
                        GNBClassifier(X, y, sample_weights)]
         # Train ADA on already defined classifiers
-        # ada_dt = ADAClassifier(X, y, sample_weights,
-        #                        classifiers[1].clf, "ADA Boosted Decision Tree")
-        # classifiers.append(ada_dt)
+        ada_dt = ADAClassifier(X, y, sample_weights,
+                               classifiers[1].clf, "ADA Boosted Decision Tree")
+        classifiers.append(ada_dt)
 
-        # ada_gnb = ADAClassifier(X, y, sample_weights,
-        #                         classifiers[3].clf, "ADA Boosted Gaussian NB")
-        # classifiers.append(ada_gnb)
+        ada_gnb = ADAClassifier(X, y, sample_weights,
+                                classifiers[2].clf, "ADA Boosted Gaussian NB")
+        classifiers.append(ada_gnb)
         return classifiers
 
     def get_best_classifier(self, X, y):
@@ -126,6 +126,6 @@ class OptimalBinaryClassifier():
                 min_loss = loss
                 best_clf = clf
 
-        print("\nBest Classifier " + str(best_clf.name) + ' with score ' + str(min_loss))
+        print("\n\nBest Classifier " + str(best_clf.name) + ' with score ' + str(min_loss))
 
         return best_clf, best_clf.name

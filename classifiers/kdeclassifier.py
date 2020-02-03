@@ -34,7 +34,7 @@ class KDEClassifier():
         range_bws = np.linspace(0.01, 6, 1000)
         grid = {
             'bandwidth': range_bws,
-            'kernel': ['gaussian'],
+            'kernel': ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear'],
             'metric': ['euclidean']
         }
         clf_optimize = GridSearchCV(estimator=KernelDensity(),
@@ -46,9 +46,8 @@ class KDEClassifier():
         clf_optimize.fit(X)
         clf = clf_optimize.best_estimator_
 
-        print("Optimal Parameters:")
+        print("\nOptimal KDE Parameters:")
         print(clf_optimize.best_params_)
-        print("Fit with score of : " + str(clf.score(X)))
 
         return clf
 

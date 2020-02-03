@@ -36,7 +36,7 @@ class SVMClassifier():
             n_jobs=CPU_COUNT)
 
         # Fit the random search model
-        clf_optimize.fit(X.values, y.values.T[0], sample_weight=sample_weights)
+        clf_optimize.fit(X.values, y.values, sample_weight=sample_weights)
         clf = clf_optimize.best_estimator_
 
         return clf

@@ -1,6 +1,6 @@
-
 import pandas as pd
 from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import brier_score_loss
 from sklearn.tree import DecisionTreeClassifier
 
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT, LOSS_FUNCTION
@@ -38,10 +38,12 @@ class DTClassifier():
             n_jobs=CPU_COUNT)
 
         # Fit the random search model
-        clf_optimize.fit(X.values, y.values.T[0])
+        clf_optimize.fit(X.values, y.values, sample_weight=sample_weights)
         clf = clf_optimize.best_estimator_
-        print("Optimal Parameters:")
+        print("\nOptimal DecisionTreeClassifier Parameters:")
         print(clf_optimize.best_params_)
+        loss = brier_score_loss(y.values, clf.predict_proba(X.values)[:, 1])
+        print("Brier Score Loss: " + str(loss))
 
         return clf
 

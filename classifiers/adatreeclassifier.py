@@ -1,9 +1,7 @@
 import numpy as np
-from sklearn.ensemble import AdaBoostClassifier
-from classifiers.dtclassifier import DTClassifier
+from sklearn.metrics import brier_score_loss
 from sklearn.model_selection import GridSearchCV
-
-from thex_data.data_consts import TARGET_LABEL, CPU_COUNT, LOSS_FUNCTION
+from sklearn.ensemble import AdaBoostClassifier
 
 
 class ADAClassifier():
@@ -29,6 +27,9 @@ class ADAClassifier():
                                learning_rate=1,
                                )
         a.fit(X.values, y.values, sample_weight=sample_weights)
+        print("Score for " + self.name)
+        loss = brier_score_loss(y.values, a.predict_proba(X.values)[:, 1])
+        print("Brier Score Loss: " + str(loss))
 
         return a
 
