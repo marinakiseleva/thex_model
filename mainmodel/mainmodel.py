@@ -64,8 +64,10 @@ class MainModel(ABC, MainModelVisualization):
         # list of features to use from database
         features = collect_cols(data_filters['cols'], data_filters['col_matches'])
 
+        print("\nFeatures Used:\n" + str(features))
+
         if data_filters['data'] is None:
-            X, y = get_source_target_data(features, **data_filters)
+            X, y = get_source_target_data(features, data_filters)
         else:
             X = data_filters['data'][0]
             y = data_filters['data'][1]
