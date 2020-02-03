@@ -11,7 +11,7 @@ from .data_transform import transform_features
 from .data_consts import TARGET_LABEL, ORIG_TARGET_LABEL
 
 
-def get_data(col_list, **data_filters):
+def get_data(col_list, data_filters):
     """
     Pull in data and filter based on different biases and corrections: group transient types, fitler to passed-in columns, keep only rows with at least 1 valid value, filter to most frequent classes, sub-sample each class to same number, and take difference between wavelengths to make new features
     :param data_columns: List of columns to filter data on
@@ -31,7 +31,9 @@ def get_data(col_list, **data_filters):
     df = filter_columns(df.copy(), col_list, data_filters['incl_redshift'])
 
     # Drop row with any NULL values (after columns have been filtered)
-    df.dropna(axis=0, inplace=True)
+    # df.dropna(axis=0, inplace=True)
+    df.fillna(df.mean(), inplace=True)
+    print("Filling NULL features with average in column.")
 
     df = drop_conflicts(df)
 
@@ -44,11 +46,11 @@ def get_data(col_list, **data_filters):
     return df.reset_index(drop=True)
 
 
-def get_source_target_data(data_columns, **data_filters):
+def get_source_target_data(data_columns, data_filters):
     """
     Gets data split into source and target; but not yet split into training and testing
     """
-    data = get_data(col_list=data_columns, **data_filters)
+    data = get_data(data_columns, data_filters)
     X = data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
     if data_filters['transform_features']:
         X = transform_features(X)
