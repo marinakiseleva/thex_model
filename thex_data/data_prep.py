@@ -33,7 +33,7 @@ def get_data(col_list, data_filters):
     # Drop row with any NULL values (after columns have been filtered)
     # df.dropna(axis=0, inplace=True)
     df.fillna(df.mean(), inplace=True)
-    print("Filling NULL features with average in column.")
+    print("\nFilling NULL features with average in column.\n")
 
     df = drop_conflicts(df)
 
