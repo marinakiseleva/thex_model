@@ -84,11 +84,24 @@ class MainModel(ABC, MainModelVisualization):
                                 data_filters['subsample'],
                                 self.class_labels)
 
+        # Save relevant data attributes to self
         self.X = X
         self.y = y
-
         self.num_folds = data_filters['folds']
         self.num_runs = data_filters['num_runs']
+        self.pca = data_filters['pca']
+
+    def run_model(self):
+        """
+        Visualize data, run analysis, and record results.
+        """
+        print("\nRunning " + str(self.name))
+
+        self.visualize_data(self.X, self.y)
+
+        results = self.run_cfv(self.X, self.y)
+
+        self.visualize_performance(results, self.y)
 
     def filter_data(self, X, y, min_class_size, max_class_size, class_labels):
         """
@@ -109,18 +122,6 @@ class MainModel(ABC, MainModelVisualization):
         y = filtered_data[[TARGET_LABEL]]
 
         return X, y
-
-    def run_model(self):
-        """
-        Visualize data, run analysis, and record results.
-        """
-        print("\nRunning " + str(self.name))
-
-        self.visualize_data(self.X, self.y)
-
-        results = self.run_cfv(self.X, self.y, self.num_folds, self.num_runs)
-
-        self.visualize_performance(results, self.y)
 
     def init_tree(self, hierarchy):
         print("\n\nConstructing Class Hierarchy Tree...")
@@ -307,14 +308,12 @@ class MainModel(ABC, MainModelVisualization):
         reduced_testing = convert_to_df(reduced_testing, k)
         return reduced_training, reduced_testing
 
-    def run_cfv(self, X, y, k, runs):
+    def run_cfv(self, X, y):
         """
         Run k-fold cross validation over a number of runs
-        :param k: Number of folds
-        :param runs: Number of runs to aggregate results over
         """
 
-        kf = StratifiedKFold(n_splits=k, shuffle=True)
+        kf = StratifiedKFold(n_splits=self.num_folds, shuffle=True)
         results = []
         for train_index, test_index in kf.split(X, y):
             X_train, X_test = X.iloc[train_index].reset_index(
@@ -324,7 +323,8 @@ class MainModel(ABC, MainModelVisualization):
 
             # Scale and apply PCA
             X_train, X_test = self.scale_data(X_train, X_test)
-            X_train, X_test = self.apply_PCA(X_train, X_test)
+            if self.pca is not None:
+                X_train, X_test = self.apply_PCA(X_train, X_test)
 
             # Train
             self.train_model(X_train, y_train)
