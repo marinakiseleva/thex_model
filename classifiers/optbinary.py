@@ -19,7 +19,7 @@ from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
 from classifiers.kdeclassifier import KDEClassifier
 from classifiers.dtclassifier import DTClassifier
 from classifiers.svmclassifier import SVMClassifier
-from classifiers.adatreeclassifier import ADAClassifier
+from classifiers.adaboostclassifier import ADAClassifier
 from classifiers.gaussiannb import GNBClassifier
 
 
@@ -103,9 +103,9 @@ class OptimalBinaryClassifier():
                                classifiers[1].clf, "ADA Boosted Decision Tree")
         classifiers.append(ada_dt)
 
-        ada_gnb = ADAClassifier(X, y, sample_weights,
-                                classifiers[2].clf, "ADA Boosted Gaussian NB")
-        classifiers.append(ada_gnb)
+        # ada_gnb = ADAClassifier(X, y, sample_weights,
+        #                         classifiers[2].clf, "ADA Boosted Gaussian NB")
+        # classifiers.append(ada_gnb)
         return classifiers
 
     def get_best_classifier(self, X, y):

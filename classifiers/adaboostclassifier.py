@@ -1,12 +1,11 @@
 import numpy as np
 from sklearn.metrics import brier_score_loss
-from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 
 
 class ADAClassifier():
     """
-    ADA Boosted Decision Tree
+    ADA Boosted classifier
     """
 
     def __init__(self,  X, y, sample_weights, base_clf, name):
@@ -23,11 +22,12 @@ class ADAClassifier():
         """
         a = AdaBoostClassifier(base_estimator=base_clf,
                                algorithm='SAMME.R',
-                               n_estimators=100,
-                               learning_rate=1,
+                               n_estimators=1000,
+                               learning_rate=.5,
                                )
+
         a.fit(X.values, y.values, sample_weight=sample_weights)
-        print("Score for " + self.name)
+        print("Score for " + str(self.name))
         loss = brier_score_loss(y.values, a.predict_proba(X.values)[:, 1])
         print("Brier Score Loss: " + str(loss))
 
