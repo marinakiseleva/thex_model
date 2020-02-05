@@ -35,7 +35,7 @@ class GNBClassifier():
             n_jobs=CPU_COUNT)
 
         # Fit the random search model
-        clf_optimize.fit(X.values, y.values, sample_weight=sample_weights)
+        clf_optimize.fit(X.values, y.values)
         clf = clf_optimize.best_estimator_
         print("\nOptimal GaussianNB Parameters:")
         print(clf_optimize.best_params_)

@@ -26,7 +26,7 @@ class ADAClassifier():
                                learning_rate=.5,
                                )
 
-        a.fit(X.values, y.values, sample_weight=sample_weights)
+        a.fit(X.values, y.values)
         print("Score for " + str(self.name))
         loss = brier_score_loss(y.values, a.predict_proba(X.values)[:, 1])
         print("Brier Score Loss: " + str(loss))
