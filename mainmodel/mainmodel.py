@@ -34,6 +34,7 @@ class MainModel(ABC, MainModelVisualization):
         Initialize model based on user arguments
         """
         self.dir = util.init_file_directories(self.name)
+        print("Saving " + self.name + " output to directory " + self.dir)
 
         # Must add Unspecifieds to tree, so that when searching for lowest-level
         # label, the UNDEF one returns.
@@ -78,7 +79,8 @@ class MainModel(ABC, MainModelVisualization):
         self.class_labels = self.get_class_labels(
             data_filters['class_labels'], y, data_filters['min_class_size'])
 
-        print("Classes in model: " + str(self.class_labels))
+        print("\nClasses Used:\n" + str(self.class_labels))
+
         X, y = self.filter_data(X, y,
                                 data_filters['min_class_size'],
                                 data_filters['subsample'],

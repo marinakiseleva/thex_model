@@ -33,6 +33,7 @@ def derive_diffs(df):
     Subtracts adjacent color bands from one another and saves result in new columns, labeled as differences between two
     :param df: DataFrame of features
     """
+    print("\nAdding new columns:")
     features = list(df)
     for index, colname1 in enumerate(features):
         if colname1 in adjacent_mags:
@@ -41,7 +42,7 @@ def derive_diffs(df):
                 primary_mag = df[colname1]
                 prev_mag = df[colname2]
                 new_col_name = colname2 + "_minus_" + colname1
-                print("Adding new column " + new_col_name)
+                print(new_col_name)
                 df[new_col_name] = primary_mag - prev_mag
 
     return df
