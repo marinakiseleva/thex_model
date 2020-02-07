@@ -111,7 +111,7 @@ class IndModel(MainModel):
         else:
             return False
 
-    def compute_probability_range_metrics(self, results):
+    def compute_probability_range_metrics(self, results, bin_size=.1):
         """
         Computes True Positive & Total metrics, split by probability assigned to class for ranges of 10% from 0 to 100. Used to plot probability assigned vs completeness (TP/total, per bin).
         :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
@@ -144,7 +144,7 @@ class IndModel(MainModel):
                     total_probabilities.append(row[class_index])
 
             # left inclusive, first bin is 0 <= x < .1. ; except last bin <=1
-            bins = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]
+            bins = np.arange(0, 1 + bin_size, bin_size)
             tp_range_counts = np.histogram(tp_probabilities, bins=bins)[0].tolist()
             total_range_counts = np.histogram(total_probabilities, bins=bins)[0].tolist()
 

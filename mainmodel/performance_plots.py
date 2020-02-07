@@ -1,6 +1,6 @@
 
 """
-Class Mixin for MainModel which contains all performance plotting functionality 
+Class Mixin for MainModel which contains all performance plotting functionality
 """
 
 import numpy as np
@@ -20,7 +20,7 @@ class MainModelVisualization:
 
     def compute_performance(self, class_metrics):
         """
-        Get recall, precision, and specificities per class. 
+        Get recall, precision, and specificities per class.
         """
         precisions = {}
         recalls = {}
@@ -130,12 +130,68 @@ class MainModelVisualization:
             ordered_baselines.reverse()
         return [ordered_formatted_names, ordered_metrics, ordered_baselines]
 
+    def plot_prob_pr_curves(self, range_metrics, class_counts):
+        """
+        Plot recall curve and precision curve relative to probabilities
+        :param range_metrics: Map of classes to [TP_range_sums, total_range_sums] where total_range_sums is the number of samples with probability in range for this class and TP_range_sums is the true positives per range
+        :param class_counts: Map from class name to counts
+        """
+
+        for index, class_name in enumerate(range_metrics.keys()):
+            true_positives, totals = range_metrics[class_name]
+            fig, ax1 = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+            class_total = class_counts[class_name]
+            precision = []  # Accuracy per range (true positive/total)
+            recall = []
+            TP_count = 0
+            total_count = 0
+            for index in reversed(range(len(true_positives))):
+                cur_precision = 0
+                cur_recall = 0
+
+                TP_count += true_positives[index]
+                total_count += totals[index]
+
+                if total_count != 0:
+                    # positive class samples / totals # with prob in range
+                    cur_precision = TP_count / total_count
+                if class_total != 0:
+                    cur_recall = TP_count / class_total
+
+                precision.append(cur_precision)
+                recall.append(cur_recall)
+            precision.reverse()
+            recall.reverse()
+            x_indices = np.arange(len(precision))
+
+            color = 'tab:red'
+            ax1.set_xlabel('Probability (%)')
+            ax1.set_ylabel('Precision', color=color)
+            ax1.scatter(x_indices, precision, color=color, s=4)
+            ax1.plot(x_indices, precision, color=color)
+            ax1.tick_params(axis='y', labelcolor=color)
+            ax1.set_ylim([0, 1])
+
+            ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+            color = 'tab:blue'
+            ax2.set_ylabel('Recall', color=color)
+            ax2.scatter(x_indices, recall, color=color, s=4)
+            ax2.plot(x_indices, recall, color=color)
+            ax2.tick_params(axis='y', labelcolor=color)
+            ax2.set_ylim([0, 1])
+
+            thex_utils.display_and_save_plot(model_dir=self.dir,
+                                             title="PR-Probability: " + class_name,
+                                             ax=None,
+                                             bbox_inches=None,
+                                             fig=fig)
+
     def plot_probability_vs_accuracy(self, range_metrics):
         """
-        Plots accuracy of class (y-axis) vs. probability assigned to class (x-axis). Accuracy is measured as the number of true positives (samples with this class as label) divided by all samples with probabilities assigned in this range. 
+        Plots accuracy of class (y-axis) vs. probability assigned to class (x-axis). Accuracy is measured as the number of true positives (samples with this class as label) divided by all samples with probabilities assigned in this range.
         :param range_metrics: Map of classes to [TP_range_sums, total_range_sums]
             total_range_sums: # of samples with probability in range for this class
-            TP_range_sums: true positives per range 
+            TP_range_sums: true positives per range
 
         """
 
@@ -152,13 +208,10 @@ class MainModelVisualization:
                     p = TP / total_predicted
                 accuracies.append(p)
 
-            normalize = plt.Normalize(min(true_positives), max(true_positives))
-            colors = plt.cm.Blues(normalize(true_positives))
-
             perc_ranges = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]
 
             x_indices = np.arange(len(accuracies))
-            ax.bar(x_indices, accuracies)  # color=bar_colors
+            ax.bar(x_indices, accuracies)
 
             thex_utils.annotate_plot(ax, x_indices, accuracies, totals)
 
