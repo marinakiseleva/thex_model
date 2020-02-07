@@ -15,6 +15,45 @@ from .data_consts import TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI
 import utilities.utilities as util
 
 
+def visualize_completeness(model_dir, X, y, class_labels):
+
+    features = list(X)
+    features.sort()
+    class_labels.sort()
+
+    data = pd.concat([X, y], axis=1)
+    data_completeness = []
+    for class_name in class_labels:
+        class_indices = []
+        for index, row in data.iterrows():
+            class_list = util.convert_str_to_list(row[TARGET_LABEL])
+            if class_name in class_list:
+                class_indices.append(index)
+        class_data = data.loc[class_indices, :]
+
+        features_completeness = []
+        num_samples = class_data.shape[0]
+        for feature in features:
+            valid = class_data.dropna(subset=[feature])
+            num_valid = valid.shape[0]
+            features_completeness.append(num_valid / num_samples)
+        data_completeness.append(features_completeness)
+
+    df = pd.DataFrame(data_completeness,
+                      index=class_labels,
+                      columns=features)
+
+    f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+
+    a = plt.pcolor(df, vmin=0, vmax=1, cmap='gist_heat')
+    plt.yticks(np.arange(0.5, len(df.index), 1), df.index)
+    plt.xticks(np.arange(0.5, len(df.columns), 1), df.columns, rotation=-90)
+    f.colorbar(a)
+    plt.gca().invert_yaxis()
+
+    util.display_and_save_plot(model_dir, "Completeness", None, None, f)
+
+
 def plot_feature_distribution(model_dir, df, feature, class_labels, class_counts):
     """
     Plots the distribution of each transient type in df over 'feature'

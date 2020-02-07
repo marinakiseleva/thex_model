@@ -30,10 +30,9 @@ def get_data(col_list, data_filters):
 
     df = filter_columns(df.copy(), col_list, data_filters['incl_redshift'])
 
+    # if data_filters['transform_features'] != True:
     # Drop row with any NULL values (after columns have been filtered)
-    # df.dropna(axis=0, inplace=True)
-    df.fillna(df.mean(), inplace=True)
-    print("\nFilling NULL features with average in column.\n")
+    df.dropna(axis=0, inplace=True)
 
     df = drop_conflicts(df)
 

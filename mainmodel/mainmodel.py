@@ -10,11 +10,11 @@ Subclasses differ in how they normalize across the class hierarchy.
 """
 
 from abc import ABC, abstractmethod
-
+import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-import pandas as pd
+
 from hmc import hmc
 
 from thex_data.data_init import *
@@ -22,7 +22,6 @@ from thex_data.data_prep import get_source_target_data
 from thex_data.data_filter import filter_class_size, sub_sample
 from thex_data.data_plot import *
 from thex_data.data_consts import TARGET_LABEL, TREE_ROOT, UNDEF_CLASS, class_to_subclass as orig_class_hier
-
 from mainmodel.performance_plots import MainModelVisualization
 import utilities.utilities as util
 
@@ -81,10 +80,13 @@ class MainModel(ABC, MainModelVisualization):
 
         print("\nClasses Used:\n" + str(self.class_labels))
 
+        # Pre-processing dependent on class labels
         X, y = self.filter_data(X, y,
                                 data_filters['min_class_size'],
                                 data_filters['subsample'],
                                 self.class_labels)
+        X, y = self.impute_data(X, y,  self.class_labels,
+                                data_filters['transform_features'])
 
         # Save relevant data attributes to self
         self.X = X
@@ -123,6 +125,17 @@ class MainModel(ABC, MainModelVisualization):
         X = filtered_data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
         y = filtered_data[[TARGET_LABEL]]
 
+        return X, y
+
+    def impute_data(self, X, y, class_labels, transform):
+        """
+        Impute data by filling with mean - currently commented out since that has unintentional consequences of biasing data. 
+        """
+        if transform != True:
+            return X, y
+        # data = pd.concat([X, y], axis=1)
+        # print("\n Data Imputation: Fill missing data with mean of feature col.")
+        # X.fillna(X.mean(), inplace=True)
         return X, y
 
     def init_tree(self, hierarchy):
@@ -232,7 +245,10 @@ class MainModel(ABC, MainModelVisualization):
 
     def visualize_data(self, X, y):
         """
+        Visualize data completeness and distribution 
         """
+        visualize_completeness(self.dir, X, y, self.class_labels)
+
         class_counts = self.get_class_counts(y)
         plot_class_hist(self.dir, class_counts)
         # Combine X and y for plotting feature dist
