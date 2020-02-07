@@ -11,7 +11,7 @@ from matplotlib.ticker import FormatStrFormatter
 import matplotlib.pyplot as plt
 from sklearn.neighbors.kde import KernelDensity
 
-from .data_consts import code_cat, TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI, cat_code
+from .data_consts import TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI
 import utilities.utilities as util
 
 

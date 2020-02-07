@@ -5,7 +5,7 @@ Functionality for filtering data
 
 import pandas as pd
 
-from .data_consts import cat_code, TARGET_LABEL
+from .data_consts import TARGET_LABEL
 import utilities.utilities as util
 
 
