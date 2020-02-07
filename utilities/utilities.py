@@ -20,7 +20,7 @@ def annotate_plot(ax, x, y, annotations):
         class_index += 1
 
 
-def save_plot(model_dir, title, ax, bbox_inches=None, fig=None, extra_artists=None):
+def save_plot(model_dir, title, ax, bbox_inches=None, fig=None):
     """
     Saves plot (by model name and passed-in title)
     :param model_dir: Directory name to save to
@@ -38,7 +38,7 @@ def save_plot(model_dir, title, ax, bbox_inches=None, fig=None, extra_artists=No
 
     if fig is not None:
         fig.savefig(model_dir + "/" + title, bbox_inches=bbox_inches)
-        fig.savefig('samplefigure', bbox_extra_artists=extra_artists,
+        fig.savefig('samplefigure', bbox_extra_artists=None,
                     bbox_inches='tight')
 
     else:
