@@ -58,14 +58,12 @@ def infer_data_classes(df):
     return list(unique_classes)
 
 
-def filter_columns(df, col_list, incl_redshift):
+def filter_columns(df, col_list):
     """
-    Filters columns down to those passed in as col_list (+ target label and redshift if selected)
+    Filters columns down to those passed in as col_list (+ target label)
     """
     # Filter DataFrame down to these columns
     col_list = col_list + [TARGET_LABEL]
-    if incl_redshift:
-        col_list.append('redshift')
     df = df[col_list]
     return df
 

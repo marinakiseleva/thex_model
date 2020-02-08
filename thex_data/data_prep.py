@@ -28,9 +28,8 @@ def get_data(col_list, data_filters):
     # Drop empty class labels
     df = df[df[TARGET_LABEL] != ""]
 
-    df = filter_columns(df.copy(), col_list, data_filters['incl_redshift'])
+    df = filter_columns(df.copy(), col_list)
 
-    # if data_filters['transform_features'] != True:
     # Drop row with any NULL values (after columns have been filtered)
     df.dropna(axis=0, inplace=True)
 

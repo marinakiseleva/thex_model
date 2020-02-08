@@ -145,7 +145,6 @@ drop_cols = [
     "dec_deg",  # float64
     "host_dist",  # float32
     "claimedtype",  # object
-    "redshift",  # float32
     "N_candidates",  # int32
     "host_dec",  # float64
     "host_id",  # object

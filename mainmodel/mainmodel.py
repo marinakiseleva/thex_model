@@ -50,7 +50,6 @@ class MainModel(ABC, MainModelVisualization):
                         'folds': 3,  # Number of folds if using k-fold Cross Validation
                         'subsample': None,
                         'transform_features': True,  # Derive mag colors
-                        'incl_redshift': True,
                         'min_class_size': 9,
                         'pca': None,  # Number of principal components
                         'class_labels': None,
@@ -61,16 +60,15 @@ class MainModel(ABC, MainModelVisualization):
         for data_filter in user_data_filters.keys():
             data_filters[data_filter] = user_data_filters[data_filter]
 
-        # list of features to use from database
-        features = collect_cols(data_filters['cols'], data_filters['col_matches'])
-
-        print("\nFeatures Used:\n" + str(features))
-
         if data_filters['data'] is None:
+            # list of features to use from database
+            features = collect_cols(data_filters['cols'], data_filters['col_matches'])
             X, y = get_source_target_data(features, data_filters)
         else:
             X = data_filters['data'][0]
             y = data_filters['data'][1]
+
+        print("\nFeatures Used:\n" + str(list(X)))
 
         # Redefine labels with Unspecifieds
         y = self.add_unspecified_labels_to_data(y)
@@ -247,7 +245,7 @@ class MainModel(ABC, MainModelVisualization):
         """
         Visualize data completeness and distribution 
         """
-        visualize_completeness(self.dir, X, y, self.class_labels)
+        # visualize_completeness(self.dir, X, y, self.class_labels)
 
         class_counts = self.get_class_counts(y)
         plot_class_hist(self.dir, class_counts)

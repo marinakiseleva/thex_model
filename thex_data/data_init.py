@@ -42,9 +42,7 @@ def collect_cols(cols, col_matches):
     for c in col_list:
         if not any(col in c for col in drop_cols):
             column_list_numeric.add(c)  # Keep only numeric columns
-    if 'redshift' in column_list_numeric:
-        raise ValueError(
-            "Do not include redshift in list of columns -- instead set it through the flag.")
+
     return list(column_list_numeric)
 
 
