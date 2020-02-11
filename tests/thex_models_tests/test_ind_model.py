@@ -26,20 +26,20 @@ python -m unittest
 
 class TestIndModel(unittest.TestCase):
 
+    def generate_data(self, original, num_datapoints):
+        data = []
+        for i in range(num_datapoints):
+            noise = np.random.normal(loc=0, scale=0.1, size=3)
+            data.append(original + noise)
+        return np.array(data)
+
     def setUp(self):
         warnings.filterwarnings('ignore')
 
-        def generate_data(original, num_datapoints):
-            data = []
-            for i in range(num_datapoints):
-                noise = np.random.normal(loc=0, scale=0.1, size=3)
-                data.append(original + noise)
-
-            return np.array(data)
         num_type1 = 20
         num_type2 = 10
-        c1 = generate_data([0.2, 0.3, .9], num_type1)
-        c2 = generate_data([0.3, 0.1, .8], num_type2)
+        c1 = self.generate_data([0.2, 0.3, .9], num_type1)
+        c2 = self.generate_data([0.3, 0.1, .8], num_type2)
         data_X = np.concatenate((c1, c2))
         fake_X = pd.DataFrame(data_X, columns=['f1', 'f2', 'f3'])
         fake_Y = pd.DataFrame(["Ia"] * num_type1 + ["CC"] *
@@ -117,9 +117,105 @@ class TestIndModel(unittest.TestCase):
                                                   N=12)
         self.assertEqual(sorted(labels), [])
 
+    def test_get_class_counts(self):
+        counts = self.test_model.get_class_counts(self.test_model.y)
+        self.assertEqual(counts["Unspecified Ia"], 20)
+        self.assertEqual(counts["Unspecified CC"], 10)
+
+    def test_scale_data(self):
+        np.set_printoptions(precision=2, suppress=True)
+        c1 = self.generate_data([30, 100, 20], 4)
+        c2 = self.generate_data([20, 60, 20], 2)
+        X_train = np.concatenate((c1, c2))
+        X_train = pd.DataFrame(X_train, columns=['f1', 'f2', 'f3'])
+
+        c1 = self.generate_data([30, 100, 20], 2)
+        c2 = self.generate_data([40, 5, 20], 1)
+        X_test = np.concatenate((c1, c2))
+        X_test = pd.DataFrame(X_test, columns=['f1', 'f2', 'f3'])
+
+        scaled_X_train, scaled_X_test = self.test_model.scale_data(X_train, X_test)
+
+        try:
+            pd.testing.assert_frame_equal(scaled_X_train, X_train)
+        except AssertionError:
+            self.assertEqual(True, True)
+            pass
+        else:
+            raise AssertionError
+
     ##########################################################################
     # IndModel functions
     ##########################################################################
+
+    def test_compute_probability_range_metrics(self):
+        self.assertEqual(self.test_model.class_labels,
+                         ['Unspecified CC', 'Unspecified Ia'])
+
+        probs = np.array([[.9, .1],
+                          [.1, .9]])
+        y = [['Unspecified CC'],
+             ['Unspecified Ia']]
+        y_test = pd.DataFrame(y, columns=[TARGET_LABEL])
+        label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
+        results = np.hstack((probs, label_column))
+
+        output = self.test_model.compute_probability_range_metrics(results, bin_size=.1)
+        self.assertEqual(output['Unspecified Ia'][0][9], 1)
+
+        # Test with larger bin size
+        probs = np.array([[.95, .01],
+                          [.01, .95]])
+        y = [['Unspecified CC'],
+             ['Unspecified Ia']]
+        y_test = pd.DataFrame(y, columns=[TARGET_LABEL])
+        label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
+        results = np.hstack((probs, label_column))
+
+        output = self.test_model.compute_probability_range_metrics(results, bin_size=.01)
+        # true positive in range == 1
+        self.assertEqual(output['Unspecified Ia'][0][94], 1)
+        # total in range == 1
+        self.assertEqual(output['Unspecified Ia'][1][94], 1)
+
+    def test_compute_metrics(self):
+        self.assertEqual(self.test_model.class_labels,
+                         ['Unspecified CC', 'Unspecified Ia'])
+        probs = np.array([[.9, .1],
+                          [.9, .1],
+                          [.1, .9],
+                          [.1, .9]])
+        y = [['Unspecified CC'],
+             ['Unspecified Ia'],
+             ['Unspecified CC'],
+             ['Unspecified Ia']]
+        y_test = pd.DataFrame(y, columns=[TARGET_LABEL])
+        label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
+        results = np.hstack((probs, label_column))
+        class_metrics = self.test_model.compute_metrics(results)
+        self.assertEqual(list(class_metrics['Unspecified CC'].values()), [1, 1, 1, 1])
+        self.assertEqual(list(class_metrics['Unspecified Ia'].values()), [1, 1, 1, 1])
+
+        # More complex case with 3 classes
+        self.test_model.class_labels = ['A', 'B', 'C']
+        self.assertEqual(self.test_model.class_labels, ['A', 'B', 'C'])
+        probs = np.array([[.8, .1, .1],
+                          [.8, .1, .1],
+                          [.1, .7, .2],
+                          [.1, .1, .8],
+                          [.01, .09, .9]])
+        y = [['A'],
+             ['B'],
+             ['B'],
+             ['C'],
+             ['C']]
+        y_test = pd.DataFrame(y, columns=[TARGET_LABEL])
+        label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
+        results = np.hstack((probs, label_column))
+        class_metrics = self.test_model.compute_metrics(results)
+        self.assertEqual(list(class_metrics['A'].values()), [1, 1, 0, 3])
+        self.assertEqual(list(class_metrics['B'].values()), [1, 0, 1, 3])
+        self.assertEqual(list(class_metrics['C'].values()), [2, 0, 0, 3])
 
     def test_relabel_class_data(self):
         relabeled_y = self.test_model.relabel_class_data("Ia", self.test_model.y)

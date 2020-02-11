@@ -141,7 +141,7 @@ class MainModel(ABC, MainModelVisualization):
                 filtered_labels.append(class_name)
             elif UNDEF_CLASS + class_name not in class_labels:
                 filtered_labels.append(class_name)
-        return filtered_labels
+        return sorted(filtered_labels)
 
     def impute_data(self, X, y, class_labels, transform):
         """
