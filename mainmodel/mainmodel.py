@@ -307,13 +307,15 @@ class MainModel(ABC, MainModelVisualization):
 
         return scaled_X_train, scaled_X_test
 
-    def apply_PCA(self, X_train, X_test, k=5):
+    def apply_PCA(self, X_train, X_test):
         """
         Fit PCA to training data and apply to both training and testing;
         Returns X_train and X_test as Pandas DataFrames
         :param X_train: Pandas DataFrame of training data
         :param X_test: Pandas DataFrame of testing data
         """
+        k = self.pca
+
         def convert_to_df(data, k):
             """
             Convert Numpy 2D array to DataFrame with k PCA columns
