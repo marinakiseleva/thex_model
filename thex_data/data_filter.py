@@ -102,7 +102,7 @@ def sub_sample(df, count, classes):
 
     unique_indices = list(set(keep_indices))
 
-    return df.loc[keep_indices, :].reset_index(drop=True)
+    return df.loc[unique_indices, :].reset_index(drop=True)
 
 
 def filter_class_size(df, N, classes):
@@ -135,4 +135,5 @@ def filter_class_size(df, N, classes):
             keep_indices += class_indices
 
     unique_indices = list(set(keep_indices))
+
     return df.loc[unique_indices, :].reset_index(drop=True)
