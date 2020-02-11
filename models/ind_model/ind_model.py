@@ -96,7 +96,7 @@ class IndModel(MainModel):
     def compute_probability_range_metrics(self, results, bin_size=.1):
         """
         Computes True Positive & Total metrics, split by probability assigned to class for ranges of 10% from 0 to 100. Used to plot probability assigned vs completeness (TP/total, per bin).
-        :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
+        :param results: Numpy ndarray, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         :return range_metrics: Map of classes to [TP_range_sums, total_range_sums]
             total_range_sums: # of samples with probability in range for this class
             TP_range_sums: true positives per range 
@@ -106,24 +106,23 @@ class IndModel(MainModel):
         for class_index, class_name in enumerate(self.class_labels):
             tp_probabilities = []  # probabilities for True Positive samples
             total_probabilities = []
-            for result_set in results:
-                for row in result_set:
-                    labels = row[label_index]
+            for row in results:
+                labels = row[label_index]
 
-                    # Sample is an instance of this current class.
-                    is_class = self.is_class(class_name, labels)
+                # Sample is an instance of this current class.
+                is_class = self.is_class(class_name, labels)
 
-                    # Get class index of max prob; exclude last column since it is label
-                    max_class_prob = np.max(row[:len(row) - 1])
-                    max_class_index = np.argmax(row[:len(row) - 1])
-                    max_class_name = self.class_labels[max_class_index]
+                # Get class index of max prob; exclude last column since it is label
+                max_class_prob = np.max(row[:len(row) - 1])
+                max_class_index = np.argmax(row[:len(row) - 1])
+                max_class_name = self.class_labels[max_class_index]
 
-                    # tp_probabilities Numpy array of all probabilities assigned to this
-                    # class that were True Positives
-                    if is_class and max_class_name == class_name:
-                        tp_probabilities.append(max_class_prob)
+                # tp_probabilities Numpy array of all probabilities assigned to this
+                # class that were True Positives
+                if is_class and max_class_name == class_name:
+                    tp_probabilities.append(max_class_prob)
 
-                    total_probabilities.append(row[class_index])
+                total_probabilities.append(row[class_index])
 
             # left inclusive, first bin is 0 <= x < .1. ; except last bin <=1
             bins = np.arange(0, 1 + bin_size, bin_size)
@@ -139,9 +138,6 @@ class IndModel(MainModel):
         :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         :return class_metrics: Map from class name to map of {"TP": w, "FP": x, "FN": y, "TN": z}
         """
-
-        # Combine sets in results
-        results = np.concatenate(results)
 
         # Last column is label
         label_index = len(self.class_labels)

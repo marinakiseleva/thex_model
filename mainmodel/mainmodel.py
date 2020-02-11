@@ -145,7 +145,7 @@ class MainModel(ABC, MainModelVisualization):
 
     def impute_data(self, X, y, class_labels, transform):
         """
-        Impute data by filling with mean - currently commented out since that has unintentional consequences of biasing data. 
+        Impute data by filling with mean - currently commented out since that has unintentional consequences of biasing data.
         """
         if transform != True:
             return X, y
@@ -170,7 +170,7 @@ class MainModel(ABC, MainModelVisualization):
 
     def assign_levels(self, tree, mapping, node, level):
         """
-        Assigns level to each node based on level in hierarchical tree. The lower it is in the tree, the larger the level. The level at the root is 1. 
+        Assigns level to each node based on level in hierarchical tree. The lower it is in the tree, the larger the level. The level at the root is 1.
         :return: Dict from class name to level number.
         """
         mapping[str(node)] = level
@@ -261,7 +261,7 @@ class MainModel(ABC, MainModelVisualization):
 
     def visualize_data(self, X, y):
         """
-        Visualize data completeness and distribution 
+        Visualize data completeness and distribution
         """
         # visualize_completeness(self.dir, X, y, self.class_labels)
 
@@ -292,15 +292,12 @@ class MainModel(ABC, MainModelVisualization):
 
     def scale_data(self, X_train, X_test):
         """
-        Fit scaling to training data and apply to both training and testing; 
+        Fit scaling to training data and apply to both training and testing;
         Returns X_train and X_test as Pandas DataFrames
         :param X_train: Pandas DataFrame of training data
         :param X_test: Pandas DataFrame of testing data
-
         """
-
         features_list = list(X_train)
-
         # Rescale data: z = (x - mean) / stdev
         scaler = StandardScaler()
         scaled_X_train = pd.DataFrame(
@@ -312,7 +309,7 @@ class MainModel(ABC, MainModelVisualization):
 
     def apply_PCA(self, X_train, X_test, k=5):
         """
-        Fit PCA to training data and apply to both training and testing; 
+        Fit PCA to training data and apply to both training and testing;
         Returns X_train and X_test as Pandas DataFrames
         :param X_train: Pandas DataFrame of training data
         :param X_test: Pandas DataFrame of testing data
@@ -348,8 +345,9 @@ class MainModel(ABC, MainModelVisualization):
     def run_cfv(self, X, y):
         """
         Run k-fold cross validation over a number of runs
+        :param X: DataFrame of features data
+        :param y: DataFram with TARGET_LABEL column
         """
-
         kf = StratifiedKFold(n_splits=self.num_folds, shuffle=True)
         results = []
         for train_index, test_index in kf.split(X, y):
@@ -372,6 +370,8 @@ class MainModel(ABC, MainModelVisualization):
             label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
             probabilities = np.hstack((probabilities, label_column))
             results.append(probabilities)
+
+        results = np.concatenate(results)
         return results
 
     def get_all_class_probabilities(self, X_test):
@@ -408,7 +408,7 @@ class MainModel(ABC, MainModelVisualization):
         :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         :return range_metrics: Map of classes to [TP_range_sums, total_range_sums]
             total_range_sums: # of samples with probability in range for this class
-            TP_range_sums: true positives per range 
+            TP_range_sums: true positives per range
         """
         pass
 

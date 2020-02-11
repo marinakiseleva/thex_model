@@ -62,24 +62,23 @@ class MultiModel(MainModel):
         for class_index, class_name in enumerate(self.class_labels):
             tp_probabilities = []  # probabilities for True Positive samples
             total_probabilities = []
-            for result_set in results:
-                for row in result_set:
-                    labels = row[label_index]
+            for row in results:
+                labels = row[label_index]
 
-                    # Sample is an instance of this current class.
-                    is_class = self.is_class(class_name, labels)
+                # Sample is an instance of this current class.
+                is_class = self.is_class(class_name, labels)
 
-                    # Get class index of max prob; exclude last column since it is label
-                    max_class_prob = np.max(row[:len(row) - 1])
-                    max_class_index = np.argmax(row[:len(row) - 1])
-                    max_class_name = self.class_labels[max_class_index]
+                # Get class index of max prob; exclude last column since it is label
+                max_class_prob = np.max(row[:len(row) - 1])
+                max_class_index = np.argmax(row[:len(row) - 1])
+                max_class_name = self.class_labels[max_class_index]
 
-                    # tp_probabilities Numpy array of all probabilities assigned to this
-                    # class that were True Positives
-                    if is_class and max_class_name == class_name:
-                        tp_probabilities.append(max_class_prob)
+                # tp_probabilities Numpy array of all probabilities assigned to this
+                # class that were True Positives
+                if is_class and max_class_name == class_name:
+                    tp_probabilities.append(max_class_prob)
 
-                    total_probabilities.append(row[class_index])
+                total_probabilities.append(row[class_index])
 
             # left inclusive, first bin is 0 <= x < .1. ; except last bin <=1
             bins = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]
