@@ -54,7 +54,7 @@ class MainModel(ABC, MainModelVisualization):
                         'pca': None,  # Number of principal components
                         'class_labels': None,
                         'prior': 'uniform',
-                        'data': None
+                        'data': None  # List of training and test pandas dfs
                         }
 
         for data_filter in user_data_filters.keys():
@@ -65,8 +65,8 @@ class MainModel(ABC, MainModelVisualization):
             features = collect_cols(data_filters['cols'], data_filters['col_matches'])
             X, y = get_source_target_data(features, data_filters)
         else:
-            X = data_filters['data'][0]
-            y = data_filters['data'][1]
+            X = data_filters['data'][0].copy()
+            y = data_filters['data'][1].copy()
 
         print("\nFeatures Used:\n" + str(list(X)))
 
@@ -76,6 +76,9 @@ class MainModel(ABC, MainModelVisualization):
         self.class_labels = self.get_class_labels(
             data_filters['class_labels'], y, data_filters['min_class_size'])
 
+        # Filter classes based on Independent model structure
+        self.class_labels = self.filter_labels(self.class_labels)
+
         print("\nClasses Used:\n" + str(self.class_labels))
 
         # Pre-processing dependent on class labels
@@ -83,8 +86,8 @@ class MainModel(ABC, MainModelVisualization):
                                 data_filters['min_class_size'],
                                 data_filters['subsample'],
                                 self.class_labels)
-        X, y = self.impute_data(X, y,  self.class_labels,
-                                data_filters['transform_features'])
+        # X, y = self.impute_data(X, y,  self.class_labels,
+        #                         data_filters['transform_features'])
 
         # Save relevant data attributes to self
         self.X = X
@@ -125,6 +128,21 @@ class MainModel(ABC, MainModelVisualization):
 
         return X, y
 
+    def filter_labels(self, class_labels):
+        """
+        Remove labels such that class are all unique (IE. Remove labels that have subclasses, such as Ia and CC)
+        Keeps all lowest-level classes (may be identified as either Unspecified, or a class name which doesn't have an unspecified version, meaning it is the lowest-level)
+        :param class_labels: List of class names
+        """
+
+        filtered_labels = []
+        for class_name in class_labels:
+            if UNDEF_CLASS in class_name:
+                filtered_labels.append(class_name)
+            elif UNDEF_CLASS + class_name not in class_labels:
+                filtered_labels.append(class_name)
+        return filtered_labels
+
     def impute_data(self, X, y, class_labels, transform):
         """
         Impute data by filling with mean - currently commented out since that has unintentional consequences of biasing data. 
@@ -159,6 +177,25 @@ class MainModel(ABC, MainModelVisualization):
         for child in tree._get_children(node):
             self.assign_levels(tree, mapping, child, level + 1)
         return mapping
+
+    def add_unspecified_labels_to_data(self, y):
+        """
+        Add unspecified label for each tree parent in data's list of labels
+        """
+        for index, row in y.iterrows():
+            # Iterate through all class labels for this label
+            max_depth = 0  # Set max depth to determine what level is undefined
+            for label in util.convert_str_to_list(row[TARGET_LABEL]):
+                if label in self.class_levels:
+                    max_depth = max(self.class_levels[label], max_depth)
+            # Max depth will be 0 for classes unhandled in hierarchy.
+            if max_depth > 0:
+                # Add Undefined label for any nodes at max depth
+                for label in util.convert_str_to_list(row[TARGET_LABEL]):
+                    if label in self.class_levels and self.class_levels[label] == max_depth:
+                        add = ", " + UNDEF_CLASS + label
+                        y.iloc[index] = y.iloc[index] + add
+        return y
 
     def get_class_labels(self, user_defined_labels, y, N):
         """
@@ -205,25 +242,6 @@ class MainModel(ABC, MainModelVisualization):
             keep_classes.remove(TREE_ROOT)
 
         return keep_classes
-
-    def add_unspecified_labels_to_data(self, y):
-        """
-        Add unspecified label for each tree parent in data's list of labels
-        """
-        for index, row in y.iterrows():
-            # Iterate through all class labels for this label
-            max_depth = 0  # Set max depth to determine what level is undefined
-            for label in util.convert_str_to_list(row[TARGET_LABEL]):
-                if label in self.class_levels:
-                    max_depth = max(self.class_levels[label], max_depth)
-            # Max depth will be 0 for classes unhandled in hierarchy.
-            if max_depth > 0:
-                # Add Undefined label for any nodes at max depth
-                for label in util.convert_str_to_list(row[TARGET_LABEL]):
-                    if label in self.class_levels and self.class_levels[label] == max_depth:
-                        add = ", " + UNDEF_CLASS + label
-                        y.iloc[index] = y.iloc[index] + add
-        return y
 
     def get_class_counts(self, y):
         """

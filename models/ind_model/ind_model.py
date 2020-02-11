@@ -21,25 +21,7 @@ class IndModel(MainModel):
         self.name = "Independent Model"
         super(IndModel, self).__init__(**data_args)
 
-        # Filter classes based on Independent model structure
-        self.class_labels = self.filter_labels(self.class_labels)
-
-    def filter_labels(self, class_labels):
-        """
-        Remove labels such that class are all unique (IE. Remove labels that have subclasses, such as Ia and CC)
-        Keeps all lowest-level classes (may be identified as either Unspecified, or a class name which doesn't have an unspecified version, meaning it is the lowest-level)
-        :param class_labels: List of class names
-        """
-
-        filtered_labels = []
-        for class_name in class_labels:
-            if UNDEF_CLASS in class_name:
-                filtered_labels.append(class_name)
-            elif UNDEF_CLASS + class_name not in class_labels:
-                filtered_labels.append(class_name)
-        return filtered_labels
-
-    def get_class_data(self, class_name, y):
+    def relabel_class_data(self, class_name, y):
         """
         Return DataFrame like y except that TARGET_LABEL values have been replaced with 0 or 1. 1 if class_name is in list of labels.
         :param class_name: Positive class
@@ -60,7 +42,7 @@ class IndModel(MainModel):
 
         self.models = {}
         for class_index, class_name in enumerate(self.class_labels):
-            y_relabeled = self.get_class_data(class_name, y_train)
+            y_relabeled = self.relabel_class_data(class_name, y_train)
 
             print("\nClass Model: " + class_name)
             self.models[class_name] = OptimalBinaryClassifier(
