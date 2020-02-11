@@ -76,18 +76,16 @@ class MainModel(ABC, MainModelVisualization):
         self.class_labels = self.get_class_labels(
             data_filters['class_labels'], y, data_filters['min_class_size'])
 
-        # Filter classes based on Independent model structure
-        self.class_labels = self.filter_labels(self.class_labels)
-
-        print("\nClasses Used:\n" + str(self.class_labels))
-
         # Pre-processing dependent on class labels
         X, y = self.filter_data(X, y,
                                 data_filters['min_class_size'],
                                 data_filters['subsample'],
                                 self.class_labels)
-        # X, y = self.impute_data(X, y,  self.class_labels,
-        #                         data_filters['transform_features'])
+
+        # Filter classes based on Independent model structure
+        self.class_labels = self.filter_labels(self.class_labels)
+
+        print("\nClasses Used:\n" + str(self.class_labels))
 
         # Save relevant data attributes to self
         self.X = X
@@ -142,17 +140,6 @@ class MainModel(ABC, MainModelVisualization):
             elif UNDEF_CLASS + class_name not in class_labels:
                 filtered_labels.append(class_name)
         return sorted(filtered_labels)
-
-    def impute_data(self, X, y, class_labels, transform):
-        """
-        Impute data by filling with mean - currently commented out since that has unintentional consequences of biasing data.
-        """
-        if transform != True:
-            return X, y
-        # data = pd.concat([X, y], axis=1)
-        # print("\n Data Imputation: Fill missing data with mean of feature col.")
-        # X.fillna(X.mean(), inplace=True)
-        return X, y
 
     def init_tree(self, hierarchy):
         print("\n\nConstructing Class Hierarchy Tree...")
