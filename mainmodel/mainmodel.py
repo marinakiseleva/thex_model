@@ -19,7 +19,7 @@ from hmc import hmc
 
 from thex_data.data_init import *
 from thex_data.data_prep import get_source_target_data
-from thex_data.data_filter import filter_class_size, sub_sample
+from thex_data.data_filter import filter_class_size, sub_sample, super_sample
 from thex_data.data_plot import *
 from thex_data.data_consts import TARGET_LABEL, TREE_ROOT, UNDEF_CLASS, class_to_subclass as orig_class_hier
 from mainmodel.performance_plots import MainModelVisualization
@@ -49,12 +49,14 @@ class MainModel(ABC, MainModelVisualization):
                         'num_runs': 1,
                         'folds': 3,  # Number of folds if using k-fold Cross Validation
                         'subsample': None,
+                        'supersample': None,
                         'transform_features': True,  # Derive mag colors
                         'min_class_size': 9,
                         'pca': None,  # Number of principal components
                         'class_labels': None,
                         'prior': 'uniform',
                         'data': None  # List of training and test pandas dfs
+
                         }
 
         for data_filter in user_data_filters.keys():
@@ -77,10 +79,7 @@ class MainModel(ABC, MainModelVisualization):
             data_filters['class_labels'], y, data_filters['min_class_size'])
 
         # Pre-processing dependent on class labels
-        X, y = self.filter_data(X, y,
-                                data_filters['min_class_size'],
-                                data_filters['subsample'],
-                                self.class_labels)
+        X, y = self.filter_data(X, y, data_filters, self.class_labels)
 
         # Filter classes based on Independent model structure
         self.class_labels = self.filter_labels(self.class_labels)
@@ -93,6 +92,7 @@ class MainModel(ABC, MainModelVisualization):
         self.num_folds = data_filters['folds']
         self.num_runs = data_filters['num_runs']
         self.pca = data_filters['pca']
+        self.oversample = data_filters['supersample']
 
     def run_model(self):
         """
@@ -106,10 +106,13 @@ class MainModel(ABC, MainModelVisualization):
 
         self.visualize_performance(results, self.y)
 
-    def filter_data(self, X, y, min_class_size, max_class_size, class_labels):
+    def filter_data(self, X, y, data_filters, class_labels):
         """
         Filter data now that class labels are known.
         """
+        min_class_size = data_filters['min_class_size']
+        max_class_size = data_filters['subsample']
+
         # Filter data (keep only classes that are > min class size)
         data = pd.concat([X, y], axis=1)
         filtered_data = filter_class_size(data,
@@ -121,6 +124,7 @@ class MainModel(ABC, MainModelVisualization):
             filtered_data = sub_sample(filtered_data,
                                        max_class_size,
                                        class_labels)
+
         X = filtered_data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
         y = filtered_data[[TARGET_LABEL]]
 
@@ -331,6 +335,18 @@ class MainModel(ABC, MainModelVisualization):
         reduced_testing = convert_to_df(reduced_testing, k)
         return reduced_training, reduced_testing
 
+    def super_sample(self, X, y):
+        """
+        Super sample using self.oversample as number to sample up to
+        """
+        data = pd.concat([X, y], axis=1)
+        super_data = super_sample(data, self.oversample, self.class_labels)
+
+        X = super_data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
+        y = super_data[[TARGET_LABEL]]
+
+        return X, y
+
     def run_cfv(self, X, y):
         """
         Run k-fold cross validation over a number of runs
@@ -344,6 +360,10 @@ class MainModel(ABC, MainModelVisualization):
                 drop=True), X.iloc[test_index].reset_index(drop=True)
             y_train, y_test = y.iloc[train_index].reset_index(
                 drop=True), y.iloc[test_index].reset_index(drop=True)
+
+            # Oversample
+            if self.oversample is not None:
+                X_train, y_train = self.super_sample(X_train, y_train)
 
             # Scale and apply PCA
             X_train, X_test = self.scale_data(X_train, X_test)

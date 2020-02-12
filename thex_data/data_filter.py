@@ -68,6 +68,54 @@ def filter_columns(df, col_list):
     return df
 
 
+def super_sample(df, count, classes):
+    """
+    Oversamples under-represented class. If class countains less than the necessary count, we only double each sample.
+    Note: ONLY APPLY TO TRAINING DATA. Applying to both training and testing biases entire set and makes it trivial to predict elements that have been duplicated.
+    :param df: DataFrame to apply to
+    :param count: Randomly supersample classes to this number
+    :param classes: classes to filter on.
+    """
+    if count is None:
+        return df
+
+    if classes is None:
+        # Infer unique classes from data
+        classes = infer_data_classes(df)
+
+    # Filter each class in list, by indices. Save indices of samples to keep.
+    orig_indices = []
+    super_sampled_indices = []
+    for class_label in classes:
+
+        class_indices = []
+        for index, row in df.iterrows():
+            class_list = util.convert_str_to_list(row[TARGET_LABEL])
+            if class_label in class_list:
+                class_indices.append(index)
+        df_class = df.loc[class_indices, :]
+        num_rows = df_class.shape[0]  # number of rows
+
+        if num_rows >= count:
+            # Leave as is
+            orig_indices += class_indices
+
+        else:
+            # Super-sample up to count
+            sample_up = count - num_rows
+            if sample_up > num_rows:
+                sample_up = num_rows
+            sampled_class_indices = list(df_class.sample(n=sample_up).index)
+            super_sampled_indices += sampled_class_indices
+
+    # only make original indices unique since subsampled ones are subsampled per class.
+    unique_indices = list(set(orig_indices))
+
+    all_indices = unique_indices + super_sampled_indices
+
+    return df.loc[all_indices, :].reset_index(drop=True)
+
+
 def sub_sample(df, count, classes):
     """
     Sub-samples over-represented class
