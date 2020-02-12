@@ -23,11 +23,11 @@ class DTClassifier():
         grid = {'criterion': ['entropy', 'gini'],
                 'splitter': ['best', 'random'],
                 # 'class_weight': [None, 'balanced', class_weights]
-                # 'max_depth': [20, 50, None],
+                'max_depth': [20, 50, None],
                 'min_samples_split': [2, 4, 8, 0.05],
-                # 'min_samples_leaf': [1, 2, 4, 8],
-                # 'min_weight_fraction_leaf': [0, 0.001, 0.01],
-                # 'max_features': [0.3, 0.5, None],
+                'min_samples_leaf': [1, 2, 4, 8],
+                'min_weight_fraction_leaf': [0, 0.001, 0.01],
+                'max_features': [0.3, 0.5, None],
                 }
         clf_optimize = GridSearchCV(
             estimator=DecisionTreeClassifier(class_weight='balanced'),
