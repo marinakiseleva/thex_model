@@ -361,7 +361,7 @@ class MainModel(ABC, MainModelVisualization):
             y_train, y_test = y.iloc[train_index].reset_index(
                 drop=True), y.iloc[test_index].reset_index(drop=True)
 
-            # Oversample
+            # Oversample training data only
             if self.oversample is not None:
                 X_train, y_train = self.super_sample(X_train, y_train)
 
