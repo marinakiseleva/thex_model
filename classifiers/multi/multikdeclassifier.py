@@ -35,9 +35,11 @@ class MultiKDEClassifier():
     def train(self, X, y):
         mc_kdes = {}
         for class_name in self.class_labels:
+            print("Training: " + class_name)
             y_relabeled = self.get_class_data(class_name, y)
             clf = KDEClassifier(X, y_relabeled).pos_model
             mc_kdes[class_name] = clf
+
         return mc_kdes
 
     def get_class_probabilities(self, x):
