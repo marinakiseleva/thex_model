@@ -24,11 +24,11 @@ class SVMClassifier():
         grid = {'kernel': ['rbf', 'linear'],
                 'gamma': [1e-3, 1e-4, 'auto'],
                 'C': [1, 10, 100, 1000],
-                'class_weight': ['balanced', class_weights]
+                # 'class_weight': ['balanced', class_weights]
                 }
 
         clf_optimize = GridSearchCV(
-            estimator=SVC(probability=True),
+            estimator=SVC(probability=True, class_weight=class_weights),
             param_grid=grid,
             scoring=LOSS_FUNCTION,
             cv=3,
