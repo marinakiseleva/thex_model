@@ -17,12 +17,10 @@ class KDEClassifier():
         self.name = "KDE"
         # Fit KDE to positive samples only.
         X_pos = X.loc[y[TARGET_LABEL] == 1]
-        y_pos = y.loc[y[TARGET_LABEL] == 1]
         self.pos_model = self.train(X_pos)
 
         # need negative model to normalize over
         X_neg = X.loc[y[TARGET_LABEL] == 0]
-        y_neg = y.loc[y[TARGET_LABEL] == 0]
         self.neg_model = self.train(X_neg)
 
     def train(self, X):
@@ -46,7 +44,7 @@ class KDEClassifier():
         clf_optimize.fit(X)
         clf = clf_optimize.best_estimator_
 
-        print("\nOptimal KDE Parameters: " + str(clf_optimize.best_params_) +
+        print("Optimal KDE Parameters: " + str(clf_optimize.best_params_) +
               " \nwith log probability density (log-likelihood): " + str(clf.score(X)))
 
         return clf
