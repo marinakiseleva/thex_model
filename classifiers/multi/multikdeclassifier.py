@@ -51,7 +51,7 @@ class MultiKDEClassifier():
         """
         # Create grid to get optimal bandwidth & kernel
         grid = {
-            'bandwidth': np.linspace(0.01, 6, 1000),
+            'bandwidth': np.linspace(0.00001, 3, 1000),
             'kernel': ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear'],
             'metric': ['euclidean']
         }

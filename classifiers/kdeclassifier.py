@@ -29,7 +29,7 @@ class KDEClassifier():
         :return: best fitting KDE
         """
         # Create grid to get optimal bandwidth
-        range_bws = np.linspace(0.01, 6, 1000)
+        range_bws = np.linspace(0.00001, 3, 1000)
         grid = {
             'bandwidth': range_bws,
             'kernel': ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear'],
