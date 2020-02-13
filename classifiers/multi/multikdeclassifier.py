@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
-from classifiers.kdeclassifier import KDEClassifier
+from sklearn.model_selection import GridSearchCV
+from sklearn.neighbors.kde import KernelDensity
+
 import utilities.utilities as thex_utils
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
 
@@ -35,12 +37,37 @@ class MultiKDEClassifier():
     def train(self, X, y):
         mc_kdes = {}
         for class_name in self.class_labels:
-            print("Training: " + class_name)
+            print("\n\nTraining: " + class_name)
             y_relabeled = self.get_class_data(class_name, y)
-            clf = KDEClassifier(X, y_relabeled).pos_model
-            mc_kdes[class_name] = clf
+            X_pos = X.loc[y_relabeled[TARGET_LABEL] == 1]
+            mc_kdes[class_name] = self.fit_class(X_pos)
 
         return mc_kdes
+
+    def fit_class(self, X):
+        """
+        Fit KDE to positive class presence
+        :return: best fitting KDE
+        """
+        # Create grid to get optimal bandwidth & kernel
+        grid = {
+            'bandwidth': np.linspace(0.01, 6, 1000),
+            'kernel': ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear'],
+            'metric': ['euclidean']
+        }
+        clf_optimize = GridSearchCV(estimator=KernelDensity(),
+                                    param_grid=grid,
+                                    cv=3,  # number of folds in a (Stratified)KFold
+                                    iid=True,
+                                    n_jobs=CPU_COUNT
+                                    )
+        clf_optimize.fit(X)
+        clf = clf_optimize.best_estimator_
+
+        print("Optimal KDE Parameters: " + str(clf_optimize.best_params_) +
+              " \nwith log probability density (log-likelihood): " + str(clf.score(X)))
+
+        return clf
 
     def get_class_probabilities(self, x):
         """
