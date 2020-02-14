@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors.kde import KernelDensity
@@ -46,6 +47,7 @@ class KDEClassifier():
 
         print("Optimal KDE Parameters: " + str(clf_optimize.best_params_) +
               " \nwith log probability density (log-likelihood): " + str(clf.score(X)))
+        sys.stdout.flush()  # Print to output file
 
         return clf
 

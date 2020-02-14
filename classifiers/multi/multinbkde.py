@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import GridSearchCV
@@ -40,6 +41,7 @@ class MultiNBKDEClassifier():
         mc_kdes = {}
         for class_name in self.class_labels:
             print("\n\nTraining: " + class_name)
+            sys.stdout.flush()  # Print to output file
             y_relabeled = self.get_class_data(class_name, y)
             X_pos = X.loc[y_relabeled[TARGET_LABEL] == 1]
             mc_kdes[class_name] = self.fit_class(X_pos)
@@ -80,6 +82,7 @@ class MultiNBKDEClassifier():
             else:
                 feature_kdes[feature] = None
                 print(str(feature) + " has no data.")
+            sys.stdout.flush()  # Print to output file
 
         return feature_kdes
 
