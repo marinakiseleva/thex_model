@@ -55,8 +55,8 @@ class MainModel(ABC, MainModelVisualization):
                         'pca': None,  # Number of principal components
                         'class_labels': None,
                         'prior': 'uniform',
-                        'data': None  # List of training and test pandas dfs
-
+                        'data': None,  # List of training and test pandas dfs
+                        'nb': False  # Naive Bayes multiclass
                         }
 
         for data_filter in user_data_filters.keys():
@@ -93,6 +93,7 @@ class MainModel(ABC, MainModelVisualization):
         self.num_runs = data_filters['num_runs']
         self.pca = data_filters['pca']
         self.oversample = data_filters['supersample']
+        self.nb = data_filters['nb']
 
     def run_model(self):
         """

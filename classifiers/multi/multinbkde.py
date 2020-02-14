@@ -7,17 +7,19 @@ import utilities.utilities as thex_utils
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
 
 
-class MultiKDEClassifier():
+class MultiNBKDEClassifier():
     """
-    Multiclass KDE classifier
+    Multiclass Naive Bayes classifier, with unique KDE per class per feature 
     """
 
     def __init__(self, X, y, class_labels):
         """
         Init classifier through training
         """
-        self.name = "Multiclass KDE"
+        self.name = "Multiclass NB KDE"
         self.class_labels = class_labels
+        # self.clfs is map of class name to : map from feature to best fit KDE for
+        # this feature/class
         self.clfs = self.train(X, y)
 
     def get_class_data(self, class_name, y):
@@ -46,28 +48,57 @@ class MultiKDEClassifier():
 
     def fit_class(self, X):
         """
-        Fit KDE to X
-        :return: best fitting KDE
+        Fit KDE per feature separately. If there is no data for a feature, do not make a KDE.
+        :return: best fitting KDEs
         """
+        features = list(X)
         # Create grid to get optimal bandwidth & kernel
         grid = {
             'bandwidth': np.linspace(0.00001, 3, 1000),
             'kernel': ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear'],
             'metric': ['euclidean']
         }
+        num_cross_folds = 3
         clf_optimize = GridSearchCV(estimator=KernelDensity(),
                                     param_grid=grid,
-                                    cv=3,  # number of folds in a (Stratified)KFold
+                                    # number of folds in a (Stratified)KFold
+                                    cv=num_cross_folds,
                                     iid=True,
                                     n_jobs=CPU_COUNT
                                     )
-        clf_optimize.fit(X)
-        clf = clf_optimize.best_estimator_
+        feature_kdes = {}
+        for feature in features:
+            feature_data = X[feature]
+            feature_data.dropna(inplace=True)
+            feature_data = feature_data.values.reshape(-1, 1)
+            if np.size(feature_data) > num_cross_folds:
+                clf_optimize.fit(feature_data)
+                clf = clf_optimize.best_estimator_
+                feature_kdes[feature] = clf
+                print(str(feature) + " KDE params: " + str(clf_optimize.best_params_) +
+                      " with log probability density (log-likelihood): " + str(clf.score(feature_data)))
+            else:
+                feature_kdes[feature] = None
+                print(str(feature) + " has no data.")
 
-        print("Optimal KDE Parameters: " + str(clf_optimize.best_params_) +
-              " \nwith log probability density (log-likelihood): " + str(clf.score(X)))
+        return feature_kdes
 
-        return clf
+    def get_class_density(self, x, clf):
+        """
+        :param x: Numpy array of features for single data point
+        :param clf: Map from feature to best fit KDE for a particular class
+        """
+        scores = []
+        for feature in clf.keys():
+            # Ensure this class has a defined KDE for this feature
+            if clf[feature] is not None:
+                # Ensure this sample has a defined value for this feature
+                x_feature = x[feature]
+                if x_feature is not None and not np.isnan(x_feature):
+                    scores.append(clf[feature].score_samples([[x_feature]])[0])
+        if len(scores) == 0:
+            scores = [0]  # Probability is 0 when no features overlap with available KDEs
+        return np.prod(np.array(scores))
 
     def get_class_probabilities(self, x):
         """
@@ -77,7 +108,7 @@ class MultiKDEClassifier():
         density_sum = 0
         probabilities = {}
         for class_name in self.class_labels:
-            class_density = np.exp(self.clfs[class_name].score_samples([x.values]))[0]
+            class_density = self.get_class_density(x, self.clfs[class_name])
             probabilities[class_name] = class_density
             density_sum += class_density
 

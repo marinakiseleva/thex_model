@@ -30,8 +30,14 @@ def get_data(col_list, data_filters):
 
     df = filter_columns(df.copy(), col_list)
 
-    # Drop row with any NULL values (after columns have been filtered)
-    df.dropna(axis=0, inplace=True)
+    if data_filters['nb']:
+        # Naive bayes: if it has at leat 1 non-null item, do not drop
+        print("before drop " + str(df.shape))
+        df.dropna(thresh=1, subset=col_list, inplace=True)
+        print("after drop " + str(df.shape))
+    else:
+       # Drop row with any NULL values (after columns have been filtered)
+        df.dropna(axis=0, inplace=True)
 
     df = drop_conflicts(df)
 

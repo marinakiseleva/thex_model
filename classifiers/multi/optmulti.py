@@ -18,11 +18,12 @@ from sklearn.metrics import average_precision_score, brier_score_loss
 
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
 from classifiers.multi.multikdeclassifier import MultiKDEClassifier
+from classifiers.multi.multinbkde import MultiNBKDEClassifier
 
 
 class OptimalMultiClassifier():
 
-    def __init__(self, X, y, class_labels):
+    def __init__(self, X, y, class_labels, nb):
         """
         Multiclasss classifier. Return map from each class name in class_labels to model, and classifier name corresponding to underlying algorithm.
         :param X: DataFrame of features
@@ -30,6 +31,7 @@ class OptimalMultiClassifier():
         :param priors: Priors to be used CURRENTLY NOT IMPLEMETNED
         """
         self.class_labels = class_labels
+        self.nb = nb
         self.clf, self.classifier_name = self.get_best_classifier(X, y)
 
     def get_one_hot(self, y):
@@ -78,9 +80,12 @@ class OptimalMultiClassifier():
         """
         Train variety of classifiers
         """
-        # Train multiclass KDE
-        multikde = MultiKDEClassifier(X, y, self.class_labels)
-
+        if self.nb:
+            print("Training Naive Bayes Multiclass Classifier")
+            multikde = MultiNBKDEClassifier(X, y, self.class_labels)
+        else:
+            print("Training multivariate KDE per class")
+            multikde = MultiKDEClassifier(X, y, self.class_labels)
         return [multikde]
 
     def get_best_classifier(self, X, y):
