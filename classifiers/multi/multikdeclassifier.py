@@ -50,14 +50,16 @@ class MultiKDEClassifier():
         :return: best fitting KDE
         """
         # Create grid to get optimal bandwidth & kernel
+
         grid = {
-            'bandwidth': np.linspace(0.00001, 3, 1000),
-            'kernel': ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear'],
-            'metric': ['euclidean']
+            'bandwidth': np.linspace(0, 1.2, 12),
+            'kernel': ['tophat',  'exponential'],
         }
-        clf_optimize = GridSearchCV(estimator=KernelDensity(),
+        num_cross_folds = 3  # number of folds in a (Stratified)KFold
+        kde = KernelDensity(leaf_size=10, metric='euclidean')
+        clf_optimize = GridSearchCV(estimator=kde,
                                     param_grid=grid,
-                                    cv=3,  # number of folds in a (Stratified)KFold
+                                    cv=num_cross_folds,
                                     iid=True,
                                     n_jobs=CPU_COUNT
                                     )
