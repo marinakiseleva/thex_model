@@ -81,10 +81,10 @@ class OptimalMultiClassifier():
         Train variety of classifiers
         """
         if self.nb:
-            print("Training Naive Bayes Multiclass Classifier")
+            print("\n\nTraining Naive Bayes Multiclass Classifier")
             multikde = MultiNBKDEClassifier(X, y, self.class_labels)
         else:
-            print("Training multivariate KDE per class")
+            print("\n\nTraining Multivariate KDE per class")
             multikde = MultiKDEClassifier(X, y, self.class_labels)
         return [multikde]
 

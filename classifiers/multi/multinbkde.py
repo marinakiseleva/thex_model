@@ -56,14 +56,13 @@ class MultiNBKDEClassifier():
         features = list(X)
         # Create grid to get optimal bandwidth & kernel
         grid = {
-            'bandwidth': np.linspace(0.00001, 3, 1000),
-            'kernel': ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear'],
-            'metric': ['euclidean']
+            'bandwidth': np.linspace(0, 1.2, 12),
+            'kernel': ['tophat',  'exponential'],
         }
-        num_cross_folds = 3
-        clf_optimize = GridSearchCV(estimator=KernelDensity(),
+        num_cross_folds = 3  # number of folds in a (Stratified)KFold
+        kde = KernelDensity(leaf_size=10, metric='euclidean')
+        clf_optimize = GridSearchCV(estimator=kde,
                                     param_grid=grid,
-                                    # number of folds in a (Stratified)KFold
                                     cv=num_cross_folds,
                                     iid=True,
                                     n_jobs=CPU_COUNT
@@ -91,6 +90,7 @@ class MultiNBKDEClassifier():
         :param x: Numpy array of features for single data point
         :param clf: Map from feature to best fit KDE for a particular class
         """
+
         scores = []
         for feature in clf.keys():
             # Ensure this class has a defined KDE for this feature
@@ -98,14 +98,17 @@ class MultiNBKDEClassifier():
                 # Ensure this sample has a defined value for this feature
                 x_feature = x[feature]
                 if x_feature is not None and not np.isnan(x_feature):
-                    scores.append(clf[feature].score_samples([[x_feature]])[0])
+                    density = np.exp(clf[feature].score_samples([[x_feature]])[0])
+                    scores.append(density)
+
         if len(scores) == 0:
             scores = [0]  # Probability is 0 when no features overlap with available KDEs
+
         return np.prod(np.array(scores))
 
     def get_class_probabilities(self, x):
         """
-        Get probability of each class for this sample x. Probability of class i  = density_i / (sum_i^N density_i). 
+        Get probability of each class for this sample x by normalizing over each class KDE density. Probability of class i  = density_i / (sum_i^N density_i). 
         :param x: Pandas Series (row of DF) of features
         """
         density_sum = 0
@@ -118,13 +121,14 @@ class MultiNBKDEClassifier():
         # Normalize
         probabilities = {k: probabilities[k] / density_sum for k in probabilities.keys()}
 
+        MIN_PROB = 0.0001  # Min probability to avoid overflow
         for class_name in self.class_labels:
             if np.isnan(probabilities[class_name]):
-                probabilities[class_name] = 0.001
-                print("MultiKDEClassifier get_class_probabilities NULL probability for " + class_name)
+                probabilities[class_name] = MIN_PROB
+                print(self.name + " NULL probability for " + class_name)
 
-            if probabilities[class_name] < 0.0001:
+            if probabilities[class_name] < MIN_PROB:
                 # Force min prob to 0.001 for future computation
-                probabilities[class_name] = 0.001
+                probabilities[class_name] = MIN_PROB
 
         return probabilities
