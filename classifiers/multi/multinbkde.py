@@ -6,6 +6,7 @@ from sklearn.neighbors.kde import KernelDensity
 
 import utilities.utilities as thex_utils
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
+from classifiers.multi.plot_fit import plot_fit
 
 
 class MultiNBKDEClassifier():
@@ -13,12 +14,13 @@ class MultiNBKDEClassifier():
     Multiclass Naive Bayes classifier, with unique KDE per class per feature 
     """
 
-    def __init__(self, X, y, class_labels):
+    def __init__(self, X, y, class_labels, model_dir):
         """
         Init classifier through training
         """
         self.name = "Multiclass NB KDE"
         self.class_labels = class_labels
+        self.dir = model_dir
         # self.clfs is map of class name to : map from feature to best fit KDE for
         # this feature/class
         self.clfs = self.train(X, y)
@@ -44,11 +46,11 @@ class MultiNBKDEClassifier():
             sys.stdout.flush()  # Print to output file
             y_relabeled = self.get_class_data(class_name, y)
             X_pos = X.loc[y_relabeled[TARGET_LABEL] == 1]
-            mc_kdes[class_name] = self.fit_class(X_pos)
+            mc_kdes[class_name] = self.fit_class(X_pos, class_name)
 
         return mc_kdes
 
-    def fit_class(self, X):
+    def fit_class(self, X, class_name):
         """
         Fit KDE per feature separately. If there is no data for a feature, do not make a KDE.
         :return: best fitting KDEs
@@ -56,11 +58,12 @@ class MultiNBKDEClassifier():
         features = list(X)
         # Create grid to get optimal bandwidth & kernel
         grid = {
-            'bandwidth': np.linspace(0, 1.2, 12),
-            'kernel': ['tophat',  'exponential'],
+            'bandwidth': np.linspace(0, 1, 10),
+            'kernel': ['tophat',  'exponential', 'gaussian'],
         }
         num_cross_folds = 3  # number of folds in a (Stratified)KFold
-        kde = KernelDensity(leaf_size=10, metric='euclidean')
+        kde = KernelDensity(leaf_size=10,
+                            metric='euclidean')
         clf_optimize = GridSearchCV(estimator=kde,
                                     param_grid=grid,
                                     cv=num_cross_folds,
@@ -72,12 +75,19 @@ class MultiNBKDEClassifier():
             feature_data = X[feature]
             feature_data.dropna(inplace=True)
             feature_data = feature_data.values.reshape(-1, 1)
-            if np.size(feature_data) > num_cross_folds:
+            if np.size(feature_data) > 9:
                 clf_optimize.fit(feature_data)
                 clf = clf_optimize.best_estimator_
                 feature_kdes[feature] = clf
-                print(str(feature) + " KDE params: " + str(clf_optimize.best_params_) +
+                print(feature)
+                print("# of samples: " + str(np.size(feature_data)))
+                print("KDE params: " + str(clf_optimize.best_params_) +
                       " with log probability density (log-likelihood): " + str(clf.score(feature_data)))
+                # plot_fit(data=feature_data,
+                #          kde=clf,
+                #          feature_name=feature,
+                #          class_name=class_name,
+                #          model_dir=self.dir)
             else:
                 feature_kdes[feature] = None
                 print(str(feature) + " has no data.")
@@ -99,6 +109,7 @@ class MultiNBKDEClassifier():
                 x_feature = x[feature]
                 if x_feature is not None and not np.isnan(x_feature):
                     density = np.exp(clf[feature].score_samples([[x_feature]])[0])
+
                     scores.append(density)
 
         if len(scores) == 0:
