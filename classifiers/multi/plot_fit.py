@@ -19,8 +19,6 @@ def plot_fit(data, kde, feature_name, class_name, model_dir):
     plt.title(title, fontsize=12)
     plt.xlabel(feature_name, fontsize=10)
     plt.ylabel("Density", fontsize=10)
-    # plt.xlim(left=0, right=max_value)
-
     # sample probabilities for a range of outcomes
     values = np.linspace(-3, 2, 100)
     values = values.reshape(len(values), 1)
@@ -30,4 +28,4 @@ def plot_fit(data, kde, feature_name, class_name, model_dir):
     # plot the histogram and pdf
     ax.hist(data, bins=10, density=True)
     ax.plot(values, probabilities)
-    util.display_and_save_plot(model_dir, "fit_" + title, ax)
+    util.save_plot(model_dir, "fit_" + title, ax)

@@ -83,11 +83,11 @@ class MultiNBKDEClassifier():
                 print("# of samples: " + str(np.size(feature_data)))
                 print("KDE params: " + str(clf_optimize.best_params_) +
                       " with log probability density (log-likelihood): " + str(clf.score(feature_data)))
-                # plot_fit(data=feature_data,
-                #          kde=clf,
-                #          feature_name=feature,
-                #          class_name=class_name,
-                #          model_dir=self.dir)
+                plot_fit(data=feature_data,
+                         kde=clf,
+                         feature_name=feature,
+                         class_name=class_name,
+                         model_dir=self.dir)
             else:
                 feature_kdes[feature] = None
                 print(str(feature) + " has no data.")
