@@ -38,9 +38,6 @@ def save_plot(model_dir, title, ax, bbox_inches=None, fig=None):
 
     if fig is not None:
         fig.savefig(model_dir + "/" + title, bbox_inches=bbox_inches)
-        fig.savefig('samplefigure', bbox_extra_artists=None,
-                    bbox_inches='tight')
-
     else:
         plt.savefig(model_dir + "/" + title, bbox_inches=bbox_inches)
 
