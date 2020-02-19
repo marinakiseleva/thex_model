@@ -59,4 +59,4 @@ def plot_fits(data_map, kdes, features, classes, model_dir):
                 probabilities = np.exp(kde.score_samples(values))
                 ax.plot(values, probabilities, label=class_name)
         ax.legend()
-        util.save_plot(model_dir, "fit_" + title, ax)
+        util.save_plot(model_dir, "Fit: " + title, ax)
