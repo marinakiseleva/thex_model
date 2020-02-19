@@ -8,6 +8,7 @@ import pandas as pd
 from matplotlib.colors import ListedColormap
 from matplotlib.ticker import MaxNLocator
 from matplotlib.ticker import FormatStrFormatter
+from matplotlib.ticker import LogLocator
 import matplotlib.pyplot as plt
 from sklearn.neighbors.kde import KernelDensity
 
@@ -127,8 +128,9 @@ def plot_class_hist(model_dir, class_counts):
     Plots histogram of class sizes
     :param model_dir: directory of model to save figure
     :param class_counts: Map from class name to counts
-
     """
+    print("Class counts:")
+    print(class_counts)
     class_names = list(class_counts.keys())
     class_indices = np.arange(len(class_names))
 
@@ -139,8 +141,11 @@ def plot_class_hist(model_dir, class_counts):
     plt.gcf().subplots_adjust(left=0.1)
 
     # Set logscale for range of values
-    if (max(class_counts.values()) - min(class_counts.values())) > 100:
+    min_class_count = min(class_counts.values())
+    max_class_count = max(class_counts.values())
+    if (max_class_count - min_class_count) > 100:
         ax.set_xscale('log')
+        # plt.xticks([10, 100, 1000])
         ax.xaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
         plt.tick_params(axis='x', which='major', rotation=-90)
 
