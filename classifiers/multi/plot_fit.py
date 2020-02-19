@@ -19,13 +19,44 @@ def plot_fit(data, kde, feature_name, class_name, model_dir):
     plt.title(title, fontsize=12)
     plt.xlabel(feature_name, fontsize=10)
     plt.ylabel("Density", fontsize=10)
-    # sample probabilities for a range of outcomes
+
     values = np.linspace(-3, 2, 100)
     values = values.reshape(len(values), 1)
 
-    probabilities = kde.score_samples(values)
-    probabilities = np.exp(probabilities)
+    # sample probabilities for the range of values
+    probabilities = np.exp(kde.score_samples(values))
     # plot the histogram and pdf
     ax.hist(data, bins=10, density=True)
     ax.plot(values, probabilities)
-    util.save_plot(model_dir, "fit_" + title, ax)
+    util.save_plot(model_dir, title, ax)
+
+
+def plot_fits(data_map, kdes, features, classes, model_dir):
+    """
+    Plot KDEs of the same feature and different classes together, so to compare different classes.
+    :param data_map: Map from class name to X data of that class
+    :param kdes: Map from class name to map from features to KDEs
+    :param features: All features to iterate through
+    :param class_name: All classes to iterate through
+    :param model_dir: Model directory to save to
+    """
+    values = np.linspace(-3, 2, 100)
+    values = values.reshape(len(values), 1)
+
+    for feature_name in features:
+        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+
+        title = feature_name
+        plt.title(title, fontsize=12)
+        plt.xlabel(feature_name, fontsize=10)
+        plt.ylabel("Probability Density", fontsize=10)
+
+        # Plot KDE fit for this feature, per class
+        for class_name in classes:
+            kde = kdes[class_name][feature_name]
+            if kde is not None:
+                # sample probabilities for the range of values
+                probabilities = np.exp(kde.score_samples(values))
+                ax.plot(values, probabilities, label=class_name)
+        ax.legend()
+        util.save_plot(model_dir, "fit_" + title, ax)

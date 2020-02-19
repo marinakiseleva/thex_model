@@ -6,7 +6,7 @@ from sklearn.neighbors.kde import KernelDensity
 
 import utilities.utilities as thex_utils
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
-from classifiers.multi.plot_fit import plot_fit
+from classifiers.multi.plot_fit import plot_fits
 
 
 class MultiNBKDEClassifier():
@@ -44,13 +44,22 @@ class MultiNBKDEClassifier():
     def train(self, X, y):
         mc_kdes = {}
         self.all_features = sorted(list(X))
+
+        data_map = {}
         for class_name in self.class_labels:
             print("\n\nTraining: " + class_name)
             sys.stdout.flush()  # Print to output file
             y_relabeled = self.get_class_data(class_name, y)
+
             X_pos = X.loc[y_relabeled[TARGET_LABEL] == 1]
+            data_map[class_name] = X_pos
             mc_kdes[class_name] = self.fit_class(X_pos, class_name)
 
+        plot_fits(data_map=data_map,
+                  kdes=mc_kdes,
+                  features=self.all_features,
+                  classes=self.class_labels,
+                  model_dir=self.dir)
         # mc_kdes = self.filter_estimates(mc_kdes)
         return mc_kdes
 
@@ -118,11 +127,7 @@ class MultiNBKDEClassifier():
                 print("# of samples: " + str(np.size(feature_data)))
                 print("KDE params: " + str(clf_optimize.best_params_))
                 print("with log-likelihood: " + str(log_density_fit))
-                # plot_fit(data=feature_data,
-                #          kde=clf,
-                #          feature_name=feature,
-                #          class_name=class_name,
-                #          model_dir=self.dir)
+
             else:
                 feature_kdes[feature] = None
                 print(str(feature) + " has no data.")
@@ -142,8 +147,9 @@ class MultiNBKDEClassifier():
             density = np.exp(clf[feature].score_samples([[x_feature]])[0])
             scores.append(density)
 
+        # Probability is 0 when no features overlap with available KDEs
         if len(scores) == 0:
-            scores = [0]  # Probability is 0 when no features overlap with available KDEs
+            scores = [0]
 
         return np.prod(np.array(scores))
 
@@ -173,6 +179,7 @@ class MultiNBKDEClassifier():
         density_sum = 0
         probabilities = {}
         valid_features = self.get_features(x)
+
         for class_name in self.class_labels:
             class_density = self.get_class_density(
                 x, self.clfs[class_name], valid_features)
