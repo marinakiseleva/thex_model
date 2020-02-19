@@ -42,8 +42,7 @@ def get_data(col_list, data_filters):
     df = filter_class_labels(df, data_filters['class_labels'])
 
     if df.shape[0] == 0:
-        raise ValueError(
-            "\nNo data to run model on. Try changing data filters or limiting number of features. Note: Running on all columns will not work since no data spans all features.\n")
+        raise ValueError("\nNo data to run model on.\n")
 
     return df.reset_index(drop=True)
 
