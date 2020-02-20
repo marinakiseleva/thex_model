@@ -471,20 +471,13 @@ class MainModel(ABC, MainModelVisualization):
     def compute_baselines(self, class_counts, y):
         """
         Get random classifier baselines for recall, specificity (negative recall), and precision
-        :param prior: NEED TO REINCORPORATE.
         """
         pos_baselines = {}
         neg_baselines = {}
         precision_baselines = {}
-
         total_count = y.shape[0]
-
-        # if prior == 'uniform':
         class_priors = {c: 1 / len(self.class_labels)
                         for c in self.class_labels}
-        # elif prior == 'frequency':
-        #     class_priors = {c: class_counts[c] /
-        #                     total_count for c in self.class_labels}
 
         for class_name in self.class_labels:
             # Compute baselines
