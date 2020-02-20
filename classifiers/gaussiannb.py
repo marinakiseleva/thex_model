@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import brier_score_loss
@@ -23,7 +24,7 @@ class GNBClassifier():
         grid = {
             # 'criterion': ['entropy', 'gini'],
             # 'splitter': ['best', 'random'],
-            'var_smoothing': [10**-4, 10**-2, 10**-1]
+            'var_smoothing': [0.001, 0.01, 0.1, 1, 1.1]
             # 'priors': [.5, .5]
         }
         clf_optimize = GridSearchCV(
@@ -37,9 +38,8 @@ class GNBClassifier():
         # Fit the random search model
         clf_optimize.fit(X.values, y.values)
         clf = clf_optimize.best_estimator_
-        print("\nOptimal GaussianNB Parameters:")
-        print(clf_optimize.best_params_)
-
+        print(self.name + " optimal parameters:\n" + str(clf_optimize.best_params_))
+        sys.stdout.flush()  # Print to output file
         return clf
 
     def get_class_probability(self, x):

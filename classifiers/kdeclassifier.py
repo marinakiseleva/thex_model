@@ -45,10 +45,9 @@ class KDEClassifier():
         clf_optimize.fit(X)
         clf = clf_optimize.best_estimator_
 
-        print("Optimal KDE Parameters: " + str(clf_optimize.best_params_) +
-              " \nwith log probability density (log-likelihood): " + str(clf.score(X)))
+        print(self.name + " optimal parameters:\n" + str(clf_optimize.best_params_))
+        print("with log probability density (log-likelihood): " + str(clf.score(X)))
         sys.stdout.flush()  # Print to output file
-
         return clf
 
     def get_class_probability(self, x):

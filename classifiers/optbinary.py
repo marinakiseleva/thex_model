@@ -96,12 +96,12 @@ class OptimalBinaryClassifier():
         """
         classifiers = [KDEClassifier(X, y),
                        DTClassifier(X, y, sample_weights, class_weights),
-                       #SVMClassifier(X, y, sample_weights, class_weights),
+                       SVMClassifier(X, y, sample_weights, class_weights),
                        GNBClassifier(X, y, sample_weights)]
         # Train ADA on already defined classifiers
-        ada_dt = ADAClassifier(X, y, sample_weights,
-                               classifiers[1].clf, "ADA Boosted Decision Tree")
-        classifiers.append(ada_dt)
+        # ada_dt = ADAClassifier(X, y, sample_weights,
+        # classifiers[1].clf, "ADA Boosted Decision Tree")
+        # classifiers.append(ada_dt)
 
         # ada_gnb = ADAClassifier(X, y, sample_weights,
         #                         classifiers[2].clf, "ADA Boosted Gaussian NB")
@@ -110,7 +110,7 @@ class OptimalBinaryClassifier():
 
     def get_best_classifier(self, X, y):
         """
-        Get best classifier 
+        Get best classifier
         """
         labeled_samples = pd.concat([X, y], axis=1)
         sample_weights = self.get_sample_weights(labeled_samples)
@@ -122,6 +122,7 @@ class OptimalBinaryClassifier():
         best_clf = None
         for clf in classifiers:
             loss = self.get_clf_loss(clf, X, y)
+            print(clf.name + " brier score loss " + str(round(loss, 3)))
             if loss < min_loss:
                 min_loss = loss
                 best_clf = clf

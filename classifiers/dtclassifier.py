@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import brier_score_loss
@@ -40,9 +41,8 @@ class DTClassifier():
         # Fit the random search model
         clf_optimize.fit(X.values, y.values)
         clf = clf_optimize.best_estimator_
-        print("\nOptimal DecisionTreeClassifier Parameters:")
-        print(clf_optimize.best_params_)
-
+        print(self.name + " optimal parameters:\n" + str(clf_optimize.best_params_))
+        sys.stdout.flush()  # Print to output file
         return clf
 
     def get_class_probability(self, x):

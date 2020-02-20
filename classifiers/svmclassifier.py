@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
@@ -21,14 +22,15 @@ class SVMClassifier():
 
         # Set the parameters by cross-validation
 
-        grid = {'kernel': ['rbf', 'linear'],
-                'gamma': [1e-3, 1e-4, 'auto'],
+        grid = {'kernel': ['rbf', 'linear', 'poly', 'sigmoid'],
+                # 'degree': [2, 3, 4, 5],
+                'gamma': [1e-3, 1e-4, 'auto', 'scale'],
                 'C': [1, 10, 100, 1000],
                 # 'class_weight': ['balanced', class_weights]
                 }
 
         clf_optimize = GridSearchCV(
-            estimator=SVC(probability=True, class_weight=class_weights),
+            estimator=SVC(probability=True, class_weight='balanced'),
             param_grid=grid,
             scoring=LOSS_FUNCTION,
             cv=3,
@@ -38,7 +40,8 @@ class SVMClassifier():
         # Fit the random search model
         clf_optimize.fit(X.values, y.values, sample_weight=sample_weights)
         clf = clf_optimize.best_estimator_
-
+        print(self.name + " optimal parameters:\n" + str(clf_optimize.best_params_))
+        sys.stdout.flush()  # Print to output file
         return clf
 
     def get_class_probability(self, x):
