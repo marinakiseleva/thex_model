@@ -31,12 +31,12 @@ class KDEClassifier():
         """
         # Create grid to get optimal bandwidth
         range_bws = np.linspace(0.00001, 1, 100)
-        grid = {
-            'bandwidth': range_bws,
-            'kernel': ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear'],
-            'metric': ['euclidean']
-        }
-        clf_optimize = GridSearchCV(estimator=KernelDensity(),
+        grid = {'bandwidth': range_bws}
+        # 'kernel': ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear'],
+        # 'metric': ['euclidean']
+
+        clf_optimize = GridSearchCV(estimator=KernelDensity(kernel='exponential',
+                                                            metric='euclidean'),
                                     param_grid=grid,
                                     cv=3,  # number of folds in a (Stratified)KFold
                                     iid=True,
