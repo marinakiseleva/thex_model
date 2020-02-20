@@ -42,8 +42,6 @@ class DTClassifier():
         clf = clf_optimize.best_estimator_
         print("\nOptimal DecisionTreeClassifier Parameters:")
         print(clf_optimize.best_params_)
-        loss = brier_score_loss(y.values, clf.predict_proba(X.values)[:, 1])
-        print("Brier Score Loss: " + str(loss))
 
         return clf
 

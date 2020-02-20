@@ -23,7 +23,7 @@ class GNBClassifier():
         grid = {
             # 'criterion': ['entropy', 'gini'],
             # 'splitter': ['best', 'random'],
-            'var_smoothing': [10**-9, 10**-6, 10**-4]
+            'var_smoothing': [10**-4, 10**-2, 10**-1]
             # 'priors': [.5, .5]
         }
         clf_optimize = GridSearchCV(
@@ -39,8 +39,6 @@ class GNBClassifier():
         clf = clf_optimize.best_estimator_
         print("\nOptimal GaussianNB Parameters:")
         print(clf_optimize.best_params_)
-        loss = brier_score_loss(y.values, clf.predict_proba(X.values)[:, 1])
-        print("Brier Score Loss: " + str(loss))
 
         return clf
 

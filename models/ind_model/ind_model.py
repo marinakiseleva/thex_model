@@ -45,7 +45,6 @@ class IndModel(MainModel):
         self.models = {}
         for class_index, class_name in enumerate(self.class_labels):
             y_relabeled = self.relabel_class_data(class_name, y_train)
-
             print("\nClass Model: " + class_name)
             self.models[class_name] = OptimalBinaryClassifier(
                 class_name, X_train, y_relabeled)
@@ -61,13 +60,13 @@ class IndModel(MainModel):
         probabilities = {}
         for class_index, class_name in enumerate(self.class_labels):
             probabilities[class_name] = self.models[class_name].get_class_probability(x)
+            MIN_PROB = 0.0001  # Min probability to avoid overflow
             if np.isnan(probabilities[class_name]):
-                probabilities[class_name] = 0.001
-                print("EnsembleModel get_class_probabilities NULL probability for " + class_name)
+                probabilities[class_name] = MIN_PROB
+                print(self.name + " NULL probability for " + class_name)
 
-            if probabilities[class_name] < 0.0001:
-                # Force min prob to 0.001 for future computation
-                probabilities[class_name] = 0.001
+            if probabilities[class_name] < MIN_PROB:
+                probabilities[class_name] = MIN_PROB
 
         # Normalize
         probabilities = self.normalize(probabilities)
