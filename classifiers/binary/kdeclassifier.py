@@ -33,6 +33,51 @@ class KDEClassifier():
         # X_neg = X.loc[y[TARGET_LABEL] == 0]
         # self.neg_model = self.train(X_neg)
 
+    def fit_fold(self, X, y, leaf_size, bandwidth, kernel):
+        """
+        Fit data using this bandwidth and kernel and report back brier score loss average over 3 folds
+        """
+
+        losses = []
+        skf = StratifiedKFold(n_splits=3, shuffle=True)
+        for train_index, test_index in skf.split(X, y):
+            X_train, X_test = X.iloc[train_index].reset_index(
+                drop=True), X.iloc[test_index].reset_index(drop=True)
+            y_train, y_test = y.iloc[train_index].reset_index(
+                drop=True), y.iloc[test_index].reset_index(drop=True)
+
+            X_pos = X_train.loc[y_train[TARGET_LABEL] == 1]
+            X_neg = X_train.loc[y_train[TARGET_LABEL] == 0]
+
+            kde_pos = KernelDensity(bandwidth=bandwidth,
+                                    leaf_size=leaf_size,
+                                    metric='euclidean',
+                                    kernel=kernel)
+            kde_pos.fit(X_pos)
+            kde_neg = KernelDensity(bandwidth=bandwidth,
+                                    leaf_size=leaf_size,
+                                    metric='euclidean',
+                                    kernel=kernel)
+            kde_neg.fit(X_neg)
+
+            pos_probs = []
+            for index, x in X_test.iterrows():
+                pos_density = np.exp(kde_pos.score_samples([x.values]))[0]
+                neg_density = np.exp(kde_neg.score_samples([x.values]))[0]
+                d = pos_density + neg_density
+                if d == 0:
+                    pos_prob = 0
+                else:
+                    pos_prob = pos_density / (pos_density + neg_density)
+                pos_probs.append(pos_prob)
+
+            # Evaluate using Brier Score Loss
+            loss = brier_score_loss(y_test.values.flatten(), pos_probs)
+            losses.append(loss)
+        # Average loss for this bandwidth across 3 folds
+        avg_loss = sum(losses) / len(losses)
+        return avg_loss
+
     def train_together(self, X, y):
         """
         Train positive and negative class together using same bandwidth to try and minimize brier score loss instead of maximizing log likelihood of fit
@@ -41,67 +86,35 @@ class KDEClassifier():
         """
         leaf_size = 40
         bandwidths = np.linspace(0.0001, 5, 100)
-
-        skf = StratifiedKFold(n_splits=3, shuffle=True)
+        kernels = ['exponential', 'gaussian', 'tophat',
+                   'epanechnikov', 'cosine', 'linear']
         best_cv_loss = 1000
         best_cv_bw = None
-        for bandwidth in bandwidths:
-            bw_losses = []
-            for train_index, test_index in skf.split(X, y):
-                X_train, X_test = X.iloc[train_index].reset_index(
-                    drop=True), X.iloc[test_index].reset_index(drop=True)
-                y_train, y_test = y.iloc[train_index].reset_index(
-                    drop=True), y.iloc[test_index].reset_index(drop=True)
+        best_kernel = None
+        for kernel in kernels:
+            for bandwidth in bandwidths:
+                loss = self.fit_fold(X, y, leaf_size, bandwidth, kernel)
 
-                X_pos = X_train.loc[y_train[TARGET_LABEL] == 1]
-                X_neg = X_train.loc[y_train[TARGET_LABEL] == 0]
-
-                kde_pos = KernelDensity(bandwidth=bandwidth,
-                                        leaf_size=leaf_size,
-                                        metric='euclidean',
-                                        kernel='exponential')
-                kde_pos.fit(X_pos)
-                kde_neg = KernelDensity(bandwidth=bandwidth,
-                                        leaf_size=leaf_size,
-                                        metric='euclidean',
-                                        kernel='exponential')
-                kde_neg.fit(X_neg)
-
-                pos_probs = []
-                for index, x in X_test.iterrows():
-                    pos_density = np.exp(kde_pos.score_samples([x.values]))[0]
-                    neg_density = np.exp(kde_neg.score_samples([x.values]))[0]
-                    d = pos_density + neg_density
-                    if d == 0:
-                        pos_prob = 0
-                    else:
-                        pos_prob = pos_density / (pos_density + neg_density)
-                    pos_probs.append(pos_prob)
-
-                # Evaluate using Brier Score Loss
-                loss = brier_score_loss(y_test.values.flatten(), pos_probs)
-                bw_losses.append(loss)
-
-            # Average loss for this bandwidth across 3 folds
-            avg_loss = sum(bw_losses) / len(bw_losses)
-
-            # Reset best BW overall.
-            if avg_loss < best_cv_loss:
-                best_cv_loss = avg_loss
-                best_cv_bw = bandwidth
+                # Reset best BW overall.
+                if loss < best_cv_loss:
+                    best_cv_loss = loss
+                    best_cv_bw = bandwidth
+                    best_kernel = kernel
 
         # Define models based on best bandwidth
-
+        print("Best bandwidth " + str(best_cv_bw))
+        print("Best kernel " + str(best_kernel))
+        print("With score: " + str(best_cv_loss))
         self.pos_model = KernelDensity(bandwidth=best_cv_bw,
                                        leaf_size=leaf_size,
-                                       metric='euclidean',
-                                       kernel='exponential')
+                                       kernel=best_kernel,
+                                       metric='euclidean')
         self.pos_model.fit(X.loc[y[TARGET_LABEL] == 1])
 
         self.neg_model = KernelDensity(bandwidth=best_cv_bw,
                                        leaf_size=leaf_size,
-                                       metric='euclidean',
-                                       kernel='exponential')
+                                       kernel=best_kernel,
+                                       metric='euclidean')
         self.neg_model.fit(X.loc[y[TARGET_LABEL] == 0])
 
     def train(self, X):
