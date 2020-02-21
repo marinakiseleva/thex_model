@@ -10,13 +10,16 @@ from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
 
 class KDEClassifier():
     """
-    KDE classifier
+    Multivariate KDE classifier
     """
 
     def __init__(self, X, y, pos_class, model_dir):
         """
         Init classifier through training
+        :param X: DataFrame of training data features
         :param y: DataFrame of TARGET_LABEL with 1 for pos_class and 0 for not pos_class
+        :param pos_class: Name of positive class
+        :param model_dir: Model directory to save output to
         """
         self.name = "Binary KDE"
         self.pos_class = pos_class
@@ -33,8 +36,12 @@ class KDEClassifier():
     def train_together(self, X, y):
         """
         Train positive and negative class together using same bandwidth to try and minimize brier score loss instead of maximizing log likelihood of fit
+        :param X: DataFrame of training data features
+        :param y: DataFrame of TARGET_LABEL with 1 for pos_class and 0 for not pos_class
         """
+        leaf_size = 40
         bandwidths = np.linspace(0.0001, 5, 100)
+
         skf = StratifiedKFold(n_splits=3, shuffle=True)
         best_cv_loss = 1000
         best_cv_bw = None
@@ -50,12 +57,12 @@ class KDEClassifier():
                 X_neg = X_train.loc[y_train[TARGET_LABEL] == 0]
 
                 kde_pos = KernelDensity(bandwidth=bandwidth,
-                                        leaf_size=10,
+                                        leaf_size=leaf_size,
                                         metric='euclidean',
                                         kernel='exponential')
                 kde_pos.fit(X_pos)
                 kde_neg = KernelDensity(bandwidth=bandwidth,
-                                        leaf_size=10,
+                                        leaf_size=leaf_size,
                                         metric='euclidean',
                                         kernel='exponential')
                 kde_neg.fit(X_neg)
@@ -74,21 +81,25 @@ class KDEClassifier():
                 # Evaluate using Brier Score Loss
                 loss = brier_score_loss(y_test.values.flatten(), pos_probs)
                 bw_losses.append(loss)
+
+            # Average loss for this bandwidth across 3 folds
             avg_loss = sum(bw_losses) / len(bw_losses)
+
             # Reset best BW overall.
             if avg_loss < best_cv_loss:
                 best_cv_loss = avg_loss
                 best_cv_bw = bandwidth
 
         # Define models based on best bandwidth
+
         self.pos_model = KernelDensity(bandwidth=best_cv_bw,
-                                       leaf_size=10,
+                                       leaf_size=leaf_size,
                                        metric='euclidean',
                                        kernel='exponential')
         self.pos_model.fit(X.loc[y[TARGET_LABEL] == 1])
 
         self.neg_model = KernelDensity(bandwidth=best_cv_bw,
-                                       leaf_size=10,
+                                       leaf_size=leaf_size,
                                        metric='euclidean',
                                        kernel='exponential')
         self.neg_model.fit(X.loc[y[TARGET_LABEL] == 0])

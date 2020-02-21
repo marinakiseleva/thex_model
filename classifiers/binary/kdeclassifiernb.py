@@ -15,6 +15,10 @@ class KDENBClassifier():
     def __init__(self, X, y, pos_class, model_dir):
         """
         Init classifier through training
+        :param X: DataFrame of training data features
+        :param y: DataFrame of TARGET_LABEL with 1 for pos_class and 0 for not pos_class
+        :param pos_class: Name of positive class
+        :param model_dir: Model directory to save output to
         """
         self.name = "Naive Bayes Binary KDE"
 
