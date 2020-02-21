@@ -14,9 +14,9 @@ class KDEClassifier():
     def __init__(self, X, y, pos_class, model_dir):
         """
         Init classifier through training
+        :param y: DataFrame of TARGET_LABEL with 1 for pos_class and 0 for not pos_class
         """
-
-        self.name = "KDE"
+        self.name = "Binary KDE"
         self.pos_class = pos_class
         # Fit KDE to positive samples only.
         X_pos = X.loc[y[TARGET_LABEL] == 1]
