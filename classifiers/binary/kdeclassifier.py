@@ -75,13 +75,10 @@ class KDEClassifier():
                 loss = brier_score_loss(y_test.values.flatten(), pos_probs)
                 bw_losses.append(loss)
             avg_loss = sum(bw_losses) / len(bw_losses)
-            print("Avg loss: " + str(avg_loss) + "for bw: " + str(bandwidth))
             # Reset best BW overall.
             if avg_loss < best_cv_loss:
                 best_cv_loss = avg_loss
                 best_cv_bw = bandwidth
-        print("Best bandwidth overall " + str(best_cv_bw) +
-              " with loss: " + str(best_cv_loss))
 
         # Define models based on best bandwidth
         self.pos_model = KernelDensity(bandwidth=best_cv_bw,
