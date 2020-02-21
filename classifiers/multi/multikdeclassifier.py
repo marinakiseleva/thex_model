@@ -49,14 +49,12 @@ class MultiKDEClassifier():
         Fit KDE to X
         :return: best fitting KDE
         """
-        # Create grid to get optimal bandwidth & kernel
-
-        grid = {
-            'bandwidth': np.linspace(0, 1.2, 12),
-            'kernel': ['tophat',  'exponential'],
-        }
+        # Create grid to get optimal bandwidth
+        grid = {'bandwidth': np.linspace(0, 1, 100)}
         num_cross_folds = 3  # number of folds in a (Stratified)KFold
-        kde = KernelDensity(leaf_size=10, metric='euclidean')
+        kde = KernelDensity(leaf_size=10,
+                            metric='euclidean',
+                            kerenl='exponential')
         clf_optimize = GridSearchCV(estimator=kde,
                                     param_grid=grid,
                                     cv=num_cross_folds,
