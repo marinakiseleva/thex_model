@@ -21,6 +21,7 @@ from classifiers.binary.dtclassifier import DTClassifier
 from classifiers.binary.svmclassifier import SVMClassifier
 from classifiers.binary.adaboostclassifier import ADAClassifier
 from classifiers.binary.gaussiannb import GNBClassifier
+from classifiers.binary.kdeclassifiernb import KDENBClassifier
 
 
 class OptimalBinaryClassifier():
@@ -95,18 +96,11 @@ class OptimalBinaryClassifier():
         """
         Train variety of classifiers
         """
-        classifiers = [KDEClassifier(X, y, self.pos_class, self.dir),
-                       DTClassifier(X, y, sample_weights, class_weights),
-                       SVMClassifier(X, y, sample_weights, class_weights),
-                       GNBClassifier(X, y, sample_weights)]
-        # Train ADA on already defined classifiers
-        # ada_dt = ADAClassifier(X, y, sample_weights,
-        # classifiers[1].clf, "ADA Boosted Decision Tree")
-        # classifiers.append(ada_dt)
-
-        # ada_gnb = ADAClassifier(X, y, sample_weights,
-        #                         classifiers[2].clf, "ADA Boosted Gaussian NB")
-        # classifiers.append(ada_gnb)
+        classifiers = [KDENBClassifier(X, y, self.pos_class, self.dir),
+                       KDEClassifier(X, y, self.pos_class, self.dir)]
+        #                DTClassifier(X, y, sample_weights, class_weights),
+        #                SVMClassifier(X, y, sample_weights, class_weights),
+        #                GNBClassifier(X, y, sample_weights)]
         return classifiers
 
     def get_best_classifier(self, X, y):
