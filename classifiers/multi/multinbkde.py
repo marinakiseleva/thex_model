@@ -6,7 +6,7 @@ from sklearn.neighbors.kde import KernelDensity
 
 import utilities.utilities as thex_utils
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
-from classifiers.multi.plot_fit import plot_fits
+from classifiers.plot_fit import plot_fits
 
 
 class MultiNBKDEClassifier():
@@ -45,18 +45,15 @@ class MultiNBKDEClassifier():
         mc_kdes = {}
         self.all_features = sorted(list(X))
 
-        data_map = {}
         for class_name in self.class_labels:
             print("\n\nTraining: " + class_name)
             sys.stdout.flush()  # Print to output file
             y_relabeled = self.get_class_data(class_name, y)
 
             X_pos = X.loc[y_relabeled[TARGET_LABEL] == 1]
-            data_map[class_name] = X_pos
             mc_kdes[class_name] = self.fit_class(X_pos, class_name)
 
-        plot_fits(data_map=data_map,
-                  kdes=mc_kdes,
+        plot_fits(kdes=mc_kdes,
                   features=self.all_features,
                   classes=self.class_labels,
                   model_dir=self.dir)

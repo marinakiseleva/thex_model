@@ -21,12 +21,10 @@ class GNBClassifier():
 
     def train(self, X, y, sample_weights):
 
-        grid = {
-            # 'criterion': ['entropy', 'gini'],
-            # 'splitter': ['best', 'random'],
-            'var_smoothing': [0.001, 0.01, 0.1, 1, 1.1]
-            # 'priors': [.5, .5]
-        }
+        grid = {'var_smoothing': [0.001, 0.01, 0.1, 1, 10, 100]
+                # 'criterion': ['entropy', 'gini'],
+                # 'splitter': ['best', 'random'],
+                }
         clf_optimize = GridSearchCV(
             estimator=GaussianNB(priors=[.5, .5]),
             param_grid=grid,

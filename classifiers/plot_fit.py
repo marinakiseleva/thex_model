@@ -31,10 +31,9 @@ def plot_fit(data, kde, feature_name, class_name, model_dir):
     util.save_plot(model_dir, title, ax)
 
 
-def plot_fits(data_map, kdes, features, classes, model_dir):
+def plot_fits(kdes, features, classes, model_dir):
     """
     Plot KDEs of the same feature and different classes together, so to compare different classes.
-    :param data_map: Map from class name to X data of that class
     :param kdes: Map from class name to map from features to KDEs
     :param features: All features to iterate through
     :param class_name: All classes to iterate through

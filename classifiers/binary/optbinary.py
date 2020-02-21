@@ -16,23 +16,24 @@ from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import brier_score_loss
 
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
-from classifiers.kdeclassifier import KDEClassifier
-from classifiers.dtclassifier import DTClassifier
-from classifiers.svmclassifier import SVMClassifier
-from classifiers.adaboostclassifier import ADAClassifier
-from classifiers.gaussiannb import GNBClassifier
+from classifiers.binary.kdeclassifier import KDEClassifier
+from classifiers.binary.dtclassifier import DTClassifier
+from classifiers.binary.svmclassifier import SVMClassifier
+from classifiers.binary.adaboostclassifier import ADAClassifier
+from classifiers.binary.gaussiannb import GNBClassifier
 
 
 class OptimalBinaryClassifier():
 
-    def __init__(self, pos_class, X, y, priors=None):
+    def __init__(self, pos_class, X, y, model_dir):
         """
         Initialize binary classifier
         :param pos_class: class_name that corresponds to TARGET_LABEL == 1
         :param X: DataFrame of features
         :param y: DataFrame with TARGET_LABEL column, 1 if it has class, 0 otherwise
-        :param priors: Priors to be used CURRENTLY NOT IMPLEMETNED
+        :param dir: Model directory
         """
+        self.dir = model_dir
         self.pos_class = pos_class
         self.opt_classifier, self.classifier_name = self.get_best_classifier(X, y)
 
@@ -94,7 +95,7 @@ class OptimalBinaryClassifier():
         """
         Train variety of classifiers
         """
-        classifiers = [KDEClassifier(X, y),
+        classifiers = [KDEClassifier(X, y, self.pos_class, self.dir),
                        DTClassifier(X, y, sample_weights, class_weights),
                        SVMClassifier(X, y, sample_weights, class_weights),
                        GNBClassifier(X, y, sample_weights)]

@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from mainmodel.mainmodel import MainModel
-from classifiers.optbinary import OptimalBinaryClassifier
+from classifiers.binary.optbinary import OptimalBinaryClassifier
 import utilities.utilities as thex_utils
 from thex_data.data_consts import TARGET_LABEL, UNDEF_CLASS
 
@@ -47,7 +47,7 @@ class BinaryModel(MainModel):
             y_relabeled = self.relabel_class_data(class_name, y_train)
             print("\nClass Model: " + class_name)
             self.models[class_name] = OptimalBinaryClassifier(
-                class_name, X_train, y_relabeled)
+                class_name, X_train, y_relabeled, self.dir)
 
         return self.models
 

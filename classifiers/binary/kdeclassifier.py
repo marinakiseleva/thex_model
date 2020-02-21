@@ -11,11 +11,13 @@ class KDEClassifier():
     KDE classifier
     """
 
-    def __init__(self, X, y):
+    def __init__(self, X, y, pos_class, model_dir):
         """
         Init classifier through training
         """
+
         self.name = "KDE"
+        self.pos_class = pos_class
         # Fit KDE to positive samples only.
         X_pos = X.loc[y[TARGET_LABEL] == 1]
         self.pos_model = self.train(X_pos)
@@ -29,12 +31,8 @@ class KDEClassifier():
         Get maximum likelihood estimated distribution by kernel density estimate of this class over all features
         :return: best fitting KDE
         """
-        # Create grid to get optimal bandwidth
-        range_bws = np.linspace(0.00001, 1, 100)
-        grid = {'bandwidth': range_bws}
-        # 'kernel': ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear'],
-        # 'metric': ['euclidean']
-
+        # Create grid to get optimal bandwidth and kernel
+        grid = {'bandwidth': np.linspace(0.00001, 1, 100)}
         clf_optimize = GridSearchCV(estimator=KernelDensity(kernel='exponential',
                                                             metric='euclidean'),
                                     param_grid=grid,
