@@ -54,7 +54,7 @@ class MultiKDEClassifier():
         num_cross_folds = 3  # number of folds in a (Stratified)KFold
         kde = KernelDensity(leaf_size=10,
                             metric='euclidean',
-                            kerenl='exponential')
+                            kernel='exponential')
         clf_optimize = GridSearchCV(estimator=kde,
                                     param_grid=grid,
                                     cv=num_cross_folds,
