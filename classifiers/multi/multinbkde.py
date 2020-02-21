@@ -18,7 +18,7 @@ class MultiNBKDEClassifier():
         """
         Init classifier through training
         """
-        self.name = "Multiclass NB KDE"
+        self.name = "Naive Bayes Multiclass KDE"
         self.class_labels = class_labels
         self.dir = model_dir
         # Record log prob density fit of data per KDE
@@ -57,7 +57,6 @@ class MultiNBKDEClassifier():
                   features=self.all_features,
                   classes=self.class_labels,
                   model_dir=self.dir)
-        # mc_kdes = self.filter_estimates(mc_kdes)
         return mc_kdes
 
     def filter_estimates(self, kdes):
