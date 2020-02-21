@@ -271,11 +271,9 @@ class MainModel(ABC, MainModelVisualization):
         Visualize performance
         :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         """
-        range_metrics_100 = self.compute_probability_range_metrics(results, .01)
         class_counts = self.get_class_counts(y)
-        self.plot_prob_pr_curves(range_metrics_100, class_counts)
-
         range_metrics = self.compute_probability_range_metrics(results)
+        self.plot_prob_pr_curves(range_metrics, class_counts)
         self.plot_probability_vs_accuracy(range_metrics)
         class_metrics = self.compute_metrics(results)
         self.plot_all_metrics(class_metrics, y)
