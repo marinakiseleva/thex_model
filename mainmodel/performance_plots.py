@@ -162,11 +162,11 @@ class MainModelVisualization:
                 recall.append(cur_recall)
             precision.reverse()
             recall.reverse()
-            x_indices = np.arange(len(precision))
+            x_indices = np.linspace(0, 1, len(precision))
 
             color = 'tab:red'
-            ax1.set_xlabel('Probability (%)')
-            ax1.set_ylabel('Precision', color=color)
+            ax1.set_xlabel('Probability >=')
+            ax1.set_ylabel('Purity', color=color)
             ax1.scatter(x_indices, precision, color=color, s=4)
             ax1.plot(x_indices, precision, color=color)
             ax1.tick_params(axis='y', labelcolor=color)
@@ -174,14 +174,14 @@ class MainModelVisualization:
 
             ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
             color = 'tab:blue'
-            ax2.set_ylabel('Recall', color=color)
+            ax2.set_ylabel('Completeness', color=color)
             ax2.scatter(x_indices, recall, color=color, s=4)
             ax2.plot(x_indices, recall, color=color)
             ax2.tick_params(axis='y', labelcolor=color)
             ax2.set_ylim([0, 1])
 
             thex_utils.display_and_save_plot(model_dir=self.dir,
-                                             title="PR-Probability: " + class_name,
+                                             title="Purity and Completeness vs. Probability: " + class_name,
                                              ax=None,
                                              bbox_inches=None,
                                              fig=fig)
