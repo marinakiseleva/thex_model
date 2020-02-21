@@ -26,14 +26,16 @@ from classifiers.binary.kdeclassifiernb import KDENBClassifier
 
 class OptimalBinaryClassifier():
 
-    def __init__(self, pos_class, X, y, model_dir):
+    def __init__(self, pos_class, X, y, nb, model_dir):
         """
         Initialize binary classifier
         :param pos_class: class_name that corresponds to TARGET_LABEL == 1
         :param X: DataFrame of features
         :param y: DataFrame with TARGET_LABEL column, 1 if it has class, 0 otherwise
-        :param dir: Model directory
+        :param nb: Naive Bayes boolean
+        :param model_dir: Model directory
         """
+        self.nb = nb
         self.dir = model_dir
         self.pos_class = pos_class
         self.opt_classifier, self.classifier_name = self.get_best_classifier(X, y)
@@ -96,8 +98,12 @@ class OptimalBinaryClassifier():
         """
         Train variety of classifiers
         """
-        classifiers = [KDENBClassifier(X, y, self.pos_class, self.dir),
-                       KDEClassifier(X, y, self.pos_class, self.dir)]
+        if self.nb:
+            classifiers = [KDENBClassifier(X, y, self.pos_class, self.dir)]
+        else:
+            classifiers = [KDEClassifier(X, y, self.pos_class, self.dir)]
+        # classifiers = [KDENBClassifier(X, y, self.pos_class, self.dir),
+        #                KDEClassifier(X, y, self.pos_class, self.dir)]
         #                DTClassifier(X, y, sample_weights, class_weights),
         #                SVMClassifier(X, y, sample_weights, class_weights),
         #                GNBClassifier(X, y, sample_weights)]
