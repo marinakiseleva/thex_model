@@ -190,7 +190,6 @@ class MultiNBKDEClassifier():
                 print(self.name + " NULL probability for " + class_name)
 
             if probabilities[class_name] < MIN_PROB:
-                # Force min prob to 0.001 for future computation
                 probabilities[class_name] = MIN_PROB
 
         return probabilities
