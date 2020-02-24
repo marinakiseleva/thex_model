@@ -157,7 +157,7 @@ def filter_class_size(df, N, classes):
     """
     Keep classes with at least N points
     :param df: DataFrame of features and TARGET_LABEL
-    :param N: Number of classes to keep
+    :param N: Minimum number of samples required in class to keep it
     :return: DataFrame of original format, with only top N classes of data
     """
     if N is None:
