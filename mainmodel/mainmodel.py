@@ -275,8 +275,8 @@ class MainModel(ABC, MainModelVisualization):
         range_metrics = self.compute_probability_range_metrics(results)
         self.plot_prob_pr_curves(range_metrics, class_counts)
         self.plot_probability_vs_accuracy(range_metrics)
-        class_metrics = self.compute_metrics(results)
-        self.plot_all_metrics(class_metrics, y)
+        class_metrics, set_totals = self.compute_metrics(results)
+        self.plot_all_metrics(class_metrics, set_totals, y)
 
         return -1
 
@@ -379,7 +379,6 @@ class MainModel(ABC, MainModelVisualization):
             probabilities = np.hstack((probabilities, label_column))
             results.append(probabilities)
 
-        results = np.concatenate(results)
         return results
 
     def get_all_class_probabilities(self, X_test):
@@ -403,6 +402,9 @@ class MainModel(ABC, MainModelVisualization):
             total_range_sums: # of samples with probability in range for this class
             TP_range_sums: true positives per range 
         """
+
+        results = np.concatenate(results)
+
         range_metrics = {}
         label_index = len(self.class_labels)  # Last column is label
         for class_index, class_name in enumerate(self.class_labels):
@@ -435,36 +437,45 @@ class MainModel(ABC, MainModelVisualization):
     def compute_metrics(self, results):
         """
         Compute TP, FP, TN, and FN per class. Each sample is assigned its lowest-level class hierarchy label as its label. This is important, otherwise penalties will go across classes.
-        :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
+        :param results: List of 2D Numpy arrays with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         :return class_metrics: Map from class name to map of {"TP": w, "FP": x, "FN": y, "TN": z}
         """
+        # results = np.concatenate(results)
 
         # Last column is label
         label_index = len(self.class_labels)
         class_metrics = {cn: {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
                          for cn in self.class_labels}
 
+        set_totals = {cn: {fold: {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
+                           for fold in range(len(results))} for cn in self.class_labels}
+
         for class_name in self.class_labels:
-            for row in results:
-                labels = row[label_index]
-                # Sample is an instance of this current class.
-                is_class = self.is_class(class_name, labels)
-                # Get class index of max prob; exclude last column since it is label
-                max_class_index = np.argmax(row[:len(row) - 1])
-                max_class_name = self.class_labels[max_class_index]
+            for index, result_set in enumerate(results):
+                for row in result_set:
+                    labels = row[label_index]
+                    # Sample is an instance of this current class.
+                    is_class = self.is_class(class_name, labels)
+                    # Get class index of max prob; exclude last column since it is label
+                    max_class_index = np.argmax(row[:len(row) - 1])
+                    max_class_name = self.class_labels[max_class_index]
 
-                if class_name == max_class_name:
-                    if is_class:
-                        class_metrics[class_name]["TP"] += 1
+                    if class_name == max_class_name:
+                        if is_class:
+                            class_metrics[class_name]["TP"] += 1
+                            set_totals[class_name][index]["TP"] += 1
+                        else:
+                            class_metrics[class_name]["FP"] += 1
+                            set_totals[class_name][index]["FP"] += 1
                     else:
-                        class_metrics[class_name]["FP"] += 1
-                else:
-                    if is_class:
-                        class_metrics[class_name]["FN"] += 1
-                    else:
-                        class_metrics[class_name]["TN"] += 1
+                        if is_class:
+                            class_metrics[class_name]["FN"] += 1
+                            set_totals[class_name][index]["FN"] += 1
+                        else:
+                            class_metrics[class_name]["TN"] += 1
+                            set_totals[class_name][index]["TN"] += 1
 
-        return class_metrics
+        return class_metrics, set_totals
 
     def compute_baselines(self, class_counts, y):
         """

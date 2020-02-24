@@ -91,6 +91,7 @@ class BinaryModel(MainModel):
             total_range_sums: # of samples with probability in range for this class
             TP_range_sums: true positives per range 
         """
+        results = np.concatenate(results)
         range_metrics = {}
         label_index = len(self.class_labels)  # Last column is label
         for class_index, class_name in enumerate(self.class_labels):

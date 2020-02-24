@@ -36,22 +36,63 @@ class MainModelVisualization:
                 (metrics["TN"] + metrics["FP"])
         return recalls, precisions, specificities
 
-    def plot_all_metrics(self, class_metrics, y):
+    def compute_confintvls(self, set_totals):
+        """
+        Compute 95% confidence intervals, [µ − 2σ, µ + 2σ],
+        for each class
+        :param set_totals: Map from fold # to map of metrics
+        """
+
+        def get_cis(values, N=3):
+            """
+            Calculate confidence intervals [µ − 2σ, µ + 2σ] where 
+            σ = (1/ N − 1) ∑_n (a_i − µ)^2
+            :param N: number of folds
+            """
+            mean = sum(values) / len(values)
+            a = sum((np.array(values) - mean) ** 2)
+            stdev = np.sqrt((1 / (N - 1)) * a)
+            return [mean - (2 * stdev), mean + (2 * stdev)]
+
+        # 95% confidence intervals, [µ − 2σ, µ + 2σ]
+        prec_cis = {cn: [0, 0] for cn in self.class_labels}
+        recall_cis = {cn: [0, 0] for cn in self.class_labels}
+        for class_name in set_totals.keys():
+            precisions = []
+            recalls = []
+            for fold_num in set_totals[class_name].keys():
+                metrics = set_totals[class_name][fold_num]
+                den = metrics["TP"] + metrics["FP"]
+                prec = metrics["TP"] / den if den > 0 else 0
+                precisions.append(prec)
+                den = metrics["TP"] + metrics["FN"]
+                rec = metrics["TP"] / den if den > 0 else 0
+                recalls.append(rec)
+
+            # Calculate confidence intervals
+            prec_cis[class_name] = get_cis(precisions)
+            recall_cis[class_name] = get_cis(recalls)
+        return prec_cis, recall_cis
+
+    def plot_all_metrics(self, class_metrics, set_totals, y):
         """
         Plot performance metrics for model
         :param class_metrics: Returned from compute_metrics; Map from class name to map of performance metrics
+        :param set_totals: Map from class name to map from fold # to map of metrics
         """
         class_counts = self.get_class_counts(y)
         recalls, precisions, specificities = self.compute_performance(class_metrics)
         pos_baselines, neg_baselines, precision_baselines = self.compute_baselines(
             class_counts, y)
 
-        self.plot_metrics(recalls, "Completeness", pos_baselines)
+        prec_intvls, recall_intvls = self.compute_confintvls(set_totals)
+
+        self.plot_metrics(recalls, "Completeness", pos_baselines, recall_intvls)
         self.plot_metrics(
             specificities, "Completeness of Negative Class Presence", neg_baselines)
-        self.plot_metrics(precisions, "Purity", precision_baselines)
+        self.plot_metrics(precisions, "Purity", precision_baselines, prec_intvls)
 
-    def plot_metrics(self, class_metrics, xlabel, baselines=None):
+    def plot_metrics(self, class_metrics, xlabel, baselines=None, intervals=None):
         """
         Visualizes accuracy per class with bar graph; with random baseline based on class level in hierarchy.
         :param class_metrics: Mapping from class name to metric value.
@@ -70,8 +111,19 @@ class MainModelVisualization:
 
         y_indices = np.arange(len(metrics))
 
+        errs = None
+        capsize = None
+        if intervals is not None:
+            errs = [[], []]
+            capsize = bar_width
+            for index, class_name in enumerate(class_names):
+                min_bar, max_bar = intervals[class_name]
+                errs[0].append(metrics[index] - min_bar)
+                errs[1].append(max_bar - metrics[index])
+
         # Plot metrics
-        ax.barh(y=y_indices, width=metrics, height=bar_width)
+        ax.barh(y=y_indices, width=metrics, height=bar_width,
+                xerr=errs, capsize=10)
 
         # Plot random baselines
         if baselines is not None:
@@ -179,7 +231,6 @@ class MainModelVisualization:
             ax2.plot(x_indices, recall, color=color)
             ax2.tick_params(axis='y', labelcolor=color)
             ax2.set_ylim([0, 1])
-
             thex_utils.display_and_save_plot(model_dir=self.dir,
                                              title="Purity and Completeness vs. Probability: " + class_name,
                                              ax=None,
