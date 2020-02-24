@@ -101,8 +101,10 @@ class MainModelVisualization:
         # of samples in each class (get plotted atop the bars)
         :[optional] param annotations: List of
         """
-        class_names, metrics, baselines = self.get_ordered_metrics(
-            class_metrics, baselines)
+        class_names, metrics, baselines, intervals = self.get_ordered_metrics(
+            class_metrics,
+            baselines,
+            intervals)
         # Set constants
         tick_size = 8
         bar_width = 0.8
@@ -115,15 +117,15 @@ class MainModelVisualization:
         capsize = None
         if intervals is not None:
             errs = [[], []]
-            capsize = bar_width
-            for index, class_name in enumerate(class_names):
-                min_bar, max_bar = intervals[class_name]
+            for index, interval in enumerate(intervals):
+                min_bar = interval[0]
+                max_bar = interval[1]
                 errs[0].append(metrics[index] - min_bar)
                 errs[1].append(max_bar - metrics[index])
 
         # Plot metrics
         ax.barh(y=y_indices, width=metrics, height=bar_width,
-                xerr=errs, capsize=10)
+                xerr=errs, capsize=10, ecolor='coral')
 
         # Plot random baselines
         if baselines is not None:
@@ -148,7 +150,7 @@ class MainModelVisualization:
 
         thex_utils.display_and_save_plot(self.dir, xlabel, ax)
 
-    def get_ordered_metrics(self, class_metrics, baselines=None):
+    def get_ordered_metrics(self, class_metrics, baselines=None, intervals=None):
         """
         Reorder metrics and reformat class names in hierarchy groupings
         :param class_metrics: Mapping from class name to metric value.
@@ -158,29 +160,28 @@ class MainModelVisualization:
         ordered_formatted_names = []
         ordered_metrics = []
         ordered_baselines = [] if baselines is not None else None
+        ordered_intervals = [] if intervals is not None else None
         for class_name in ordered_names:
             # Add to metrics and baselines
             ordered_metrics.append(class_metrics[class_name])
             if baselines is not None:
                 ordered_baselines.append(baselines[class_name])
-
-            # Reformat class name based on depth and add to names
+            if intervals is not None:
+                ordered_intervals.append(intervals[class_name])
+                # Reformat class name based on depth and add to names
             pretty_class_name = class_name
             if UNDEF_CLASS in class_name:
                 pretty_class_name = class_name.replace(UNDEF_CLASS, "")
                 pretty_class_name = pretty_class_name + " (unspec.)"
-            # level = self.class_levels[class_name]
-            # if level > 2:
-            #     indent = " " * (level - 1)
-            #     symbol = ">"
-            #     pretty_class_name = indent + symbol + pretty_class_name
             ordered_formatted_names.append(pretty_class_name)
 
         ordered_formatted_names.reverse()
         ordered_metrics.reverse()
         if baselines is not None:
             ordered_baselines.reverse()
-        return [ordered_formatted_names, ordered_metrics, ordered_baselines]
+        if intervals is not None:
+            ordered_intervals.reverse()
+        return [ordered_formatted_names, ordered_metrics, ordered_baselines, ordered_intervals]
 
     def plot_prob_pr_curves(self, range_metrics, class_counts):
         """
