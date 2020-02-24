@@ -18,10 +18,10 @@ class MultiKDEClassifier():
         """
         Init classifier through training
         """
-        self.name = "Multiclass KDE"
+        self.name = "Multiclass Multivariate KDE"
         self.class_labels = class_labels
-        # self.clfs = self.train(X, y)
-        self.train_together(X, y)
+        self.clfs = self.train(X, y)
+        # self.train_together(X, y)
 
     def get_class_data(self, class_name, y):
         """
