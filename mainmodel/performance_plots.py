@@ -125,7 +125,7 @@ class MainModelVisualization:
 
         # Plot metrics
         ax.barh(y=y_indices, width=metrics, height=bar_width,
-                xerr=errs, capsize=10, ecolor='coral')
+                xerr=errs, capsize=2, ecolor='coral')
 
         # Plot random baselines
         if baselines is not None:
