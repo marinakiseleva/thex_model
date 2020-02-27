@@ -12,11 +12,9 @@ Determines best parameters for each classifier using 3-fold cross validation. Un
 """
 import pandas as pd
 import numpy as np
+from sklearn.utils.class_weight import compute_sample_weight
 
-from sklearn.utils.class_weight import compute_class_weight
-from sklearn.metrics import average_precision_score, brier_score_loss
-
-from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
+from thex_data.data_consts import TARGET_LABEL
 from classifiers.multi.multikdeclassifier import MultiKDEClassifier
 from classifiers.multi.multinbkde import MultiNBKDEClassifier
 
@@ -35,6 +33,13 @@ class OptimalMultiClassifier():
         self.nb = nb
         self.dir = model_dir
         self.clf, self.classifier_name = self.get_best_classifier(X, y)
+
+    def get_sample_weights(self, y):
+        """
+        Get weight of each sample (1/# of samples in class) and save in list with same order as labeled_samples
+        :param y: TARGET_LABEL, where TARGET_LABEL values are 0 or 1
+        """
+        return compute_sample_weight(class_weight='balanced', y=y)
 
     def get_one_hot(self, y):
         """
@@ -60,23 +65,28 @@ class OptimalMultiClassifier():
         :param X: Pandas DataFrame features
         :param y: Pandas DataFrame labels
         """
+
         y_onehot = self.get_one_hot(y)
         probabilities = []
         for index, row in X.iterrows():
             row_probs = clf.get_class_probabilities(row)
             probabilities.append(np.array(list(row_probs.values())))
 
-        loss = self.brier_multi(y_onehot, np.array(probabilities))
+        sample_weights = self.get_sample_weights(y)
+        loss = self.brier_multi(targets=y_onehot,
+                                probs=np.array(probabilities),
+                                sample_weights=sample_weights)
+        print("Brier loss " + str(loss))
         return loss
 
-    def brier_multi(self, targets, probs):
+    def brier_multi(self, targets, probs, sample_weights):
         """
         Brier score loss for multiple classes:
         https://www.wikiwand.com/en/Brier_score#/Original_definition_by_Brier
         :param targets: 2D numpy array of one hot vectors
         :param probs: 2D numpy array of probabilities, same order of classes as targets
         """
-        return np.mean(np.sum((probs - targets)**2, axis=1))
+        return np.average(np.sum((probs - targets)**2, axis=1), weights=sample_weights)
 
     def train_classifiers(self, X, y):
         """
@@ -95,8 +105,6 @@ class OptimalMultiClassifier():
         Get best classifier 
         """
         labeled_samples = pd.concat([X, y], axis=1)
-        # sample_weights = self.get_sample_weights(labeled_samples)
-        # class_weights = self.get_class_weights(labeled_samples)
 
         classifiers = self.train_classifiers(X, y)
 
