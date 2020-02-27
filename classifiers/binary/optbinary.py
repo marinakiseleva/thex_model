@@ -14,6 +14,7 @@ import numpy as np
 
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import brier_score_loss
+from sklearn.utils.class_weight import compute_sample_weight
 
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
 from classifiers.binary.kdeclassifier import KDEClassifier
@@ -51,21 +52,12 @@ class OptimalBinaryClassifier():
             class_weight='balanced', classes=[0, 1], y=labeled_samples[TARGET_LABEL].values)
         return dict(enumerate(class_weights))
 
-    def get_sample_weights(self, labeled_samples):
+    def get_sample_weights(self, y):
         """
         Get weight of each sample (1/# of samples in class) and save in list with same order as labeled_samples
-        :param labeled_samples: DataFrame of features and TARGET_LABEL, where TARGET_LABEL values are 0 or 1
+        :param y: TARGET_LABEL, where TARGET_LABEL values are 0 or 1
         """
-        classes = labeled_samples[TARGET_LABEL].unique()
-        label_counts = {}
-        for c in classes:
-            label_counts[c] = labeled_samples.loc[
-                labeled_samples[TARGET_LABEL] == c].shape[0]
-        sample_weights = []
-        for df_index, row in labeled_samples.iterrows():
-            class_count = label_counts[row[TARGET_LABEL]]
-            sample_weights.append(1 / class_count)
-        return sample_weights
+        return compute_sample_weight(class_weight='balanced', y=y)
 
     def get_class_probability(self, x):
         """
@@ -90,8 +82,10 @@ class OptimalBinaryClassifier():
         :param X: Pandas DataFrame features
         :param y: Pandas DataFrame labels
         """
+        sample_weights = self.get_sample_weights(y.values)
         predictions = self.get_class_probabilities(clf, X)
-        loss = brier_score_loss(y.values.flatten(), predictions)
+        loss = brier_score_loss(y.values.flatten(), predictions,
+                                sample_weight=sample_weights)
         return loss
 
     def train_classifiers(self, X, y, sample_weights, class_weights):
