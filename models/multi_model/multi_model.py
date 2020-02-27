@@ -21,7 +21,7 @@ class MultiModel(MainModel):
         """
         Initialize Multiclass Model - call init method of parent class
         """
-        self.name = "Multiclass Model"
+        self.name = "Multiclass Classifier"
         super(MultiModel, self).__init__(**data_args)
 
     def train_model(self, X_train, y_train):

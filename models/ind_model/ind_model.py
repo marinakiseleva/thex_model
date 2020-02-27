@@ -20,7 +20,7 @@ class IndModel(MainModel):
         """
         Initialize Independent Model - call init method of parent class
         """
-        self.name = "Independent Model"
+        self.name = "Ensemble Classifier"
         super(IndModel, self).__init__(**data_args)
 
     def relabel_class_data(self, class_name, y):

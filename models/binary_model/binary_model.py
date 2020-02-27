@@ -20,7 +20,7 @@ class BinaryModel(MainModel):
         """
         Initialize Independent Model - call init method of parent class
         """
-        self.name = "Binary-Classifiers Model"
+        self.name = "Binary Classifiers"
         super(BinaryModel, self).__init__(**data_args)
 
     def relabel_class_data(self, class_name, y):

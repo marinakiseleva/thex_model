@@ -148,7 +148,7 @@ class MainModelVisualization:
         yax = ax.get_yaxis()
         yax.set_tick_params(pad=max_tick_width + 2)
 
-        thex_utils.display_and_save_plot(self.dir, xlabel, ax)
+        thex_utils.display_and_save_plot(self.dir, self.name + ": " + xlabel, ax)
 
     def get_ordered_metrics(self, class_metrics, baselines=None, intervals=None):
         """
@@ -233,7 +233,7 @@ class MainModelVisualization:
             ax2.tick_params(axis='y', labelcolor=color)
             ax2.set_ylim([0, 1])
             thex_utils.display_and_save_plot(model_dir=self.dir,
-                                             title="Purity and Completeness vs. Probability: " + class_name,
+                                             title=self.name + " Purity and Completeness vs. Probability: " + class_name,
                                              ax=None,
                                              bbox_inches=None,
                                              fig=fig)
