@@ -101,7 +101,7 @@ def fit_folds(X, y, leaf_size, bandwidth, kernel, class_labels):
                                                 leaf_size=leaf_size,
                                                 kernel=kernel,
                                                 metric='euclidean')
-            y_relabeled = self.get_class_data(class_name, y)
+            y_relabeled = get_class_data(class_name, y)
             mc_kdes[class_name].fit(X.loc[y_relabeled[TARGET_LABEL] == 1])
 
         probs = []  # 2D List of probabilities
@@ -111,8 +111,8 @@ def fit_folds(X, y, leaf_size, bandwidth, kernel, class_labels):
         probs = np.array(probs)
         # Evaluate using Brier Score Loss
         weights = np.take(sample_weights, test_index)
-        labels = np.take(y_onehot, test_index, axis=1)
-        loss = brier_multi(y_test.values.flatten(), probs, weights)
+        labels = np.take(y_onehot, test_index, axis=0)
+        loss = brier_multi(labels, probs, weights)
         losses.append(loss)
     # Average loss for this bandwidth across 3 folds
     avg_loss = sum(losses) / len(losses)
@@ -148,8 +148,7 @@ class MultiKDEClassifier():
         """
         self.name = "Multiclass Multivariate KDE"
         self.class_labels = class_labels
-        # self.clfs = self.train(X, y)
-        self.clfs = self.train_together(X, y)
+        self.clfs = self.train(X, y)
 
     def train_together(self, X, y):
         """
