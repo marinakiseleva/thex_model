@@ -96,7 +96,7 @@ def fit_folds(X, y, leaf_size, bandwidth, kernel, class_labels):
             drop=True), y.iloc[test_index].reset_index(drop=True)
 
         mc_kdes = {}
-        for class_name in self.class_labels:
+        for class_name in class_labels:
             mc_kdes[class_name] = KernelDensity(bandwidth=bandwidth,
                                                 leaf_size=leaf_size,
                                                 kernel=kernel,
