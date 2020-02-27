@@ -6,8 +6,17 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors.kde import KernelDensity
 from sklearn.metrics import brier_score_loss
+from sklearn.utils.class_weight import compute_sample_weight
 
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
+
+
+def get_sample_weights(y):
+    """
+    Get weight of each sample 
+    :param y: TARGET_LABEL, where TARGET_LABEL values are 0 or 1
+    """
+    return compute_sample_weight(class_weight='balanced', y=y)
 
 
 def fit_folds(X, y, leaf_size, bandwidth, kernel):
@@ -15,6 +24,7 @@ def fit_folds(X, y, leaf_size, bandwidth, kernel):
     Fit data using this bandwidth and kernel and report back brier score loss average over 3 folds
     """
     losses = []
+    sample_weights = get_sample_weights(y)
     skf = StratifiedKFold(n_splits=3, shuffle=True)
     for train_index, test_index in skf.split(X, y):
         X_train, X_test = X.iloc[train_index].reset_index(
@@ -49,7 +59,12 @@ def fit_folds(X, y, leaf_size, bandwidth, kernel):
             pos_probs.append(pos_prob)
 
         # Evaluate using Brier Score Loss
-        loss = brier_score_loss(y_test.values.flatten(), pos_probs)
+        weights = np.take(sample_weights, test_index)
+
+        origloss = brier_score_loss(y_test.values.flatten(), pos_probs)
+
+        loss = brier_score_loss(y_test.values.flatten(), pos_probs, weights)
+
         losses.append(loss)
     # Average loss for this bandwidth across 3 folds
     avg_loss = sum(losses) / len(losses)
