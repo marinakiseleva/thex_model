@@ -8,15 +8,18 @@ Performance aggregation
 Subclasses differ in how they normalize across the class hierarchy.
 
 """
-
+import sys
+import pickle
 from abc import ABC, abstractmethod
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
+
 from hmc import hmc
 
+# local imports
 from thex_data.data_init import *
 from thex_data.data_prep import get_source_target_data
 from thex_data.data_filter import filter_class_size, sub_sample, super_sample
@@ -34,6 +37,9 @@ class MainModel(ABC, MainModelVisualization):
         """
         self.dir = util.init_file_directories(self.name)
         print("Saving " + self.name + " output to directory " + self.dir)
+        # Redirect prints to log
+        self.orig_stdout = sys.stdout  # Save to reset later
+        sys.stdout = open(self.dir + "/experiment.log", "a")
 
         # Must add Unspecifieds to tree, so that when searching for lowest-level
         # label, the UNDEF one returns.
@@ -105,7 +111,15 @@ class MainModel(ABC, MainModelVisualization):
 
         results = self.run_cfv(self.X, self.y)
 
+        # Save results in pickle
+        with open(self.dir + '/results.pickle', 'wb') as f:
+            pickle.dump(results, f)
+        with open(self.dir + '/y.pickle', 'wb') as f:
+            pickle.dump(self.y, f)
+
         self.visualize_performance(results, self.y)
+
+        sys.stdout = self.orig_stdout
 
     def filter_data(self, X, y, data_filters, class_labels):
         """
