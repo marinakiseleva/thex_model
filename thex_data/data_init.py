@@ -65,5 +65,5 @@ def collect_data():
         else:
             df[column] = df_bytes[column]
     # Drop infinity values.
-    df = df[~df.isin([np.nan, np.inf, -np.inf]).any(1)]
+    df = df[~df.isin([np.inf, -np.inf]).any(1)]
     return df
