@@ -43,7 +43,7 @@ class MainModelVisualization:
         :param set_totals: Map from fold # to map of metrics
         """
 
-        def get_cis(values, N=3):
+        def get_cis(values, N):
             """
             Calculate confidence intervals [µ − 2σ, µ + 2σ] where 
             σ = (1/ N − 1) ∑_n (a_i − µ)^2
@@ -70,8 +70,8 @@ class MainModelVisualization:
                 recalls.append(rec)
 
             # Calculate confidence intervals
-            prec_cis[class_name] = get_cis(precisions)
-            recall_cis[class_name] = get_cis(recalls)
+            prec_cis[class_name] = get_cis(precisions, self.num_runs)
+            recall_cis[class_name] = get_cis(recalls, self.num_runs)
         return prec_cis, recall_cis
 
     def plot_all_metrics(self, class_metrics, set_totals, y):
@@ -194,6 +194,9 @@ class MainModelVisualization:
             true_positives, totals = range_metrics[class_name]
             fig, ax1 = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
             class_total = class_counts[class_name]
+            if self.num_runs is not None:
+                class_total = self.num_runs * class_total * .33
+
             precision = []  # Accuracy per range (true positive/total)
             recall = []
             TP_count = 0

@@ -15,7 +15,7 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-
+from sklearn.model_selection import train_test_split
 
 from hmc import hmc
 
@@ -51,8 +51,8 @@ class MainModel(ABC, MainModelVisualization):
 
         data_filters = {'cols': None,  # Names of columns to filter on; default is all numeric cols
                         'col_matches': None,  # String by which columns will be selected
-                        'num_runs': 1,
-                        'folds': 3,  # Number of folds if using k-fold Cross Validation
+                        'num_runs': None,
+                        'folds': None,  # Number of folds if using k-fold Cross Validation
                         'subsample': None,
                         'supersample': None,
                         'transform_features': True,  # Derive mag colors
@@ -75,8 +75,6 @@ class MainModel(ABC, MainModelVisualization):
             X = data_filters['data'][0].copy()
             y = data_filters['data'][1].copy()
 
-        print("\nFeatures Used:\n" + str(list(X)))
-
         # Redefine labels with Unspecifieds
         y = self.add_unspecified_labels_to_data(y)
 
@@ -87,6 +85,7 @@ class MainModel(ABC, MainModelVisualization):
         X, y = self.filter_data(X, y, data_filters, self.class_labels)
 
         print("\nClasses Used:\n" + str(self.class_labels))
+        print("\nFeatures Used:\n" + str(list(X)))
 
         # Save relevant data attributes to self
         self.X = X
@@ -105,7 +104,12 @@ class MainModel(ABC, MainModelVisualization):
 
         self.visualize_data(self.X, self.y)
 
-        results = self.run_cfv(self.X, self.y)
+        if self.num_runs is not None:
+            results = self.run_trials(self.X, self.y, self.num_runs)
+        elif self.num_folds is not None:
+            results = self.run_cfv(self.X, self.y)
+        else:
+            raise ValueError("Must pass in either number of folds or runs.")
 
         # Save results in pickle
         with open(self.dir + '/results.pickle', 'wb') as f:
@@ -137,8 +141,9 @@ class MainModel(ABC, MainModelVisualization):
                                        class_labels)
 
         X = filtered_data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
-        y = filtered_data[[TARGET_LABEL]]
+        y = filtered_data[[TARGET_LABEL]].reset_index(drop=True)
 
+        X, y = self.drop_conflicts(X, y)
         return X, y
 
     def init_tree(self, hierarchy):
@@ -186,7 +191,7 @@ class MainModel(ABC, MainModelVisualization):
 
     def get_class_labels(self, user_defined_labels, y, N):
         """
-        Get class labels over which to run analysis, either from the user defined parameter, or from the data itself. If there are no user defined labels, we compile a list of unique transient type labels based on what is known in the hierarchy and over the minimum class size, N. If a class has no siblings and is 'Unspecified' we use the parent class name instead. (Ie. CC instad of Unspecified CC if there are no type IIs)
+        Keep all classes with # of samples > min class size. If a class has only 1 child class that meets this criteria, we only use the parent class and not the children. We ensure each class is greater than N, and then we make disjoint by keeping only leaves of the new class hierarchy tree. If user_defined_labels is not NULL, we filter on this at the end.
         :param user_defined_labels: None, or valid list of class labels
         :param y: DataFrame with TARGET_LABEL column
         :param N: Minimum # of samples per class to keep it
@@ -236,6 +241,7 @@ class MainModel(ABC, MainModelVisualization):
         if user_defined_labels is not None:
             keep_classes = list(set(keep_classes).intersection(set(user_defined_labels)))
 
+        self.class_hier = new_hier
         return keep_classes
 
     def get_class_counts(self, y):
@@ -382,6 +388,101 @@ class MainModel(ABC, MainModelVisualization):
 
         return results
 
+    def drop_conflicts(self, X, y):
+        """
+        Drop rows that have more than 1 disjoint label assigned (conflicting labels)
+        """
+        keep_indices = []
+        for index, row in y.iterrows():
+            keep = True
+            labels = util.convert_str_to_list(row[TARGET_LABEL])
+            # Row shouldn't contain more than 1 label in a set of children.
+            for c_key in self.class_hier.keys():
+                children = self.class_hier[c_key]
+                com = list(set(labels).intersection(set(children)))
+                if len(com) > 1:
+                    keep = False
+                    break
+            if keep:
+                keep_indices.append(index)
+
+        k = list(set(keep_indices))
+        return X.loc[k, :].reset_index(drop=True), y.loc[k, :].reset_index(drop=True)
+
+    def manually_stratify(self, X, y, train_split):
+        """
+        Stratify data manually - meaning classes are properly distributed in both training and testing data.
+        """
+        c = self.get_class_counts(y)
+        if y.shape[0] != sum(c.values()):
+            raise ValueError(
+                "Data size does not equal class counts. This indicates that something is wrong with disjoint labels.")
+        # Split data by class
+        class_data = {c: [] for c in self.class_labels}
+        class_indices = []
+        for index, row in y.iterrows():
+            for class_name in self.class_labels:
+                labels = util.convert_str_to_list(row[TARGET_LABEL])
+                if class_name in labels:
+                    class_data[class_name].append(index)
+
+        train = []
+        test = []
+        # Get train/test indices per class
+        for class_name in class_data.keys():
+            indices = np.array(class_data[class_name])
+            # Shuffle
+            np.random.shuffle(indices)
+            # First part training
+            train += list(indices[:int(len(indices) * train_split)])
+            # Second part testing
+            test += list(indices[int(len(indices) * train_split):])
+
+        # Ensure that no indices are repeated
+        if len(train) != len(list(set(train))):
+            raise ValueError("Sample used more than once.")
+
+            # Filter data on train/test indices
+        X_train = X.iloc[train, :].reset_index(drop=True)
+        y_train = y.iloc[train, :].reset_index(drop=True)
+        X_test = X.iloc[test, :].reset_index(drop=True)
+        y_test = y.iloc[test, :].reset_index(drop=True)
+        return X_train, y_train, X_test, y_test
+
+    def run_trials(self, X, y, N):
+        """
+        Run N trials & aggregate results the same as in the cross validation.
+        :param X: DataFrame of features data
+        :param y: DataFram with TARGET_LABEL column
+        :param N: Number of trials
+        """
+
+        results = []
+        for i in range(N):
+            print("\n\nTrial:  " + str(i))
+            X_train, y_train, X_test, y_test = self.manually_stratify(X, y, .66)
+
+            # Oversample training data only
+            if self.oversample is not None:
+                X_train, y_train = self.super_sample(X_train, y_train)
+
+            # Scale and apply PCA
+            X_train, X_test = self.scale_data(X_train, X_test)
+            if self.pca is not None:
+                X_train, X_test = self.apply_PCA(X_train, X_test)
+
+            # Train
+            self.train_model(X_train, y_train)
+
+            # Test model
+            probabilities = self.get_all_class_probabilities(X_test)
+            # Add labels as column to probabilities, for later evaluation
+            label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
+            probabilities = np.hstack((probabilities, label_column))
+            results.append(probabilities)
+
+        return results
+
     def get_all_class_probabilities(self, X_test):
         """
         Get class probabilities for all test data.
@@ -401,7 +502,7 @@ class MainModel(ABC, MainModelVisualization):
         :param bin_size: Size of each bin (range of probabilities) to consider at a time; must be betwen 0 and 1
         :return range_metrics: Map of classes to [TP_range_sums, total_range_sums]
             total_range_sums: # of samples with probability in range for this class
-            TP_range_sums: true positives per range 
+            TP_range_sums: true positives per range
         """
 
         results = np.concatenate(results)
@@ -418,8 +519,8 @@ class MainModel(ABC, MainModelVisualization):
                 is_class = self.is_class(class_name, labels)
 
                 # Get class index of max prob; exclude last column since it is label
-                max_class_prob = np.max(row[:len(row) - 1])
-                max_class_index = np.argmax(row[:len(row) - 1])
+                max_class_prob = np.max(row[: len(row) - 1])
+                max_class_index = np.argmax(row[: len(row) - 1])
                 max_class_name = self.class_labels[max_class_index]
 
                 if is_class and max_class_name == class_name:
