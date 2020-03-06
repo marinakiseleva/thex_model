@@ -138,7 +138,7 @@ class MainModelVisualization:
         plt.xticks(list(np.linspace(0, 1, 11)), [
                    str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
         plt.xlabel(xlabel, fontsize=10)
-        plt.yticks(y_indices, class_names,  fontsize='xx-small',
+        plt.yticks(y_indices, class_names,  fontsize='small',
                    horizontalalignment='left')
         plt.ylabel('Transient Class', fontsize=10)
         max_tick_width = 0
