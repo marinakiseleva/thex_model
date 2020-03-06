@@ -43,10 +43,9 @@ class MainModel(ABC, MainModelVisualization):
 
         # Must add Unspecifieds to tree, so that when searching for lowest-level
         # label, the UNDEF one returns.
-        self.class_hier = orig_class_hier
+        self.class_hier = orig_class_hier.copy()
         for parent in orig_class_hier.keys():
             self.class_hier[parent].insert(0, UNDEF_CLASS + parent)
-
         self.tree = self.init_tree(self.class_hier)
         self.class_levels = self.assign_levels(self.tree, {}, self.tree.root, 1)
 
@@ -86,9 +85,6 @@ class MainModel(ABC, MainModelVisualization):
 
         # Pre-processing dependent on class labels
         X, y = self.filter_data(X, y, data_filters, self.class_labels)
-
-        # Filter classes based on Independent model structure
-        self.class_labels = self.filter_labels(self.class_labels)
 
         print("\nClasses Used:\n" + str(self.class_labels))
 
@@ -145,21 +141,6 @@ class MainModel(ABC, MainModelVisualization):
 
         return X, y
 
-    def filter_labels(self, class_labels):
-        """
-        Remove labels such that class are all unique (IE. Remove labels that have subclasses, such as Ia and CC)
-        Keeps all lowest-level classes (may be identified as either Unspecified, or a class name which doesn't have an unspecified version, meaning it is the lowest-level)
-        :param class_labels: List of class names
-        """
-
-        filtered_labels = []
-        for class_name in class_labels:
-            if UNDEF_CLASS in class_name:
-                filtered_labels.append(class_name)
-            elif UNDEF_CLASS + class_name not in class_labels:
-                filtered_labels.append(class_name)
-        return sorted(filtered_labels)
-
     def init_tree(self, hierarchy):
         print("\n\nConstructing Class Hierarchy Tree...")
         hmc_hierarchy = hmc.ClassHierarchy(TREE_ROOT)
@@ -205,47 +186,55 @@ class MainModel(ABC, MainModelVisualization):
 
     def get_class_labels(self, user_defined_labels, y, N):
         """
-        Get class labels over which to run analysis, either from the user defined parameter, or from the data itself. If there are no user defined labels, we compile a list of unique transient type labels based on what is known in the hierarchy.
+        Get class labels over which to run analysis, either from the user defined parameter, or from the data itself. If there are no user defined labels, we compile a list of unique transient type labels based on what is known in the hierarchy and over the minimum class size, N. If a class has no siblings and is 'Unspecified' we use the parent class name instead. (Ie. CC instad of Unspecified CC if there are no type IIs)
         :param user_defined_labels: None, or valid list of class labels
         :param y: DataFrame with TARGET_LABEL column
         :param N: Minimum # of samples per class to keep it
         """
-        # defined_classes : classes defined in hierarchy
+        # Initialize new hierarchy and class counts
+        new_hier = self.class_hier.copy()
+
+        # Get counts of all defined classes
         defined_classes = set()
         for k, class_list in self.class_hier.items():
             defined_classes.add(k)
             for c in class_list:
                 defined_classes.add(c)
+        self.class_labels = list(defined_classes)
+        counts = self.get_class_counts(y)
 
-        # Only keep classes that exist in data
-        data_labels = set()
-        for index, row in y.iterrows():
-            labels = util.convert_str_to_list(row[TARGET_LABEL])
-            for label in labels:
-                data_labels.add(label)
+        # 1. if only 1 child has > N samples, just use parent
+        drop_parents = []
+        for parent in new_hier.keys():
+            children = new_hier[parent]
+            num_good_children = 0
+            for child in children:
+                if child in counts and counts[child] > N:
+                    num_good_children += 1
+            if num_good_children <= 1:
+                # Use parent only, by dropping this key
+                drop_parents.append(parent)
+        for p in drop_parents:
+            del new_hier[p]
 
-        class_labels_set = data_labels.intersection(defined_classes)
-        class_labels = list(class_labels_set)
+        # 2. Make sure each child class has at least MIN samples
+        for parent in new_hier.keys():
+            keep_children = []
+            for child in new_hier[parent]:
+                if child in counts and counts[child] > N:
+                    keep_children.append(child)
+            new_hier[parent] = keep_children
 
-        if user_defined_labels is not None:
-            class_labels = class_labels_set.intersection(set(user_defined_labels))
-
-        # Filter based on the numbers in the data - must have at least X data
-        # points in each class
+        # 3. Keep leaves
         keep_classes = []
-        for class_label in class_labels:
-            class_indices = []
-            for index, row in y.iterrows():
-                class_list = util.convert_str_to_list(row[TARGET_LABEL])
-                if class_label in class_list:
-                    class_indices.append(index)
+        for parent in new_hier.keys():
+            for child in new_hier[parent]:
+                if child not in new_hier.keys():
+                    keep_classes.append(child)
 
-            if y.loc[class_indices, :].shape[0] >= N:
-                # Keep class because count is >= N
-                keep_classes.append(class_label)
-
-        if TREE_ROOT in keep_classes:
-            keep_classes.remove(TREE_ROOT)
+        # 4. Filter on any classes passed in by user
+        if user_defined_labels is not None:
+            keep_classes = list(set(keep_classes).intersection(set(user_defined_labels)))
 
         return keep_classes
 
@@ -255,14 +244,12 @@ class MainModel(ABC, MainModelVisualization):
         :param y: Pandas DataFrame with TARGET_LABEL column
         :return class_counts: Map of {class_name : count, ...}
         """
-        class_counts = {}
-        for class_name in self.class_labels:
-            count = 0
-            for index, row in y.iterrows():
+        class_counts = {c: 0 for c in self.class_labels}
+        for index, row in y.iterrows():
+            for class_name in self.class_labels:
                 labels = util.convert_str_to_list(row[TARGET_LABEL])
                 if class_name in labels:
-                    count += 1
-            class_counts[class_name] = count
+                    class_counts[class_name] += 1
         return class_counts
 
     def visualize_data(self, X, y):
@@ -288,7 +275,7 @@ class MainModel(ABC, MainModelVisualization):
         class_counts = self.get_class_counts(y)
         range_metrics = self.compute_probability_range_metrics(results)
         self.plot_prob_pr_curves(range_metrics, class_counts)
-        self.plot_probability_vs_accuracy(range_metrics)
+        # self.plot_probability_vs_accuracy(range_metrics)
         class_metrics, set_totals = self.compute_metrics(results)
         self.plot_all_metrics(class_metrics, set_totals, y)
 
@@ -409,7 +396,7 @@ class MainModel(ABC, MainModelVisualization):
 
     def compute_probability_range_metrics(self, results, bin_size=0.1):
         """
-        Computes True Positive & Total metrics, split by probability assigned to class for ranges dictated by bin_size. Used to plot probability assigned vs completeness (TP/total, per bin).
+        Computes True Positive & Total metrics, split by >= probability assigned to class for cumulative ranges dictated by bin_size. Used to plot probability assigned vs completeness (TP/total, per bin).
         :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         :param bin_size: Size of each bin (range of probabilities) to consider at a time; must be betwen 0 and 1
         :return range_metrics: Map of classes to [TP_range_sums, total_range_sums]
