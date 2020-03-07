@@ -27,6 +27,9 @@ def init_plot_settings():
 def calculate_completeness(X, y, class_labels):
     """
     Get completeness of each class for each feature. Return as map from class name to list of completeness per feature.
+    :param X: DataFrame of features
+    :param y: DataFrame with TARGET_LABEL 
+    :param class_labels: Class labels by which to calculate completeness
     """
     data = pd.concat([X, y], axis=1)
     features = list(X)
@@ -50,14 +53,15 @@ def calculate_completeness(X, y, class_labels):
 
 
 def visualize_completeness(model_dir, X, class_labels, data_completeness):
-
+    """
+    Plot completeness of dataset as heatmap. 
+    :param model_dir: directory of model to save figure
+    :param X: DataFrame of features
+    :param class_labels: list of class names
+    :param data_completeness: list in order of class names, which contains completeness per feature
+    """
     features = list(X)
     features.sort()
-
-    # data_completeness = []
-    # for class_name in completenesses.keys():
-    #     data_completeness.append(completenesses[class_name])
-
     df = pd.DataFrame(data_completeness,
                       index=class_labels,
                       columns=features)
@@ -68,7 +72,6 @@ def visualize_completeness(model_dir, X, class_labels, data_completeness):
     plt.yticks(np.arange(0.5, len(df.index), 1), df.index)
     plt.xticks(np.arange(0.5, len(df.columns), 1), df.columns, rotation=-90)
     f.colorbar(a)
-    # plt.gca().invert_yaxis()
 
     util.display_and_save_plot(model_dir, "Completeness", None, None, f)
 
@@ -76,11 +79,11 @@ def visualize_completeness(model_dir, X, class_labels, data_completeness):
 def plot_feature_distribution(model_dir, df, feature, class_labels, class_counts):
     """
     Plots the distribution of each transient type in df over 'feature'
-    :param model_name: name of model
+    :param model_dir: directory of model to save figure
     :param df: DataFrame with both feature column and TARGET_LABEL column
     :param feature: Name of feature to plot distribution over
     :param class_labels: list of class names to show in legend
-    :param class_counts: map fro class names to count
+    :param class_counts: map from class names to count
     """
     # Order classes  by count from largest to smallest so they plot well
     ordered_classes = []
