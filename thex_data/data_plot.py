@@ -12,18 +12,25 @@ from matplotlib.ticker import LogLocator
 import matplotlib.pyplot as plt
 from sklearn.neighbors.kde import KernelDensity
 
-from .data_consts import TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI
+from .data_consts import TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI, ordered_classes, UNDEF_CLASS
 import utilities.utilities as util
 
 
-def visualize_completeness(model_dir, X, y, class_labels):
+def init_plot_settings():
+    """
+    Set defaults for all plots: font.
+    """
+    plt.rcParams['font.family'] = 'serif'
+    plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 
-    features = list(X)
-    features.sort()
-    class_labels.sort()
 
+def calculate_completeness(X, y, class_labels):
+    """
+    Get completeness of each class for each feature. Return as map from class name to list of completeness per feature.
+    """
     data = pd.concat([X, y], axis=1)
-    data_completeness = []
+    features = list(X)
+    completenesses = {}
     for class_name in class_labels:
         class_indices = []
         for index, row in data.iterrows():
@@ -38,7 +45,18 @@ def visualize_completeness(model_dir, X, y, class_labels):
             valid = class_data.dropna(subset=[feature])
             num_valid = valid.shape[0]
             features_completeness.append(num_valid / num_samples)
-        data_completeness.append(features_completeness)
+        completenesses[class_name] = features_completeness
+    return completenesses
+
+
+def visualize_completeness(model_dir, X, class_labels, data_completeness):
+
+    features = list(X)
+    features.sort()
+
+    # data_completeness = []
+    # for class_name in completenesses.keys():
+    #     data_completeness.append(completenesses[class_name])
 
     df = pd.DataFrame(data_completeness,
                       index=class_labels,
@@ -50,7 +68,7 @@ def visualize_completeness(model_dir, X, y, class_labels):
     plt.yticks(np.arange(0.5, len(df.index), 1), df.index)
     plt.xticks(np.arange(0.5, len(df.columns), 1), df.columns, rotation=-90)
     f.colorbar(a)
-    plt.gca().invert_yaxis()
+    # plt.gca().invert_yaxis()
 
     util.display_and_save_plot(model_dir, "Completeness", None, None, f)
 
@@ -92,11 +110,6 @@ def plot_feature_distribution(model_dir, df, feature, class_labels, class_counts
         vector_values = np.sort(np.array(values), axis=0)
         n, x, _ = ax.hist(vector_values, bins=np.linspace(
             0, max_value, 50), alpha=0.7, label=class_name)
-
-    # if feature == "redshift":
-    #     # Plot LSST-expected redshift distributions atop actual
-    #     plot_lsst_distribution(ax)
-
     ylabel = "Class Count"
     title = "Transient Type Distributions over " + feature
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
@@ -110,46 +123,23 @@ def plot_feature_distribution(model_dir, df, feature, class_labels, class_counts
     util.display_and_save_plot(model_dir, title, ax)
 
 
-# def plot_lsst_distribution(ax):
-#     """
-#     Plot LSST Redshift distribution per class. Hard-coded based on collected
-#     expectations of redshift dists.
-#     """
-#     def plot_norm_class_dist(mu, sigma, label, ax):
-#         x = np.linspace(0, 1, 100)
-#         const = 1.0 / np.sqrt(2 * np.pi * (sigma**2))
-#         y = const * np.exp(-((x - mu)**2) / (2.0 * (sigma**2)))
-#         ax.plot(x, y, label=label)
-#     plot_norm_class_dist(mu=0.45, sigma=0.1, label="LSST Ia", ax=ax)
-
-
-def plot_class_hist(model_dir, class_counts):
+def plot_class_hist(model_dir, class_names, counts):
     """
     Plots histogram of class sizes
     :param model_dir: directory of model to save figure
     :param class_counts: Map from class name to counts
     """
-    print("Class counts:")
-    print(class_counts)
-    class_names = list(class_counts.keys())
     class_indices = np.arange(len(class_names))
-
     f, ax = plt.subplots(figsize=(6, 6), dpi=DPI)
     # Plot data horizontally
-    ax.barh(y=class_indices, width=list(class_counts.values()), height=0.7)
-
+    ax.barh(y=class_indices, width=counts, height=0.7)
     plt.gcf().subplots_adjust(left=0.1)
-
     # Set logscale for range of values
-    min_class_count = min(class_counts.values())
-    max_class_count = max(class_counts.values())
-    if (max_class_count - min_class_count) > 100:
+    if (max(counts) - min(counts)) > 100:
         ax.set_xscale('log')
-        # plt.xticks([10, 100, 1000])
         ax.xaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
         plt.tick_params(axis='x', which='major', rotation=-90)
 
-    ax.invert_yaxis()  # labels read top-to-bottom
     plt.yticks(class_indices, class_names, fontsize=8)
     ax.tick_params(axis='x', which='both', labelsize=8, rotation=-90)
     ax.tick_params(axis='x', which='minor', labelsize=4)

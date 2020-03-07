@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import utilities.utilities as thex_utils
 
 
-from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, TREE_ROOT, UNDEF_CLASS
+from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, TREE_ROOT, UNDEF_CLASS, ordered_classes
 
 
 class MainModelVisualization:
@@ -80,10 +80,9 @@ class MainModelVisualization:
         :param class_metrics: Returned from compute_metrics; Map from class name to map of performance metrics
         :param set_totals: Map from class name to map from fold # to map of metrics
         """
-        class_counts = self.get_class_counts(y)
         recalls, precisions, specificities = self.compute_performance(class_metrics)
         pos_baselines, neg_baselines, precision_baselines = self.compute_baselines(
-            class_counts, y)
+            self.class_counts, y)
 
         prec_intvls, recall_intvls = self.compute_confintvls(set_totals)
 
@@ -155,25 +154,28 @@ class MainModelVisualization:
         Reorder metrics and reformat class names in hierarchy groupings
         :param class_metrics: Mapping from class name to metric value.
         :[optional] param baselines: Mapping from class name to random-baseline performance
+        :[optional] param intervals: Mapping from class name to confidence intervals
         """
-        ordered_names = sorted(self.class_labels)
         ordered_formatted_names = []
         ordered_metrics = []
         ordered_baselines = [] if baselines is not None else None
         ordered_intervals = [] if intervals is not None else None
-        for class_name in ordered_names:
-            # Add to metrics and baselines
-            ordered_metrics.append(class_metrics[class_name])
-            if baselines is not None:
-                ordered_baselines.append(baselines[class_name])
-            if intervals is not None:
-                ordered_intervals.append(intervals[class_name])
-                # Reformat class name based on depth and add to names
-            pretty_class_name = class_name
-            if UNDEF_CLASS in class_name:
-                pretty_class_name = class_name.replace(UNDEF_CLASS, "")
-                pretty_class_name = pretty_class_name + " (unspec.)"
-            ordered_formatted_names.append(pretty_class_name)
+        for class_name in ordered_classes:
+            for c in class_metrics.keys():
+                if c.replace(UNDEF_CLASS, "") == class_name:
+                    # Add to metrics and baselines
+                    ordered_metrics.append(class_metrics[c])
+                    if baselines is not None:
+                        ordered_baselines.append(baselines[c])
+                    if intervals is not None:
+                        ordered_intervals.append(intervals[c])
+
+                    pretty_class_name = c
+                    if UNDEF_CLASS in c:
+                        pretty_class_name = class_name.replace(UNDEF_CLASS, "")
+                        pretty_class_name = pretty_class_name + " (unspecified)"
+                    ordered_formatted_names.append(pretty_class_name)
+                    break
 
         ordered_formatted_names.reverse()
         ordered_metrics.reverse()

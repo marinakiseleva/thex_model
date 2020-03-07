@@ -95,6 +95,7 @@ class MainModel(ABC, MainModelVisualization):
         self.pca = data_filters['pca']
         self.oversample = data_filters['supersample']
         self.nb = data_filters['nb']
+        self.class_counts = self.get_class_counts(y)
 
     def run_model(self):
         """
@@ -262,10 +263,14 @@ class MainModel(ABC, MainModelVisualization):
         """
         Visualize data completeness and distribution
         """
-        # visualize_completeness(self.dir, X, y, self.class_labels)
+        init_plot_settings()
 
-        class_counts = self.get_class_counts(y)
-        plot_class_hist(self.dir, class_counts)
+        completeness = calculate_completeness(X, y, self.class_labels)
+        ordered_comp = self.get_ordered_metrics(completeness)
+        visualize_completeness(self.dir, X, ordered_comp[0], ordered_comp[1])
+
+        ordered_counts = self.get_ordered_metrics(self.class_counts)
+        plot_class_hist(self.dir, ordered_counts[0], ordered_counts[1])
         # Combine X and y for plotting feature dist
         df = pd.concat([X, y], axis=1)
         features = list(df)
@@ -278,9 +283,8 @@ class MainModel(ABC, MainModelVisualization):
         Visualize performance
         :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         """
-        class_counts = self.get_class_counts(y)
         range_metrics = self.compute_probability_range_metrics(results)
-        self.plot_prob_pr_curves(range_metrics, class_counts)
+        self.plot_prob_pr_curves(range_metrics, self.class_counts)
         # self.plot_probability_vs_accuracy(range_metrics)
         class_metrics, set_totals = self.compute_metrics(results)
         self.plot_all_metrics(class_metrics, set_totals, y)

@@ -56,6 +56,44 @@ LOSS_FUNCTION = "brier_score_loss"
 
 
 """
+Transient classes in order they are to be visualized. If class is Unspecified, it will take the place of its unspecified name
+"""
+ordered_classes = ["Ia",
+                   "Ia-91bg",
+                   "Ia-91T",
+                   "Ia-02cx",
+                   "Ia-CSM",
+                   "Minor sub-types",
+                   "Ca-rich (*)",
+                   "CC",
+                   "SE",
+                   "Ib",
+                   "Ibn",
+                   "IIb",
+                   "Ic",
+                   "Ic-BL",
+                   "Ib/c",
+                   "II",
+                   "II P",
+                   "II L",
+                   "IIn",
+                   "SLSN",
+                   "SLSN-R",
+                   "SLSN-I",
+                   "SLSN-II",
+                   "TDE",
+                   "UVOptTDE",
+                   "XrayTDE",
+                   "GRB",
+                   "SGRB",
+                   "LGRB",
+                   "FRB",
+                   "Kilonova",
+                   "GW"
+                   ]
+
+
+"""
 class_to_subclass
 {Parent : [Child1, child2, ...] }
 Hierarchy of transient types, used in hierarchical multilabel classifiers
