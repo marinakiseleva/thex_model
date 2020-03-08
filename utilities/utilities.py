@@ -20,38 +20,31 @@ def annotate_plot(ax, x, y, annotations):
         class_index += 1
 
 
-def save_plot(model_dir, title, ax, bbox_inches=None, fig=None):
+def save_plot(model_dir, file_name, bbox_inches=None, fig=None):
     """
     Saves plot (by model name and passed-in title)
     :param model_dir: Directory name to save to
-    :param title: String title of plot, used to save 
-    :param ax: Axis
+    :param file_name: Save plot with this name
     :[optional] param bbox_inches: Optional parameter for savefig
     :[optional] param fig: will do fig.savefig instead of plt.savefig
     """
-    if ax is None:
-        plt.title('\n'.join(wrap(title, 60)))
-    else:
-        ax.set_title('\n'.join(wrap(title, 60)))
-    title = clean_str(title)
     plt.tight_layout()
 
     if fig is not None:
-        fig.savefig(model_dir + "/" + title, bbox_inches=bbox_inches)
+        fig.savefig(model_dir + "/" + clean_str(file_name), bbox_inches=bbox_inches)
     else:
-        plt.savefig(model_dir + "/" + title, bbox_inches=bbox_inches)
+        plt.savefig(model_dir + "/" + clean_str(file_name), bbox_inches=bbox_inches)
 
 
-def display_and_save_plot(model_dir, title, ax, bbox_inches=None, fig=None):
+def display_and_save_plot(model_dir, file_name, bbox_inches=None, fig=None):
     """
-    Saves plot (by model name and passed-in title) and displays.
+    Saves plot by passed-in file name, and displays.
     :param model_dir: Directory name to save to
-    :param title: String title of plot, used to save 
-    :param ax: Axis
+    :param file_name: Save plot with this name
     :[optional] param bbox_inches: Optional parameter for savefig
     :[optional] param fig: will do fig.savefig instead of plt.savefig
     """
-    save_plot(model_dir, title, ax, bbox_inches, fig)
+    save_plot(model_dir, file_name, bbox_inches, fig)
     plt.show()
 
 

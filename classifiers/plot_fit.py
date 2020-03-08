@@ -15,8 +15,7 @@ def plot_fit(data, kde, feature_name, class_name, model_dir):
     :param model_dir: Model directory to save to
     """
     f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-    title = class_name + " : " + feature_name
-    plt.title(title, fontsize=12)
+    ax.set_title('\n'.join(wrap(class_name + " : " + feature_name, 60)))
     plt.xlabel(feature_name, fontsize=10)
     plt.ylabel("Density", fontsize=10)
 
@@ -28,7 +27,7 @@ def plot_fit(data, kde, feature_name, class_name, model_dir):
     # plot the histogram and pdf
     ax.hist(data, bins=10, density=True)
     ax.plot(values, probabilities)
-    util.save_plot(model_dir, title, ax)
+    util.save_plot(model_dir, class_name + " : " + feature_name)
 
 
 def plot_fits(kdes, features, classes, model_dir):
@@ -44,9 +43,7 @@ def plot_fits(kdes, features, classes, model_dir):
 
     for feature_name in features:
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-
-        title = feature_name
-        plt.title(title, fontsize=12)
+        ax.set_title(feature_name)
         plt.xlabel(feature_name, fontsize=10)
         plt.ylabel("Probability Density", fontsize=10)
 
@@ -58,4 +55,5 @@ def plot_fits(kdes, features, classes, model_dir):
                 probabilities = np.exp(kde.score_samples(values))
                 ax.plot(values, probabilities, label=class_name)
         ax.legend()
-        util.save_plot(model_dir,  title + " KDE", ax)
+
+        util.save_plot(model_dir, feature_name)

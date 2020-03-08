@@ -46,12 +46,12 @@ class MainModelVisualization:
         def get_cis(values, N):
             """
             Calculate confidence intervals [µ − 2σ, µ + 2σ] where 
-            σ = (1/ N − 1) ∑_n (a_i − µ)^2
+            σ = sqrt( (1/ N ) ∑_n (a_i − µ)^2 )
             :param N: number of folds
             """
             mean = sum(values) / len(values)
             a = sum((np.array(values) - mean) ** 2)
-            stdev = np.sqrt((1 / (N - 1)) * a)
+            stdev = np.sqrt((1 / N) * a)
             return [mean - (2 * stdev), mean + (2 * stdev)]
 
         # 95% confidence intervals, [µ − 2σ, µ + 2σ]
@@ -147,7 +147,8 @@ class MainModelVisualization:
         yax = ax.get_yaxis()
         yax.set_tick_params(pad=max_tick_width + 2)
 
-        thex_utils.display_and_save_plot(self.dir, self.name + ": " + xlabel, ax)
+        ax.set_title(xlabel)
+        thex_utils.display_and_save_plot(self.dir, self.name + ": " + xlabel)
 
     def get_ordered_metrics(self, class_metrics, baselines=None, intervals=None):
         """
@@ -237,9 +238,11 @@ class MainModelVisualization:
             ax2.plot(x_indices, recall, color=color)
             ax2.tick_params(axis='y', labelcolor=color)
             ax2.set_ylim([0, 1])
+
+            plt.title(class_name)
+
             thex_utils.display_and_save_plot(model_dir=self.dir,
-                                             title=self.name + " Purity and Completeness vs. Probability: " + class_name,
-                                             ax=None,
+                                             file_name=self.name + " Purity and Completeness vs. Probability: " + class_name,
                                              bbox_inches=None,
                                              fig=fig)
 
@@ -271,11 +274,11 @@ class MainModelVisualization:
             ax.bar(x_indices, accuracies)
 
             thex_utils.annotate_plot(ax, x_indices, accuracies, totals)
-
             plt.yticks(list(np.linspace(0, 1, 11)), [
                        str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
             plt.xticks(x_indices, perc_ranges, fontsize=10)
             plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
             plt.ylabel('Purity', fontsize=12)
+            ax.set_title(class_name)
             thex_utils.display_and_save_plot(self.dir,
-                                             "Probability vs Positive Rate: " + class_name, ax)
+                                             "Probability vs Positive Rate: " + class_name)

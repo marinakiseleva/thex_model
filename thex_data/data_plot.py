@@ -73,7 +73,8 @@ def visualize_completeness(model_dir, X, class_labels, data_completeness):
     plt.xticks(np.arange(0.5, len(df.columns), 1), df.columns, rotation=-90)
     f.colorbar(a)
 
-    util.display_and_save_plot(model_dir, "Completeness", None, None, f)
+    plt.title("Completeness")
+    util.display_and_save_plot(model_dir, "Completeness", None, f)
 
 
 def plot_feature_distribution(model_dir, df, feature, class_labels, class_counts):
@@ -114,7 +115,7 @@ def plot_feature_distribution(model_dir, df, feature, class_labels, class_counts
         n, x, _ = ax.hist(vector_values, bins=np.linspace(
             0, max_value, 50), alpha=0.7, label=class_name)
     ylabel = "Class Count"
-    title = "Transient Type Distributions over " + feature
+
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
     plt.title(title, fontsize=12)
     plt.xlabel(feature, fontsize=10)
@@ -123,7 +124,10 @@ def plot_feature_distribution(model_dir, df, feature, class_labels, class_counts
     plt.yscale('log', nonposy='clip')
     ax.legend(loc='best',  prop={'size': 5})
 
-    util.display_and_save_plot(model_dir, title, ax)
+    ax.set_title(feature)
+
+    util.display_and_save_plot(
+        model_dir, "Transient Type Distributions over " + feature)
 
 
 def plot_class_hist(model_dir, class_names, counts):
@@ -150,8 +154,8 @@ def plot_class_hist(model_dir, class_names, counts):
     plt.ylabel('Class', fontsize=12)
     plt.xlabel('Count', fontsize=12)
 
-    title = "Distribution of Transient Types in Data Sample"
-    plt.title(title, fontsize=12)
+    plt.title("Class Distribution", fontsize=12)
     plt.tight_layout()
 
-    util.display_and_save_plot(model_dir, title, ax)
+    util.display_and_save_plot(
+        model_dir, "Distribution of Transient Types in Data Sample")
