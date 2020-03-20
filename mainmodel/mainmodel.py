@@ -84,9 +84,6 @@ class MainModel(ABC, MainModelVisualization):
         # Pre-processing dependent on class labels
         X, y = self.filter_data(X, y, data_filters, self.class_labels)
 
-        print("\nClasses Used:\n" + str(self.class_labels))
-        print("\nFeatures Used:\n" + str(list(X)))
-
         # Save relevant data attributes to self
         self.X = X
         self.y = y
@@ -96,6 +93,10 @@ class MainModel(ABC, MainModelVisualization):
         self.oversample = data_filters['supersample']
         self.nb = data_filters['nb']
         self.class_counts = self.get_class_counts(y)
+
+        print("\nClasses Used:\n" + str(self.class_labels))
+        print("\nFeatures Used:\n" + str(list(X)))
+        print("\nClass counts:\n" + str(self.class_counts))
 
     def run_model(self):
         """
@@ -270,13 +271,14 @@ class MainModel(ABC, MainModelVisualization):
         visualize_completeness(self.dir, X, ordered_comp[0], ordered_comp[1])
 
         ordered_counts = self.get_ordered_metrics(self.class_counts)
+
         plot_class_hist(self.dir, ordered_counts[0], ordered_counts[1])
         # Combine X and y for plotting feature dist
         df = pd.concat([X, y], axis=1)
         features = list(df)
         if 'redshift' in features:
             plot_feature_distribution(self.dir,  df, 'redshift',
-                                      self.class_labels, class_counts)
+                                      self.class_labels, self.class_counts)
 
     def visualize_performance(self, results, y):
         """

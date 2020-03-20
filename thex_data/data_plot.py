@@ -12,7 +12,7 @@ from matplotlib.ticker import LogLocator
 import matplotlib.pyplot as plt
 from sklearn.neighbors.kde import KernelDensity
 
-from .data_consts import TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI, ordered_classes, UNDEF_CLASS
+from .data_consts import TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI, ORDERED_CLASSES, UNDEF_CLASS
 import utilities.utilities as util
 
 
@@ -86,10 +86,6 @@ def plot_feature_distribution(model_dir, df, feature, class_labels, class_counts
     :param class_labels: list of class names to show in legend
     :param class_counts: map from class names to count
     """
-    # Order classes  by count from largest to smallest so they plot well
-    ordered_classes = []
-    for class_name, class_count in sorted(class_counts.items(), key=lambda item: item[1],  reverse=True):
-        ordered_classes.append(class_name)
 
     f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
     cm = plt.get_cmap('tab20')
@@ -103,7 +99,7 @@ def plot_feature_distribution(model_dir, df, feature, class_labels, class_counts
 
     ax.set_prop_cycle('color', [cm(1. * i / NUM_COLORS) for i in range(NUM_COLORS)])
     max_value = df[feature].max()
-    for class_name in ordered_classes:
+    for class_name in ORDERED_CLASSES:
         keep_indices = []
         for index, row in df.iterrows():
             classes = util.convert_str_to_list(row[TARGET_LABEL])
@@ -136,6 +132,7 @@ def plot_class_hist(model_dir, class_names, counts):
     :param model_dir: directory of model to save figure
     :param class_counts: Map from class name to counts
     """
+
     class_indices = np.arange(len(class_names))
     f, ax = plt.subplots(figsize=(6, 6), dpi=DPI)
     # Plot data horizontally

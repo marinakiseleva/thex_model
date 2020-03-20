@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import utilities.utilities as thex_utils
 
 
-from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, TREE_ROOT, UNDEF_CLASS, ordered_classes
+from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, TREE_ROOT, UNDEF_CLASS, ORDERED_CLASSES
 
 
 class MainModelVisualization:
@@ -42,6 +42,8 @@ class MainModelVisualization:
         for each class
         :param set_totals: Map from fold # to map of metrics
         """
+
+        print("Number of runs: " + str(self.num_runs))
 
         def get_cis(values, N):
             """
@@ -161,7 +163,7 @@ class MainModelVisualization:
         ordered_metrics = []
         ordered_baselines = [] if baselines is not None else None
         ordered_intervals = [] if intervals is not None else None
-        for class_name in ordered_classes:
+        for class_name in ORDERED_CLASSES:
             for c in class_metrics.keys():
                 if c.replace(UNDEF_CLASS, "") == class_name:
                     # Add to metrics and baselines
