@@ -38,7 +38,6 @@ class MainModel(ABC, MainModelVisualization):
         self.dir = util.init_file_directories(self.name)
         print("Saving " + self.name + " output to directory " + self.dir)
         # Redirect prints to log
-        self.orig_stdout = sys.stdout  # Save to reset later
         sys.stdout = open(self.dir + "/experiment.log", "a")
 
         # Must add Unspecifieds to tree, so that when searching for lowest-level
@@ -121,7 +120,7 @@ class MainModel(ABC, MainModelVisualization):
 
         self.visualize_performance(results, self.y)
 
-        sys.stdout = self.orig_stdout
+        sys.stdout = sys.__stdout__
 
     def filter_data(self, X, y, data_filters, class_labels):
         """
