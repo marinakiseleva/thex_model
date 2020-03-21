@@ -3,13 +3,13 @@ Source code contributing to the research of the Transient Host Exchange project 
 
 
 # Set-Up
-1. Set up the following directory structure (assuming you have the data in the corresponding FITs file):
+1. Set up the following directory structure (with the dataset as a FITs file in the data directory):
 ```
 thex_project
 └───thex_code
 │
 └───data
-│   │   THEx-training-set.v0_0_1.fits
+│   │   THEx-dataset.fits
 ```
 2. Use the following commands to clone this repository and run the install script. The Jupyter Notebook interfaces will be automatically loaded.
 ```
@@ -19,7 +19,7 @@ cd thex_model
 sh install.sh
 ```
 
-<!-- Update LOCAL_DATA_PATH in [thex_data/data_consts.py](thex_data/data_consts.py) with the path to data FITS file  (relative to thex_model root dir). It is best to follow this structure: -->
+
 3. After installation, ensure that virtualenv has  been activated ((thex_env) should be prepended to your shell prompt) and the structure of the project looks like this:
 ```
 thex_project
@@ -29,7 +29,7 @@ thex_project
 |    └───thex_model
 │
 └───data
-│   │   THEx-training-set.v0_0_1.fits
+│   │   THEx-dataset.fits
 ```
 4. When you are done developing/running models you may exit virtualenv with the following command.
 ```
@@ -37,36 +37,38 @@ deactivate
 ```
 
 # Running
-Please use the Jupyter Notebook [THEx Model Intro](notebooks/THEx%20Model%20Intro.ipynb) located in the notebooks directory to help you get started with running the models. Be sure to use notebooks that are in 'THEx env (py3env)'.
+Use the Jupyter Notebook [THEx Model Intro](notebooks/THEx%20Model%20Intro.ipynb) located in the notebooks directory to help you get started with running the models. Be sure to use the correct environment with the notebook.
 
 # Dependencies
-This requires you have the following already installed:
+This module requires you have the following already installed:
 - Python 3.6
 - virtualenv (be sure virtualenv uses 3.6 by default)
-<!-- Listed in requirements.txt and the following that needs to be separately installed in another directory.
-- [hmc](https://github.com/marinakiseleva/hmc) -- see above
+<!-- Listed in requirements.txt and the following that needs to be separately installed in another directory. -->
+- hmc fork available here: (https://github.com/marinakiseleva/hmc) 
 
-Do not pip install hmc. Download it from the link above and install it using setup.py. This is a forked and edited version, and only this version will work with our project. -->
+Note: Do not pip install hmc. Download it from the link above and install it using setup.py. This is a forked and edited version, and only this version will work with our project.
 
 # Project Structure
 This module is broken up into smaller modules that each provide different utilities and are described below.
 
+## classifiers
+Contains the different classifiers explored/used in the project. 
+
+## mainmodel
+Abstract class which all models are built on. 
+
 ## models
-Contains the different classifiers explored/used in the project. Each multiclass classifier below attempts to assign the probability of every class, for each sample.
+Directory that contains existing models - which differ based on the underlying computation of probabilities. Each uses kernel density estimation per class.
 
-### mc_kde_model
-Multiclass Kernel Density Estimate (KDE) model, which creates a single distribution over all features for each transient class. The 'mc' implies Multiclass since a separate KDE is created for each class, and probabilities are determined by normalizing over the probability densities of all classes at the same level of the hierarchy. 
-<!-- ### hmc_model
-Decisioning tree using the Hierarchical Multi-label Decisioing Tree from Vens, et al. 2008. -->
+### binary_model
+Binary Classifiers: Treats each class as a separate binary classification problem and reports probability of each class versus all other classes. A multivariate Kernel Density Estimate (KDE) is estimated for each class, and for all the samples not with that class. 
 
-### clus_hmc_ens_model
-Decisioning tree using the Hierarchical Multi-label Decisioing Tree using variance based on class hierarchy (CLUS-HMC-ENS) from Schietgat, Vens, Struyf, et al. 2010. 
+### ind_model
+Ensemble Classifier: Same as binary model except resulting probabilities are normalized together to get multiclass probabilities. 
 
-### ktrees_model
-Multiclass model with an ensemble of decision trees. Creates decision tree for each class, minimizing the Brier score. 
+### multi_model
+KDE Multiclass Classifier: Multiclass classifier like the previous one, except now KDEs are created for each class, and probabilities are computed over those positive-class KDEs. The negative class space is not fitted.
 
-### network_model
-Series of Neural Networks, for each group of comparable transient classes. Starting at the root of the transient class hierarchy, the first neural network assigns probabilities to each class. We recurse on the subclasses of the class with the maximum probability, and repeat until we reach a class which has no subclasses. 
 
 ## thex_data
 Data pulling, cleansing, normalizing, preparation, and plotting.
