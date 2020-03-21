@@ -6,7 +6,8 @@ from thex_data.data_consts import DATA_PATH, drop_cols, ORIG_TARGET_LABEL
 
 
 """
-Initializes data from initial pull. Filters down list of columns based on user-input.
+Handles accessing and updating data.
+Initializes data from initial pull. Filters down list of columns based on user-input. 
 """
 
 

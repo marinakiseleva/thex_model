@@ -23,20 +23,6 @@ class BinaryModel(MainModel):
         self.name = "Binary Classifiers"
         super(BinaryModel, self).__init__(**data_args)
 
-    def relabel_class_data(self, class_name, y):
-        """
-        Return DataFrame like y except that TARGET_LABEL values have been replaced with 0 or 1. 1 if class_name is in list of labels.
-        :param class_name: Positive class
-        :return: y, relabeled
-        """
-        labels = []  # Relabeled y
-        for df_index, row in y.iterrows():
-            cur_classes = thex_utils.convert_str_to_list(row[TARGET_LABEL])
-            label = 1 if class_name in cur_classes else 0
-            labels.append(label)
-        relabeled_y = pd.DataFrame(labels, columns=[TARGET_LABEL])
-        return relabeled_y
-
     def train_model(self, X_train, y_train):
         """
         Train model using training data. All classes are a single disjoint set, so create a binary classifier for each one

@@ -9,6 +9,54 @@ from .data_consts import TARGET_LABEL
 import utilities.utilities as util
 
 
+def drop_disjoint_conflicts(X, y, class_hier):
+    """
+    Drop rows that have more than 1 disjoint label assigned (conflicting labels)
+    """
+    keep_indices = []
+    for index, row in y.iterrows():
+        keep = True
+        labels = util.convert_str_to_list(row[TARGET_LABEL])
+        # Row shouldn't contain more than 1 label in a set of children.
+        for c_key in class_hier.keys():
+            children = class_hier[c_key]
+            com = list(set(labels).intersection(set(children)))
+            if len(com) > 1:
+                keep = False
+                break
+        if keep:
+            keep_indices.append(index)
+
+    k = list(set(keep_indices))
+    return X.loc[k, :].reset_index(drop=True), y.loc[k, :].reset_index(drop=True)
+
+
+def filter_data(X, y, data_filters, class_labels, class_hier):
+    """
+    Filter data with known class labels and default/passed-in filters
+    """
+    min_class_size = data_filters['min_class_size']
+    max_class_size = data_filters['max_class_size']
+
+    # Filter data (keep only classes that are > min class size)
+    data = pd.concat([X, y], axis=1)
+    filtered_data = filter_class_size(data,
+                                      min_class_size,
+                                      class_labels)
+
+    if max_class_size is not None:
+          # Randomly subsample any over-represented classes down to passed-in value
+        filtered_data = sub_sample(filtered_data,
+                                   max_class_size,
+                                   class_labels)
+
+    X = filtered_data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
+    y = filtered_data[[TARGET_LABEL]].reset_index(drop=True)
+
+    X, y = drop_disjoint_conflicts(X, y, class_hier)
+    return X, y
+
+
 def filter_class_labels(df, class_labels):
     """
     Keep rows that have label in class_labels
@@ -66,54 +114,6 @@ def filter_columns(df, col_list):
     col_list = col_list + [TARGET_LABEL]
     df = df[col_list]
     return df
-
-
-def super_sample(df, count, classes):
-    """
-    Oversamples under-represented class. If class countains less than the necessary count, we only double each sample.
-    Note: ONLY APPLY TO TRAINING DATA. Applying to both training and testing biases entire set and makes it trivial to predict elements that have been duplicated.
-    :param df: DataFrame to apply to
-    :param count: Randomly supersample classes to this number
-    :param classes: classes to filter on.
-    """
-    if count is None:
-        return df
-
-    if classes is None:
-        # Infer unique classes from data
-        classes = infer_data_classes(df)
-
-    # Filter each class in list, by indices. Save indices of samples to keep.
-    orig_indices = []
-    super_sampled_indices = []
-    for class_label in classes:
-
-        class_indices = []
-        for index, row in df.iterrows():
-            class_list = util.convert_str_to_list(row[TARGET_LABEL])
-            if class_label in class_list:
-                class_indices.append(index)
-        df_class = df.loc[class_indices, :]
-        num_rows = df_class.shape[0]  # number of rows
-
-        if num_rows >= count:
-            # Leave as is
-            orig_indices += class_indices
-
-        else:
-            # Super-sample up to count
-            sample_up = count - num_rows
-            if sample_up > num_rows:
-                sample_up = num_rows
-            sampled_class_indices = list(df_class.sample(n=sample_up).index)
-            super_sampled_indices += sampled_class_indices
-
-    # only make original indices unique since subsampled ones are subsampled per class.
-    unique_indices = list(set(orig_indices))
-
-    all_indices = unique_indices + super_sampled_indices
-
-    return df.loc[all_indices, :].reset_index(drop=True)
 
 
 def sub_sample(df, count, classes):

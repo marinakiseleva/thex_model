@@ -2,6 +2,11 @@
 data_transform
 Enhance features by scaling and transforming them
 """
+import pandas as pd
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
 from thex_data.data_consts import adjacent_mags
 
 
@@ -43,3 +48,58 @@ def derive_diffs(df):
                 df[new_col_name] = primary_mag - prev_mag
 
     return df
+
+
+def scale_data(X_train, X_test):
+    """
+    Fit scaling to training data and apply to both training and testing;
+    Returns X_train and X_test as Pandas DataFrames
+    :param X_train: Pandas DataFrame of training data
+    :param X_test: Pandas DataFrame of testing data
+    """
+    features_list = list(X_train)
+    # Rescale data: z = (x - mean) / stdev
+    scaler = StandardScaler()
+    scaled_X_train = pd.DataFrame(
+        data=scaler.fit_transform(X_train), columns=features_list)
+    scaled_X_test = pd.DataFrame(
+        data=scaler.transform(X_test), columns=features_list)
+
+    return scaled_X_train, scaled_X_test
+
+
+def apply_PCA(self, X_train, X_test, k):
+    """
+    Fit PCA to training data and apply to both training and testing;
+    Returns X_train and X_test as Pandas DataFrames
+    :param X_train: Pandas DataFrame of training data
+    :param X_test: Pandas DataFrame of testing data
+    :param k: self.pca from model; number of components
+    """
+    def convert_to_df(data, k):
+        """
+        Convert Numpy 2D array to DataFrame with k PCA columns
+        :param data: Numpy 2D array of data features
+        :param k: Number of PCA components to label cols
+        """
+        reduced_columns = []
+        for i in range(k):
+            new_column = "PC" + str(i + 1)
+            reduced_columns.append(new_column)
+        df = pd.DataFrame(data=data, columns=reduced_columns)
+
+        return df
+
+    # Return original if # features <= # PCA components
+    if len(list(X_train)) <= k:
+        return X_train, X_test
+
+    pca = PCA(n_components=k)
+    reduced_training = pca.fit_transform(X_train)
+    reduced_testing = pca.transform(X_test)
+    print("\nPCA Analysis: Explained Variance Ratio")
+    print(pca.explained_variance_ratio_)
+
+    reduced_training = convert_to_df(reduced_training, k)
+    reduced_testing = convert_to_df(reduced_testing, k)
+    return reduced_training, reduced_testing

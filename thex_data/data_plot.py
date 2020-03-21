@@ -113,7 +113,7 @@ def plot_feature_distribution(model_dir, df, feature, class_labels, class_counts
     ylabel = "Class Count"
 
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.title(title, fontsize=12)
+    plt.title(feature, fontsize=12)
     plt.xlabel(feature, fontsize=10)
     plt.ylabel(ylabel, fontsize=10)
     plt.xlim(left=0, right=max_value)

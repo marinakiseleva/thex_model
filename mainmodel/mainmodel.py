@@ -13,18 +13,14 @@ import pickle
 from abc import ABC, abstractmethod
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.model_selection import train_test_split
-
-from hmc import hmc
 
 # local imports
 from thex_data.data_init import *
+from thex_data.data_filter import filter_data
 from thex_data.data_prep import get_source_target_data
-from thex_data.data_filter import filter_class_size, sub_sample, super_sample
+from thex_data.data_transform import scale_data, apply_PCA
 from thex_data.data_plot import *
-from thex_data.data_consts import TARGET_LABEL, TREE_ROOT, UNDEF_CLASS, class_to_subclass as orig_class_hier
+from thex_data.data_consts import TARGET_LABEL, UNDEF_CLASS, class_to_subclass as CLASS_HIERARCHY
 from mainmodel.performance_plots import MainModelVisualization
 import utilities.utilities as util
 
@@ -42,30 +38,26 @@ class MainModel(ABC, MainModelVisualization):
 
         # Must add Unspecifieds to tree, so that when searching for lowest-level
         # label, the UNDEF one returns.
-        self.class_hier = orig_class_hier.copy()
-        for parent in orig_class_hier.keys():
+        self.class_hier = CLASS_HIERARCHY.copy()
+        for parent in CLASS_HIERARCHY.keys():
             self.class_hier[parent].insert(0, UNDEF_CLASS + parent)
-        self.tree = self.init_tree(self.class_hier)
-        self.class_levels = self.assign_levels(self.tree, {}, self.tree.root, 1)
-
+        self.tree = util.init_tree(self.class_hier)
+        self.class_levels = util.assign_levels(self.tree, {}, self.tree.root, 1)
         data_filters = {'cols': None,  # Names of columns to filter on; default is all numeric cols
                         'col_matches': None,  # String by which columns will be selected
-                        'num_runs': None,
+                        'num_runs': None,  # Number of trials
                         'folds': None,  # Number of folds if using k-fold Cross Validation
-                        'subsample': None,
-                        'supersample': None,
                         'transform_features': True,  # Derive mag colors
                         'min_class_size': 9,
+                        'max_class_size': None,
                         'pca': None,  # Number of principal components
                         'class_labels': None,
-                        'prior': 'uniform',
                         'data': None,  # List of training and test pandas dfs
                         'nb': False  # Naive Bayes multiclass
                         }
 
         for data_filter in user_data_filters.keys():
             data_filters[data_filter] = user_data_filters[data_filter]
-
         if data_filters['data'] is None:
             # list of features to use from database
             features = collect_cols(data_filters['cols'], data_filters['col_matches'])
@@ -75,21 +67,18 @@ class MainModel(ABC, MainModelVisualization):
             y = data_filters['data'][1].copy()
 
         # Redefine labels with Unspecifieds
-        y = self.add_unspecified_labels_to_data(y)
+        y = util.add_unspecified_labels_to_data(y, self.class_levels)
 
         self.class_labels = self.get_class_labels(
             data_filters['class_labels'], y, data_filters['min_class_size'])
-
         # Pre-processing dependent on class labels
-        X, y = self.filter_data(X, y, data_filters, self.class_labels)
-
+        X, y = filter_data(X, y, data_filters, self.class_labels, self.class_hier)
         # Save relevant data attributes to self
         self.X = X
         self.y = y
         self.num_folds = data_filters['folds']
         self.num_runs = data_filters['num_runs']
         self.pca = data_filters['pca']
-        self.oversample = data_filters['supersample']
         self.nb = data_filters['nb']
         self.class_counts = self.get_class_counts(y)
 
@@ -106,89 +95,35 @@ class MainModel(ABC, MainModelVisualization):
         self.visualize_data(self.X, self.y)
 
         if self.num_runs is not None:
-            results = self.run_trials(self.X, self.y, self.num_runs)
+            self.results = self.run_trials(self.X, self.y, self.num_runs)
         elif self.num_folds is not None:
-            results = self.run_cfv(self.X, self.y)
+            self.results = self.run_cfv(self.X, self.y)
         else:
             raise ValueError("Must pass in either number of folds or runs.")
 
         # Save results in pickle
         with open(self.dir + '/results.pickle', 'wb') as f:
-            pickle.dump(results, f)
+            pickle.dump(self.results, f)
         with open(self.dir + '/y.pickle', 'wb') as f:
             pickle.dump(self.y, f)
 
-        self.visualize_performance(results, self.y)
+        self.visualize_performance(self.results, self.y)
 
         sys.stdout = sys.__stdout__
 
-    def filter_data(self, X, y, data_filters, class_labels):
+    def relabel_class_data(self, class_name, y):
         """
-        Filter data now that class labels are known.
+        Return DataFrame like y except that TARGET_LABEL values have been replaced with 0 or 1. 1 if class_name is in list of labels.
+        :param class_name: Positive class
+        :return: y, relabeled
         """
-        min_class_size = data_filters['min_class_size']
-        max_class_size = data_filters['subsample']
-
-        # Filter data (keep only classes that are > min class size)
-        data = pd.concat([X, y], axis=1)
-        filtered_data = filter_class_size(data,
-                                          min_class_size,
-                                          class_labels)
-
-        if max_class_size is not None:
-              # Randomly subsample any over-represented classes down to passed-in value
-            filtered_data = sub_sample(filtered_data,
-                                       max_class_size,
-                                       class_labels)
-
-        X = filtered_data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
-        y = filtered_data[[TARGET_LABEL]].reset_index(drop=True)
-
-        X, y = self.drop_conflicts(X, y)
-        return X, y
-
-    def init_tree(self, hierarchy):
-        print("\n\nConstructing Class Hierarchy Tree...")
-        hmc_hierarchy = hmc.ClassHierarchy(TREE_ROOT)
-        for parent in hierarchy.keys():
-            # hierarchy maps parents to children, so get all children
-            list_children = hierarchy[parent]
-            for child in list_children:
-                # Nodes are added with child parent pairs
-                try:
-                    hmc_hierarchy.add_node(child, parent)
-                except ValueError as e:
-                    print(e)
-        return hmc_hierarchy
-
-    def assign_levels(self, tree, mapping, node, level):
-        """
-        Assigns level to each node based on level in hierarchical tree. The lower it is in the tree, the larger the level. The level at the root is 1.
-        :return: Dict from class name to level number.
-        """
-        mapping[str(node)] = level
-        for child in tree._get_children(node):
-            self.assign_levels(tree, mapping, child, level + 1)
-        return mapping
-
-    def add_unspecified_labels_to_data(self, y):
-        """
-        Add unspecified label for each tree parent in data's list of labels
-        """
-        for index, row in y.iterrows():
-            # Iterate through all class labels for this label
-            max_depth = 0  # Set max depth to determine what level is undefined
-            for label in util.convert_str_to_list(row[TARGET_LABEL]):
-                if label in self.class_levels:
-                    max_depth = max(self.class_levels[label], max_depth)
-            # Max depth will be 0 for classes unhandled in hierarchy.
-            if max_depth > 0:
-                # Add Undefined label for any nodes at max depth
-                for label in util.convert_str_to_list(row[TARGET_LABEL]):
-                    if label in self.class_levels and self.class_levels[label] == max_depth:
-                        add = ", " + UNDEF_CLASS + label
-                        y.iloc[index] = y.iloc[index] + add
-        return y
+        labels = []  # Relabeled y
+        for df_index, row in y.iterrows():
+            cur_classes = util.convert_str_to_list(row[TARGET_LABEL])
+            label = 1 if class_name in cur_classes else 0
+            labels.append(label)
+        relabeled_y = pd.DataFrame(labels, columns=[TARGET_LABEL])
+        return relabeled_y
 
     def get_class_labels(self, user_defined_labels, y, N):
         """
@@ -292,72 +227,6 @@ class MainModel(ABC, MainModelVisualization):
 
         return -1
 
-    def scale_data(self, X_train, X_test):
-        """
-        Fit scaling to training data and apply to both training and testing;
-        Returns X_train and X_test as Pandas DataFrames
-        :param X_train: Pandas DataFrame of training data
-        :param X_test: Pandas DataFrame of testing data
-        """
-        features_list = list(X_train)
-        # Rescale data: z = (x - mean) / stdev
-        scaler = StandardScaler()
-        scaled_X_train = pd.DataFrame(
-            data=scaler.fit_transform(X_train), columns=features_list)
-        scaled_X_test = pd.DataFrame(
-            data=scaler.transform(X_test), columns=features_list)
-
-        return scaled_X_train, scaled_X_test
-
-    def apply_PCA(self, X_train, X_test):
-        """
-        Fit PCA to training data and apply to both training and testing;
-        Returns X_train and X_test as Pandas DataFrames
-        :param X_train: Pandas DataFrame of training data
-        :param X_test: Pandas DataFrame of testing data
-        """
-        k = self.pca
-
-        def convert_to_df(data, k):
-            """
-            Convert Numpy 2D array to DataFrame with k PCA columns
-            :param data: Numpy 2D array of data features
-            :param k: Number of PCA components to label cols
-            """
-            reduced_columns = []
-            for i in range(k):
-                new_column = "PC" + str(i + 1)
-                reduced_columns.append(new_column)
-            df = pd.DataFrame(data=data, columns=reduced_columns)
-
-            return df
-
-        # Return original if # features <= # PCA components
-        if len(list(X_train)) <= k:
-            return X_train, X_test
-
-        pca = PCA(n_components=k)
-        reduced_training = pca.fit_transform(X_train)
-        reduced_testing = pca.transform(X_test)
-        print("\nPCA Analysis: Explained Variance Ratio")
-        print(pca.explained_variance_ratio_)
-
-        reduced_training = convert_to_df(reduced_training, k)
-        reduced_testing = convert_to_df(reduced_testing, k)
-        return reduced_training, reduced_testing
-
-    def super_sample(self, X, y):
-        """
-        Super sample using self.oversample as number to sample up to
-        """
-        data = pd.concat([X, y], axis=1)
-        super_data = super_sample(data, self.oversample, self.class_labels)
-
-        X = super_data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
-        y = super_data[[TARGET_LABEL]]
-
-        return X, y
-
     def run_cfv(self, X, y):
         """
         Run k-fold cross validation over a number of runs
@@ -372,14 +241,10 @@ class MainModel(ABC, MainModelVisualization):
             y_train, y_test = y.iloc[train_index].reset_index(
                 drop=True), y.iloc[test_index].reset_index(drop=True)
 
-            # Oversample training data only
-            if self.oversample is not None:
-                X_train, y_train = self.super_sample(X_train, y_train)
-
             # Scale and apply PCA
-            X_train, X_test = self.scale_data(X_train, X_test)
+            X_train, X_test = scale_data(X_train, X_test)
             if self.pca is not None:
-                X_train, X_test = self.apply_PCA(X_train, X_test)
+                X_train, X_test = apply_PCA(X_train, X_test, self.pca)
 
             # Train
             self.train_model(X_train, y_train)
@@ -392,27 +257,6 @@ class MainModel(ABC, MainModelVisualization):
             results.append(probabilities)
 
         return results
-
-    def drop_conflicts(self, X, y):
-        """
-        Drop rows that have more than 1 disjoint label assigned (conflicting labels)
-        """
-        keep_indices = []
-        for index, row in y.iterrows():
-            keep = True
-            labels = util.convert_str_to_list(row[TARGET_LABEL])
-            # Row shouldn't contain more than 1 label in a set of children.
-            for c_key in self.class_hier.keys():
-                children = self.class_hier[c_key]
-                com = list(set(labels).intersection(set(children)))
-                if len(com) > 1:
-                    keep = False
-                    break
-            if keep:
-                keep_indices.append(index)
-
-        k = list(set(keep_indices))
-        return X.loc[k, :].reset_index(drop=True), y.loc[k, :].reset_index(drop=True)
 
     def manually_stratify(self, X, y, train_split):
         """
@@ -464,17 +308,13 @@ class MainModel(ABC, MainModelVisualization):
 
         results = []
         for i in range(N):
-            print("\n\nTrial:  " + str(i))
+            print("\n\nTrial:  " + str(i + 1))
             X_train, y_train, X_test, y_test = self.manually_stratify(X, y, .66)
 
-            # Oversample training data only
-            if self.oversample is not None:
-                X_train, y_train = self.super_sample(X_train, y_train)
-
             # Scale and apply PCA
-            X_train, X_test = self.scale_data(X_train, X_test)
+            X_train, X_test = scale_data(X_train, X_test)
             if self.pca is not None:
-                X_train, X_test = self.apply_PCA(X_train, X_test)
+                X_train, X_test = apply_PCA(X_train, X_test, self.pca)
 
             # Train
             self.train_model(X_train, y_train)

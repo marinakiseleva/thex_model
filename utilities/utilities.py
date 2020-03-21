@@ -2,7 +2,59 @@ import os
 import shutil
 from textwrap import wrap
 import matplotlib.pyplot as plt
-from thex_data.data_consts import ROOT_DIR
+
+from hmc import hmc
+
+from thex_data.data_consts import ROOT_DIR, TREE_ROOT, TARGET_LABEL, UNDEF_CLASS
+
+
+# Hierarchy Utilities
+
+def init_tree(hierarchy):
+    print("\n\nConstructing Class Hierarchy Tree...")
+    hmc_hierarchy = hmc.ClassHierarchy(TREE_ROOT)
+    for parent in hierarchy.keys():
+        # hierarchy maps parents to children, so get all children
+        list_children = hierarchy[parent]
+        for child in list_children:
+            # Nodes are added with child parent pairs
+            try:
+                hmc_hierarchy.add_node(child, parent)
+            except ValueError as e:
+                print(e)
+    return hmc_hierarchy
+
+
+def assign_levels(tree, mapping, node, level):
+    """
+    Assigns level to each node based on level in hierarchical tree. The lower it is in the tree, the larger the level. The level at the root is 1.
+    :return: Dict from class name to level number.
+    """
+    mapping[str(node)] = level
+    for child in tree._get_children(node):
+        assign_levels(tree, mapping, child, level + 1)
+    return mapping
+
+
+def add_unspecified_labels_to_data(y, class_levels):
+    """
+    Add unspecified label for each tree parent in data's list of labels
+    :param class_levels: self.class_levels from model
+    """
+    for index, row in y.iterrows():
+        # Iterate through all class labels for this label
+        max_depth = 0  # Set max depth to determine what level is undefined
+        for label in convert_str_to_list(row[TARGET_LABEL]):
+            if label in class_levels:
+                max_depth = max(class_levels[label], max_depth)
+        # Max depth will be 0 for classes unhandled in hierarchy.
+        if max_depth > 0:
+            # Add Undefined label for any nodes at max depth
+            for label in convert_str_to_list(row[TARGET_LABEL]):
+                if label in class_levels and class_levels[label] == max_depth:
+                    add = ", " + UNDEF_CLASS + label
+                    y.iloc[index] = y.iloc[index] + add
+    return y
 
 
 # Plotting Utilities
