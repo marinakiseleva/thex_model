@@ -88,7 +88,7 @@ class MainModel(ABC, MainModelVisualization):
 
     def run_model(self):
         """
-        Visualize data, run analysis, and record results.
+        Visualize data, run analysis, and record results in self.results, a list of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         """
         print("\nRunning " + str(self.name))
 
@@ -106,8 +106,7 @@ class MainModel(ABC, MainModelVisualization):
             pickle.dump(self.results, f)
         with open(self.dir + '/y.pickle', 'wb') as f:
             pickle.dump(self.y, f)
-
-        self.visualize_performance(self.results, self.y)
+        self.visualize_performance()
 
         sys.stdout = sys.__stdout__
 
@@ -214,16 +213,16 @@ class MainModel(ABC, MainModelVisualization):
             plot_feature_distribution(self.dir,  df, 'redshift',
                                       self.class_labels, self.class_counts)
 
-    def visualize_performance(self, results, y):
+    def visualize_performance(self):
         """
         Visualize performance
-        :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
+
         """
-        range_metrics = self.compute_probability_range_metrics(results)
+        range_metrics = self.compute_probability_range_metrics(self.results)
         self.plot_prob_pr_curves(range_metrics, self.class_counts)
         # self.plot_probability_vs_accuracy(range_metrics)
-        class_metrics, set_totals = self.compute_metrics(results)
-        self.plot_all_metrics(class_metrics, set_totals, y)
+        class_metrics, set_totals = self.compute_metrics(self.results)
+        self.plot_all_metrics(class_metrics, set_totals, self.y)
 
         return -1
 
@@ -305,7 +304,6 @@ class MainModel(ABC, MainModelVisualization):
         :param y: DataFram with TARGET_LABEL column
         :param N: Number of trials
         """
-
         results = []
         for i in range(N):
             print("\n\nTrial:  " + str(i + 1))
