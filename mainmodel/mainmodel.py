@@ -220,7 +220,7 @@ class MainModel(ABC, MainModelVisualization):
         """
         range_metrics = self.compute_probability_range_metrics(self.results)
         self.plot_prob_pr_curves(range_metrics, self.class_counts)
-        # self.plot_probability_vs_accuracy(range_metrics)
+        self.plot_probability_vs_accuracy(range_metrics)
         class_metrics, set_totals = self.compute_metrics(self.results)
         self.plot_all_metrics(class_metrics, set_totals, self.y)
 
