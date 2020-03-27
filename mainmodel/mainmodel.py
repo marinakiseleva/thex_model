@@ -71,8 +71,10 @@ class MainModel(ABC, MainModelVisualization):
 
         self.class_labels = self.get_class_labels(
             data_filters['class_labels'], y, data_filters['min_class_size'])
+
         # Pre-processing dependent on class labels
         X, y = filter_data(X, y, data_filters, self.class_labels, self.class_hier)
+
         # Save relevant data attributes to self
         self.X = X
         self.y = y
@@ -91,7 +93,6 @@ class MainModel(ABC, MainModelVisualization):
         Visualize data, run analysis, and record results in self.results, a list of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         """
         print("\nRunning " + str(self.name))
-
         self.visualize_data(self.X, self.y)
 
         if self.num_runs is not None:
@@ -131,6 +132,10 @@ class MainModel(ABC, MainModelVisualization):
         :param y: DataFrame with TARGET_LABEL column
         :param N: Minimum # of samples per class to keep it
         """
+        # Return classes passed in by user if there are any
+        if user_defined_labels is not None:
+            return user_defined_labels
+
         # Initialize new hierarchy and class counts
         new_hier = self.class_hier.copy()
 
@@ -171,10 +176,6 @@ class MainModel(ABC, MainModelVisualization):
             for child in new_hier[parent]:
                 if child not in new_hier.keys():
                     keep_classes.append(child)
-
-        # 4. Filter on any classes passed in by user
-        if user_defined_labels is not None:
-            keep_classes = list(set(keep_classes).intersection(set(user_defined_labels)))
 
         self.class_hier = new_hier
         return keep_classes

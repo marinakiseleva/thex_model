@@ -40,6 +40,7 @@ def filter_data(X, y, data_filters, class_labels, class_hier):
 
     # Filter data (keep only classes that are > min class size)
     data = pd.concat([X, y], axis=1)
+
     filtered_data = filter_class_size(data,
                                       min_class_size,
                                       class_labels)
@@ -49,6 +50,8 @@ def filter_data(X, y, data_filters, class_labels, class_hier):
         filtered_data = sub_sample(filtered_data,
                                    max_class_size,
                                    class_labels)
+
+    filtered_data = filter_class_labels(filtered_data, class_labels)
 
     X = filtered_data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
     y = filtered_data[[TARGET_LABEL]].reset_index(drop=True)

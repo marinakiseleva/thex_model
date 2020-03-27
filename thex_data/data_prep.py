@@ -39,8 +39,6 @@ def get_data(col_list, data_filters):
 
     df = drop_conflicts(df)
 
-    df = filter_class_labels(df, data_filters['class_labels'])
-
     if df.shape[0] == 0:
         raise ValueError("\nNo data to run model on.\n")
 
