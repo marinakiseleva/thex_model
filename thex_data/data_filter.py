@@ -9,7 +9,7 @@ from .data_consts import TARGET_LABEL
 import utilities.utilities as util
 
 
-def drop_disjoint_conflicts(X, y, class_hier):
+def drop_disjoint_conflicts(X, y, class_labels):
     """
     Drop rows that have more than 1 disjoint label assigned (conflicting labels)
     """
@@ -17,14 +17,10 @@ def drop_disjoint_conflicts(X, y, class_hier):
     for index, row in y.iterrows():
         keep = True
         labels = util.convert_str_to_list(row[TARGET_LABEL])
-        # Row shouldn't contain more than 1 label in a set of children.
-        for c_key in class_hier.keys():
-            children = class_hier[c_key]
-            com = list(set(labels).intersection(set(children)))
-            if len(com) > 1:
-                keep = False
-                break
-        if keep:
+
+        i = list(set(labels).intersection(set(class_labels)))
+        if len(i) == 1:
+            # Contains 1 disjoint label
             keep_indices.append(index)
 
     k = list(set(keep_indices))
@@ -56,7 +52,8 @@ def filter_data(X, y, data_filters, class_labels, class_hier):
     X = filtered_data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
     y = filtered_data[[TARGET_LABEL]].reset_index(drop=True)
 
-    X, y = drop_disjoint_conflicts(X, y, class_hier)
+    X, y = drop_disjoint_conflicts(X, y, class_labels)
+
     return X, y
 
 
