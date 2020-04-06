@@ -223,9 +223,7 @@ drop_cols = [
 """
 Magnitudes adjacent to one another that can be subtracted to get colors.
 """
-
-
-adjacent_mags = {
+ORDERED_MAGS = {
     'NUV_mag': 'FUV_mag',
     'u_mag': 'NUV_mag',
     'g_mag': 'u_mag',
