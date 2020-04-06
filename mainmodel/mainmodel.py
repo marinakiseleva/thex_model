@@ -355,6 +355,7 @@ class MainModel(ABC, MainModelVisualization):
         label_index = len(self.class_labels)  # Last column is label
 
         self.class_prob_rates = {}
+        self.class_positives = {}
         for class_index, class_name in enumerate(self.class_labels):
             tp_probabilities = []  # probabilities for True Positive samples
             pos_probabilities = []  # probabilities for Positive samples
@@ -386,8 +387,10 @@ class MainModel(ABC, MainModelVisualization):
             range_metrics[class_name] = [tp_range_counts, total_range_counts]
 
             # Calculate class prob rates separately
-            class_rates = np.histogram(pos_probabilities, bins=bins)[0].tolist()
-            class_prob_rates = np.array(class_rates) / np.array(total_range_counts)
+            pos_class_per_range = np.histogram(pos_probabilities, bins=bins)[0].tolist()
+            self.class_positives[class_name] = pos_class_per_range
+            class_prob_rates = np.array(pos_class_per_range) / \
+                np.array(total_range_counts)
             class_prob_rates[np.isinf(class_prob_rates)] = 0
             class_prob_rates[np.isnan(class_prob_rates)] = 0
             self.class_prob_rates[class_name] = class_prob_rates

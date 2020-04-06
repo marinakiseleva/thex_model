@@ -254,23 +254,50 @@ class MainModelVisualization:
         :param range_metrics: Map of classes to [TP_range_sums, total_range_sums] from compute_probability_range_metrics
         """
 
-        for index, class_name in enumerate(range_metrics.keys()):
+        perc_ranges = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]
+        x_indices = np.arange(len(perc_ranges))
+        total_count_per_range = np.zeros(10)
+        for class_name in self.class_labels:
             true_positives, totals = range_metrics[class_name]
+
+            pos_class_counts_per_range = np.array(self.class_positives[class_name])
+            total_count_per_range += pos_class_counts_per_range
+
             prob_rates = self.class_prob_rates[class_name]
             print("\nProbability vs Class Rates for: " + str(class_name))
             print(prob_rates)
             f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-            perc_ranges = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]
-
-            x_indices = np.arange(len(prob_rates))
             ax.bar(x_indices, prob_rates)
-
             thex_utils.annotate_plot(ax, x_indices, prob_rates, totals)
+            plt.xticks(x_indices, perc_ranges, fontsize=10)
             plt.yticks(list(np.linspace(0, 1, 11)), [
                        str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
-            plt.xticks(x_indices, perc_ranges, fontsize=10)
             plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
-            plt.ylabel('Purity', fontsize=12)
+            plt.ylabel('Class Rate', fontsize=12)
             ax.set_title(class_name)
             thex_utils.display_and_save_plot(self.dir,
                                              "Probability vs Positive Rate: " + class_name)
+
+        # Plot aggregated prob vs rates across all classes using weighted averages
+        aggregated_rates = np.zeros(10)
+        for class_name in self.class_labels:
+            class_weights = np.array(self.class_positives[
+                class_name]) / total_count_per_range
+            pos_prob_rates = np.array(self.class_prob_rates[class_name])
+            # Weighted rate = weight * rates
+            aggregated_rates += np.multiply(class_weights, pos_prob_rates)
+        print('\nAggregated Probability vs Class Rates')
+        print(aggregated_rates)
+
+        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+        ax.bar(x_indices, aggregated_rates)
+        total = [int(b) for b in total_count_per_range]
+        thex_utils.annotate_plot(ax, x_indices, aggregated_rates, total)
+        plt.xticks(x_indices, perc_ranges, fontsize=10)
+        plt.yticks(list(np.linspace(0, 1, 11)), [
+            str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
+        plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
+        plt.ylabel('Class Rate', fontsize=12)
+        ax.set_title("Aggregated Probability vs Positive Rate")
+        thex_utils.display_and_save_plot(self.dir,
+                                         "Aggregated Probability vs Positive Rate")
