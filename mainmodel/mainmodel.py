@@ -341,7 +341,7 @@ class MainModel(ABC, MainModelVisualization):
 
     def compute_probability_range_metrics(self, results, bin_size=0.1):
         """
-        Computes True Positive & Total metrics, split by >= probability assigned to class for cumulative ranges dictated by bin_size. Used to plot probability assigned vs completeness (TP/total, per bin).
+        Returns map of class name to true positives & total count per probability bin. Also saves probability rates and # of samples in each class to maps (self.class_prob_rates, self.class_positives)
         :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         :param bin_size: Size of each bin (range of probabilities) to consider at a time; must be betwen 0 and 1
         :return range_metrics: Map of classes to [TP_range_sums, total_range_sums]
