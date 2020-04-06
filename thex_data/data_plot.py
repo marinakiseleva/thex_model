@@ -12,7 +12,7 @@ from matplotlib.ticker import LogLocator
 import matplotlib.pyplot as plt
 from sklearn.neighbors.kde import KernelDensity
 
-from .data_consts import TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI, ORDERED_CLASSES, UNDEF_CLASS
+from .data_consts import TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI, ORDERED_CLASSES, UNDEF_CLASS, ORDERED_MAGS
 import utilities.utilities as util
 
 
@@ -24,6 +24,25 @@ def init_plot_settings():
     plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 
 
+def get_ordered_features(features):
+    """
+    Order features if possible
+    """
+
+    ordered_features = []
+    # Manually add first feature as it is not in defined dict.
+    if 'FUV_mag' in features:
+        ordered_features.append('FUV_mag')
+    for mag in ORDERED_MAGS.keys():
+        if mag in features:
+            ordered_features.append(mag)
+
+    # Order features by wavelength, if possible
+    if len(ordered_features) == len(features):
+        features = ordered_features
+    return features
+
+
 def calculate_completeness(X, y, class_labels):
     """
     Get completeness of each class for each feature. Return as map from class name to list of completeness per feature.
@@ -32,7 +51,9 @@ def calculate_completeness(X, y, class_labels):
     :param class_labels: Class labels by which to calculate completeness
     """
     data = pd.concat([X, y], axis=1)
-    features = list(X)
+
+    features = get_ordered_features(list(X))
+
     completenesses = {}
     for class_name in class_labels:
         class_indices = []
@@ -60,8 +81,8 @@ def visualize_completeness(model_dir, X, class_labels, data_completeness):
     :param class_labels: list of class names
     :param data_completeness: list in order of class names, which contains completeness per feature
     """
-    features = list(X)
-    features.sort()
+    features = get_ordered_features(list(X))
+
     df = pd.DataFrame(data_completeness,
                       index=class_labels,
                       columns=features)

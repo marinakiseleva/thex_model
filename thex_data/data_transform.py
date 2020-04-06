@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
-from thex_data.data_consts import adjacent_mags
+from thex_data.data_consts import ORDERED_MAGS
 
 
 def transform_features(df):
@@ -39,8 +39,8 @@ def derive_diffs(df):
     """
     features = list(df)
     for index, colname1 in enumerate(features):
-        if colname1 in adjacent_mags:
-            colname2 = adjacent_mags[colname1]
+        if colname1 in ORDERED_MAGS:
+            colname2 = ORDERED_MAGS[colname1]
             if colname2 in features:
                 primary_mag = df[colname1]
                 prev_mag = df[colname2]
