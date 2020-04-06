@@ -42,13 +42,3 @@ class MultiModel(MainModel):
         probabilities = self.model.clf.get_class_probabilities(x)
 
         return probabilities
-
-    def is_class(self, class_name, labels):
-        """
-        Boolean which returns True if class name is in the list of labels, and False otherwise.
-
-        """
-        if class_name in labels:
-            return True
-        else:
-            return False

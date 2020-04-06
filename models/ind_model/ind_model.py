@@ -1,7 +1,7 @@
 """
 Independent Model
 
-Ensemble of binary classifiers with resulting probabilities normalized across all classes. Assumes all classes are independent and are not related by any class hierarchy. 
+Ensemble of binary classifiers with resulting probabilities normalized across all classes. Assumes all classes are independent and are not related by any class hierarchy.
 
 """
 
@@ -109,13 +109,3 @@ class IndModel(MainModel):
                               total for class_name, prob in probabilities.items()}
 
         return norm_probabilities
-
-    def is_class(self, class_name, labels):
-        """
-        Boolean which returns True if class name is in the list of labels, and False otherwise.
-
-        """
-        if class_name in labels:
-            return True
-        else:
-            return False

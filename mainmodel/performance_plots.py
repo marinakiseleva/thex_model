@@ -6,6 +6,7 @@ Class Mixin for MainModel which contains all performance plotting functionality
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
 
 import utilities.utilities as thex_utils
 
@@ -17,6 +18,58 @@ class MainModelVisualization:
     """
     Mixin Class for MainModel performance visualization
     """
+
+    def compute_confusion_matrix(self, results):
+        """
+        Compute confusion matrix using sklearn defined function
+        :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
+        """
+        results = np.concatenate(results)
+
+        label_index = len(self.class_labels)  # Last column is label
+
+        predictions = []  # predictions (as class indices)
+        labels = []  # labels (as class indices)
+        for row in results:
+            row_labels = thex_utils.convert_str_to_list(row[label_index])
+
+            # Sample is an instance of this current class.
+            true_labels = list(set(self.class_labels).intersection(set(row_labels)))
+            if len(true_labels) != 1:
+                raise ValueError("Class has more than 1 label.")
+            true_label = true_labels[0]
+
+            # Get class index of max prob; exclude last column since it is label
+            pred_class_index = np.argmax(row[: len(row) - 1])
+            actual_class_index = self.class_labels.index(true_label)
+
+            # Use class index as label
+            predictions.append(pred_class_index)
+            labels.append(actual_class_index)
+
+        index_labels = list(range(len(self.class_labels)))
+        cm = confusion_matrix(labels, predictions, labels=index_labels, normalize='true')
+        return cm
+
+    def plot_confusion_matrix(self, results):
+        """
+        Plot confusion matrix 
+        :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
+        """
+
+        cm = self.compute_confusion_matrix(results)
+        print("\nConfusion Matrix")
+        print(cm)
+        fig = plt.figure(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI, tight_layout=True)
+        ax = plt.subplot()
+        hm = ax.imshow(cm, cmap='Blues', interpolation='nearest')
+        indices = list(range(len(self.class_labels)))
+        plt.ylabel("Actual")
+        plt.xlabel("Prediction")
+        plt.yticks(indices, self.class_labels)
+        plt.xticks(indices, self.class_labels, rotation=65)
+        plt.colorbar(hm)
+        thex_utils.display_and_save_plot(self.dir, "Confusion Matrix", fig=fig)
 
     def compute_performance(self, class_metrics):
         """

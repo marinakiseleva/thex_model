@@ -217,8 +217,8 @@ class MainModel(ABC, MainModelVisualization):
     def visualize_performance(self):
         """
         Visualize performance
-
         """
+        self.plot_confusion_matrix(self.results)
         range_metrics = self.compute_probability_range_metrics(self.results)
         self.plot_prob_pr_curves(range_metrics, self.class_counts)
         self.plot_probability_vs_class_rates(range_metrics)
@@ -338,6 +338,15 @@ class MainModel(ABC, MainModelVisualization):
             all_probs = np.append(all_probs, [list(row_p.values())], axis=0)
 
         return all_probs
+
+    def is_class(self, class_name, labels):
+        """
+        Boolean which returns True if class name is in the list of labels, and False otherwise.
+        """
+        if class_name in util.convert_str_to_list(labels):
+            return True
+        else:
+            return False
 
     def compute_probability_range_metrics(self, results, bin_size=0.1):
         """
