@@ -248,34 +248,24 @@ class MainModelVisualization:
                                              bbox_inches=None,
                                              fig=fig)
 
-    def plot_probability_vs_accuracy(self, range_metrics):
+    def plot_probability_vs_class_rates(self, range_metrics):
         """
-        Plots accuracy of class (y-axis) vs. probability assigned to class (x-axis). Accuracy is measured as the number of true positives (samples with this class as label) divided by all samples with probabilities assigned in this range.
-        :param range_metrics: Map of classes to [TP_range_sums, total_range_sums]
-            total_range_sums: # of samples with probability in range for this class
-            TP_range_sums: true positives per range
-
+        Plots probability assigned to class (x-axis) vs the percentage of assignments that were that class (# of class A / all samples given probability of class in the range A).
+        :param range_metrics: Map of classes to [TP_range_sums, total_range_sums] from compute_probability_range_metrics
         """
 
         for index, class_name in enumerate(range_metrics.keys()):
             true_positives, totals = range_metrics[class_name]
+            prob_rates = self.class_prob_rates[class_name]
+            print("\nProbability vs Class Rates for: " + str(class_name))
+            print(prob_rates)
             f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-
-            accuracies = []  # Accuracy per range (true positive/total)
-            for index, TP in enumerate(true_positives):
-                p = 0
-                total_predicted = totals[index]
-                if total_predicted != 0:
-                    # positive class samples / totals # with prob in range
-                    p = TP / total_predicted
-                accuracies.append(p)
-
             perc_ranges = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]
 
-            x_indices = np.arange(len(accuracies))
-            ax.bar(x_indices, accuracies)
+            x_indices = np.arange(len(prob_rates))
+            ax.bar(x_indices, prob_rates)
 
-            thex_utils.annotate_plot(ax, x_indices, accuracies, totals)
+            thex_utils.annotate_plot(ax, x_indices, prob_rates, totals)
             plt.yticks(list(np.linspace(0, 1, 11)), [
                        str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
             plt.xticks(x_indices, perc_ranges, fontsize=10)

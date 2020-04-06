@@ -221,7 +221,7 @@ class MainModel(ABC, MainModelVisualization):
         """
         range_metrics = self.compute_probability_range_metrics(self.results)
         self.plot_prob_pr_curves(range_metrics, self.class_counts)
-        self.plot_probability_vs_accuracy(range_metrics)
+        self.plot_probability_vs_class_rates(range_metrics)
         class_metrics, set_totals = self.compute_metrics(self.results)
         self.plot_all_metrics(class_metrics, set_totals, self.y)
 
@@ -353,8 +353,11 @@ class MainModel(ABC, MainModelVisualization):
 
         range_metrics = {}
         label_index = len(self.class_labels)  # Last column is label
+
+        self.class_prob_rates = {}
         for class_index, class_name in enumerate(self.class_labels):
             tp_probabilities = []  # probabilities for True Positive samples
+            pos_probabilities = []  # probabilities for Positive samples
             total_probabilities = []
             for row in results:
                 labels = row[label_index]
@@ -367,6 +370,9 @@ class MainModel(ABC, MainModelVisualization):
                 max_class_index = np.argmax(row[: len(row) - 1])
                 max_class_name = self.class_labels[max_class_index]
 
+                if is_class:
+                    pos_probabilities.append(row[class_index])
+
                 if is_class and max_class_name == class_name:
                     tp_probabilities.append(max_class_prob)
 
@@ -378,6 +384,14 @@ class MainModel(ABC, MainModelVisualization):
             total_range_counts = np.histogram(total_probabilities, bins=bins)[0].tolist()
 
             range_metrics[class_name] = [tp_range_counts, total_range_counts]
+
+            # Calculate class prob rates separately
+            class_rates = np.histogram(pos_probabilities, bins=bins)[0].tolist()
+            class_prob_rates = np.array(class_rates) / np.array(total_range_counts)
+            class_prob_rates[np.isinf(class_prob_rates)] = 0
+            class_prob_rates[np.isnan(class_prob_rates)] = 0
+            self.class_prob_rates[class_name] = class_prob_rates
+
         return range_metrics
 
     def compute_metrics(self, results):
