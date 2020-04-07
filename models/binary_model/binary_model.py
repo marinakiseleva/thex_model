@@ -56,42 +56,17 @@ class BinaryModel(MainModel):
 
         return probabilities
 
-    def compute_probability_range_metrics(self, results, bin_size=0.1):
+    def is_true_positive(self, is_class, row, class_index, max_class_name, class_name):
         """
-        Overwrites function for binary classifiers.
-
-        Computes True Positive & Total metrics, split by probability assigned to class for ranges dictated by bin_size. Used to plot probability assigned vs completeness (TP/total, per bin).
-        :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
-        :param bin_size: Size of each bin (range of probabilities) to consider at a time; must be betwen 0 and 1
-        :return range_metrics: Map of classes to [TP_range_sums, total_range_sums]
-            total_range_sums: # of samples with probability in range for this class
-            TP_range_sums: true positives per range 
+        Determines if the prediction is a true positive for the class class_name (need this to overwrite in Binary)
         """
-        results = np.concatenate(results)
-        range_metrics = {}
-        label_index = len(self.class_labels)  # Last column is label
-        for class_index, class_name in enumerate(self.class_labels):
-            tp_probabilities = []  # probabilities for True Positive samples
-            total_probabilities = []
-            for row in results:
-                labels = row[label_index]
+        return is_class and row[class_index] > 0.5
 
-                # Sample is an instance of this current class.
-                is_class = self.is_class(class_name, labels)
-
-                # If class is positive, and probability > .5 it was TP
-                if is_class and row[class_index] > 0.5:
-                    tp_probabilities.append(row[class_index])
-
-                total_probabilities.append(row[class_index])
-
-            # left inclusive, first bin is 0 <= x < .1. ; except last bin <=1
-            bins = np.arange(0, 1 + bin_size, bin_size)
-            tp_range_counts = np.histogram(tp_probabilities, bins=bins)[0].tolist()
-            total_range_counts = np.histogram(total_probabilities, bins=bins)[0].tolist()
-
-            range_metrics[class_name] = [tp_range_counts, total_range_counts]
-        return range_metrics
+    def get_true_pos_prob(self, row, class_index, max_class_prob):
+        """
+        Get true positive probability (need this to overwrite in Binary)
+        """
+        return row[class_index]
 
     def compute_baselines(self, class_counts, y):
         """

@@ -320,7 +320,8 @@ class MainModelVisualization:
             print(prob_rates)
             f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
             ax.bar(x_indices, prob_rates)
-            thex_utils.annotate_plot(ax, x_indices, prob_rates, totals)
+            thex_utils.annotate_plot(ax, x_indices, prob_rates,
+                                     pos_class_counts_per_range)
             plt.xticks(x_indices, perc_ranges, fontsize=10)
             plt.yticks(list(np.linspace(0, 1, 11)), [
                        str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)

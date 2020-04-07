@@ -225,8 +225,6 @@ class MainModel(ABC, MainModelVisualization):
         class_metrics, set_totals = self.compute_metrics(self.results)
         self.plot_all_metrics(class_metrics, set_totals, self.y)
 
-        return -1
-
     def run_cfv(self, X, y):
         """
         Run k-fold cross validation over a number of runs
@@ -348,6 +346,18 @@ class MainModel(ABC, MainModelVisualization):
         else:
             return False
 
+    def is_true_positive(self, is_class, row, class_index,  max_class_name, class_name):
+        """
+        Determines if the prediction is a true positive for the class class_name (need this to overwrite in Binary)
+        """
+        return is_class and max_class_name == class_name
+
+    def get_true_pos_prob(self, row, class_index, max_class_prob):
+        """
+        Get true positive probability (need this to overwrite in Binary)
+        """
+        return max_class_prob
+
     def compute_probability_range_metrics(self, results, bin_size=0.1):
         """
         Returns map of class name to true positives & total count per probability bin. Also saves probability rates and # of samples in each class to maps (self.class_prob_rates, self.class_positives)
@@ -383,8 +393,11 @@ class MainModel(ABC, MainModelVisualization):
                 if is_class:
                     pos_probabilities.append(row[class_index])
 
-                if is_class and max_class_name == class_name:
-                    tp_probabilities.append(max_class_prob)
+                is_tp = self.is_true_positive(
+                    is_class, row, class_index,  max_class_name, class_name)
+                if is_tp:
+                    pos_prob = self.get_true_pos_prob(row, class_index, max_class_prob)
+                    tp_probabilities.append(pos_prob)
 
                 total_probabilities.append(row[class_index])
 
