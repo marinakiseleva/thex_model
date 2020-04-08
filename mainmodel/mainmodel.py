@@ -88,6 +88,39 @@ class MainModel(ABC, MainModelVisualization):
         print("\nFeatures Used:\n" + str(list(X)))
         print("\nClass counts:\n" + str(self.class_counts))
 
+    def analyze_probabilities(self):
+        """
+        Comparison of model performance when using top 1/2 of max assignment probabilities versus all.  
+        """
+        # Init self.results
+        self.run_model()
+        results = np.concatenate(self.results)
+
+        # 1. Get max value per row
+        probs_only = results[:, 0:len(self.class_labels)].astype(float)
+        max_value_per_row = np.amax(probs_only, axis=1)
+
+        # 2. Get row indies of top half of max_value_per_row
+        sorted_indices = np.argsort(max_value_per_row)
+        half = int(len(sorted_indices) / 2)
+        top_half_indices = np.flip(sorted_indices)[:half]
+        # Select rows at those indices
+        top_half = np.take(results, indices=top_half_indices, axis=0)
+
+        # 3. Compare 2 sets of results w.r.t. purity & completeness
+        metrics_1, set_totals_1 = self.compute_metrics(self.results)
+        recalls_1, purity_1, specificities = self.compute_performance(metrics_1)
+        prec_intvls_1, recall_intvls_1 = self.compute_confintvls(set_totals_1)
+
+        metrics_2, set_totals_2 = self.compute_metrics(np.array([top_half]))
+        recalls_2, purity_2, specificities = self.compute_performance(metrics_2)
+        prec_intvls_2, recall_intvls_2 = self.compute_confintvls(set_totals_2)
+
+        self.compare_metrics(purity_1, purity_2, prec_intvls_1,
+                             None, "Purity, Top 1/2 vs All")
+        self.compare_metrics(recalls_1, recalls_2, recall_intvls_1,
+                             None, "Completeness, Top 1/2 vs All")
+
     def run_model(self):
         """
         Visualize data, run analysis, and record results in self.results, a list of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
@@ -108,8 +141,6 @@ class MainModel(ABC, MainModelVisualization):
         with open(self.dir + '/y.pickle', 'wb') as f:
             pickle.dump(self.y, f)
         self.visualize_performance()
-
-        sys.stdout = sys.__stdout__
 
     def relabel_class_data(self, class_name, y):
         """
@@ -425,7 +456,6 @@ class MainModel(ABC, MainModelVisualization):
         :param results: List of 2D Numpy arrays with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         :return class_metrics: Map from class name to map of {"TP": w, "FP": x, "FN": y, "TN": z}
         """
-        # results = np.concatenate(results)
 
         # Last column is label
         label_index = len(self.class_labels)

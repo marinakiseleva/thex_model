@@ -19,6 +19,69 @@ class MainModelVisualization:
     Mixin Class for MainModel performance visualization
     """
 
+    def prep_err_bars(self, intervals, metrics):
+        """
+        Convert confidence intervals to specific values to be plotted
+        """
+        errs = [[], []]
+        for index, interval in enumerate(intervals):
+            min_bar = interval[0]
+            max_bar = interval[1]
+            errs[0].append(metrics[index] - min_bar)
+            errs[1].append(max_bar - metrics[index])
+        return errs
+
+    def get_max_tick_width(self, class_names, tick_size):
+        """
+        Get the maximum tick width 
+        """
+        max_tick_width = 0
+        for i in class_names:
+            bb = mpl.textpath.TextPath((0, 0), i, size=tick_size).get_extents()
+            max_tick_width = max(bb.width, max_tick_width)
+        return max_tick_width + 2
+
+    def compare_metrics(self, metrics_1, metrics_2, xlabel):
+        """
+        Compares performance between 2 sets of metrics.
+        :param metrics_1, metrics_2: Mapping from class name to metric value. 1 is original and 2 is comparison.
+        """
+        class_names, mtrcs_1, b_1, intvls_1 = self.get_ordered_metrics(
+            metrics_1,  None, None)
+        class_names, mtrcs_2, b_2, intvls_2 = self.get_ordered_metrics(
+            metrics_2,  None, None)
+
+        # Set constants
+        tick_size = 8
+        bar_width = 0.4
+        fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
+                               dpi=DPI, tight_layout=True)
+
+        # Plot metrics
+        y_indices = np.arange(len(mtrcs_1))
+        ax.barh(y=y_indices, width=mtrcs_1, height=bar_width,
+                color="#6699ff", label='Original')
+
+        ax.barh(y=y_indices + bar_width, width=mtrcs_2,
+                height=bar_width,  color='#99ffcc', label='Top 1/2')
+        ax.legend()
+
+        # Format Axes, Labels, and Ticks
+        ax.set_xlim(0, 1)
+        plt.xticks(list(np.linspace(0, 1, 11)), [
+                   str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
+        plt.xlabel(xlabel, fontsize=10)
+        plt.yticks(y_indices, class_names,  fontsize='small',
+                   horizontalalignment='left')
+        plt.ylabel('Transient Class', fontsize=10)
+        ax.set_title(xlabel)
+
+        max_tick_width = self.get_max_tick_width(class_names, tick_size)
+        yax = ax.get_yaxis()
+        yax.set_tick_params(pad=max_tick_width)
+
+        thex_utils.display_and_save_plot(self.dir, self.name + ": " + xlabel)
+
     def compute_confusion_matrix(self, results):
         """
         Compute confusion matrix using sklearn defined function
@@ -141,18 +204,15 @@ class MainModelVisualization:
         prec_intvls, recall_intvls = self.compute_confintvls(set_totals)
 
         self.plot_metrics(recalls, "Completeness", pos_baselines, recall_intvls)
-        self.plot_metrics(
-            specificities, "Completeness of Negative Class Presence", neg_baselines)
         self.plot_metrics(precisions, "Purity", precision_baselines, prec_intvls)
 
     def plot_metrics(self, class_metrics, xlabel, baselines=None, intervals=None):
         """
-        Visualizes accuracy per class with bar graph; with random baseline based on class level in hierarchy.
+        Visualizes metric per class with bar graph; with random baseline based on class level in hierarchy.
         :param class_metrics: Mapping from class name to metric value.
-        :param xlabel: Label to assign to y-axis
-        :[optional] param baselines: Mapping from class name to random-baseline performance
-        # of samples in each class (get plotted atop the bars)
-        :[optional] param annotations: List of
+        :param xlabel: Metric being plotted =  x-axis label
+        :[optional] param baselines: Mapping from class name to random-baseline performance (get plotted atop the bars)
+        :[optional] param intervals: confidence intervals, map from class 
         """
         class_names, metrics, baselines, intervals = self.get_ordered_metrics(
             class_metrics,
@@ -161,21 +221,10 @@ class MainModelVisualization:
         # Set constants
         tick_size = 8
         bar_width = 0.8
-        fig = plt.figure(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI, tight_layout=True)
-        ax = plt.subplot()
-
+        fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
+                               dpi=DPI, tight_layout=True)
+        errs = self.prep_err_bars(intervals, metrics)
         y_indices = np.arange(len(metrics))
-
-        errs = None
-        capsize = None
-        if intervals is not None:
-            errs = [[], []]
-            for index, interval in enumerate(intervals):
-                min_bar = interval[0]
-                max_bar = interval[1]
-                errs[0].append(metrics[index] - min_bar)
-                errs[1].append(max_bar - metrics[index])
-
         # Plot metrics
         ax.barh(y=y_indices, width=metrics, height=bar_width,
                 xerr=errs, capsize=2, ecolor='coral')
@@ -194,12 +243,10 @@ class MainModelVisualization:
         plt.yticks(y_indices, class_names,  fontsize='small',
                    horizontalalignment='left')
         plt.ylabel('Transient Class', fontsize=10)
-        max_tick_width = 0
-        for i in class_names:
-            bb = mpl.textpath.TextPath((0, 0), i, size=tick_size).get_extents()
-            max_tick_width = max(bb.width, max_tick_width)
+
+        max_tick_width = self.get_max_tick_width(class_names, tick_size)
         yax = ax.get_yaxis()
-        yax.set_tick_params(pad=max_tick_width + 2)
+        yax.set_tick_params(pad=max_tick_width)
 
         ax.set_title(xlabel)
         thex_utils.display_and_save_plot(self.dir, self.name + ": " + xlabel)
