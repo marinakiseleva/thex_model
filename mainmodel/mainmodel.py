@@ -116,10 +116,8 @@ class MainModel(ABC, MainModelVisualization):
         recalls_2, purity_2, specificities = self.compute_performance(metrics_2)
         prec_intvls_2, recall_intvls_2 = self.compute_confintvls(set_totals_2)
 
-        self.compare_metrics(purity_1, purity_2, prec_intvls_1,
-                             None, "Purity, Top 1/2 vs All")
-        self.compare_metrics(recalls_1, recalls_2, recall_intvls_1,
-                             None, "Completeness, Top 1/2 vs All")
+        self.compare_metrics(purity_1, purity_2,  "Purity, Top 1/2 vs All")
+        self.compare_metrics(recalls_1, recalls_2, "Completeness, Top 1/2 vs All")
 
     def run_model(self):
         """

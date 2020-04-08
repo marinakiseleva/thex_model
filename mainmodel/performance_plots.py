@@ -59,11 +59,11 @@ class MainModelVisualization:
 
         # Plot metrics
         y_indices = np.arange(len(mtrcs_1))
-        ax.barh(y=y_indices, width=mtrcs_1, height=bar_width,
+        ax.barh(y=y_indices, width=mtrcs_2,
+                height=bar_width,  color='#99ffcc', label='Top 1/2')
+        ax.barh(y=y_indices + bar_width, width=mtrcs_1, height=bar_width,
                 color="#6699ff", label='Original')
 
-        ax.barh(y=y_indices + bar_width, width=mtrcs_2,
-                height=bar_width,  color='#99ffcc', label='Top 1/2')
         ax.legend()
 
         # Format Axes, Labels, and Ticks
