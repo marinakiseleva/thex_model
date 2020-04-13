@@ -98,53 +98,61 @@ def visualize_completeness(model_dir, X, class_labels, data_completeness):
     util.display_and_save_plot(model_dir, "Completeness", None, f)
 
 
-def plot_feature_distribution(model_dir, df, feature, class_labels, class_counts):
+def plot_feature_distribution(model_dir, df, feature, class_labels):
     """
     Plots the distribution of each transient type in df over 'feature'
     :param model_dir: directory of model to save figure
     :param df: DataFrame with both feature column and TARGET_LABEL column
     :param feature: Name of feature to plot distribution over
-    :param class_labels: list of class names to show in legend
-    :param class_counts: map from class names to count
+    :param class_labels: class labels
     """
 
+    # Relabel DF
+    label_col = df.columns.get_loc(TARGET_LABEL)
+    for index, row in df.iterrows():
+        classes = util.convert_str_to_list(row[TARGET_LABEL])
+        for class_name in class_labels:
+            if class_name in classes:
+                df.iloc[index, label_col] = class_name
+                break
+
     f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-    cm = plt.get_cmap('tab20')
-    NUM_COLORS = len(class_labels)
-    if NUM_COLORS > 20:
-        colors1 = plt.get_cmap('tab20b').colors
-        colors2 = plt.get_cmap('tab20c').colors
-        # combine them and build a new colormap
-        colors = np.vstack((colors1, colors2))
-        cm = ListedColormap(colors)
 
-    ax.set_prop_cycle('color', [cm(1. * i / NUM_COLORS) for i in range(NUM_COLORS)])
-    max_value = df[feature].max()
-    for class_name in ORDERED_CLASSES:
-        keep_indices = []
-        for index, row in df.iterrows():
-            classes = util.convert_str_to_list(row[TARGET_LABEL])
-            if class_name in classes and row[feature] is not None:
-                keep_indices.append(index)
+    max_value = 0.8  # df[feature].max()
+    bins = np.linspace(0, max_value, 50)
+    counts = []
+    edges = []
+    bars = []
+    colors = plt.get_cmap('tab20').colors
+    for index, class_name in enumerate(class_labels):
+        class_rs = df[df[TARGET_LABEL] == class_name][feature].values
+        c, e, b = ax.hist(x=class_rs,
+                          bins=bins,
+                          density=True,
+                          color=colors[index],
+                          label=class_name)
+        counts.append(c)
+        edges.append(e)
+        bars.append(b)
 
-        values = df.loc[keep_indices, :][feature].values
-        vector_values = np.sort(np.array(values), axis=0)
-        n, x, _ = ax.hist(vector_values, bins=np.linspace(
-            0, max_value, 50), alpha=0.7, label=class_name)
-    ylabel = "Class Count"
+    # Iterate over each bin
+    it_bins = bars[0]
+    for bin_index, value in enumerate(it_bins):
+        bin_counts = []  # Count per class for this bin
+        for class_count in counts:
+            bin_counts.append(class_count[bin_index])
 
-    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.title(feature, fontsize=12)
-    plt.xlabel(feature, fontsize=10)
-    plt.ylabel(ylabel, fontsize=10)
-    plt.xlim(left=0, right=max_value)
-    plt.yscale('log', nonposy='clip')
-    ax.legend(loc='best',  prop={'size': 5})
+        # Sorted biggest to smallest, indices
+        sorted_indices = np.flip(np.argsort(bin_counts))
 
-    ax.set_title(feature)
-
-    util.display_and_save_plot(
-        model_dir, "Transient Type Distributions over " + feature)
+        zorder = 0
+        for sorted_index in sorted_indices:
+            bars[sorted_index][bin_index].set_zorder(zorder)
+            zorder += 1
+    plt.xlabel(feature.capitalize())
+    plt.ylabel("Normalized density")
+    plt.legend()
+    util.display_and_save_plot(model_dir, "Feature distribution")
 
 
 def plot_class_hist(model_dir, class_names, counts):

@@ -84,6 +84,11 @@ class MainModel(ABC, MainModelVisualization):
         self.nb = data_filters['nb']
         self.class_counts = self.get_class_counts(y)
 
+        cc = sum(self.class_counts.values())
+        a = self.y.shape[0]
+        if cc != a:
+            raise ValueError("Data is not filtered properly.")
+
         print("\nClasses Used:\n" + str(self.class_labels))
         print("\nFeatures Used:\n" + str(list(X)))
         print("\nClass counts:\n" + str(self.class_counts))
@@ -124,7 +129,7 @@ class MainModel(ABC, MainModelVisualization):
         Visualize data, run analysis, and record results in self.results, a list of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         """
         print("\nRunning " + str(self.name))
-        self.visualize_data(self.X, self.y)
+        self.visualize_data()
 
         if self.num_runs is not None:
             self.results = self.run_trials(self.X, self.y, self.num_runs)
@@ -223,25 +228,31 @@ class MainModel(ABC, MainModelVisualization):
                     class_counts[class_name] += 1
         return class_counts
 
-    def visualize_data(self, X, y):
+    def visualize_data(self):
         """
         Visualize data completeness and distribution
         """
+        X = self.X
+        y = self.y
         init_plot_settings()
 
         completeness = calculate_completeness(X, y, self.class_labels)
         ordered_comp = self.get_ordered_metrics(completeness)
+
         visualize_completeness(self.dir, X, ordered_comp[0], ordered_comp[1])
 
         ordered_counts = self.get_ordered_metrics(self.class_counts)
-
-        plot_class_hist(self.dir, ordered_counts[0], ordered_counts[1])
+        ordered_names = ordered_counts[0]
+        ordered_metrics = ordered_counts[1]
+        plot_class_hist(self.dir, ordered_names, ordered_metrics)
         # Combine X and y for plotting feature dist
         df = pd.concat([X, y], axis=1)
         features = list(df)
         if 'redshift' in features:
-            plot_feature_distribution(self.dir,  df, 'redshift',
-                                      self.class_labels, self.class_counts)
+            plot_feature_distribution(model_dir=self.dir,
+                                      df=df.copy(),
+                                      feature='redshift',
+                                      class_labels=self.class_labels)
 
     def visualize_performance(self):
         """
