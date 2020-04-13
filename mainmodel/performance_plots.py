@@ -396,7 +396,7 @@ class MainModelVisualization:
         plt.xticks(x_indices, perc_ranges, fontsize=10)
         plt.yticks(list(np.linspace(0, 1, 11)), [
             str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
-        plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
+        plt.xlabel('Probability +/- 5%', fontsize=12)
         plt.ylabel('Class Rate', fontsize=12)
         ax.set_title("Aggregated Probability vs Positive Rate")
         thex_utils.display_and_save_plot(self.dir,
