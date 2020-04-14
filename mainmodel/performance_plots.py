@@ -74,7 +74,6 @@ class MainModelVisualization:
         plt.yticks(y_indices, class_names,  fontsize='small',
                    horizontalalignment='left')
         plt.ylabel('Transient Class', fontsize=10)
-        ax.set_title(xlabel)
 
         max_tick_width = self.get_max_tick_width(class_names, tick_size)
         yax = ax.get_yaxis()
