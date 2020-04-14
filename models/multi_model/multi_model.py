@@ -32,13 +32,12 @@ class MultiModel(MainModel):
             X_train, y_train, self.class_labels, self.nb, self.dir)
         return self.model
 
-    def get_class_probabilities(self, x):
+    def get_class_probabilities(self, x, normalize=True):
         """
         Calculates probability of each transient class for the single test data point (x).
         :param x: Pandas DF row of features
         :return: map from class_name to probabilities
         """
-        # for class_index, class_name in enumerate(self.class_labels):
-        probabilities = self.model.clf.get_class_probabilities(x)
+        probabilities = self.model.clf.get_class_probabilities(x, normalize)
 
         return probabilities

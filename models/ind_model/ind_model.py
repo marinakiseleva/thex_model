@@ -77,7 +77,7 @@ class IndModel(MainModel):
 
         return self.models
 
-    def get_class_probabilities(self, x):
+    def get_class_probabilities(self, x, normalize=True):
         """
         Calculates probability of each transient class for the single test data point (x).
         :param x: Pandas DF row of features
@@ -95,7 +95,8 @@ class IndModel(MainModel):
                 probabilities[class_name] = MIN_PROB
 
         # Normalize
-        probabilities = self.normalize(probabilities)
+        if normalize:
+            probabilities = self.normalize(probabilities)
 
         return probabilities
 

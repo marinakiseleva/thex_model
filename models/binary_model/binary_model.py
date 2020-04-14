@@ -37,7 +37,7 @@ class BinaryModel(MainModel):
 
         return self.models
 
-    def get_class_probabilities(self, x):
+    def get_class_probabilities(self, x, normalize=True):
         """
         Calculates probability of each transient class for the single test data point (x).
         :param x: Pandas DF row of features
@@ -45,7 +45,8 @@ class BinaryModel(MainModel):
         """
         probabilities = {}
         for class_index, class_name in enumerate(self.class_labels):
-            probabilities[class_name] = self.models[class_name].get_class_probability(x)
+            probabilities[class_name] = self.models[
+                class_name].get_class_probability(x, normalize)
             MIN_PROB = 0.0001  # Min probability to avoid overflow
             if np.isnan(probabilities[class_name]):
                 probabilities[class_name] = MIN_PROB

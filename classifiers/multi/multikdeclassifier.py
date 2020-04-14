@@ -252,7 +252,7 @@ class MultiKDEClassifier():
 
         return clf
 
-    def get_class_probabilities(self, x):
+    def get_class_probabilities(self, x, normalize=True):
         """
         Get probability of each class for this sample x. Probability of class i  = density_i / (sum_i^N density_i). 
         :param x: Pandas Series (row of DF) of features
@@ -265,9 +265,11 @@ class MultiKDEClassifier():
             density_sum += class_density
 
         # Normalize
-        probabilities = {k: probabilities[k] / density_sum for k in probabilities.keys()}
+        if normalize:
+            probabilities = {k: probabilities[k] /
+                             density_sum for k in probabilities.keys()}
 
-        MIN_PROB = 0.0001  # Min probability to avoid overflow
+        MIN_PROB = 10**-15  # Min probability to avoid overflow
         for class_name in self.class_labels:
             if np.isnan(probabilities[class_name]):
                 probabilities[class_name] = MIN_PROB

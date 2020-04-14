@@ -83,36 +83,48 @@ class MainModel(ABC, MainModelVisualization):
         self.pca = data_filters['pca']
         self.nb = data_filters['nb']
         self.class_counts = self.get_class_counts(y)
+        self.normalize = True
+
+        print("\nClasses Used:\n" + str(self.class_labels))
+        print("\nFeatures Used:\n" + str(list(X)))
+        print("\nClass counts:\n" + str(self.class_counts))
 
         cc = sum(self.class_counts.values())
         a = self.y.shape[0]
         if cc != a:
             raise ValueError("Data is not filtered properly.")
 
-        print("\nClasses Used:\n" + str(self.class_labels))
-        print("\nFeatures Used:\n" + str(list(X)))
-        print("\nClass counts:\n" + str(self.class_counts))
-
     def analyze_probabilities(self):
         """
         Comparison of model performance when using top 1/2 of max assignment probabilities versus all.  
         """
+
         # Init self.results
+        self.normalize = False
         self.run_model()
         results = np.concatenate(self.results)
 
-        # 1. Get max value per row
-        probs_only = results[:, 0:len(self.class_labels)].astype(float)
-        max_value_per_row = np.amax(probs_only, axis=1)
+        top_indices = []
+        # 1. Get all unnorm probs for each class
+        for index, class_name in enumerate(self.class_labels):
+            class_unnorm_probs = results[:, index]
 
-        # 2. Get row indies of top half of max_value_per_row
-        sorted_indices = np.argsort(max_value_per_row)
-        half = int(len(sorted_indices) / 2)
-        top_half_indices = np.flip(sorted_indices)[:half]
-        # Select rows at those indices
-        top_half = np.take(results, indices=top_half_indices, axis=0)
+            # 2. Record indices of top 1/2
+            sorted_indices = np.argsort(class_unnorm_probs)
+            half = int(len(class_unnorm_probs) / 2)
+            top_half_indices = np.flip(sorted_indices)[:half]
+            top_indices += list(top_half_indices)
 
-        # 3. Compare 2 sets of results w.r.t. purity & completeness
+        # 3. Keep unique indices
+        top_indices = list(set(top_indices))
+
+        print("\n\nNumber of unique indices " + str(len(top_indices)))
+        print("Versus total number of rows: " + str(self.y.shape[0]))
+
+        # 4. Select rows at those indices
+        top_half = np.take(results, indices=top_indices, axis=0)
+
+        # 5. Compare 2 sets of results w.r.t. purity & completeness
         metrics_1, set_totals_1 = self.compute_metrics(self.results)
         recalls_1, purity_1, specificities = self.compute_performance(metrics_1)
         prec_intvls_1, recall_intvls_1 = self.compute_confintvls(set_totals_1)
@@ -121,8 +133,8 @@ class MainModel(ABC, MainModelVisualization):
         recalls_2, purity_2, specificities = self.compute_performance(metrics_2)
         prec_intvls_2, recall_intvls_2 = self.compute_confintvls(set_totals_2)
 
-        self.compare_metrics(purity_1, purity_2,  "Purity, Top 1/2 vs All")
-        self.compare_metrics(recalls_1, recalls_2, "Completeness, Top 1/2 vs All")
+        self.compare_metrics(purity_1, purity_2,  "Purity")
+        self.compare_metrics(recalls_1, recalls_2, "Completeness")
 
     def run_model(self):
         """
@@ -288,7 +300,7 @@ class MainModel(ABC, MainModelVisualization):
             self.train_model(X_train, y_train)
 
             # Test model
-            probabilities = self.get_all_class_probabilities(X_test)
+            probabilities = self.get_all_class_probabilities(X_test, self.normalize)
             # Add labels as column to probabilities, for later evaluation
             label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
             probabilities = np.hstack((probabilities, label_column))
@@ -357,7 +369,7 @@ class MainModel(ABC, MainModelVisualization):
             self.train_model(X_train, y_train)
 
             # Test model
-            probabilities = self.get_all_class_probabilities(X_test)
+            probabilities = self.get_all_class_probabilities(X_test, self.normalize)
             # Add labels as column to probabilities, for later evaluation
             label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
             probabilities = np.hstack((probabilities, label_column))
@@ -365,14 +377,14 @@ class MainModel(ABC, MainModelVisualization):
 
         return results
 
-    def get_all_class_probabilities(self, X_test):
+    def get_all_class_probabilities(self, X_test, normalize=True):
         """
         Get class probabilities for all test data.
         :return probabilities: Numpy 2D Matrix with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels
         """
         all_probs = np.empty((0, len(self.class_labels)))
         for index, row in X_test.iterrows():
-            row_p = self.get_class_probabilities(row)
+            row_p = self.get_class_probabilities(row, normalize)
             all_probs = np.append(all_probs, [list(row_p.values())], axis=0)
 
         return all_probs

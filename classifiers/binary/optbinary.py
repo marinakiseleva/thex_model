@@ -59,21 +59,21 @@ class OptimalBinaryClassifier():
         """
         return compute_sample_weight(class_weight='balanced', y=y)
 
-    def get_class_probability(self, x):
+    def get_class_probability(self, x, normalize=True):
         """
         Get class probability from optimal classifier (can only use this function after having selected best classifier)
         :param x: Pandas Series (row of DF)
         """
-        return self.opt_classifier.get_class_probability(x)
+        return self.opt_classifier.get_class_probability(x, normalize)
 
-    def get_class_probabilities(self, clf, X):
+    def get_class_probabilities(self, clf, X, normalize=True):
         """
         Get probabilities for all samples in X
         :param X: Pandas DataFrame features
         """
         probabilities = []
         for index, row in X.iterrows():
-            probabilities.append(clf.get_class_probability(row))
+            probabilities.append(clf.get_class_probability(row, normalize))
         return np.array(probabilities)
 
     def get_clf_loss(self, clf, X, y):

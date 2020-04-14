@@ -165,7 +165,7 @@ class MultiNBKDEClassifier():
                     valid_features.append(feature)
         return valid_features
 
-    def get_class_probabilities(self, x):
+    def get_class_probabilities(self, x, normalize=True):
         """
         Get probability of each class for this sample x by normalizing over each class KDE density. Probability of class i  = density_i / (sum_i^N density_i).
         :param x: Pandas Series (row of DF) of features
@@ -181,7 +181,9 @@ class MultiNBKDEClassifier():
             density_sum += class_density
 
         # Normalize
-        probabilities = {k: probabilities[k] / density_sum for k in probabilities.keys()}
+        if normalize:
+            probabilities = {k: probabilities[k] /
+                             density_sum for k in probabilities.keys()}
 
         MIN_PROB = 0.0001  # Min probability to avoid overflow
         for class_name in self.class_labels:

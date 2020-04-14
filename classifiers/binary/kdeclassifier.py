@@ -193,7 +193,7 @@ class KDEClassifier():
         sys.stdout.flush()  # Print to output file
         return clf
 
-    def get_class_probability(self, x):
+    def get_class_probability(self, x, normalize=True):
         """
         Get probability of this class for this sample x. Probability of class 1 = density(1) / (density(1) + density(0)). 
         :param x: Pandas Series (row of DF) of features
@@ -204,5 +204,8 @@ class KDEClassifier():
         if d == 0:
             pos_prob = 0
         else:
-            pos_prob = pos_density / (pos_density + neg_density)
+            if normalize:
+                pos_prob = pos_density / (pos_density + neg_density)
+            else:
+                pos_prob = pos_density
         return pos_prob
