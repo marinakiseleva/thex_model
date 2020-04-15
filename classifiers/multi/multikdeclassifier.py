@@ -81,7 +81,7 @@ def get_class_probabilities(x, class_labels, clfs):
     return probabilities
 
 
-def fit_folds(X, y, leaf_size, bandwidth, kernel, class_labels):
+def fit_folds(X, y, bandwidth, class_labels):
     """
     Fit data using this bandwidth and kernel and report back brier score loss average over 3 folds
     """
@@ -98,9 +98,9 @@ def fit_folds(X, y, leaf_size, bandwidth, kernel, class_labels):
         mc_kdes = {}
         for class_name in class_labels:
             mc_kdes[class_name] = KernelDensity(bandwidth=bandwidth,
-                                                leaf_size=leaf_size,
-                                                kernel=kernel,
-                                                metric='euclidean')
+                                                metric='euclidean',
+                                                kernel='exponential',
+                                                leaf_size=40)
             y_relabeled = get_class_data(class_name, y)
             mc_kdes[class_name].fit(X.loc[y_relabeled[TARGET_LABEL] == 1])
 
@@ -119,20 +119,20 @@ def fit_folds(X, y, leaf_size, bandwidth, kernel, class_labels):
     return avg_loss
 
 
-def fit_kernel(X, y, leaf_size, bandwidths, kernel, class_labels, record):
+def find_best_bw(X, y, bandwidths, class_labels):
     """
     Fit all bandwidths for this kernel
     """
     best_cv_loss = 1000
     best_cv_bw = None
     for bandwidth in bandwidths:
-        loss = fit_folds(X, y, leaf_size, bandwidth, kernel, class_labels)
+        loss = fit_folds(X, y, bandwidth, class_labels)
         # Reset best BW overall.
         if loss < best_cv_loss:
             best_cv_loss = loss
             best_cv_bw = bandwidth
 
-    record[kernel] = [best_cv_loss, best_cv_bw]
+    # record[kernel] = [best_cv_loss, best_cv_bw]
 
     return best_cv_loss, best_cv_bw
 
@@ -148,7 +148,7 @@ class MultiKDEClassifier():
         """
         self.name = "Multiclass Multivariate KDE"
         self.class_labels = class_labels
-        self.clfs = self.train(X, y)
+        self.clfs = self.train_together(X, y)
 
     def train_together(self, X, y):
         """
@@ -157,45 +157,50 @@ class MultiKDEClassifier():
         :param y: DataFrame of TARGET_LABEL with 1 for pos_class and 0 for not pos_class
         """
         leaf_size = 40
-        bandwidths = np.linspace(0.0001, 5, 100)
-        kernels = ['exponential', 'gaussian', 'tophat',
-                   'epanechnikov', 'cosine', 'linear']
-        best_cv_loss = 1000
-        best_cv_bw = None
-        best_kernel = None
+        bandwidths = np.linspace(0.0001, 1, 100)
+        # grid = {'bandwidth': np.linspace(0, 1, 100)}
+        # kernels = ['exponential', 'gaussian', 'tophat',
+        #            'epanechnikov', 'cosine', 'linear']
 
+        # best_kernel = None
+        best_cv_loss, best_cv_bw = find_best_bw(X, y, bandwidths, self.class_labels)
+
+        # best_cv_loss = 1000
+        # best_cv_bw = None
         # Multiprocess by kernels
-        manager = multiprocessing.Manager()
-        record = manager.dict()
-        jobs = []
-        for kernel in kernels:
-            cur_proc = multiprocessing.Process(
-                target=fit_kernel,
-                args=(X, y, leaf_size, bandwidths, kernel, self.class_labels, record))
-            jobs.append(cur_proc)
-            cur_proc.start()
+        # manager = multiprocessing.Manager()
+        # record = manager.dict()
+        # jobs = []
+
+        #     cur_proc = multiprocessing.Process(
+        #         target=fit_kernel,
+        #         args=(X, y, leaf_size, bandwidths, kernel, self.class_labels, record))
+        #     jobs.append(cur_proc)
+        #     cur_proc.start()
 
         # Wait for all jobs to finish
-        for job in jobs:
-            job.join()
+        # for job in jobs:
+        #     job.join()
 
         # Find min loss among all kernels (which is min among bandwidths)
-        for kernel_name in record.keys():
-            best_kernel_loss, bw = record[kernel_name]
-            if best_kernel_loss < best_cv_loss:
-                best_cv_loss = best_kernel_loss
-                best_cv_bw = bw
-                best_kernel = kernel_name
+        # for kernel_name in record.keys():
+        #     best_kernel_loss, bw = record[kernel_name]
+        #     if best_kernel_loss < best_cv_loss:
+        #         best_cv_loss = best_kernel_loss
+        #         best_cv_bw = bw
+        #         best_kernel = kernel_name
 
         # Define models based on best bandwidth
+        best_kernel = 'exponential'
         print("Best bandwidth " + str(best_cv_bw))
         print("Best kernel " + str(best_kernel))
         print("With score: " + str(best_cv_loss))
         mc_kdes = {}
 
+        # Make KDE for each class using same bandwidth, leaf size, and kernel
         for class_name in self.class_labels:
             mc_kdes[class_name] = KernelDensity(bandwidth=best_cv_bw,
-                                                leaf_size=leaf_size,
+                                                leaf_size=40,
                                                 kernel=best_kernel,
                                                 metric='euclidean')
             y_relabeled = self.get_class_data(class_name, y)
