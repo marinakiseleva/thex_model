@@ -79,7 +79,8 @@ class MainModelVisualization:
         yax = ax.get_yaxis()
         yax.set_tick_params(pad=max_tick_width)
 
-        thex_utils.display_and_save_plot(self.dir, self.name + ": " + xlabel)
+        thex_utils.display_and_save_plot(
+            self.dir, "Comparison_" + self.name + ": " + xlabel)
 
     def compute_confusion_matrix(self, results):
         """
@@ -377,18 +378,47 @@ class MainModelVisualization:
             thex_utils.display_and_save_plot(self.dir,
                                              "Probability vs Positive Rate: " + class_name)
 
+        self.plot_agg_prob_vs_class_rates(total_count_per_range, True)
+
+        self.plot_agg_prob_vs_class_rates(total_count_per_range, False)
+
+    def get_agg_prob_vs_class_rates(self, total_count_per_range, weighted):
+        """
+        Get aggregated probability vs class rates
+        """
         # Plot aggregated prob vs rates across all classes using weighted averages
         aggregated_rates = np.zeros(10)
         for class_name in self.class_labels:
             class_weights = np.array(self.class_positives[
                 class_name]) / total_count_per_range
             pos_prob_rates = np.array(self.class_prob_rates[class_name])
-            # Weighted rate = weight * rates
-            aggregated_rates += np.multiply(class_weights, pos_prob_rates)
-        print('\nAggregated Probability vs Class Rates')
-        print(aggregated_rates)
+            if weighted:
+                # Weighted rate = weight * rates
+                aggregated_rates += np.multiply(class_weights, pos_prob_rates)
+            else:
+                # Balanced average = (1/K) * rates
+                aggregated_rates += (1 / len(self.class_labels)) * pos_prob_rates
+        return aggregated_rates
+
+    def plot_agg_prob_vs_class_rates(self, total_count_per_range, weighted):
+        """
+        :param total_count_per_range: Numpy array of length 10, with # of class samples in each range, total. So, last index is total number of samples with probability in range 90-100%
+        """
+        aggregated_rates = self.get_agg_prob_vs_class_rates(
+            total_count_per_range, weighted)
+
+        if weighted:
+            p_title = 'Aggregated (Weighted) Probability vs Class Rates'
+        else:
+            p_title = 'Aggregated (Balanced) Probability vs Class Rates'
+
+        print(p_title + ": \n" + str(aggregated_rates))
 
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+        perc_ranges = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]
+        x_indices = np.arange(len(perc_ranges))
+
+        # Plot aggregated rates
         ax.bar(x_indices, aggregated_rates)
         total = [int(b) for b in total_count_per_range]
         thex_utils.annotate_plot(ax, x_indices, aggregated_rates, total)
@@ -397,6 +427,5 @@ class MainModelVisualization:
             str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
         plt.xlabel('Probability +/- 5%', fontsize=12)
         plt.ylabel('Class Rate', fontsize=12)
-        ax.set_title("Aggregated Probability vs Positive Rate")
-        thex_utils.display_and_save_plot(self.dir,
-                                         "Aggregated Probability vs Positive Rate")
+        ax.set_title(p_title)
+        thex_utils.display_and_save_plot(self.dir, p_title)
