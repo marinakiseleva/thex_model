@@ -141,7 +141,10 @@ class MainModel(ABC, MainModelVisualization):
         Visualize data, run analysis, and record results in self.results, a list of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         """
         print("\nRunning " + str(self.name))
+
         self.visualize_data()
+
+        print("\nDone visualizing...")
 
         if self.num_runs is not None:
             self.results = self.run_trials(self.X, self.y, self.num_runs)
@@ -244,8 +247,8 @@ class MainModel(ABC, MainModelVisualization):
         """
         Visualize data completeness and distribution
         """
-        X = self.X
-        y = self.y
+        X = self.X.copy()
+        y = self.y.copy()
         init_plot_settings()
 
         completeness = calculate_completeness(X, y, self.class_labels)
