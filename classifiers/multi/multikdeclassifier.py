@@ -1,4 +1,6 @@
+from functools import partial
 import multiprocessing
+
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import GridSearchCV
@@ -81,7 +83,7 @@ def get_class_probabilities(x, class_labels, clfs):
     return probabilities
 
 
-def fit_folds(X, y, bandwidth, class_labels):
+def fit_folds(X, y, class_labels, bandwidth):
     """
     Fit data using this bandwidth and kernel and report back brier score loss average over 3 folds
     """
@@ -116,25 +118,8 @@ def fit_folds(X, y, bandwidth, class_labels):
         losses.append(loss)
     # Average loss for this bandwidth across 3 folds
     avg_loss = sum(losses) / len(losses)
+    print("For bandwidth " + str(bandwidth) + " loss: " + str(avg_loss))
     return avg_loss
-
-
-def find_best_bw(X, y, bandwidths, class_labels):
-    """
-    Fit all bandwidths for this kernel
-    """
-    best_cv_loss = 1000
-    best_cv_bw = None
-    for bandwidth in bandwidths:
-        loss = fit_folds(X, y, bandwidth, class_labels)
-        # Reset best BW overall.
-        if loss < best_cv_loss:
-            best_cv_loss = loss
-            best_cv_bw = bandwidth
-
-    # record[kernel] = [best_cv_loss, best_cv_bw]
-
-    return best_cv_loss, best_cv_bw
 
 
 class MultiKDEClassifier():
@@ -157,51 +142,35 @@ class MultiKDEClassifier():
         :param y: DataFrame of TARGET_LABEL with 1 for pos_class and 0 for not pos_class
         """
         leaf_size = 40
-        bandwidths = np.linspace(0.0001, 1, 100)
-        # grid = {'bandwidth': np.linspace(0, 1, 100)}
-        # kernels = ['exponential', 'gaussian', 'tophat',
-        #            'epanechnikov', 'cosine', 'linear']
+        bandwidths = np.linspace(0.0001, 1, 10)
 
-        # best_kernel = None
-        best_cv_loss, best_cv_bw = find_best_bw(X, y, bandwidths, self.class_labels)
+        print("Running " + str(CPU_COUNT) + " processes.")
+        pool = multiprocessing.Pool(CPU_COUNT)
 
-        # best_cv_loss = 1000
-        # best_cv_bw = None
-        # Multiprocess by kernels
-        # manager = multiprocessing.Manager()
-        # record = manager.dict()
-        # jobs = []
+        # Pass in parameters that don't change for parallel processes
+        func = partial(fit_folds, X, y, self.class_labels)
 
-        #     cur_proc = multiprocessing.Process(
-        #         target=fit_kernel,
-        #         args=(X, y, leaf_size, bandwidths, kernel, self.class_labels, record))
-        #     jobs.append(cur_proc)
-        #     cur_proc.start()
+        # Multithread over bandwidths
+        losses = []
+        losses = pool.map(func, bandwidths)
 
-        # Wait for all jobs to finish
-        # for job in jobs:
-        #     job.join()
+        pool.close()
+        pool.join()
+        print("Done processing...")
 
-        # Find min loss among all kernels (which is min among bandwidths)
-        # for kernel_name in record.keys():
-        #     best_kernel_loss, bw = record[kernel_name]
-        #     if best_kernel_loss < best_cv_loss:
-        #         best_cv_loss = best_kernel_loss
-        #         best_cv_bw = bw
-        #         best_kernel = kernel_name
+        min_loss_index = losses.index(min(losses))
+        best_cv_loss = losses[min_loss_index]
+        best_cv_bw = bandwidths[min_loss_index]
+        print("Best bandwidth " + str(best_cv_bw))
+        print("With score: " + str(best_cv_loss))
 
         # Define models based on best bandwidth
-        best_kernel = 'exponential'
-        print("Best bandwidth " + str(best_cv_bw))
-        print("Best kernel " + str(best_kernel))
-        print("With score: " + str(best_cv_loss))
         mc_kdes = {}
-
         # Make KDE for each class using same bandwidth, leaf size, and kernel
         for class_name in self.class_labels:
             mc_kdes[class_name] = KernelDensity(bandwidth=best_cv_bw,
                                                 leaf_size=40,
-                                                kernel=best_kernel,
+                                                kernel='exponential',
                                                 metric='euclidean')
             y_relabeled = self.get_class_data(class_name, y)
             mc_kdes[class_name].fit(X.loc[y_relabeled[TARGET_LABEL] == 1])
