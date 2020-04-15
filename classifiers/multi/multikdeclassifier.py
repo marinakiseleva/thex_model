@@ -142,7 +142,7 @@ class MultiKDEClassifier():
         :param y: DataFrame of TARGET_LABEL with 1 for pos_class and 0 for not pos_class
         """
         leaf_size = 40
-        bandwidths = np.linspace(0.0001, 1, 10)
+        bandwidths = np.linspace(0.0001, 1, 100)
 
         print("Running " + str(CPU_COUNT) + " processes.")
         pool = multiprocessing.Pool(CPU_COUNT)
