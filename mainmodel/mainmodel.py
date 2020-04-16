@@ -99,30 +99,31 @@ class MainModel(ABC, MainModelVisualization):
         Comparison of model performance when using top 1/2 of max assignment probabilities versus all.  
         """
 
-        # Init self.results
+        # Run model with normalization
+        self.run_model()
+        orig_results = self.results
+
+        # Rerun model with unnormalized probabilities saved
         self.normalize = False
         self.run_model()
         results = np.concatenate(self.results)
 
-        top_indices = []
-        # 1. Get all unnorm probs for each class
-        for index, class_name in enumerate(self.class_labels):
-            class_unnorm_probs = results[:, index]
+        # Save results in pickle
+        with open(self.dir + '/orig_results.pickle', 'wb') as f:
+            pickle.dump(orig_results, f)
+        with open(self.dir + '/density_results.pickle', 'wb') as f:
+            pickle.dump(results, f)
 
-            # 2. Record indices of top 1/2
-            sorted_indices = np.argsort(class_unnorm_probs)
-            half = int(len(class_unnorm_probs) / 2)
-            top_half_indices = np.flip(sorted_indices)[:half]
-            top_indices += list(top_half_indices)
+        # 1. Get max density value per row
+        probs_only = results[:, 0:len(self.class_labels)].astype(float)
+        max_value_per_row = np.amax(probs_only, axis=1)
 
-        # 3. Keep unique indices
-        top_indices = list(set(top_indices))
-
-        print("\n\nNumber of unique indices " + str(len(top_indices)))
-        print("Versus total number of rows: " + str(self.y.shape[0]))
-
-        # 4. Select rows at those indices
-        top_half = np.take(results, indices=top_indices, axis=0)
+        # 2. Get row indies of top half of max_value_per_row
+        sorted_indices = np.argsort(max_value_per_row)
+        half = int(len(sorted_indices) / 2)
+        top_half_indices = np.flip(sorted_indices)[:half]
+        # Select rows at those indices
+        top_half = np.take(results, indices=top_half_indices, axis=0)
 
         # 5. Compare 2 sets of results w.r.t. purity & completeness
         metrics_1, set_totals_1 = self.compute_metrics(self.results)
