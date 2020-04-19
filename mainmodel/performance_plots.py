@@ -71,14 +71,8 @@ class MainModelVisualization:
 
             # Put probs & labels in same Numpy array
             i_results = np.hstack((top_i_probs, top_i_labels.reshape(-1, 1)))
-            print("\n i results ")
-            print(i_results)
             metrics, set_totals = self.compute_metrics(i_results, False)
-            print("\nmetrics ")
-            print(metrics)
             recalls, puritys, accs = self.compute_performance(metrics)
-            print("\nrecalls ")
-            print(recalls)
             avg_recall = sum(recalls.values()) / len(recalls)
             avg_purity = sum(puritys.values()) / len(puritys.values())
             avg_acc = sum(accs.values()) / len(accs.values())
@@ -93,18 +87,28 @@ class MainModelVisualization:
         """
         print("Entering plot densityp erformance")
         p, c, a = self.get_avg_performances(unnorm_results)
+        print("\nPurities per top X proportion of densities ")
+        print(p)
+        print("\nCompleteness per top X proportion of densities ")
+        print(c)
+        print("\nAccuracy per top X proportion of densities ")
+        print(a)
 
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
                                dpi=DPI, tight_layout=True)
-        ax.plot(np.linspace(0, 1, 100), p, color='tab:red')
-        ax.set_ylabel("Average Purity", color='tab:red')
+        ax_color = 'tab:red'
+        ax.plot(np.linspace(0, 1, 100), p, color=ax_color)
+        ax.set_ylabel("Average Purity", color=ax_color)
         ax.set_xlabel("% top densities")
         ax.set_ylim([0, 1])
+        ax.tick_params(axis='y', labelcolor=ax_color)
 
         ax2 = ax.twinx()  # instantiate a second axes that shares the same x-axis
-        ax2.set_ylabel('Average Completeness', color='tab:blue')
-        ax2.plot(np.linspace(0, 1, 100), c, color='tab:blue')
+        ax2_color = 'tab:blue'
+        ax2.set_ylabel('Average Completeness', color=ax2_color)
+        ax2.plot(np.linspace(0, 1, 100), c, color=ax2_color)
         ax2.set_ylim([0, 1])
+        ax2.tick_params(axis='y', labelcolor=ax2_color)
 
         thex_utils.display_and_save_plot(
             self.dir, "Average Purity and Completeness vs Density", fig=fig)
@@ -212,7 +216,7 @@ class MainModelVisualization:
 
     def compute_performance(self, class_metrics):
         """
-        Get recall, precision, and specificities per class.
+        Get recall (completeness), precision (purity), and accuracy per class.
         """
         precisions = {}
         recalls = {}
