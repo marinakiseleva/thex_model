@@ -41,6 +41,83 @@ class MainModelVisualization:
             max_tick_width = max(bb.width, max_tick_width)
         return max_tick_width + 2
 
+    def get_avg_performances(self, unnorm_results):
+        """
+        Get average purity, completeness, and accuracy for each threshold of maintaing top i% maximum unnormalized probabilities 
+        """
+        # Init performance metrics
+        p = []  # Avg purity for each i
+        c = []  # Avg compelteness for each i
+        a = []  # Avg accuracy for each i
+
+        # 1. Get max density value per row
+        probs_only = unnorm_results[:, 0:len(self.class_labels)].astype(float)
+        max_value_per_row = np.amax(probs_only, axis=1)
+        sorted_indices = np.flip(np.argsort(max_value_per_row))
+
+        for i in np.linspace(0, 1, 100):
+            # Get row indies of top i% of max_value_per_row
+            top_i = int(len(sorted_indices) * i)
+            top_i_indices = sorted_indices[:top_i]
+            # Select rows at those indices
+            top_i_densities = np.take(probs_only, indices=top_i_indices, axis=0)
+
+            # Normalize these densities to compute metrics
+            top_i_probs = top_i_densities / top_i_densities.sum(axis=1)[:, None]
+
+            top_i_labels = np.take(unnorm_results,
+                                   indices=top_i_indices,
+                                   axis=0)[:, len(self.class_labels)]
+
+            # Put probs & labels in same Numpy array
+            i_results = np.hstack((top_i_probs, top_i_labels.reshape(-1, 1)))
+            print("\n i results ")
+            print(i_results)
+            metrics, set_totals = self.compute_metrics(i_results, False)
+            print("\nmetrics ")
+            print(metrics)
+            recalls, puritys, accs = self.compute_performance(metrics)
+            print("\nrecalls ")
+            print(recalls)
+            avg_recall = sum(recalls.values()) / len(recalls)
+            avg_purity = sum(puritys.values()) / len(puritys.values())
+            avg_acc = sum(accs.values()) / len(accs.values())
+            c.append(avg_recall)
+            p.append(avg_purity)
+            a.append(avg_acc)
+        return p, c, a
+
+    def plot_density_performance(self, unnorm_results):
+        """
+        Plots accuracy vs the X% of top unnormalized probabilities (densities) evaluated
+        """
+        print("Entering plot densityp erformance")
+        p, c, a = self.get_avg_performances(unnorm_results)
+
+        fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
+                               dpi=DPI, tight_layout=True)
+        ax.plot(np.linspace(0, 1, 100), p, color='tab:red')
+        ax.set_ylabel("Average Purity", color='tab:red')
+        ax.set_xlabel("% top densities")
+        ax.set_ylim([0, 1])
+
+        ax2 = ax.twinx()  # instantiate a second axes that shares the same x-axis
+        ax2.set_ylabel('Average Completeness', color='tab:blue')
+        ax2.plot(np.linspace(0, 1, 100), c, color='tab:blue')
+        ax2.set_ylim([0, 1])
+
+        thex_utils.display_and_save_plot(
+            self.dir, "Average Purity and Completeness vs Density", fig=fig)
+
+        fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
+                               dpi=DPI, tight_layout=True)
+        ax.plot(np.linspace(0, 1, 100), a)
+        ax.set_ylabel("Average Accuracy")
+        ax.set_xlabel("% top densities")
+        ax.set_ylim([0, 1])
+        thex_utils.display_and_save_plot(
+            self.dir, "Average Accuracy")
+
     def compare_metrics(self, metrics_1, metrics_2, xlabel):
         """
         Compares performance between 2 sets of metrics.
@@ -139,7 +216,7 @@ class MainModelVisualization:
         """
         precisions = {}
         recalls = {}
-        specificities = {}  # specificity = true negative rate
+        accuracies = {}
         for class_name in class_metrics.keys():
             metrics = class_metrics[class_name]
             den = metrics["TP"] + metrics["FP"]
@@ -147,9 +224,10 @@ class MainModelVisualization:
             den = metrics["TP"] + metrics["FN"]
             recalls[class_name] = metrics["TP"] / den if den > 0 else 0
 
-            specificities[class_name] = metrics["TN"] / \
-                (metrics["TN"] + metrics["FP"])
-        return recalls, precisions, specificities
+            den = metrics["TP"] + metrics["TN"] + metrics["FP"] + metrics["FN"]
+            accuracies[class_name] = ((
+                metrics["TP"] + metrics["TN"]) / den) if den > 0 else 0
+        return recalls, precisions, accuracies
 
     def compute_confintvls(self, set_totals):
         """
@@ -197,7 +275,7 @@ class MainModelVisualization:
         :param class_metrics: Returned from compute_metrics; Map from class name to map of performance metrics
         :param set_totals: Map from class name to map from fold # to map of metrics
         """
-        recalls, precisions, specificities = self.compute_performance(class_metrics)
+        recalls, precisions, accuracies = self.compute_performance(class_metrics)
         pos_baselines, neg_baselines, precision_baselines = self.compute_baselines(
             self.class_counts, y)
 

@@ -96,46 +96,20 @@ class MainModel(ABC, MainModelVisualization):
 
     def analyze_probabilities(self):
         """
-        Comparison of model performance when using top 1/2 of max assignment probabilities versus all.  
+        Evalaute how well the KDEs fit the data by visualizing the performance at different proportions of top unnormalized probabilities (densities). 
         """
-
-        # Run model with normalization
-        self.run_model()
-        orig_results = self.results
-
-        # Rerun model with unnormalized probabilities saved
         self.normalize = False
-        self.run_model()
+        if self.num_runs is not None:
+            self.results = self.run_trials(self.X, self.y, self.num_runs)
+        elif self.num_folds is not None:
+            self.results = self.run_cfv(self.X, self.y)
+        else:
+            raise ValueError("Must pass in either number of folds or runs.")
         results = np.concatenate(self.results)
-
-        # Save results in pickle
-        with open(self.dir + '/orig_results.pickle', 'wb') as f:
-            pickle.dump(orig_results, f)
         with open(self.dir + '/density_results.pickle', 'wb') as f:
             pickle.dump(results, f)
 
-        # 1. Get max density value per row
-        probs_only = results[:, 0:len(self.class_labels)].astype(float)
-        max_value_per_row = np.amax(probs_only, axis=1)
-
-        # 2. Get row indies of top half of max_value_per_row
-        sorted_indices = np.argsort(max_value_per_row)
-        half = int(len(sorted_indices) / 2)
-        top_half_indices = np.flip(sorted_indices)[:half]
-        # Select rows at those indices
-        top_half = np.take(results, indices=top_half_indices, axis=0)
-
-        # 5. Compare 2 sets of results w.r.t. purity & completeness
-        metrics_1, set_totals_1 = self.compute_metrics(self.results)
-        recalls_1, purity_1, specificities = self.compute_performance(metrics_1)
-        prec_intvls_1, recall_intvls_1 = self.compute_confintvls(set_totals_1)
-
-        metrics_2, set_totals_2 = self.compute_metrics(np.array([top_half]))
-        recalls_2, purity_2, specificities = self.compute_performance(metrics_2)
-        prec_intvls_2, recall_intvls_2 = self.compute_confintvls(set_totals_2)
-
-        self.compare_metrics(purity_1, purity_2,  "Purity")
-        self.compare_metrics(recalls_1, recalls_2, "Completeness")
+        self.plot_density_performance(results)
 
     def run_model(self):
         """
@@ -475,46 +449,69 @@ class MainModel(ABC, MainModelVisualization):
 
         return range_metrics
 
-    def compute_metrics(self, results):
+    def compute_metrics(self, results, as_sets=True):
         """
-        Compute TP, FP, TN, and FN per class. Each sample is assigned its lowest-level class hierarchy label as its label. This is important, otherwise penalties will go across classes.
+        Compute TP, FP, TN, and FN per class and (if as_sets is True) compute those metrics for each class fore each fold too. Each sample is assigned its lowest-level class hierarchy label as its label. This is important, otherwise penalties will go across classes.
         :param results: List of 2D Numpy arrays with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         :return class_metrics: Map from class name to map of {"TP": w, "FP": x, "FN": y, "TN": z}
         """
 
-        # Last column is label
-        label_index = len(self.class_labels)
+        # Map from class name to metrics
         class_metrics = {cn: {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
                          for cn in self.class_labels}
 
+        # (for sets) Map from class name to map from fold to metrics (to estimate confidence intervals on later)
         set_totals = {cn: {fold: {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
                            for fold in range(len(results))} for cn in self.class_labels}
-
-        for class_name in self.class_labels:
+        if as_sets:
+            # For each set,
             for index, result_set in enumerate(results):
                 for row in result_set:
-                    labels = row[label_index]
-                    # Sample is an instance of this current class.
-                    is_class = self.is_class(class_name, labels)
-                    # Get class index of max prob; exclude last column since it is label
-                    max_class_index = np.argmax(row[:len(row) - 1])
-                    max_class_name = self.class_labels[max_class_index]
+                    class_metrics, set_totals = self.get_row_metrics(
+                        row, class_metrics, index, set_totals)
+        else:
+            for row in results:
+                class_metrics, set_totals = self.get_row_metrics(row, class_metrics)
 
-                    if class_name == max_class_name:
-                        if is_class:
-                            class_metrics[class_name]["TP"] += 1
-                            set_totals[class_name][index]["TP"] += 1
-                        else:
-                            class_metrics[class_name]["FP"] += 1
-                            set_totals[class_name][index]["FP"] += 1
-                    else:
-                        if is_class:
-                            class_metrics[class_name]["FN"] += 1
-                            set_totals[class_name][index]["FN"] += 1
-                        else:
-                            class_metrics[class_name]["TN"] += 1
-                            set_totals[class_name][index]["TN"] += 1
+        return class_metrics, set_totals
 
+    def get_row_metrics(self, row, class_metrics, index=None, set_totals=None):
+        """
+        Helper function for compute_metrics
+        Get TP, FP, TN, FN metrics for this row & update in passed in dict of class_metrics. If set_totals is not None, update this too. 
+        :param index: Index of result set
+        :param row: Numpy row of probabiliites (last col is label)
+        :param class_metrics: Dict to update
+        """
+        # Last column is label
+        label_index = len(self.class_labels)
+        labels = row[label_index]
+
+        for class_name in self.class_labels:
+            # Sample is an instance of this current class.
+            is_class = self.is_class(class_name, labels)
+            # Get class index of max prob; exclude last column since it is label
+            max_class_index = np.argmax(row[:len(row) - 1])
+            max_class_name = self.class_labels[max_class_index]
+
+            if class_name == max_class_name:
+                if is_class:
+                    class_metrics[class_name]["TP"] += 1
+                    if set_totals is not None:
+                        set_totals[class_name][index]["TP"] += 1
+                else:
+                    class_metrics[class_name]["FP"] += 1
+                    if set_totals is not None:
+                        set_totals[class_name][index]["FP"] += 1
+            else:
+                if is_class:
+                    class_metrics[class_name]["FN"] += 1
+                    if set_totals is not None:
+                        set_totals[class_name][index]["FN"] += 1
+                else:
+                    class_metrics[class_name]["TN"] += 1
+                    if set_totals is not None:
+                        set_totals[class_name][index]["TN"] += 1
         return class_metrics, set_totals
 
     def compute_baselines(self, class_counts, y):
