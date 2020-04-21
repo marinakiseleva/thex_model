@@ -270,7 +270,7 @@ class MainModel(ABC, MainModelVisualization):
                 drop=True), y.iloc[test_index].reset_index(drop=True)
 
             # Scale and apply PCA
-            X_train, X_test = scale_data(X_train, X_test)
+            # X_train, X_test = scale_data(X_train, X_test)
             if self.pca is not None:
                 X_train, X_test = apply_PCA(X_train, X_test, self.pca)
 
@@ -339,7 +339,7 @@ class MainModel(ABC, MainModelVisualization):
             X_train, y_train, X_test, y_test = self.manually_stratify(X, y, .66)
 
             # Scale and apply PCA
-            X_train, X_test = scale_data(X_train, X_test)
+            # X_train, X_test = scale_data(X_train, X_test)
             if self.pca is not None:
                 X_train, X_test = apply_PCA(X_train, X_test, self.pca)
 
