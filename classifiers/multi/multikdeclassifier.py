@@ -133,7 +133,7 @@ class MultiKDEClassifier():
         """
         self.name = "Multiclass Multivariate KDE"
         self.class_labels = class_labels
-        self.clfs = self.train_together(X, y)
+        self.clfs = self.train(X, y)
 
     def train_together(self, X, y):
         """
