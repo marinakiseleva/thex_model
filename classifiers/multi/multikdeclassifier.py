@@ -127,12 +127,13 @@ class MultiKDEClassifier():
     Multiclass Multivariate KDE classifier
     """
 
-    def __init__(self, X, y, class_labels):
+    def __init__(self, X, y, class_labels, class_priors):
         """
         Init classifier through training
         """
         self.name = "Multiclass Multivariate KDE"
         self.class_labels = class_labels
+        self.class_priors = class_priors
         self.clfs = self.train(X, y)
 
     def train_together(self, X, y):
@@ -233,8 +234,10 @@ class MultiKDEClassifier():
         """
         density_sum = 0
         probabilities = {}
-        for class_name in self.class_labels:
+        for class_index, class_name in enumerate(self.class_labels):
             class_density = np.exp(self.clfs[class_name].score_samples([x.values]))[0]
+            if self.class_priors is not None:
+                class_density *= self.class_priors[class_index]
             probabilities[class_name] = class_density
             density_sum += class_density
 

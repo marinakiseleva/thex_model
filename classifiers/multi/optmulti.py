@@ -21,15 +21,18 @@ from classifiers.multi.multinbkde import MultiNBKDEClassifier
 
 class OptimalMultiClassifier():
 
-    def __init__(self, X, y, class_labels, nb, model_dir):
+    def __init__(self, X, y, class_labels, class_priors, nb, model_dir):
         """
         Multiclasss classifier. Return map from each class name in class_labels to model, and classifier name corresponding to underlying algorithm.
         :param X: DataFrame of features
         :param y: DataFrame with TARGET_LABEL column, 1 if it has class, 0 otherwise
+        :param class_labels: Class labels to use
+        :param class_priors: Priors as list, in order of class_labels
         :param nb: Naive Bayes boolean
         :param dir: Model directory to save files to
         """
         self.class_labels = class_labels
+        self.class_priors = class_priors
         self.nb = nb
         self.dir = model_dir
         self.clf, self.classifier_name = self.get_best_classifier(X, y)
@@ -97,7 +100,7 @@ class OptimalMultiClassifier():
             multikde = MultiNBKDEClassifier(X, y, self.class_labels, self.dir)
         else:
             print("\n\nTraining Multivariate KDE per class")
-            multikde = MultiKDEClassifier(X, y, self.class_labels)
+            multikde = MultiKDEClassifier(X, y, self.class_labels, self.class_priors)
         return [multikde]
 
     def get_best_classifier(self, X, y):

@@ -54,7 +54,8 @@ class MainModel(ABC, MainModelVisualization):
                         'pca': None,  # Number of principal components
                         'class_labels': None,
                         'data': None,  # List of training and test pandas dfs
-                        'nb': False  # Naive Bayes multiclass
+                        'nb': False,  # Naive Bayes multiclass
+                        'priors': None  # Priors in order of class_labels
                         }
 
         for data_filter in user_data_filters.keys():
@@ -81,6 +82,7 @@ class MainModel(ABC, MainModelVisualization):
         # Save relevant data attributes to self
         self.X = X
         self.y = y
+        self.class_priors = data_filters['priors']
         self.num_folds = data_filters['folds']
         self.num_runs = data_filters['num_runs']
         self.pca = data_filters['pca']
@@ -89,8 +91,9 @@ class MainModel(ABC, MainModelVisualization):
         self.normalize = True
 
         print("\nClasses Used:\n" + str(self.class_labels))
+        print("\nClass Priors:\n" + str(self.class_priors))
         print("\nFeatures Used:\n" + str(list(X)))
-        print("\nClass counts:\n" + str(self.class_counts))
+        print("\nClass Counts:\n" + str(self.class_counts))
 
         cc = sum(self.class_counts.values())
         a = self.y.shape[0]

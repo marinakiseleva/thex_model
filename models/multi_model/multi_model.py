@@ -28,8 +28,13 @@ class MultiModel(MainModel):
         """
         Train model using training data - single multiclass classifier
         """
-        self.model = OptimalMultiClassifier(
-            X_train, y_train, self.class_labels, self.nb, self.dir)
+        self.model = OptimalMultiClassifier(X=X_train,
+                                            y=y_train,
+                                            class_labels=self.class_labels,
+                                            class_priors=self.class_priors,
+                                            nb=self.nb,
+                                            model_dir=self.dir)
+
         return self.model
 
     def get_class_probabilities(self, x, normalize=True):
