@@ -69,10 +69,12 @@ class MainModel(ABC, MainModelVisualization):
         # Redefine labels with Unspecifieds
         y = util.add_unspecified_labels_to_data(y, self.class_levels)
 
-        self.class_labels = self.get_class_labels(
-            data_filters['class_labels'], y, data_filters['min_class_size'])
-
+        self.class_labels = self.get_class_labels(y,
+                                                  data_filters['min_class_size'])
         # Pre-processing dependent on class labels
+        if data_filters['class_labels'] is not None:
+            self.class_labels = data_filters['class_labels']
+
         X, y = filter_data(X, y, data_filters, self.class_labels, self.class_hier)
 
         # Save relevant data attributes to self
@@ -149,16 +151,12 @@ class MainModel(ABC, MainModelVisualization):
         relabeled_y = pd.DataFrame(labels, columns=[TARGET_LABEL])
         return relabeled_y
 
-    def get_class_labels(self, user_defined_labels, y, N):
+    def get_class_labels(self, y, N):
         """
-        Keep all classes with # of samples > min class size. If a class has only 1 child class that meets this criteria, we only use the parent class and not the children. We ensure each class is greater than N, and then we make disjoint by keeping only leaves of the new class hierarchy tree. If user_defined_labels is not NULL, we filter on this at the end.
-        :param user_defined_labels: None, or valid list of class labels
+        Keep all classes with # of samples > N. If a class has only 1 child class that meets this criteria, we only use the parent class and not the children. We ensure each class is greater than N, and then we make disjoint by keeping only leaves of the new class hierarchy tree. 
         :param y: DataFrame with TARGET_LABEL column
         :param N: Minimum # of samples per class to keep it
         """
-        # Return classes passed in by user if there are any
-        if user_defined_labels is not None:
-            return user_defined_labels
 
         # Initialize new hierarchy and class counts
         new_hier = self.class_hier.copy()

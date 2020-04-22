@@ -37,6 +37,8 @@ def filter_data(X, y, data_filters, class_labels, class_hier):
     # Filter data (keep only classes that are > min class size)
     data = pd.concat([X, y], axis=1)
 
+    # Keeps only samples whose class is in classes and has the minimum number
+    # of class samples necessary.
     filtered_data = filter_class_size(data,
                                       min_class_size,
                                       class_labels)
@@ -47,32 +49,12 @@ def filter_data(X, y, data_filters, class_labels, class_hier):
                                    max_class_size,
                                    class_labels)
 
-    filtered_data = filter_class_labels(filtered_data, class_labels)
-
     X = filtered_data.drop([TARGET_LABEL], axis=1).reset_index(drop=True)
     y = filtered_data[[TARGET_LABEL]].reset_index(drop=True)
 
     X, y = drop_disjoint_conflicts(X, y, class_labels)
 
     return X, y
-
-
-def filter_class_labels(df, class_labels):
-    """
-    Keep rows that have label in class_labels
-    :param df: DataFrame of features and TARGET_LABEL
-    """
-    if class_labels is None:
-        return df
-    keep_indices = []
-    for df_index, row in df.iterrows():
-        list_classes = util.convert_str_to_list(row[TARGET_LABEL])
-        for c in list_classes:
-            if c in class_labels:
-                keep_indices.append(df_index)
-                break
-
-    return df.loc[keep_indices, :].reset_index(drop=True)
 
 
 def drop_conflicts(df):
@@ -155,7 +137,7 @@ def sub_sample(df, count, classes):
 
 def filter_class_size(df, N, classes):
     """
-    Keep classes with at least N points
+    Keep samples that have a class in classes with at least N points
     :param df: DataFrame of features and TARGET_LABEL
     :param N: Minimum number of samples required in class to keep it
     :return: DataFrame of original format, with only top N classes of data
@@ -164,12 +146,10 @@ def filter_class_size(df, N, classes):
         return df
 
     if classes is None:
-        # Infer unique classes from data
-        classes = infer_data_classes(df)
+        raise ValueError("Need class labels.")
 
     # Filter each class in list, by indices. Save indices of samples to keep.
     keep_indices = []
-
     for class_label in classes:
         class_indices = []
         for index, row in df.iterrows():
