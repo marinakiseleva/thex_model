@@ -15,6 +15,7 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
 # local imports
+from mainmodel.helper_compute import get_ordered_metrics
 from thex_data.data_init import *
 from thex_data.data_filter import filter_data
 from thex_data.data_prep import get_source_target_data
@@ -225,11 +226,11 @@ class MainModel(ABC, MainModelVisualization):
         init_plot_settings()
 
         completeness = calculate_completeness(X, y, self.class_labels)
-        ordered_comp = self.get_ordered_metrics(completeness)
+        ordered_comp = get_ordered_metrics(completeness)
 
         visualize_completeness(self.dir, X, ordered_comp[0], ordered_comp[1])
 
-        ordered_counts = self.get_ordered_metrics(self.class_counts)
+        ordered_counts = get_ordered_metrics(self.class_counts)
         ordered_names = ordered_counts[0]
         ordered_metrics = ordered_counts[1]
         plot_class_hist(self.dir, ordered_names, ordered_metrics)
