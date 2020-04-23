@@ -2,13 +2,14 @@
 Base model structure which models all build off of. Model structure allows for flexibility in normalization method and hierarchy use. Model defines structure that all submodels have in common:
 
 Initial data collection class
-Evaluation strategy (k-fold cross validation)
+Evaluation strategy (k-fold cross validation or a set number of trials)
 Performance aggregation
 
 Subclasses differ in how they normalize across the class hierarchy.
 
 """
 import sys
+import random
 import pickle
 from abc import ABC, abstractmethod
 import pandas as pd
@@ -250,6 +251,9 @@ class MainModel(ABC, MainModelVisualization):
         """
         Visualize performance
         """
+        n = len(self.results[0])
+        sample_X = self.results[0][random.randint(1, n)]
+        self.plot_example_output(sample_X)
         self.plot_confusion_matrix(self.results)
         range_metrics = self.compute_probability_range_metrics(self.results)
         self.plot_prob_pr_curves(range_metrics, self.class_counts)
@@ -272,7 +276,7 @@ class MainModel(ABC, MainModelVisualization):
                 drop=True), y.iloc[test_index].reset_index(drop=True)
 
             # Scale and apply PCA
-            X_train, X_test = scale_data(X_train, X_test)
+            # X_train, X_test = scale_data(X_train, X_test)
             if self.pca is not None:
                 X_train, X_test = apply_PCA(X_train, X_test, self.pca)
 
@@ -341,7 +345,7 @@ class MainModel(ABC, MainModelVisualization):
             X_train, y_train, X_test, y_test = self.manually_stratify(X, y, .66)
 
             # Scale and apply PCA
-            X_train, X_test = scale_data(X_train, X_test)
+            # X_train, X_test = scale_data(X_train, X_test)
             if self.pca is not None:
                 X_train, X_test = apply_PCA(X_train, X_test, self.pca)
 

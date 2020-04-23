@@ -9,9 +9,29 @@ import utilities.utilities as thex_utils
 from thex_data.data_consts import UNDEF_CLASS, ORDERED_CLASSES
 
 
+def update_class_purities(class_purities, class_metrics):
+    """
+    Add next purity to list of purities for each class. If not valid, append -1.
+    :param class_purities: Map from class name to list, where we will append purity based on class metrics
+    :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values)
+    """
+    for class_name in class_purities.keys():
+        metrics = class_metrics[class_name]
+        den = metrics["TP"] + metrics["FP"]
+        if den > 0:
+            v = metrics["TP"] / den
+        else:
+            v = -1
+        class_purities[class_name].append(v)
+    return class_purities
+
+
 def compute_performance(class_metrics):
     """
-    Get recall (completeness), precision (purity), and accuracy per class.
+    Get recall (completeness), precision (purity) per class. 
+    For purity: if a class has no TP or FP then we do not use that class in the aggregated metric. 
+    For completeness: if a class has no TP or FN then we do not use that class in the aggregated metric.
+    :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values) 
     """
     precisions = {}
     recalls = {}
@@ -19,13 +39,12 @@ def compute_performance(class_metrics):
     for class_name in class_metrics.keys():
         metrics = class_metrics[class_name]
         den = metrics["TP"] + metrics["FP"]
-        precisions[class_name] = metrics["TP"] / den if den > 0 else 0
+        if den > 0:
+            precisions[class_name] = metrics["TP"] / den
         den = metrics["TP"] + metrics["FN"]
-        recalls[class_name] = metrics["TP"] / den if den > 0 else 0
-        den = metrics["TP"] + metrics["TN"] + metrics["FP"] + metrics["FN"]
-        accuracies[class_name] = ((
-            metrics["TP"] + metrics["TN"]) / den) if den > 0 else 0
-    return recalls, precisions, accuracies
+        if den > 0:
+            recalls[class_name] = metrics["TP"] / den
+    return recalls, precisions
 
 
 def compute_confusion_matrix(results, class_labels):
