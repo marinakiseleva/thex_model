@@ -59,6 +59,7 @@ class MainModelVisualization:
         probabilities = row[0:len(row) - 1]
         x_indices = np.arange(len(self.class_labels))
         ax.bar(x_indices, probabilities, color=colors)
+        ax.set_ylim([0, 1])
         plt.ylabel('Probability Assigned', fontsize=12)
         plt.xlabel('Class', fontsize=12)
         plt.xticks(x_indices, self.class_labels, fontsize=10)
@@ -71,6 +72,7 @@ class MainModelVisualization:
         # Init performance metrics
         p = []  # Avg purity for each i
         c = []  # Avg compelteness for each i
+        a = []  # Avg accuracy for each i
         a = []  # Avg accuracy for each i
 
         # 1. Get max density value per row
@@ -96,7 +98,7 @@ class MainModelVisualization:
             # Put probs & labels in same Numpy array
             i_results = np.hstack((top_i_probs, top_i_labels.reshape(-1, 1)))
             metrics, set_totals = self.compute_metrics(i_results, False)
-            recalls, puritys = compute_performance(metrics)
+            recalls, puritys, accs = compute_performance(metrics)
             if len(recalls.values()) == 0:
                 avg_recall = 0
             else:
@@ -106,48 +108,50 @@ class MainModelVisualization:
             else:
                 avg_purity = sum(puritys.values()) / len(puritys.values())
 
+            if len(accs.values()) == 0:
+                avg_acc = 0
+            else:
+                avg_acc = sum(accs.values()) / len(accs.values())
+
             c.append(avg_recall)
             p.append(avg_purity)
+            a.append(avg_acc)
 
             class_purities = update_class_purities(class_purities, metrics)
-        return p, c, class_purities
+
+        print("\nDensity performances:")
+        print("\nPurity\n" + str(p))
+        print("\nCompleteness\n" + str(c))
+        print("\nAccuracy\n" + str(a))
+        print("\nClass purities\n" + str(class_purities))
+        return p, c, a, class_purities
 
     def plot_density_performance(self, unnorm_results):
         """
         Plots accuracy vs the X% of top unnormalized probabilities (densities) evaluated
         """
         print("Entering plot densityp erformance")
-        p, c, class_purities = self.get_avg_performances(unnorm_results)
-        print("\nPurities per top X proportion of densities ")
-        print(p)
-        print("\nCompleteness per top X proportion of densities ")
-        print(c)
+        p, c, a, class_purities = self.get_avg_performances(unnorm_results)
 
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
                                dpi=DPI, tight_layout=True)
-        ax_color = 'tab:red'
-        ax.plot(np.linspace(0, 1, 100), p, color=ax_color)
-        ax.set_ylabel("Average Purity", color=ax_color)
+        x = np.linspace(0, 1, 100)
+        ax.plot(x, p, color='red', label="Purity")
+        ax.plot(x, c, color='blue', label="Completeness")
+        ax.plot(x, a, color='green', label="Accuracy")
         ax.set_xlabel("% Top Densities")
-        ax.set_ylim([0, 1.05])
-        ax.tick_params(axis='y', labelcolor=ax_color)
-
-        ax2 = ax.twinx()  # instantiate a second axes that shares the same x-axis
-        ax2_color = 'tab:blue'
-        ax2.set_ylabel('Average Completeness', color=ax2_color)
-        ax2.plot(np.linspace(0, 1, 100), c, color=ax2_color)
-        ax2.set_ylim([0, 1.05])
-        ax2.tick_params(axis='y', labelcolor=ax2_color)
+        ax.set_ylabel("Average %")
+        ax.set_ylim([0, 1.01])
+        ax.tick_params(axis='y')
+        ax.legend()
 
         thex_utils.display_and_save_plot(
-            self.dir, "Average Purity and Completeness vs Density", fig=fig)
+            self.dir, "Average Performance vs Density", fig=fig)
 
-        print("\nClass purities")
-        print(class_purities)
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
                                dpi=DPI, tight_layout=True)
 
-        colors = ["green", "blue", "red", "purple"]
+        colors = plt.get_cmap('tab20').colors
         for class_index, class_name in enumerate(self.class_labels):
             purities = class_purities[class_name]
             # Only plot points which are valid.
@@ -189,7 +193,7 @@ class MainModelVisualization:
         :param class_metrics: Returned from compute_metrics; Map from class name to map of performance metrics
         :param set_totals: Map from class name to map from fold # to map of metrics
         """
-        recalls, precisions = compute_performance(class_metrics)
+        recalls, precisions, accs = compute_performance(class_metrics)
         pos_baselines, neg_baselines, precision_baselines = self.compute_baselines(
             self.class_counts, y)
 

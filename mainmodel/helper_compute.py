@@ -44,7 +44,10 @@ def compute_performance(class_metrics):
         den = metrics["TP"] + metrics["FN"]
         if den > 0:
             recalls[class_name] = metrics["TP"] / den
-    return recalls, precisions
+        if den > 0:
+            trues = metrics["TP"] + metrics["TN"]
+            accuracies[class_name] = trues / (trues + metrics["FP"] + metrics["FN"])
+    return recalls, precisions, accuracies
 
 
 def compute_confusion_matrix(results, class_labels):
