@@ -35,8 +35,6 @@ class BinaryModel(MainModel):
             self.models[class_name] = OptimalBinaryClassifier(
                 class_name, X_train, y_relabeled, self.nb, self.dir)
 
-        return self.models
-
     def get_class_probabilities(self, x, normalize=True):
         """
         Calculates probability of each transient class for the single test data point (x).

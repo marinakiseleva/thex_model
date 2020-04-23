@@ -35,8 +35,6 @@ class MultiModel(MainModel):
                                             nb=self.nb,
                                             model_dir=self.dir)
 
-        return self.model
-
     def get_class_probabilities(self, x, normalize=True):
         """
         Calculates probability of each transient class for the single test data point (x).
