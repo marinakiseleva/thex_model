@@ -28,8 +28,7 @@ def update_class_purities(class_purities, class_metrics):
 
 def compute_performance(class_metrics):
     """
-    Get recall (completeness), precision (purity) per class. 
-    For purity: if a class has no TP or FP then we do not use that class in the aggregated metric. 
+    Get recall (completeness), precision (purity) and accuracy per class - for only the classes included in the sample (those with some TP or FP)
     For completeness: if a class has no TP or FN then we do not use that class in the aggregated metric.
     :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values) 
     """
@@ -38,15 +37,23 @@ def compute_performance(class_metrics):
     accuracies = {}
     for class_name in class_metrics.keys():
         metrics = class_metrics[class_name]
-        den = metrics["TP"] + metrics["FP"]
-        if den > 0:
-            precisions[class_name] = metrics["TP"] / den
-        den = metrics["TP"] + metrics["FN"]
-        if den > 0:
-            recalls[class_name] = metrics["TP"] / den
-        if den > 0:
-            trues = metrics["TP"] + metrics["TN"]
-            accuracies[class_name] = trues / (trues + metrics["FP"] + metrics["FN"])
+        TP = metrics["TP"]
+        FP = metrics["FP"]
+        TN = metrics["TN"]
+        FN = metrics["FN"]
+
+        N = TP + FN  # Number of class samples
+
+        # Only if there are samples in this class, calculate its metrics
+        if N > 0:
+            recalls[class_name] = TP / N
+            accuracies[class_name] = (TP + TN) / (TP + TN + FP + FN)
+
+            P = TP + FP
+            # Only record purity if at least some samples were classified positive,
+            # otherwise we can't measure purity
+            if P > 0:
+                precisions[class_name] = TP / P
     return recalls, precisions, accuracies
 
 
