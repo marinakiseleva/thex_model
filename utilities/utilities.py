@@ -142,4 +142,5 @@ def clean_str(text):
     replace_strs = ["\n", " ", ":", ".", ",", "/"]
     for r in replace_strs:
         text = text.replace(r, "_")
+    text = text.replace('%', "perc")
     return text

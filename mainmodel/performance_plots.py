@@ -65,6 +65,16 @@ class MainModelVisualization:
         plt.xticks(x_indices, self.class_labels, fontsize=10)
         thex_utils.display_and_save_plot(self.dir, "Example output")
 
+    def get_average(self, metrics):
+        """
+        Gets average if there are values, otherwise 0
+        """
+        if len(metrics.values()) == 0:
+            avg_metric = 0
+        else:
+            avg_metric = sum(metrics.values()) / len(metrics)
+        return avg_metric
+
     def get_avg_performances(self, unnorm_results):
         """
         Get average purity, completeness, and accuracy for each threshold of maintaing top i% maximum unnormalized probabilities
@@ -74,7 +84,7 @@ class MainModelVisualization:
         c = []  # Avg compelteness for each i
         a = []  # Avg accuracy for each i
         a = []  # Avg accuracy for each i
-
+        s = []  # Avg specificity (true neg rate) for each i
         # 1. Get max density value per row
         probs_only = unnorm_results[:, 0:len(self.class_labels)].astype(float)
         max_value_per_row = np.amax(probs_only, axis=1)
@@ -98,40 +108,31 @@ class MainModelVisualization:
             # Put probs & labels in same Numpy array
             i_results = np.hstack((top_i_probs, top_i_labels.reshape(-1, 1)))
             metrics, set_totals = self.compute_metrics(i_results, False)
-            recalls, puritys, accs = compute_performance(metrics)
-            if len(recalls.values()) == 0:
-                avg_recall = 0
-            else:
-                avg_recall = sum(recalls.values()) / len(recalls)
-            if len(puritys.values()) == 0:
-                avg_purity = 0
-            else:
-                avg_purity = sum(puritys.values()) / len(puritys.values())
-
-            if len(accs.values()) == 0:
-                avg_acc = 0
-            else:
-                avg_acc = sum(accs.values()) / len(accs.values())
+            recalls, puritys, spec, accs = compute_performance(metrics)
+            avg_recall = self.get_average(recalls)
+            avg_purity = self.get_average(puritys)
+            avg_acc = self.get_average(accs)
+            avg_spec = self.get_average(spec)
 
             c.append(avg_recall)
             p.append(avg_purity)
             a.append(avg_acc)
-
+            s.append(avg_spec)
             class_purities = update_class_purities(class_purities, metrics)
 
         print("\nDensity performances:")
         print("\nPurity\n" + str(p))
         print("\nCompleteness\n" + str(c))
         print("\nAccuracy\n" + str(a))
+        print("\nSpecificity\n" + str(s))
         print("\nClass purities\n" + str(class_purities))
-        return p, c, a, class_purities
+        return p, c, a, s, class_purities
 
     def plot_density_performance(self, unnorm_results):
         """
         Plots accuracy vs the X% of top unnormalized probabilities (densities) evaluated
         """
-        print("Entering plot densityp erformance")
-        p, c, a, class_purities = self.get_avg_performances(unnorm_results)
+        p, c, a, s, class_purities = self.get_avg_performances(unnorm_results)
 
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
                                dpi=DPI, tight_layout=True)
@@ -139,6 +140,7 @@ class MainModelVisualization:
         ax.plot(x, p, color='red', label="Purity")
         ax.plot(x, c, color='blue', label="Completeness")
         ax.plot(x, a, color='green', label="Accuracy")
+        ax.plot(x, s, color='black', label="Specificity")
         ax.set_xlabel("% Top Densities")
         ax.set_ylabel("Average %")
         ax.set_ylim([0, 1.01])
@@ -193,7 +195,7 @@ class MainModelVisualization:
         :param class_metrics: Returned from compute_metrics; Map from class name to map of performance metrics
         :param set_totals: Map from class name to map from fold # to map of metrics
         """
-        recalls, precisions, accs = compute_performance(class_metrics)
+        recalls, precisions, s, accs = compute_performance(class_metrics)
         pos_baselines, neg_baselines, precision_baselines = self.compute_baselines(
             self.class_counts, y)
 

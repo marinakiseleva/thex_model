@@ -28,13 +28,14 @@ def update_class_purities(class_purities, class_metrics):
 
 def compute_performance(class_metrics):
     """
-    Get recall (completeness), precision (purity) and accuracy per class - for only the classes included in the sample (those with some TP or FP)
+    Get recall (completeness), precision (purity), specificity (true negative rate) and accuracy per class - for only the classes included in the sample (those with some TP or FP)
     For completeness: if a class has no TP or FN then we do not use that class in the aggregated metric.
     :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values) 
     """
     precisions = {}
     recalls = {}
     accuracies = {}
+    specificitys = {}
     for class_name in class_metrics.keys():
         metrics = class_metrics[class_name]
         TP = metrics["TP"]
@@ -48,13 +49,13 @@ def compute_performance(class_metrics):
         if N > 0:
             recalls[class_name] = TP / N
             accuracies[class_name] = (TP + TN) / (TP + TN + FP + FN)
-
+            specificitys[class_name] = TN / (TN + FP)
             P = TP + FP
             # Only record purity if at least some samples were classified positive,
             # otherwise we can't measure purity
             if P > 0:
                 precisions[class_name] = TP / P
-    return recalls, precisions, accuracies
+    return recalls, precisions, specificitys, accuracies
 
 
 def compute_confusion_matrix(results, class_labels):
