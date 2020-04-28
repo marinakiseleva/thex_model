@@ -169,7 +169,7 @@ class MainModelVisualization:
             ax.plot(x, y, color=colors[class_index], label=class_name)
         ax.set_ylabel("Purity")
         ax.set_xlabel("% Top Densities")
-        ax.legend(loc='upper center', bbox_to_anchor=(1.1, 1), ncol=1, prop={'size': 8})
+        ax.legend(loc='upper center', bbox_to_anchor=(1.25, 1), ncol=1, prop={'size': 8})
 
         thex_utils.display_and_save_plot(self.dir, "Prob Density % vs Purities")
 
