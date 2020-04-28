@@ -134,9 +134,10 @@ class MainModelVisualization:
         """
         p, c, a, s, class_purities = self.get_avg_performances(unnorm_results)
 
+        # Plot aggregated performance metrics
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
                                dpi=DPI, tight_layout=True)
-        x = np.linspace(0, 1, 100)
+        x = list(range(0, 100, 1))
         ax.plot(x, p, color='red', label="Purity")
         ax.plot(x, c, color='blue', label="Completeness")
         ax.plot(x, a, color='green', label="Accuracy")
@@ -150,6 +151,7 @@ class MainModelVisualization:
         thex_utils.display_and_save_plot(
             self.dir, "Average Performance vs Density", fig=fig)
 
+        # Plot purity per class
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
                                dpi=DPI, tight_layout=True)
 
@@ -167,7 +169,8 @@ class MainModelVisualization:
             ax.plot(x, y, color=colors[class_index], label=class_name)
         ax.set_ylabel("Purity")
         ax.set_xlabel("% Top Densities")
-        ax.legend()
+        ax.legend(loc='upper center', bbox_to_anchor=(1.1, 1), ncol=1, prop={'size': 8})
+
         thex_utils.display_and_save_plot(self.dir, "Prob Density % vs Purities")
 
     def plot_confusion_matrix(self, results):
