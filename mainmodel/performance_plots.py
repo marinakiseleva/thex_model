@@ -41,10 +41,12 @@ class MainModelVisualization:
             max_tick_width = max(bb.width, max_tick_width)
         return max_tick_width + 2
 
-    def plot_example_output(self, row):
+    def plot_example_output(self, row, i=None, priors=None):
         """
         Plots example output for a set of probabilities for a particular host-galaxy
         :param row: Numpy array of probabilities in order of self.class_labels and then TARGET_LABEL
+        :param i: Index of sample
+        :param priors: Boolean if using priors, for saving
         """
         labels = row[len(row) - 1]
         true_class_index = None
@@ -63,7 +65,12 @@ class MainModelVisualization:
         plt.ylabel('Probability Assigned', fontsize=12)
         plt.xlabel('Class', fontsize=12)
         plt.xticks(x_indices, self.class_labels, fontsize=10)
-        thex_utils.display_and_save_plot(self.dir, "Example output")
+        title = "example_output"
+        if i is not None:
+            title += "_" + str(i)
+        if priors is not None:
+            title += "_" + str(priors)
+        thex_utils.display_and_save_plot(self.dir, title)
 
     def get_average(self, metrics):
         """
