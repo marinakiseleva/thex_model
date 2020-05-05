@@ -101,17 +101,23 @@ class MainModel(ABC, MainModelVisualization):
         if cc != a:
             raise ValueError("Data is not filtered properly.")
 
-    def analyze_probabilities(self):
+    def run(self):
         """
-        Evalaute how well the KDEs fit the data by visualizing the performance at different proportions of top unnormalized probabilities (densities). 
+        Run model, either by trials or cross fold validation
         """
-        self.normalize = False
         if self.num_runs is not None:
             self.results = self.run_trials(self.X, self.y, self.num_runs)
         elif self.num_folds is not None:
             self.results = self.run_cfv(self.X, self.y)
         else:
             raise ValueError("Must pass in either number of folds or runs.")
+
+    def analyze_probabilities(self):
+        """
+        Evalaute how well the KDEs fit the data by visualizing the performance at different proportions of top unnormalized probabilities (densities). 
+        """
+        self.normalize = False
+        self.run()
         results = np.concatenate(self.results)
         with open(self.dir + '/density_results.pickle', 'wb') as f:
             pickle.dump(results, f)
@@ -126,20 +132,14 @@ class MainModel(ABC, MainModelVisualization):
 
         self.visualize_data()
 
-        print("\nDone visualizing...")
-
-        if self.num_runs is not None:
-            self.results = self.run_trials(self.X, self.y, self.num_runs)
-        elif self.num_folds is not None:
-            self.results = self.run_cfv(self.X, self.y)
-        else:
-            raise ValueError("Must pass in either number of folds or runs.")
+        self.run()
 
         # Save results in pickle
         with open(self.dir + '/results.pickle', 'wb') as f:
             pickle.dump(self.results, f)
         with open(self.dir + '/y.pickle', 'wb') as f:
             pickle.dump(self.y, f)
+
         self.visualize_performance()
 
     def relabel_class_data(self, class_name, y):
@@ -269,6 +269,7 @@ class MainModel(ABC, MainModelVisualization):
         """
         kf = StratifiedKFold(n_splits=self.num_folds, shuffle=True)
         results = []
+        self.datas = []
         for train_index, test_index in kf.split(X, y):
             X_train, X_test = X.iloc[train_index].reset_index(
                 drop=True), X.iloc[test_index].reset_index(drop=True)
@@ -282,6 +283,7 @@ class MainModel(ABC, MainModelVisualization):
 
             # Train
             self.train_model(X_train, y_train)
+            self.datas.append(X_test)
 
             # Test model
             probabilities = self.get_all_class_probabilities(X_test, self.normalize)
@@ -394,7 +396,7 @@ class MainModel(ABC, MainModelVisualization):
         """
         return max_class_prob
 
-    def compute_probability_range_metrics(self, results, bin_size=0.1):
+    def compute_probability_range_metrics(self, results, bin_size=0.1, concat=True):
         """
         Returns map of class name to true positives & total count per probability bin. Also saves probability rates and # of samples in each class to maps (self.class_prob_rates, self.class_positives)
         :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
@@ -403,8 +405,8 @@ class MainModel(ABC, MainModelVisualization):
             total_range_sums: # of samples with probability in range for this class
             TP_range_sums: true positives per range
         """
-
-        results = np.concatenate(results)
+        if concat:
+            results = np.concatenate(results)
 
         range_metrics = {}
         label_index = len(self.class_labels)  # Last column is label

@@ -135,6 +135,55 @@ class MainModelVisualization:
         print("\nClass purities\n" + str(class_purities))
         return p, c, a, s, class_purities
 
+    def get_proportion_results(self, indices,  results):
+        """
+        Reduce results to those with these indices 
+        :param indices: List of indices to keep 
+        :param results: Results, with density/prob per class and last column has label 
+        """
+        probs_only = results[:, 0:len(self.class_labels)].astype(float)
+
+        # Select rows at those indices
+        densities = np.take(probs_only, indices=indices, axis=0)
+
+        # Normalize these densities to compute metrics
+        probs = densities / densities.sum(axis=1)[:, None]
+
+        labels = np.take(results,
+                         indices=indices,
+                         axis=0)[:, len(self.class_labels)]
+
+        # Put probs & labels in same Numpy array
+        prop_results = np.hstack((probs, labels.reshape(-1, 1)))
+        return prop_results
+
+    def plot_density_half_compare(self, unnorm_results):
+        """
+        Plot prob vs class rates for top 1/2 densities vs bottom 1/2
+        """
+        # Get top 1/2 densities (max density per row)
+        probs_only = unnorm_results[:, 0:len(self.class_labels)].astype(float)
+        max_value_per_row = np.amax(probs_only, axis=1)
+        sorted_indices = np.flip(np.argsort(max_value_per_row))
+
+        class_purities = {c: [] for c in self.class_labels}
+        # Get row indies of top i% of max_value_per_row
+        top_half = int(len(sorted_indices) * 0.5)
+        top_half_indices = sorted_indices[:top_half]
+
+        top_results = self.get_proportion_results(top_half_indices,  unnorm_results)
+        print("\n\nTop results")
+        print(top_results)
+        top_metrics = self.compute_probability_range_metrics(top_results, concat=False)
+        print("\nVisualizing probability vs class rates for top 1/2 ")
+        self.plot_probability_vs_class_rates(top_metrics, extra_title=" (top half)")
+
+        bot_half_indices = sorted_indices[top_half:]
+        bot_results = self.get_proportion_results(bot_half_indices,  unnorm_results)
+        bot_metrics = self.compute_probability_range_metrics(bot_results, concat=False)
+        print("\nVisualizing probability vs class rates for bottom 1/2 ")
+        self.plot_probability_vs_class_rates(bot_metrics, extra_title=" (bottom half)")
+
     def plot_density_performance(self, unnorm_results):
         """
         Plots accuracy vs the X% of top unnormalized probabilities (densities) evaluated
@@ -320,10 +369,11 @@ class MainModelVisualization:
                                              bbox_inches=None,
                                              fig=fig)
 
-    def plot_probability_vs_class_rates(self, range_metrics):
+    def plot_probability_vs_class_rates(self, range_metrics, extra_title=None):
         """
         Plots probability assigned to class (x-axis) vs the percentage of assignments that were that class (# of class A / all samples given probability of class in the range A).
         :param range_metrics: Map of classes to [TP_range_sums, total_range_sums] from compute_probability_range_metrics
+        :param extra_title: Extra string to add to title. 
         """
 
         perc_ranges = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]
@@ -348,8 +398,10 @@ class MainModelVisualization:
             plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
             plt.ylabel('Class Rate', fontsize=12)
             ax.set_title(class_name)
+            if extra_title is None:
+                extra_title = ""
             thex_utils.display_and_save_plot(self.dir,
-                                             "Probability vs Positive Rate: " + class_name)
+                                             "Probability vs Positive Rate: " + class_name + extra_title)
 
         self.plot_agg_prob_vs_class_rates(total_count_per_range, True)
 
