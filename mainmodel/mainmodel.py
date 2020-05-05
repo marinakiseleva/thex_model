@@ -116,12 +116,15 @@ class MainModel(ABC, MainModelVisualization):
         """
         Evalaute how well the KDEs fit the data by visualizing the performance at different proportions of top unnormalized probabilities (densities). 
         """
+
         self.normalize = False
         self.run()
+
         results = np.concatenate(self.results)
         with open(self.dir + '/density_results.pickle', 'wb') as f:
             pickle.dump(results, f)
 
+        self.plot_density_half_compare(results)
         self.plot_density_performance(results)
 
     def run_model(self):
