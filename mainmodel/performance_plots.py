@@ -135,18 +135,18 @@ class MainModelVisualization:
         print("\nClass purities\n" + str(class_purities))
         return p, c, a, s, class_purities
 
-    def get_proportion_results(self, indices,  results):
+    def get_proportion_results(self, indices, results):
         """
-        Reduce results to those with these indices 
+        Reduce results (as probabilities) to those with these indices 
         :param indices: List of indices to keep 
-        :param results: Results, with density/prob per class and last column has label 
+        :param results: Results, with density per class and last column has label 
         """
         probs_only = results[:, 0:len(self.class_labels)].astype(float)
 
         # Select rows at those indices
         densities = np.take(probs_only, indices=indices, axis=0)
 
-        # Normalize these densities to compute metrics
+        # Normalize these densities to get probabilities
         probs = densities / densities.sum(axis=1)[:, None]
 
         labels = np.take(results,
@@ -172,8 +172,6 @@ class MainModelVisualization:
         top_half_indices = sorted_indices[:top_half]
 
         top_results = self.get_proportion_results(top_half_indices,  unnorm_results)
-        print("\n\nTop results")
-        print(top_results)
         top_metrics = self.compute_probability_range_metrics(top_results, concat=False)
         print("\nVisualizing probability vs class rates for top 1/2 ")
         self.plot_probability_vs_class_rates(top_metrics, extra_title=" (top half)")
