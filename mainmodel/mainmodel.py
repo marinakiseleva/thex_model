@@ -121,8 +121,9 @@ class MainModel(ABC, MainModelVisualization):
         results = np.concatenate(self.results)
         with open(self.dir + '/density_results.pickle', 'wb') as f:
             pickle.dump(results, f)
-        self.plot_density_half_compare(results)
+
         self.plot_density_performance(results)
+        self.plot_density_half_compare(results)
 
     def run_model(self):
         """
@@ -263,7 +264,8 @@ class MainModel(ABC, MainModelVisualization):
 
     def run_cfv(self, X, y):
         """
-        Run k-fold cross validation over a number of runs
+        Run k-fold cross validation
+        Number of folds comes from self.num_folds
         :param X: DataFrame of features data
         :param y: DataFram with TARGET_LABEL column
         """

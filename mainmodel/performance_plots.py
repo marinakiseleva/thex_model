@@ -76,11 +76,16 @@ class MainModelVisualization:
         """
         Gets average if there are values, otherwise 0
         """
-        if len(metrics.values()) == 0:
-            avg_metric = 0
+        avg = 0
+        valid_count = 0
+        for class_name in metrics.keys():
+            if metrics[class_name] is not None:
+                avg += metrics[class_name]
+                valid_count += 1
+        if valid_count > 0:
+            return avg / valid_count
         else:
-            avg_metric = sum(metrics.values()) / len(metrics)
-        return avg_metric
+            return None
 
     def get_avg_performances(self, unnorm_results):
         """
@@ -182,6 +187,27 @@ class MainModelVisualization:
         print("\nVisualizing probability vs class rates for bottom 1/2 ")
         self.plot_probability_vs_class_rates(bot_metrics, extra_title=" (bottom half)")
 
+    def pre_plot_clean(self, x, y):
+        """
+        Keep only x, y values where y is not None
+        """
+        new_x = []
+        new_y = []
+        for index, value in enumerate(x):
+            if y[index] is not None:
+                new_x.append(value)
+                new_y.append(y[index])
+        return new_x, new_y
+
+    def clean_plot(self, y, ax, name, color):
+        """
+        Helper plotting function for density analysis
+        """
+        orig_x = list(range(0, 100, 1))
+        x, y = self.pre_plot_clean(orig_x,  y)
+        ax.scatter(x, y, color=color, s=2)
+        ax.plot(x, y, color=color, label=name)
+
     def plot_density_performance(self, unnorm_results):
         """
         Plots accuracy vs the X% of top unnormalized probabilities (densities) evaluated
@@ -191,11 +217,10 @@ class MainModelVisualization:
         # Plot aggregated performance metrics
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
                                dpi=DPI, tight_layout=True)
-        x = list(range(0, 100, 1))
-        ax.plot(x, p, color='red', label="Purity")
-        ax.plot(x, c, color='blue', label="Completeness")
-        ax.plot(x, a, color='green', label="Accuracy")
-        ax.plot(x, s, color='black', label="Specificity")
+        self.clean_plot(p, ax, "Purity", 'red')
+        self.clean_plot(c, ax, "Completeness", 'blue')
+        self.clean_plot(a, ax, "Accuracy", 'green')
+        self.clean_plot(s, ax, "Specificity", 'black')
         ax.set_xlabel("% Top Densities")
         ax.set_ylabel("Average %")
         ax.set_ylim([0, 1.01])
@@ -212,15 +237,7 @@ class MainModelVisualization:
         colors = plt.get_cmap('tab20').colors
         for class_index, class_name in enumerate(self.class_labels):
             purities = class_purities[class_name]
-            # Only plot points which are valid.
-            x = []
-            y = []
-            for index, p in enumerate(purities):
-                if p != -1:
-                    x.append(index)
-                    y.append(p)
-            ax.scatter(x, y, color=colors[class_index], s=2)
-            ax.plot(x, y, color=colors[class_index], label=class_name)
+            self.clean_plot(purities, ax, class_name, colors[class_index])
         ax.set_ylabel("Purity")
         ax.set_xlabel("% Top Densities")
         ax.legend(loc='upper center', bbox_to_anchor=(1.25, 1), ncol=1, prop={'size': 8})
@@ -367,7 +384,7 @@ class MainModelVisualization:
                                              bbox_inches=None,
                                              fig=fig)
 
-    def plot_probability_vs_class_rates(self, range_metrics, extra_title=None):
+    def plot_probability_vs_class_rates(self, range_metrics, extra_title=""):
         """
         Plots probability assigned to class (x-axis) vs the percentage of assignments that were that class (# of class A / all samples given probability of class in the range A).
         :param range_metrics: Map of classes to [TP_range_sums, total_range_sums] from compute_probability_range_metrics
@@ -395,9 +412,8 @@ class MainModelVisualization:
                        str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
             plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
             plt.ylabel('Class Rate', fontsize=12)
-            ax.set_title(class_name)
-            if extra_title is None:
-                extra_title = ""
+            ax.set_title(class_name + extra_title)
+
             thex_utils.display_and_save_plot(self.dir,
                                              "Probability vs Positive Rate: " + class_name + extra_title)
 

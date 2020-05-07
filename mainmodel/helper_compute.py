@@ -21,7 +21,7 @@ def update_class_purities(class_purities, class_metrics):
         if den > 0:
             v = metrics["TP"] / den
         else:
-            v = -1
+            v = None
         class_purities[class_name].append(v)
     return class_purities
 
@@ -43,18 +43,12 @@ def compute_performance(class_metrics):
         TN = metrics["TN"]
         FN = metrics["FN"]
 
-        N = TP + FN  # Number of class samples
-
         # Only if there are samples in this class, calculate its metrics
-        if N > 0:
-            recalls[class_name] = TP / N
-            accuracies[class_name] = (TP + TN) / (TP + TN + FP + FN)
-            specificitys[class_name] = TN / (TN + FP)
-            P = TP + FP
-            # Only record purity if at least some samples were classified positive,
-            # otherwise we can't measure purity
-            if P > 0:
-                precisions[class_name] = TP / P
+        total = TP + TN + FP + FN
+        accuracies[class_name] = (TP + TN) / total if total > 0 else None
+        recalls[class_name] = TP / (TP + FN) if (TP + FN) > 0 else None
+        precisions[class_name] = TP / (TP + FP) if (TP + FP) > 0 else None
+        specificitys[class_name] = TN / (TN + FP) if (TN + FP) > 0 else None
     return recalls, precisions, specificitys, accuracies
 
 
