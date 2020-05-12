@@ -23,6 +23,8 @@ class MainModelVisualization:
         """
         Convert confidence intervals to specific values to be plotted
         """
+        if intervals is None:
+            return None
         errs = [[], []]
         for index, interval in enumerate(intervals):
             min_bar = interval[0]
@@ -120,11 +122,11 @@ class MainModelVisualization:
             # Put probs & labels in same Numpy array
             i_results = np.hstack((top_i_probs, top_i_labels.reshape(-1, 1)))
             metrics, set_totals = self.compute_metrics(i_results, False)
-            recalls, puritys, spec, accs = compute_performance(metrics)
+            recalls, puritys, spec = compute_performance(metrics)
             avg_recall = self.get_average(recalls)
             avg_purity = self.get_average(puritys)
-            avg_acc = self.get_average(accs)
             avg_spec = self.get_average(spec)
+            avg_acc = get_accuracy(metrics, N=top_i)
 
             c.append(avg_recall)
             p.append(avg_purity)
@@ -177,15 +179,20 @@ class MainModelVisualization:
         top_half_indices = sorted_indices[:top_half]
 
         top_results = self.get_proportion_results(top_half_indices,  unnorm_results)
-        top_metrics = self.compute_probability_range_metrics(top_results, concat=False)
+        top_metrics = self.compute_probability_range_metrics(
+            top_results, bin_size=0.2, concat=False)
         print("\nVisualizing probability vs class rates for top 1/2 ")
-        self.plot_probability_vs_class_rates(top_metrics, extra_title=" (top half)")
+        perc_ranges = [10, 30, 50, 70, 90]
+        self.plot_probability_vs_class_rates(
+            top_metrics, extra_title=" (top half)", perc_ranges=perc_ranges)
 
         bot_half_indices = sorted_indices[top_half:]
         bot_results = self.get_proportion_results(bot_half_indices,  unnorm_results)
-        bot_metrics = self.compute_probability_range_metrics(bot_results, concat=False)
+        bot_metrics = self.compute_probability_range_metrics(
+            bot_results, bin_size=0.2, concat=False)
         print("\nVisualizing probability vs class rates for bottom 1/2 ")
-        self.plot_probability_vs_class_rates(bot_metrics, extra_title=" (bottom half)")
+        self.plot_probability_vs_class_rates(
+            bot_metrics, extra_title=" (bottom half)", perc_ranges=perc_ranges)
 
     def pre_plot_clean(self, x, y):
         """
@@ -291,11 +298,13 @@ class MainModelVisualization:
             class_metrics,
             baselines,
             intervals)
+
         # Set constants
         tick_size = 8
         bar_width = 0.8
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
                                dpi=DPI, tight_layout=True)
+
         errs = self.prep_err_bars(intervals, metrics)
         y_indices = np.arange(len(metrics))
         # Plot metrics
@@ -384,16 +393,23 @@ class MainModelVisualization:
                                              bbox_inches=None,
                                              fig=fig)
 
-    def plot_probability_vs_class_rates(self, range_metrics, extra_title=""):
+    def plot_probability_vs_class_rates(self, range_metrics, extra_title="", perc_ranges=None):
         """
         Plots probability assigned to class (x-axis) vs the percentage of assignments that were that class (# of class A / all samples given probability of class in the range A).
         :param range_metrics: Map of classes to [TP_range_sums, total_range_sums] from compute_probability_range_metrics
         :param extra_title: Extra string to add to title. 
         """
+        if perc_ranges is None:
+            perc_ranges = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]
+        # Set +/- minus range based on number of xticks.
+        if len(perc_ranges) == 10:
+            pm = 5
+        elif len(perc_ranges) == 5:
+            pm = 10
 
-        perc_ranges = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]
         x_indices = np.arange(len(perc_ranges))
-        total_count_per_range = np.zeros(10)
+        # x_indices = np.arange(0, 1, 1 / len(perc_ranges))
+        total_count_per_range = np.zeros(len(perc_ranges))
         for class_name in self.class_labels:
             true_positives, totals = range_metrics[class_name]
 
@@ -405,23 +421,29 @@ class MainModelVisualization:
             print(prob_rates)
             f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
             ax.bar(x_indices, prob_rates)
-            thex_utils.annotate_plot(ax, x_indices, prob_rates,
-                                     pos_class_counts_per_range)
+
+            # Make annotations: pos # in range / total # in range
+            annotations = []
+            for index, p in enumerate(pos_class_counts_per_range):
+                annotations.append(str(p) + " / " + str(totals[index]))
+
+            thex_utils.annotate_plot(ax, x_indices, prob_rates, annotations)
             plt.xticks(x_indices, perc_ranges, fontsize=10)
             plt.yticks(list(np.linspace(0, 1, 11)), [
                        str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
-            plt.xlabel('Probability of ' + class_name + ' +/- 5%', fontsize=12)
+            plt.xlabel('Probability of ' + class_name +
+                       ' +/-' + str(pm) + '%', fontsize=12)
             plt.ylabel('Class Rate', fontsize=12)
             ax.set_title(class_name + extra_title)
 
             thex_utils.display_and_save_plot(self.dir,
                                              "Probability vs Positive Rate: " + class_name + extra_title)
 
-        self.plot_agg_prob_vs_class_rates(total_count_per_range, True)
+        self.plot_agg_prob_vs_class_rates(total_count_per_range, True, perc_ranges)
 
-        self.plot_agg_prob_vs_class_rates(total_count_per_range, False)
+        self.plot_agg_prob_vs_class_rates(total_count_per_range, False, perc_ranges)
 
-    def plot_agg_prob_vs_class_rates(self, total_count_per_range, weighted):
+    def plot_agg_prob_vs_class_rates(self, total_count_per_range, weighted, perc_ranges):
         """
         Aggregates probability versus class rates across all classes.
         :param total_count_per_range: Numpy array of length 10, with # of class samples in each range, total. So, last index is total number of samples with probability in range 90-100%
@@ -442,7 +464,6 @@ class MainModelVisualization:
         print(p_title + ": \n" + str(aggregated_rates))
 
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-        perc_ranges = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]
         x_indices = np.arange(len(perc_ranges))
 
         # Plot aggregated rates

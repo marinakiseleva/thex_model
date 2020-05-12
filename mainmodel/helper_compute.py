@@ -26,15 +26,30 @@ def update_class_purities(class_purities, class_metrics):
     return class_purities
 
 
+def get_accuracy(class_metrics, N):
+    """
+    Get accuracy as total # of TP / total # of samples
+    :param class_metrics : Map from class name to metrics (which are map from TP, TN, FP, FN to values) 
+    :param N: total number of samples
+    """
+    if N == 0:
+        return 0
+    TP_total = 0
+    for class_name in class_metrics.keys():
+        metrics = class_metrics[class_name]
+        TP = metrics["TP"]
+        TP_total += TP
+    return TP_total / N
+
+
 def compute_performance(class_metrics):
     """
-    Get recall (completeness), precision (purity), specificity (true negative rate) and accuracy per class - for only the classes included in the sample (those with some TP or FP)
-    For completeness: if a class has no TP or FN then we do not use that class in the aggregated metric.
+    Get recall (completeness), precision (purity), specificity (true negative rate)   - for only the classes included in the sample. If no samples, return None for that metric. 
     :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values) 
     """
     precisions = {}
     recalls = {}
-    accuracies = {}
+    # accuracies = {}
     specificitys = {}
     for class_name in class_metrics.keys():
         metrics = class_metrics[class_name]
@@ -45,11 +60,11 @@ def compute_performance(class_metrics):
 
         # Only if there are samples in this class, calculate its metrics
         total = TP + TN + FP + FN
-        accuracies[class_name] = (TP + TN) / total if total > 0 else None
+        # accuracies[class_name] = (TP + TN) / total if total > 0 else None
         recalls[class_name] = TP / (TP + FN) if (TP + FN) > 0 else None
         precisions[class_name] = TP / (TP + FP) if (TP + FP) > 0 else None
         specificitys[class_name] = TN / (TN + FP) if (TN + FP) > 0 else None
-    return recalls, precisions, specificitys, accuracies
+    return recalls, precisions, specificitys
 
 
 def compute_confusion_matrix(results, class_labels):
@@ -94,7 +109,8 @@ def compute_confintvls(set_totals, num_runs, class_labels):
     for each class
     :param set_totals: Map from fold # to map of metrics
     """
-
+    if num_runs is None:
+        return None, None
     print("Number of runs: " + str(num_runs))
 
     def get_cis(values, N):
@@ -133,8 +149,9 @@ def get_agg_prob_vs_class_rates(total_count_per_range,  class_labels, class_posi
     """
     Get aggregated probability vs class rates
     """
+    length = len(class_positives[class_labels[0]])
     # Plot aggregated prob vs rates across all classes using weighted averages
-    aggregated_rates = np.zeros(10)
+    aggregated_rates = np.zeros(length)
     for class_name in class_labels:
         class_weights = np.array(class_positives[
             class_name]) / total_count_per_range

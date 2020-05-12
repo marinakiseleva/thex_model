@@ -256,7 +256,8 @@ class MainModel(ABC, MainModelVisualization):
         sample_X = self.results[0][random.randint(1, n)]
         self.plot_example_output(sample_X)
         self.plot_confusion_matrix(self.results)
-        range_metrics = self.compute_probability_range_metrics(self.results)
+        range_metrics = self.compute_probability_range_metrics(
+            self.results)
         self.plot_prob_pr_curves(range_metrics, self.class_counts)
         self.plot_probability_vs_class_rates(range_metrics)
         class_metrics, set_totals = self.compute_metrics(self.results)
@@ -442,7 +443,7 @@ class MainModel(ABC, MainModelVisualization):
                 total_probabilities.append(row[class_index])
 
             # left inclusive, first bin is 0 <= x < .1. ; except last bin <=1
-            bins = np.arange(0, 1 + bin_size, bin_size)
+            bins = np.arange(0, 1.01, bin_size)
             tp_range_counts = np.histogram(tp_probabilities, bins=bins)[0].tolist()
             total_range_counts = np.histogram(total_probabilities, bins=bins)[0].tolist()
 
