@@ -2,7 +2,7 @@
 """
 Class Mixin for MainModel which contains all performance plotting functionality
 """
-
+import math
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -418,7 +418,7 @@ class MainModelVisualization:
             prob_rates = self.class_prob_rates[class_name]
 
             if self.num_runs is not None:
-                totals = [int(t / self.num_runs) for t in totals]
+                totals = [math.ceil(t / self.num_runs) for t in totals]
 
             # Plotting
             f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
@@ -468,9 +468,9 @@ class MainModelVisualization:
 
         # Get average count per bin over runs
         if self.num_runs is not None:
-            totals = [int(t / self.num_runs) for t in total_pos_pr]
+            totals = [math.ceil(t / self.num_runs) for t in total_pos_pr]
         else:
-            totals = total_pos_pr
+            totals = [int(t / self.num_runs) for t in total_pos_pr]
 
         norm = plt.Normalize(0, max(totals))
         colors = mpl.cm.Blues(norm(totals))
