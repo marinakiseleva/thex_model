@@ -63,13 +63,13 @@ def annotate_plot(ax, x, y, annotations):
     """
     Adds count to top of each bar in bar plot
     """
-    class_index = 0
+    index = 0
     for xy in zip(x, y):
-        # Get class count of current class_index
-        count = str(annotations[class_index])
+        # Get class count of current index
+        count = str(annotations[index])
         ax.annotate(count, xy=xy, textcoords='data', ha='center',
                     va='bottom', fontsize=8, rotation=-90)
-        class_index += 1
+        index += 1
 
 
 def save_plot(model_dir, file_name, bbox_inches=None, fig=None):
