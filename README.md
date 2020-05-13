@@ -3,14 +3,16 @@ Source code contributing to the research of the Transient Host Exchange project 
 
 
 # Set-Up
-1. Set up the following directory structure (with the dataset as a FITs file in the data directory):
+1. Set up the following directory structure (with the dataset as a FITs file in the data directory). Ensure that thex_data/data_consts.py has the correct LOCAL_DATA_PATH file set. 
 ```
 thex_project
 └───thex_code
 │
 └───data
-│   │   THEx-dataset.fits
+│   │   [DATA FILES].fits
 ```
+
+
 2. Use the following commands to clone this repository and run the install script. The Jupyter Notebook interfaces will be automatically loaded.
 ```
 cd thex_code
@@ -20,7 +22,7 @@ sh install.sh
 ```
 
 
-3. After installation, ensure that virtualenv has  been activated ((thex_env) should be prepended to your shell prompt) and the structure of the project looks like this:
+3. The install script sets up a virtual environment. After the script finishes, ensure that virtualenv has  been activated ((thex_env) should be prepended to your shell prompt) and the structure of the project looks like this:
 ```
 thex_project
 └───thex_code
