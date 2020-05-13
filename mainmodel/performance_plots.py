@@ -420,7 +420,11 @@ class MainModelVisualization:
             print("\nProbability vs Class Rates for: " + str(class_name))
             print(prob_rates)
             f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-            ax.bar(x_indices, prob_rates)
+
+            norm = plt.Normalize(0, max(totals))
+            colors = mpl.cm.Blues(norm(totals))
+
+            a = ax.bar(x_indices, prob_rates, color=colors)
 
             # Make annotations: pos # in range / total # in range
             annotations = []
