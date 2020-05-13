@@ -441,18 +441,18 @@ class MainModelVisualization:
 
         if self.num_runs is not None:
             totals = [int(t / self.num_runs) for t in total_pos_pr]
-        self.plot_agg_prob_vs_class_rates(total_pos_pr, True, perc_ranges)
+        self.plot_agg_prob_vs_class_rates(totals, True, perc_ranges)
 
-        self.plot_agg_prob_vs_class_rates(total_pos_pr, False, perc_ranges)
+        self.plot_agg_prob_vs_class_rates(totals, False, perc_ranges)
 
-    def plot_agg_prob_vs_class_rates(self, total_count_per_range, weighted, perc_ranges):
+    def plot_agg_prob_vs_class_rates(self, total, weighted, perc_ranges):
         """
         Aggregates probability versus class rates across all classes.
-        :param total_count_per_range: Numpy array of length 10, with # of positive class samples in each range, total. So, last index is total number of TP samples with probability in range 90-100%
+        :param total: Numpy array of length 10, with # of positive class samples in each range, total. So, last index is total number of TP samples with probability in range 90-100%
         :param weighted: Boolean to weigh by class frequency
         """
         aggregated_rates = get_agg_prob_vs_class_rates(
-            total_count_per_range,
+            total,
             self.class_labels,
             self.class_positives,
             self.class_prob_rates,
@@ -468,9 +468,12 @@ class MainModelVisualization:
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         x_indices = np.arange(len(perc_ranges))
 
+        norm = plt.Normalize(0, max(total))
+        colors = mpl.cm.Blues(norm(total))
+
         # Plot aggregated rates
-        ax.bar(x_indices, aggregated_rates)
-        total = [int(b) for b in total_count_per_range]
+        ax.bar(x_indices, aggregated_rates, color=colors)
+
         thex_utils.annotate_plot(ax, x_indices, aggregated_rates, total)
         plt.xticks(x_indices, perc_ranges, fontsize=10)
         plt.yticks(list(np.linspace(0, 1, 11)), [
