@@ -439,20 +439,18 @@ class MainModelVisualization:
             thex_utils.display_and_save_plot(self.dir,
                                              "Probability vs Positive Rate: " + class_name + extra_title)
 
-        if self.num_runs is not None:
-            totals = [int(t / self.num_runs) for t in total_pos_pr]
-        self.plot_agg_prob_vs_class_rates(totals, True, perc_ranges)
+        self.plot_agg_prob_vs_class_rates(total_pos_pr, True, perc_ranges)
 
-        self.plot_agg_prob_vs_class_rates(totals, False, perc_ranges)
+        self.plot_agg_prob_vs_class_rates(total_pos_pr, False, perc_ranges)
 
-    def plot_agg_prob_vs_class_rates(self, total, weighted, perc_ranges):
+    def plot_agg_prob_vs_class_rates(self, total_pos_pr, weighted, perc_ranges):
         """
         Aggregates probability versus class rates across all classes.
-        :param total: Numpy array of length 10, with # of positive class samples in each range, total. So, last index is total number of TP samples with probability in range 90-100%
+        :param total_pos_pr: Numpy array of length 10, with total # of positive class samples per range. So, last index is total number of TP samples with probability in range 90-100%
         :param weighted: Boolean to weigh by class frequency
         """
         aggregated_rates = get_agg_prob_vs_class_rates(
-            total,
+            total_pos_pr,
             self.class_labels,
             self.class_positives,
             self.class_prob_rates,
@@ -468,13 +466,19 @@ class MainModelVisualization:
         f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         x_indices = np.arange(len(perc_ranges))
 
-        norm = plt.Normalize(0, max(total))
-        colors = mpl.cm.Blues(norm(total))
+        # Get average count per bin over runs
+        if self.num_runs is not None:
+            totals = [int(t / self.num_runs) for t in total_pos_pr]
+        else:
+            totals = total_pos_pr
+
+        norm = plt.Normalize(0, max(totals))
+        colors = mpl.cm.Blues(norm(totals))
 
         # Plot aggregated rates
         ax.bar(x_indices, aggregated_rates, color=colors)
 
-        thex_utils.annotate_plot(ax, x_indices, aggregated_rates, total)
+        thex_utils.annotate_plot(ax, x_indices, aggregated_rates, totals)
         plt.xticks(x_indices, perc_ranges, fontsize=10)
         plt.yticks(list(np.linspace(0, 1, 11)), [
             str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
