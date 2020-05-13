@@ -276,7 +276,7 @@ class MainModelVisualization:
         :param class_metrics: Returned from compute_metrics; Map from class name to map of performance metrics
         :param set_totals: Map from class name to map from fold # to map of metrics
         """
-        recalls, precisions, s, accs = compute_performance(class_metrics)
+        recalls, precisions, s = compute_performance(class_metrics)
         pos_baselines, neg_baselines, precision_baselines = self.compute_baselines(
             self.class_counts, y)
 
@@ -395,7 +395,7 @@ class MainModelVisualization:
 
     def plot_probability_vs_class_rates(self, range_metrics, extra_title="", perc_ranges=None):
         """
-        Plots probability assigned to class (x-axis) vs the percentage of assignments that were that class (# of class A / all samples given probability of class in the range A).
+        Plots probability assigned to class (x-axis) vs the percentage of assignments that were that class (# of class A / all samples given probability of class in the range A). At top of each bar is AVERAGE  # assigned probability in that range (over runs), and bars are colored accordingly. If using cross-fold, count is just the total.
         :param range_metrics: Map of classes to [TP_range_sums, total_range_sums] from compute_probability_range_metrics
         :param extra_title: Extra string to add to title. 
         """
@@ -408,24 +408,23 @@ class MainModelVisualization:
             pm = 10
 
         x_indices = np.arange(len(perc_ranges))
-        # x_indices = np.arange(0, 1, 1 / len(perc_ranges))
-        total_count_per_range = np.zeros(len(perc_ranges))
+        # total_pos_pr - total positive # of samples per range.
+        total_pos_pr = np.zeros(len(perc_ranges))
         for class_name in self.class_labels:
+            # Collect data for this class
             true_positives, totals = range_metrics[class_name]
-
             pos_class_counts_per_range = np.array(self.class_positives[class_name])
-            total_count_per_range += pos_class_counts_per_range
-
+            total_pos_pr += pos_class_counts_per_range
             prob_rates = self.class_prob_rates[class_name]
-            print("\nProbability vs Class Rates for: " + str(class_name))
-            print(prob_rates)
-            f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
 
+            if self.num_runs is not None:
+                totals = [int(t / self.num_runs) for t in totals]
+
+            # Plotting
+            f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
             norm = plt.Normalize(0, max(totals))
             colors = mpl.cm.Blues(norm(totals))
-
             a = ax.bar(x_indices, prob_rates, color=colors)
-
             thex_utils.annotate_plot(ax, x_indices, prob_rates, totals)
             plt.xticks(x_indices, perc_ranges, fontsize=10)
             plt.yticks(list(np.linspace(0, 1, 11)), [
@@ -435,17 +434,21 @@ class MainModelVisualization:
             plt.ylabel('Class Rate', fontsize=12)
             ax.set_title(class_name + extra_title)
 
+            print("\nProbability vs Class Rates for: " + str(class_name))
+            print(prob_rates)
             thex_utils.display_and_save_plot(self.dir,
                                              "Probability vs Positive Rate: " + class_name + extra_title)
 
-        self.plot_agg_prob_vs_class_rates(total_count_per_range, True, perc_ranges)
+        if self.num_runs is not None:
+            totals = [int(t / self.num_runs) for t in total_pos_pr]
+        self.plot_agg_prob_vs_class_rates(total_pos_pr, True, perc_ranges)
 
-        self.plot_agg_prob_vs_class_rates(total_count_per_range, False, perc_ranges)
+        self.plot_agg_prob_vs_class_rates(total_pos_pr, False, perc_ranges)
 
     def plot_agg_prob_vs_class_rates(self, total_count_per_range, weighted, perc_ranges):
         """
         Aggregates probability versus class rates across all classes.
-        :param total_count_per_range: Numpy array of length 10, with # of class samples in each range, total. So, last index is total number of samples with probability in range 90-100%
+        :param total_count_per_range: Numpy array of length 10, with # of positive class samples in each range, total. So, last index is total number of TP samples with probability in range 90-100%
         :param weighted: Boolean to weigh by class frequency
         """
         aggregated_rates = get_agg_prob_vs_class_rates(
