@@ -426,12 +426,7 @@ class MainModelVisualization:
 
             a = ax.bar(x_indices, prob_rates, color=colors)
 
-            # Make annotations: pos # in range / total # in range
-            annotations = []
-            for index, p in enumerate(pos_class_counts_per_range):
-                annotations.append(str(p) + " / " + str(totals[index]))
-
-            thex_utils.annotate_plot(ax, x_indices, prob_rates, annotations)
+            thex_utils.annotate_plot(ax, x_indices, prob_rates, totals)
             plt.xticks(x_indices, perc_ranges, fontsize=10)
             plt.yticks(list(np.linspace(0, 1, 11)), [
                        str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
