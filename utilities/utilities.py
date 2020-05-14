@@ -83,9 +83,11 @@ def save_plot(model_dir, file_name, bbox_inches=None, fig=None):
     plt.tight_layout()
 
     if fig is not None:
-        fig.savefig(model_dir + "/" + clean_str(file_name), bbox_inches=bbox_inches)
+        fig.savefig(model_dir + "/" + clean_str(file_name) +
+                    ".png", bbox_inches=bbox_inches)
     else:
-        plt.savefig(model_dir + "/" + clean_str(file_name), bbox_inches=bbox_inches)
+        plt.savefig(model_dir + "/" + clean_str(file_name) +
+                    ".png", bbox_inches=bbox_inches)
 
 
 def display_and_save_plot(model_dir, file_name, bbox_inches=None, fig=None):
