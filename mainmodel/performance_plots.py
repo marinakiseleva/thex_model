@@ -470,7 +470,7 @@ class MainModelVisualization:
         if self.num_runs is not None:
             totals = [math.ceil(t / self.num_runs) for t in total_pos_pr]
         else:
-            totals = [int(t / self.num_runs) for t in total_pos_pr]
+            totals = [int(t) for t in total_pos_pr]
 
         norm = plt.Normalize(0, max(totals))
         colors = mpl.cm.Blues(norm(totals))
