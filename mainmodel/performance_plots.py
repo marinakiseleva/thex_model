@@ -252,7 +252,7 @@ class MainModelVisualization:
             print("\n" + class_name + " purities " + str([x for x in zip(x, y)]))
             ax.scatter(x, y, color=colors[class_index], s=2)
             ax.plot(x, y, color=colors[class_index], label=class_name)
-            ax.plot(star[0], star[1], marker='*', color='black')
+            ax.plot(star[0], star[1], marker='*', color=colors[class_index])
         ax.set_ylabel("Purity")
         ax.set_xlabel("% Top Densities")
         ax.legend(loc='upper center', bbox_to_anchor=(1.25, 1), ncol=1, prop={'size': 8})
