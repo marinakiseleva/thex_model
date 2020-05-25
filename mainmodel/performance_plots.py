@@ -210,6 +210,8 @@ class MainModelVisualization:
         """
         Helper plotting function for density analysis
         """
+        print("\nPlotting " + str(name) + " versus % top densities. Y values: ")
+        print(y)
         orig_x = list(range(0, 100, 1))
         x, y = self.pre_plot_clean(orig_x,  y)
         ax.scatter(x, y, color=color, s=2)
