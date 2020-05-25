@@ -53,8 +53,6 @@ def compute_performance(class_metrics):
     """
     precisions = {}
     recalls = {}
-    # accuracies = {}
-    specificitys = {}
     for class_name in class_metrics.keys():
         metrics = class_metrics[class_name]
         TP = metrics["TP"]
@@ -64,11 +62,9 @@ def compute_performance(class_metrics):
 
         # Only if there are samples in this class, calculate its metrics
         total = TP + TN + FP + FN
-        # accuracies[class_name] = (TP + TN) / total if total > 0 else None
         recalls[class_name] = TP / (TP + FN) if (TP + FN) > 0 else None
         precisions[class_name] = TP / (TP + FP) if (TP + FP) > 0 else None
-        specificitys[class_name] = TN / (TN + FP) if (TN + FP) > 0 else None
-    return recalls, precisions, specificitys
+    return recalls, precisions
 
 
 def compute_confusion_matrix(results, class_labels):

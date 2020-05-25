@@ -98,7 +98,6 @@ class MainModelVisualization:
         c = []  # Avg compelteness for each i
         a = []  # Avg accuracy for each i
         a = []  # Avg accuracy for each i
-        s = []  # Avg specificity (true neg rate) for each i
         # 1. Get max density value per row
         probs_only = unnorm_results[:, 0:len(self.class_labels)].astype(float)
         max_value_per_row = np.amax(probs_only, axis=1)
@@ -122,25 +121,17 @@ class MainModelVisualization:
             # Put probs & labels in same Numpy array
             i_results = np.hstack((top_i_probs, top_i_labels.reshape(-1, 1)))
             metrics, set_totals = self.compute_metrics(i_results, False)
-            recalls, puritys, spec = compute_performance(metrics)
+            recalls, puritys = compute_performance(metrics)
             avg_recall = self.get_average(recalls)
             avg_purity = self.get_average(puritys)
-            avg_spec = self.get_average(spec)
             avg_acc = get_accuracy(metrics, N=top_i)
 
             c.append(avg_recall)
             p.append(avg_purity)
             a.append(avg_acc)
-            s.append(avg_spec)
             class_purities = update_class_purities(class_purities, metrics, i)
 
-        print("\nDensity performances:")
-        print("\nPurity\n" + str(p))
-        print("\nCompleteness\n" + str(c))
-        print("\nAccuracy\n" + str(a))
-        print("\nSpecificity\n" + str(s))
-        print("\nClass purities\n" + str(class_purities))
-        return p, c, a, s, class_purities
+        return p, c, a, class_purities
 
     def get_proportion_results(self, indices, results):
         """
@@ -210,10 +201,10 @@ class MainModelVisualization:
         """
         Helper plotting function for density analysis
         """
-        print("\nPlotting " + str(name) + " versus % top densities. Y values: ")
-        print(y)
         orig_x = list(range(0, 100, 1))
         x, y = self.pre_plot_clean(orig_x,  y)
+        print("\nPlotting " + str(name) + " versus % top densities. Y values:")
+        print(y)
         ax.scatter(x, y, color=color, s=2)
         ax.plot(x, y, color=color, label=name)
 
@@ -221,7 +212,7 @@ class MainModelVisualization:
         """
         Plots accuracy vs the X% of top unnormalized probabilities (densities) evaluated
         """
-        p, c, a, s, class_purities = self.get_avg_performances(unnorm_results)
+        p, c, a, class_purities = self.get_avg_performances(unnorm_results)
 
         # Plot aggregated performance metrics
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
@@ -229,7 +220,6 @@ class MainModelVisualization:
         self.clean_plot(p, ax, "Purity", 'red')
         self.clean_plot(c, ax, "Completeness", 'blue')
         self.clean_plot(a, ax, "Accuracy", 'green')
-        self.clean_plot(s, ax, "Specificity", 'black')
         ax.set_xlabel("% Top Densities")
         ax.set_ylabel("Average %")
         ax.set_ylim([0, 1.01])
@@ -259,7 +249,7 @@ class MainModelVisualization:
                     y.append(TP / den)
                     if round(class_count / total, 1) == 0.5:
                         star = [i, TP / den]
-
+            print("\n" + class_name + " purities " + str([x for x in zip(x, y)]))
             ax.scatter(x, y, color=colors[class_index], s=2)
             ax.plot(x, y, color=colors[class_index], label=class_name)
             ax.plot(star[0], star[1], marker='*', color='black')
@@ -294,7 +284,7 @@ class MainModelVisualization:
         :param class_metrics: Returned from compute_metrics; Map from class name to map of performance metrics
         :param set_totals: Map from class name to map from fold # to map of metrics
         """
-        recalls, precisions, s = compute_performance(class_metrics)
+        recalls, precisions = compute_performance(class_metrics)
         pos_baselines, neg_baselines, precision_baselines = self.compute_baselines(
             self.class_counts, y)
 
