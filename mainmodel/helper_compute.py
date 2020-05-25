@@ -9,19 +9,23 @@ import utilities.utilities as thex_utils
 from thex_data.data_consts import UNDEF_CLASS, ORDERED_CLASSES
 
 
-def update_class_purities(class_purities, class_metrics):
+def update_class_purities(class_purities, class_metrics, i):
     """
-    Add next purity to list of purities for each class. If not valid, append -1.
-    :param class_purities: Map from class name to list, where we will append purity based on class metrics
+    Add next purity to list of purities for each class. If not valid, append None. If there are no new samples (no change in TP+FP), also append None.
+    :param class_purities: Map from class name to list, where we will append [TP, TP+FP, i, class count] based on class metrics
     :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values)
     """
     for class_name in class_purities.keys():
         metrics = class_metrics[class_name]
         den = metrics["TP"] + metrics["FP"]
+        v = None
         if den > 0:
-            v = metrics["TP"] / den
-        else:
-            v = None
+            # Get last value, and make sure (TP+FP) counts have changed
+            last_val = class_purities[class_name][-1]
+            if last_val is None or last_val[1] < den:
+                class_count = metrics["TP"] + metrics["FN"]
+                v = [metrics["TP"], den, i, class_count]
+
         class_purities[class_name].append(v)
     return class_purities
 

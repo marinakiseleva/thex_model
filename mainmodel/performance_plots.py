@@ -132,7 +132,7 @@ class MainModelVisualization:
             p.append(avg_purity)
             a.append(avg_acc)
             s.append(avg_spec)
-            class_purities = update_class_purities(class_purities, metrics)
+            class_purities = update_class_purities(class_purities, metrics, i)
 
         print("\nDensity performances:")
         print("\nPurity\n" + str(p))
@@ -243,8 +243,24 @@ class MainModelVisualization:
 
         colors = plt.get_cmap('tab20').colors
         for class_index, class_name in enumerate(self.class_labels):
+            if self.num_runs is not None:
+                raise ValueError(
+                    "Can only aggregate this over folds, not runs.")
+            total = self.class_counts[class_name]
             purities = class_purities[class_name]
-            self.clean_plot(purities, ax, class_name, colors[class_index])
+            x = []
+            y = []
+            for vals in purities:
+                if vals is not None:
+                    TP, den, i, class_count = vals
+                    x.append(i)
+                    y.append(TP / den)
+                    if round(class_count / total, 1) == 0.5:
+                        star = [i, TP / den]
+
+            ax.scatter(x, y, color=colors[class_index], s=2)
+            ax.plot(x, y, color=colors[class_index], label=class_name)
+            ax.plot(star[0], star[1], marker='*', color='black')
         ax.set_ylabel("Purity")
         ax.set_xlabel("% Top Densities")
         ax.legend(loc='upper center', bbox_to_anchor=(1.25, 1), ncol=1, prop={'size': 8})
@@ -285,6 +301,10 @@ class MainModelVisualization:
 
         self.plot_metrics(recalls, "Completeness", pos_baselines, recall_intvls)
         self.plot_metrics(precisions, "Purity", precision_baselines, prec_intvls)
+        print("\n\nCompleteness\n")
+        print(str(recalls))
+        print("\n\nPurity\n")
+        print(str(precisions))
 
     def plot_metrics(self, class_metrics, xlabel, baselines=None, intervals=None):
         """
@@ -424,7 +444,7 @@ class MainModelVisualization:
             f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
             norm = plt.Normalize(0, max(totals))
             colors = mpl.cm.Blues(norm(totals))
-            a = ax.bar(x_indices, prob_rates, color=colors)
+            a = ax.bar(x_indices, prob_rates, color=colors, edgecolor='black')
             thex_utils.annotate_plot(ax, x_indices, prob_rates, totals)
             plt.xticks(x_indices, perc_ranges, fontsize=10)
             plt.yticks(list(np.linspace(0, 1, 11)), [
@@ -476,7 +496,7 @@ class MainModelVisualization:
         colors = mpl.cm.Blues(norm(totals))
 
         # Plot aggregated rates
-        ax.bar(x_indices, aggregated_rates, color=colors)
+        ax.bar(x_indices, aggregated_rates, color=colors, edgecolor='black')
 
         thex_utils.annotate_plot(ax, x_indices, aggregated_rates, totals)
         plt.xticks(x_indices, perc_ranges, fontsize=10)
