@@ -462,7 +462,7 @@ class MainModel(ABC, MainModelVisualization):
 
     def compute_metrics(self, results, as_sets=True):
         """
-        Compute TP, FP, TN, and FN per class and (if as_sets is True) compute those metrics for each class fore each fold too. Each sample is assigned its lowest-level class hierarchy label as its label. This is important, otherwise penalties will go across classes.
+        Compute TP, FP, TN, and FN per class and (if as_sets is True) compute those metrics for each class for each fold too. Each sample is assigned its lowest-level class hierarchy label as its label. This is important, otherwise penalties will go across classes.
         :param results: List of 2D Numpy arrays with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         :return class_metrics: Map from class name to map of {"TP": w, "FP": x, "FN": y, "TN": z}
         """
