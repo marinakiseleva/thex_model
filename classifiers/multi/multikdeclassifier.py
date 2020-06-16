@@ -209,7 +209,7 @@ class MultiKDEClassifier():
         """
         # Create grid to get optimal bandwidth
         # grid = {'bandwidth': np.linspace(0.001, 4, 100)}
-        grid = {'bandwidth': np.linspace(0.0001, 0.6, 100)}
+        grid = {'bandwidth': np.linspace(0.0001, 1, 100)}
         num_cross_folds = 3  # number of folds in a (Stratified)KFold
         kde = KernelDensity(leaf_size=40,
                             metric='euclidean',

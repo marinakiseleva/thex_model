@@ -5,6 +5,7 @@ Enhance features by scaling and transforming them
 import pandas as pd
 
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 
 from thex_data.data_consts import ORDERED_MAGS
@@ -46,7 +47,9 @@ def scale_data(X_train, X_test):
     """
     features_list = list(X_train)
     # Rescale data: z = (x - mean) / stdev
-    scaler = StandardScaler()
+    # scaler = StandardScaler()
+    scaler = MinMaxScaler(feature_range=(0, 2))
+
     scaled_X_train = pd.DataFrame(
         data=scaler.fit_transform(X_train), columns=features_list)
     scaled_X_test = pd.DataFrame(
