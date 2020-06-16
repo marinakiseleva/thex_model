@@ -117,7 +117,7 @@ def compute_confintvls(set_totals, num_runs, class_labels):
         """
         Calculate confidence intervals [µ − 2σ, µ + 2σ] where 
         σ = sqrt( (1/ N ) ∑_n (a_i − µ)^2 )
-        :param N: number of folds
+        :param N: number of runs
         """
         mean = sum(values) / len(values)
         a = sum((np.array(values) - mean) ** 2)

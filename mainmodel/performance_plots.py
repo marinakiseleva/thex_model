@@ -291,8 +291,9 @@ class MainModelVisualization:
         pos_baselines, neg_baselines, precision_baselines = self.compute_baselines(
             self.class_counts, y)
 
+        N = self.num_runs if self.num_runs is not None else self.num_folds
         prec_intvls, recall_intvls = compute_confintvls(
-            set_totals, self.num_runs, self.class_labels)
+            set_totals, N, self.class_labels)
 
         self.plot_metrics(recalls, "Completeness", pos_baselines, recall_intvls)
         self.plot_metrics(precisions, "Purity", precision_baselines, prec_intvls)
