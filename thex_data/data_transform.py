@@ -47,8 +47,7 @@ def scale_data(X_train, X_test):
     """
     features_list = list(X_train)
     # Rescale data: z = (x - mean) / stdev
-    # scaler = StandardScaler()
-    scaler = MinMaxScaler(feature_range=(0, 2))
+    scaler = StandardScaler()
 
     scaled_X_train = pd.DataFrame(
         data=scaler.fit_transform(X_train), columns=features_list)
