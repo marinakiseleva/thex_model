@@ -39,7 +39,7 @@ def derive_diffs(df):
 
 def scale_data(X_train, X_test):
     """
-    Fit scaling to training data and apply to both training and testing;
+    Fit scaling to training data and apply to both training and testing; scale my removing mean and scaling to unit variance. 
     Returns X_train and X_test as Pandas DataFrames
     :param X_train: Pandas DataFrame of training data
     :param X_test: Pandas DataFrame of testing data
