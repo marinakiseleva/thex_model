@@ -88,6 +88,7 @@ class MainModel(ABC, MainModelVisualization):
         self.num_runs = data_filters['num_runs']
         self.pca = data_filters['pca']
         self.nb = data_filters['nb']
+        self.transform_features = data_filters['transform_features']
         self.class_counts = self.get_class_counts(y)
         self.normalize = True
 
@@ -280,7 +281,8 @@ class MainModel(ABC, MainModelVisualization):
                 drop=True), y.iloc[test_index].reset_index(drop=True)
 
             # Scale and apply PCA
-            # X_train, X_test = scale_data(X_train, X_test)
+            if self.transform_features:
+                X_train, X_test = scale_data(X_train, X_test)
             if self.pca is not None:
                 X_train, X_test = apply_PCA(X_train, X_test, self.pca)
 
@@ -350,7 +352,8 @@ class MainModel(ABC, MainModelVisualization):
             X_train, y_train, X_test, y_test = self.manually_stratify(X, y, .66)
 
             # Scale and apply PCA
-            # X_train, X_test = scale_data(X_train, X_test)
+            if self.transform_features:
+                X_train, X_test = scale_data(X_train, X_test)
             if self.pca is not None:
                 X_train, X_test = apply_PCA(X_train, X_test, self.pca)
 
