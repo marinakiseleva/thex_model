@@ -349,7 +349,7 @@ class MainModel(ABC, MainModelVisualization):
         results = []
         for i in range(N):
             print("\n\nTrial:  " + str(i + 1))
-            X_train, y_train, X_test, y_test = self.manually_stratify(X, y, .66)
+            X_train, y_train, X_test, y_test = self.manually_stratify(X, y, .8)
 
             # Scale and apply PCA
             if self.transform_features:
