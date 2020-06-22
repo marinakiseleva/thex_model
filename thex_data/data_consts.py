@@ -1,46 +1,35 @@
 """
 data_consts
-Constant data-based information needed in THEx data program. Includes file locations of data, mapping of transient types and codes, as well as program-specific column names and references.
+Constant data-based information needed in THEx data program. Includes file locations of data, mapping of transient types, as well as program-specific column names and references.
 """
 
 import os
 
-CPU_COUNT = 6
+# ***************************************************************
+# Paths
+
+# FITS file of transient/galaxy data
+DATA_PATH = '~/thex/data/assembled-magcols.fits'
+
+# ROOT_DIR = /full/path/up/to/thex_model
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
+
+
+# ***************************************************************
+# Runtime specs
+TREE_ROOT = "_ROOT"
+
+LOSS_FUNCTION = "brier_score_loss"
+
+CPU_COUNT = 8
 
 # Plotting Specifications
 FIG_WIDTH = 6
 FIG_HEIGHT = 4
 DPI = 600
 
-#***************************************************************
-# LOCAL_DATA_PATH to relative path of THEx FITS file, relative to root of
-# package: thex_model
-
-
-# Testing
-# LOCAL_DATA_PATH = '/../../data/test_data.fits'
-
-# June 3 Assembled - More data?
-# LOCAL_DATA_PATH = '/../../data/assembled.fits'
-
-# GALEX/WISE/PANSTARRS Versions 1, 2, 3
-# LOCAL_DATA_PATH = '/../../data/THEx-training-set.v0_0_1.fits'
-# LOCAL_DATA_PATH = '/../../data/THEx-training-set-v0_0_2.fits'
-# LOCAL_DATA_PATH = '/../../data/THEx-training-set-v0_0_3.fits'
-LOCAL_DATA_PATH = '/../../data/assembled-magcols.fits'
-
-# All data Version 4
-# LOCAL_DATA_PATH = '/../../data/THEx-catalog.v0_0_4.fits'
-
-
-#***************************************************************
-
-
-# ROOT_DIR = /full/path/up/to/thex_model
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
-
-# FITS file of transient/galaxy data
-DATA_PATH = ROOT_DIR + LOCAL_DATA_PATH
+# ***************************************************************
+# Transient class variables
 
 # ORIG_TARGET_LABEL: Database defined column name; converted to TARGET_LABEL in project
 ORIG_TARGET_LABEL = 'claimedtype'
@@ -49,10 +38,6 @@ TARGET_LABEL = 'transient_type'
 UNKNOWN_LABEL = 'Unknown'
 PRED_LABEL = 'predicted_class'
 UNDEF_CLASS = 'Unspecified '
-TREE_ROOT = "_ROOT"
-
-
-LOSS_FUNCTION = "brier_score_loss"
 
 
 """
@@ -124,7 +109,6 @@ class_to_subclass
 Hierarchy of transient types, used in hierarchical multilabel classifiers
 """
 
-# Version 4
 class_to_subclass = {
     "Ia":                    ["Ia Pec"],
     "Ia Pec":                ["Ia-00cx", "Ia-02cx", "Ia-09dc", "Ia-91T",
