@@ -9,7 +9,8 @@ import os
 # Paths
 
 # FITS file of transient/galaxy data
-DATA_PATH = '~/data/thex/assembled-magcols.fits'
+
+DATA_PATH = os.environ['HOME'] + '/data/thex/assembled-magcols.fits'
 
 # ROOT_DIR = /full/path/up/to/thex_model
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
