@@ -103,15 +103,15 @@ def compute_confusion_matrix(results, class_labels):
     return cm
 
 
-def compute_confintvls(set_totals, num_runs, class_labels):
+def compute_confintvls(set_totals, N, class_labels):
     """
     Compute 95% confidence intervals, [µ − 2σ, µ + 2σ],
     for each class
     :param set_totals: Map from fold # to map of metrics
+    :param N: Number of runs or folds
     """
-    if num_runs is None:
+    if N is None:
         return None, None
-    print("Number of runs: " + str(num_runs))
 
     def get_cis(values, N):
         """
@@ -121,10 +121,11 @@ def compute_confintvls(set_totals, num_runs, class_labels):
         """
         mean = sum(values) / len(values)
         a = sum((np.array(values) - mean) ** 2)
-        stdev = np.sqrt((1 / N) * a)
-        return [mean - (2 * stdev), mean + (2 * stdev)]
+        stdev = np.sqrt((a / (N - 1)))
+        stderr = stdev / np.sqrt(N)
+        # 95% confidence intervals, [µ − 1.96σ, µ + 1.96σ]
+        return [mean - (1.96 * stderr), mean + (1.96 * stderr)]
 
-    # 95% confidence intervals, [µ − 2σ, µ + 2σ]
     prec_cis = {cn: [0, 0] for cn in class_labels}
     recall_cis = {cn: [0, 0] for cn in class_labels}
     for class_name in set_totals.keys():
@@ -140,8 +141,8 @@ def compute_confintvls(set_totals, num_runs, class_labels):
             recalls.append(rec)
 
         # Calculate confidence intervals
-        prec_cis[class_name] = get_cis(precisions, num_runs)
-        recall_cis[class_name] = get_cis(recalls, num_runs)
+        prec_cis[class_name] = get_cis(precisions, N)
+        recall_cis[class_name] = get_cis(recalls, N)
     return prec_cis, recall_cis
 
 
