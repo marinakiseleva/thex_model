@@ -9,6 +9,27 @@ import utilities.utilities as thex_utils
 from thex_data.data_consts import UNDEF_CLASS, ORDERED_CLASSES
 
 
+def compute_baselines(class_counts, class_labels, y):
+    """
+    Get random classifier baselines for recall, specificity (negative recall), and precision
+    """
+    pos_baselines = {}
+    neg_baselines = {}
+    precision_baselines = {}
+    total_count = y.shape[0]
+    class_priors = {c: 1 / len(class_labels)
+                    for c in class_labels}
+
+    for class_name in class_labels:
+        # Compute baselines
+        class_freq = class_counts[class_name] / total_count
+        pos_baselines[class_name] = class_priors[class_name]
+        neg_baselines[class_name] = (1 - class_priors[class_name])
+        precision_baselines[class_name] = class_freq
+
+    return pos_baselines, neg_baselines, precision_baselines
+
+
 def update_class_purities(class_purities, class_metrics, i):
     """
     Add next purity to list of purities for each class. If not valid, append None. If there are no new samples (no change in TP+FP), also append None.

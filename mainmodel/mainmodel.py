@@ -36,7 +36,7 @@ class MainModel(ABC, MainModelVisualization):
         self.dir = util.init_file_directories(self.name)
         print("Saving " + self.name + " output to directory " + self.dir)
         # Redirect prints to log
-        sys.stdout = open(self.dir + "/experiment.log", "a")
+        # sys.stdout = open(self.dir + "/experiment.log", "a")
 
         # Must add Unspecifieds to tree, so that when searching for lowest-level
         # label, the UNDEF one returns.
@@ -253,9 +253,6 @@ class MainModel(ABC, MainModelVisualization):
         """
         Visualize performance
         """
-        n = len(self.results[0])
-        sample_X = self.results[0][random.randint(1, n)]
-        self.plot_example_output(sample_X)
         self.plot_confusion_matrix(self.results)
         range_metrics = self.compute_probability_range_metrics(
             self.results)
@@ -528,26 +525,6 @@ class MainModel(ABC, MainModelVisualization):
                     if set_totals is not None:
                         set_totals[class_name][index]["TN"] += 1
         return class_metrics, set_totals
-
-    def compute_baselines(self, class_counts, y):
-        """
-        Get random classifier baselines for recall, specificity (negative recall), and precision
-        """
-        pos_baselines = {}
-        neg_baselines = {}
-        precision_baselines = {}
-        total_count = y.shape[0]
-        class_priors = {c: 1 / len(self.class_labels)
-                        for c in self.class_labels}
-
-        for class_name in self.class_labels:
-            # Compute baselines
-            class_freq = class_counts[class_name] / total_count
-            pos_baselines[class_name] = class_priors[class_name]
-            neg_baselines[class_name] = (1 - class_priors[class_name])
-            precision_baselines[class_name] = class_freq
-
-        return pos_baselines, neg_baselines, precision_baselines
 
     @abstractmethod
     def get_class_probabilities(self, x):

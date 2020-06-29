@@ -66,7 +66,7 @@ class MainModelVisualization:
         ax.set_ylim([0, 1])
         plt.ylabel('Probability Assigned', fontsize=12)
         plt.xlabel('Class', fontsize=12)
-        plt.xticks(x_indices, self.class_labels, fontsize=10)
+        plt.xticks(x_indices, self.class_labels, fontsize=12)
         title = "example_output"
         if i is not None:
             title += "_" + str(i)
@@ -277,7 +277,7 @@ class MainModelVisualization:
         ax.set_ylabel("Actual", fontsize=10)
         ax.set_xlabel("Prediction", fontsize=10)
         plt.yticks(indices, self.class_labels, fontsize=10)
-        plt.xticks(indices, self.class_labels, rotation=-90, fontsize=10)
+        plt.xticks(indices, self.class_labels, rotation=-90, fontsize=12)
         plt.colorbar(hm)
         thex_utils.display_and_save_plot(self.dir, "Confusion Matrix", fig=fig)
 
@@ -288,8 +288,8 @@ class MainModelVisualization:
         :param set_totals: Map from class name to map from fold # to map of metrics
         """
         recalls, precisions = compute_performance(class_metrics)
-        pos_baselines, neg_baselines, precision_baselines = self.compute_baselines(
-            self.class_counts, y)
+        pos_baselines, neg_baselines, precision_baselines = compute_baselines(
+            self.class_counts, self.class_labels, y)
 
         N = self.num_runs if self.num_runs is not None else self.num_folds
         prec_intvls, recall_intvls = compute_confintvls(
@@ -337,14 +337,19 @@ class MainModelVisualization:
         ax.set_xlim(0, 1)
         plt.xticks(list(np.linspace(0, 1, 11)), [
                    str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
-        plt.xlabel(xlabel, fontsize=10)
-        plt.yticks(y_indices, class_names,  fontsize='small',
-                   horizontalalignment='left')
-        plt.ylabel('Transient Class', fontsize=10)
 
-        max_tick_width = self.get_max_tick_width(class_names, tick_size)
-        yax = ax.get_yaxis()
-        yax.set_tick_params(pad=max_tick_width)
+        plt.xlabel(xlabel, fontsize=12)
+
+        for index, cn in enumerate(class_names):
+            new_name = cn.replace("unspecified", "unspec.")
+            class_names[index] = new_name.strip()
+        plt.yticks(y_indices, class_names,  fontsize=12,
+                   horizontalalignment='right')
+        plt.ylabel('Transient Class', fontsize=12)
+
+        # max_tick_width = self.get_max_tick_width(class_names, tick_size)
+        # yax = ax.get_yaxis()
+        # yax.set_tick_params(pad=max_tick_width)
 
         ax.set_title(xlabel)
         thex_utils.display_and_save_plot(self.dir, self.name + ": " + xlabel)
@@ -387,8 +392,8 @@ class MainModelVisualization:
             x_indices = np.linspace(0, 1, len(precision))
 
             color = 'tab:red'
-            ax1.set_xlabel('Probability >=')
-            ax1.set_ylabel('Purity', color=color)
+            ax1.set_xlabel('Probability >=', fontsize=14)
+            ax1.set_ylabel('Purity', color=color, fontsize=14)
             ax1.scatter(x_indices, precision, color=color, s=4)
             ax1.plot(x_indices, precision, color=color)
             ax1.tick_params(axis='y', labelcolor=color)
@@ -396,7 +401,7 @@ class MainModelVisualization:
 
             ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
             color = 'tab:blue'
-            ax2.set_ylabel('Completeness', color=color)
+            ax2.set_ylabel('Completeness', color=color, fontsize=14)
             ax2.scatter(x_indices, recall, color=color, s=4)
             ax2.plot(x_indices, recall, color=color)
             ax2.tick_params(axis='y', labelcolor=color)
