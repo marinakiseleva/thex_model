@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setup(name='thex_model',
       packages=find_packages(),
-      version='2.94',
+      version='2.95',
       description='THEx Model: Package for classifying astronomical transients using host galaxies for THEx collaboration.',
       long_description=long_description,
       long_description_content_type = 'text/markdown',
