@@ -121,12 +121,12 @@ class MainModelVisualization:
             # Put probs & labels in same Numpy array
             i_results = np.hstack((top_i_probs, top_i_labels.reshape(-1, 1)))
             metrics = self.compute_metrics(i_results)
-            recalls, puritys = compute_performance(metrics)
-            avg_recall = self.get_average(recalls)
+            comps, puritys = compute_performance(metrics)
+            avg_comp = self.get_average(comps)
             avg_purity = self.get_average(puritys)
             avg_acc = get_accuracy(metrics, N=top_i)
 
-            c.append(avg_recall)
+            c.append(avg_comp)
             p.append(avg_purity)
             a.append(avg_acc)
             class_purities = update_class_purities(class_purities, metrics, i)
@@ -281,27 +281,26 @@ class MainModelVisualization:
         plt.colorbar(hm)
         thex_utils.display_and_save_plot(self.dir, "Confusion Matrix", fig=fig)
 
-    def plot_all_metrics(self, precisions, recalls, all_pc, y):
+    def plot_all_metrics(self, purities, comps, all_pc, y):
         """
         Plot performance metrics for model
-        :param precisions: Average purity across folds/trials, per class (dict)
-        :param recalls: Average completeness across folds/trials, per class (dict)
+        :param purities: Average purity across folds/trials, per class (dict)
+        :param comps: Average completeness across folds/trials, per class (dict)
         :param all_pc: Purity & completeness per trial/fold, per class
         :param y: all y dataset 
         """
-        # recalls, precisions = compute_performance(class_metrics)
-        pos_baselines, neg_baselines, precision_baselines = compute_baselines(
+        c_baselines, s_baselines, p_baselines = compute_baselines(
             self.class_counts, self.class_labels, y)
 
-        prec_intvls, recall_intvls = compute_confintvls(
-            all_pc, self.class_labels)
+        p_intvls, c_intvls = compute_confintvls(all_pc, self.class_labels)
 
-        self.plot_metrics(recalls, "Completeness", pos_baselines, recall_intvls)
-        self.plot_metrics(precisions, "Purity", precision_baselines, prec_intvls)
+        self.plot_metrics(comps, "Completeness", c_baselines, c_intvls)
+        self.plot_metrics(purities, "Purity", p_baselines, p_intvls)
+
         print("\n\nCompleteness\n")
-        print(str(recalls))
+        print(str(comps))
         print("\n\nPurity\n")
-        print(str(precisions))
+        print(str(purities))
 
     def plot_metrics(self, class_metrics, xlabel, baselines=None, intervals=None):
         """
@@ -355,9 +354,9 @@ class MainModelVisualization:
         ax.set_title(xlabel)
         thex_utils.display_and_save_plot(self.dir, self.name + ": " + xlabel)
 
-    def plot_prob_pr_curves(self, range_metrics, class_counts):
+    def plot_prob_pc_curves(self, range_metrics, class_counts):
         """
-        Plot recall curve and precision curve relative to probabilities
+        Plot purity & completeness curves relative to >= probability assigned to event
         :param range_metrics: Map of classes to [TP_range_sums, total_range_sums] where total_range_sums is the number of samples with probability in range for this class and TP_range_sums is the true positives per range
         :param class_counts: Map from class name to counts
         """
@@ -369,42 +368,40 @@ class MainModelVisualization:
             if self.num_runs is not None:
                 class_total = self.num_runs * class_total * .33
 
-            precision = []  # Accuracy per range (true positive/total)
-            recall = []
+            purities = []  # Accuracy per range (true positive/total)
+            comps = []
             TP_count = 0
             total_count = 0
             for index in reversed(range(len(true_positives))):
-                cur_precision = 0
-                cur_recall = 0
-
+                cur_p = 0  # Current purity
+                cur_c = 0  # Current completeness
                 TP_count += true_positives[index]
                 total_count += totals[index]
-
                 if total_count != 0:
                     # positive class samples / totals # with prob in range
-                    cur_precision = TP_count / total_count
+                    cur_p = TP_count / total_count
                 if class_total != 0:
-                    cur_recall = TP_count / class_total
+                    cur_c = TP_count / class_total
 
-                precision.append(cur_precision)
-                recall.append(cur_recall)
-            precision.reverse()
-            recall.reverse()
-            x_indices = np.linspace(0, 1, len(precision))
+                purities.append(cur_p)
+                comps.append(cur_c)
+            purities.reverse()
+            comps.reverse()
+            x_indices = np.linspace(0, 1, len(purities))
 
             color = 'tab:red'
             ax1.set_xlabel('Probability >=', fontsize=14)
             ax1.set_ylabel('Purity', color=color, fontsize=14)
-            ax1.scatter(x_indices, precision, color=color, s=4)
-            ax1.plot(x_indices, precision, color=color)
+            ax1.scatter(x_indices, purities, color=color, s=4)
+            ax1.plot(x_indices, purities, color=color)
             ax1.tick_params(axis='y', labelcolor=color)
             ax1.set_ylim([0, 1])
 
             ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
             color = 'tab:blue'
             ax2.set_ylabel('Completeness', color=color, fontsize=14)
-            ax2.scatter(x_indices, recall, color=color, s=4)
-            ax2.plot(x_indices, recall, color=color)
+            ax2.scatter(x_indices, comps, color=color, s=4)
+            ax2.plot(x_indices, comps, color=color)
             ax2.tick_params(axis='y', labelcolor=color)
             ax2.set_ylim([0, 1])
 

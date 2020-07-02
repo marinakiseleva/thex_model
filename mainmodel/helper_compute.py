@@ -11,11 +11,11 @@ from thex_data.data_consts import UNDEF_CLASS, ORDERED_CLASSES
 
 def compute_baselines(class_counts, class_labels, y):
     """
-    Get random classifier baselines for recall, specificity (negative recall), and precision
+    Get random classifier baselines for completeness, specificity (negative recall), and purity
     """
-    pos_baselines = {}
-    neg_baselines = {}
-    precision_baselines = {}
+    comp_baselines = {}
+    spec_baselines = {}
+    purity_baselines = {}
     total_count = y.shape[0]
     class_priors = {c: 1 / len(class_labels)
                     for c in class_labels}
@@ -23,11 +23,11 @@ def compute_baselines(class_counts, class_labels, y):
     for class_name in class_labels:
         # Compute baselines
         class_freq = class_counts[class_name] / total_count
-        pos_baselines[class_name] = class_priors[class_name]
-        neg_baselines[class_name] = (1 - class_priors[class_name])
-        precision_baselines[class_name] = class_freq
+        comp_baselines[class_name] = class_priors[class_name]
+        spec_baselines[class_name] = (1 - class_priors[class_name])
+        purity_baselines[class_name] = class_freq
 
-    return pos_baselines, neg_baselines, precision_baselines
+    return comp_baselines, spec_baselines, purity_baselines
 
 
 def update_class_purities(class_purities, class_metrics, i):
@@ -73,7 +73,7 @@ def compute_performance(class_metrics):
     :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values) 
     """
     purities = {}
-    recalls = {}
+    comps = {}
     for class_name in class_metrics.keys():
         metrics = class_metrics[class_name]
         TP = metrics["TP"]
@@ -83,9 +83,9 @@ def compute_performance(class_metrics):
 
         # Only if there are samples in this class, calculate its metrics
         total = TP + TN + FP + FN
-        recalls[class_name] = TP / (TP + FN) if (TP + FN) > 0 else None
+        comps[class_name] = TP / (TP + FN) if (TP + FN) > 0 else None
         purities[class_name] = TP / (TP + FP) if (TP + FP) > 0 else None
-    return recalls, purities
+    return comps, purities
 
 
 def compute_confusion_matrix(results, class_labels):
@@ -146,8 +146,8 @@ def compute_confintvls(all_pc, class_labels):
 
     N = len(all_pc)  # Number of folds/trials
 
-    prec_cis = {}
-    recall_cis = {}
+    purity_cis = {}
+    comp_cis = {}
     for class_name in class_labels:
         class_purities = []
         class_comps = []
@@ -158,9 +158,9 @@ def compute_confintvls(all_pc, class_labels):
             class_comps.append(class_compeleteness)
 
         # Calculate confidence intervals
-        prec_cis[class_name] = get_cis(class_purities, N)
-        recall_cis[class_name] = get_cis(class_comps, N)
-    return prec_cis, recall_cis
+        purity_cis[class_name] = get_cis(class_purities, N)
+        comp_cis[class_name] = get_cis(class_comps, N)
+    return purity_cis, comp_cis
 
 
 def get_agg_prob_vs_class_rates(total_count_per_range,  class_labels, class_positives, class_prob_rates, weighted):
