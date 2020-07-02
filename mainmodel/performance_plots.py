@@ -120,7 +120,7 @@ class MainModelVisualization:
 
             # Put probs & labels in same Numpy array
             i_results = np.hstack((top_i_probs, top_i_labels.reshape(-1, 1)))
-            metrics, set_totals = self.compute_metrics(i_results, False)
+            metrics = self.compute_metrics(i_results)
             recalls, puritys = compute_performance(metrics)
             avg_recall = self.get_average(recalls)
             avg_purity = self.get_average(puritys)
@@ -281,19 +281,20 @@ class MainModelVisualization:
         plt.colorbar(hm)
         thex_utils.display_and_save_plot(self.dir, "Confusion Matrix", fig=fig)
 
-    def plot_all_metrics(self, class_metrics, set_totals, y):
+    def plot_all_metrics(self, precisions, recalls, all_pc, y):
         """
         Plot performance metrics for model
-        :param class_metrics: Returned from compute_metrics; Map from class name to map of performance metrics
-        :param set_totals: Map from class name to map from fold # to map of metrics
+        :param precisions: Average purity across folds/trials, per class (dict)
+        :param recalls: Average completeness across folds/trials, per class (dict)
+        :param all_pc: Purity & completeness per trial/fold, per class
+        :param y: all y dataset 
         """
-        recalls, precisions = compute_performance(class_metrics)
+        # recalls, precisions = compute_performance(class_metrics)
         pos_baselines, neg_baselines, precision_baselines = compute_baselines(
             self.class_counts, self.class_labels, y)
 
-        N = self.num_runs if self.num_runs is not None else self.num_folds
         prec_intvls, recall_intvls = compute_confintvls(
-            set_totals, N, self.class_labels)
+            all_pc, self.class_labels)
 
         self.plot_metrics(recalls, "Completeness", pos_baselines, recall_intvls)
         self.plot_metrics(precisions, "Purity", precision_baselines, prec_intvls)

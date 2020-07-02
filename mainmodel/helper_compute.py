@@ -69,10 +69,10 @@ def get_accuracy(class_metrics, N):
 
 def compute_performance(class_metrics):
     """
-    Get recall (completeness), precision (purity), specificity (true negative rate)   - for only the classes included in the sample. If no samples, return None for that metric. 
+    Get completeness & purity for each class, return as 2 dicts
     :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values) 
     """
-    precisions = {}
+    purities = {}
     recalls = {}
     for class_name in class_metrics.keys():
         metrics = class_metrics[class_name]
@@ -84,8 +84,8 @@ def compute_performance(class_metrics):
         # Only if there are samples in this class, calculate its metrics
         total = TP + TN + FP + FN
         recalls[class_name] = TP / (TP + FN) if (TP + FN) > 0 else None
-        precisions[class_name] = TP / (TP + FP) if (TP + FP) > 0 else None
-    return recalls, precisions
+        purities[class_name] = TP / (TP + FP) if (TP + FP) > 0 else None
+    return recalls, purities
 
 
 def compute_confusion_matrix(results, class_labels):
@@ -124,15 +124,12 @@ def compute_confusion_matrix(results, class_labels):
     return cm
 
 
-def compute_confintvls(set_totals, N, class_labels):
+def compute_confintvls(all_pc, class_labels):
     """
     Compute 95% confidence intervals, [µ − 2σ, µ + 2σ],
     for each class
-    :param set_totals: Map from fold # to map of metrics
-    :param N: Number of runs or folds
+    :param all_pc: List with length of N, each item is [pmap, cmap] for that fold/trial, where pmap is map from class name to purity
     """
-    if N is None:
-        return None, None
 
     def get_cis(values, N):
         """
@@ -147,23 +144,22 @@ def compute_confintvls(set_totals, N, class_labels):
         # 95% confidence intervals, [µ − 1.96σ, µ + 1.96σ]
         return [mean - (1.96 * stderr), mean + (1.96 * stderr)]
 
-    prec_cis = {cn: [0, 0] for cn in class_labels}
-    recall_cis = {cn: [0, 0] for cn in class_labels}
-    for class_name in set_totals.keys():
-        precisions = []
-        recalls = []
-        for fold_num in set_totals[class_name].keys():
-            metrics = set_totals[class_name][fold_num]
-            den = metrics["TP"] + metrics["FP"]
-            prec = metrics["TP"] / den if den > 0 else 0
-            precisions.append(prec)
-            den = metrics["TP"] + metrics["FN"]
-            rec = metrics["TP"] / den if den > 0 else 0
-            recalls.append(rec)
+    N = len(all_pc)  # Number of folds/trials
+
+    prec_cis = {}
+    recall_cis = {}
+    for class_name in class_labels:
+        class_purities = []
+        class_comps = []
+        for pc in all_pc:
+            class_purity = pc[0][class_name]
+            class_compeleteness = pc[1][class_name]
+            class_purities.append(class_purity)
+            class_comps.append(class_compeleteness)
 
         # Calculate confidence intervals
-        prec_cis[class_name] = get_cis(precisions, N)
-        recall_cis[class_name] = get_cis(recalls, N)
+        prec_cis[class_name] = get_cis(class_purities, N)
+        recall_cis[class_name] = get_cis(class_comps, N)
     return prec_cis, recall_cis
 
 

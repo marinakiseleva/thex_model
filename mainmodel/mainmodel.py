@@ -16,7 +16,7 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
 # local imports
-from mainmodel.helper_compute import get_ordered_metrics
+from mainmodel.helper_compute import get_ordered_metrics, compute_performance
 from thex_data.data_init import *
 from thex_data.data_filter import filter_data
 from thex_data.data_prep import get_source_target_data
@@ -258,9 +258,13 @@ class MainModel(ABC, MainModelVisualization):
             self.results)
         self.plot_prob_pr_curves(range_metrics, self.class_counts)
         self.plot_probability_vs_class_rates(range_metrics)
-        class_metrics, set_totals = self.compute_metrics(self.results)
 
-        self.plot_all_metrics(class_metrics, set_totals, self.y)
+        N = self.num_runs if self.num_runs is not None else self.num_folds
+
+        pc_per_trial = self.get_pc_per_trial(self.results)
+        ps, cs = self.get_avg_pc(self.results, pc_per_trial, N)
+
+        self.plot_all_metrics(ps, cs, pc_per_trial, self.y)
 
     def run_cfv(self, X, y):
         """
@@ -461,31 +465,59 @@ class MainModel(ABC, MainModelVisualization):
 
         return range_metrics
 
-    def compute_metrics(self, results, as_sets=True):
+    def compute_metrics(self, results):
         """
-        Compute TP, FP, TN, and FN per class and (if as_sets is True) compute those metrics for each class for each fold/run. Each sample is assigned its lowest-level class hierarchy label as its label. This is important, otherwise penalties will go across classes.
+        Compute TP, FP, TN, and FN per class and (if as_sets is True) compute those metrics for each class for each fold/run.
         :param results: List of 2D Numpy arrays with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         :return class_metrics: Map from class name to map of {"TP": w, "FP": x, "FN": y, "TN": z}
         """
-
-        # Map from class name to metrics
-        class_metrics = {cn: {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
+        class_metrics = {cn: {"TP": 0, "FP": 0, "TN": 0, "FN": 0}
                          for cn in self.class_labels}
+        for row in results:
+            class_metrics = self.get_row_metrics(row, class_metrics)
+        return class_metrics
 
-        # (for sets) Map from class name to map from fold to metrics (to estimate confidence intervals on later)
-        set_totals = {cn: {fold: {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
-                           for fold in range(len(results))} for cn in self.class_labels}
-        if as_sets:
-            # For each set,
-            for index, result_set in enumerate(results):
-                for row in result_set:
-                    class_metrics, set_totals = self.get_row_metrics(
-                        row, class_metrics, index, set_totals)
-        else:
-            for row in results:
-                class_metrics, set_totals = self.get_row_metrics(row, class_metrics)
+    def get_pc_per_trial(self, results):
+        """
+        Get purity and completeness per trial/fold, per class
+        Return [[c1,p1], [c2,p2] ..., [cN, pN]] where each c and p is a map from class names to completeness or purity, respectively
+        """
+        t_performances = []  # performance per trial/fold
+        for index, trial in enumerate(results):
+            class_metrics = {cn: {"TP": 0, "FP": 0, "TN": 0, "FN": 0}
+                             for cn in self.class_labels}
+            # For each predicted row
+            for row in trial:
+                class_metrics = self.get_row_metrics(row, class_metrics)
+            # Compute purity & completeness for this trial/fold (per class)
+            comps, puritys = compute_performance(class_metrics)
+            t_performances.append([comps, puritys])
 
-        return class_metrics, set_totals
+            print("Metrics for trial " + str(index + 1))
+            print("Completeness: " + str(comps))
+            print("Purity: " + str(puritys))
+        return t_performances
+
+    def get_avg_pc(self, results, t_performances, N):
+        """
+        Compute average purity & completeness over folds/trials per class
+        :param results: List of 2D Numpy arrays with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
+        :param t_performances: Return of self.get_pc_per_trial
+        :param N: Number of trials/folds
+        """
+        # Average purity & completeness over folds/trials (per class)
+        avg_comps = {cn: 0 for cn in self.class_labels}
+        avg_purities = {cn: 0 for cn in self.class_labels}
+        for c, p in t_performances:
+            for class_name in self.class_labels:
+                avg_purities[class_name] += p[class_name]
+                avg_comps[class_name] += c[class_name]
+        # Get average
+        for class_name in self.class_labels:
+            avg_purities[class_name] = avg_purities[class_name] / N
+            avg_comps[class_name] = avg_comps[class_name] / N
+
+        return avg_purities, avg_comps
 
     def get_row_metrics(self, row, class_metrics, index=None, set_totals=None):
         """
@@ -509,22 +541,14 @@ class MainModel(ABC, MainModelVisualization):
             if class_name == max_class_name:
                 if is_class:
                     class_metrics[class_name]["TP"] += 1
-                    if set_totals is not None:
-                        set_totals[class_name][index]["TP"] += 1
                 else:
                     class_metrics[class_name]["FP"] += 1
-                    if set_totals is not None:
-                        set_totals[class_name][index]["FP"] += 1
             else:
                 if is_class:
                     class_metrics[class_name]["FN"] += 1
-                    if set_totals is not None:
-                        set_totals[class_name][index]["FN"] += 1
                 else:
                     class_metrics[class_name]["TN"] += 1
-                    if set_totals is not None:
-                        set_totals[class_name][index]["TN"] += 1
-        return class_metrics, set_totals
+        return class_metrics
 
     @abstractmethod
     def get_class_probabilities(self, x):
