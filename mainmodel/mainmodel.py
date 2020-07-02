@@ -35,8 +35,6 @@ class MainModel(ABC, MainModelVisualization):
         """
         self.dir = util.init_file_directories(self.name)
         print("Saving " + self.name + " output to directory " + self.dir)
-        # Redirect prints to log
-        # sys.stdout = open(self.dir + "/experiment.log", "a")
 
         # Must add Unspecifieds to tree, so that when searching for lowest-level
         # label, the UNDEF one returns.
@@ -262,7 +260,7 @@ class MainModel(ABC, MainModelVisualization):
         N = self.num_runs if self.num_runs is not None else self.num_folds
 
         pc_per_trial = self.get_pc_per_trial(self.results)
-        ps, cs = self.get_avg_pc(self.results, pc_per_trial, N)
+        ps, cs = self.get_avg_pc(pc_per_trial, N)
 
         self.plot_all_metrics(ps, cs, pc_per_trial, self.y)
 
@@ -490,25 +488,25 @@ class MainModel(ABC, MainModelVisualization):
             for row in trial:
                 class_metrics = self.get_row_metrics(row, class_metrics)
             # Compute purity & completeness for this trial/fold (per class)
-            comps, puritys = compute_performance(class_metrics)
-            t_performances.append([comps, puritys])
+            puritys, comps = compute_performance(class_metrics)
+            t_performances.append([puritys, comps])
 
             print("Metrics for trial " + str(index + 1))
-            print("Completeness: " + str(comps))
             print("Purity: " + str(puritys))
+            print("Completeness: " + str(comps))
+
         return t_performances
 
-    def get_avg_pc(self, results, t_performances, N):
+    def get_avg_pc(self, t_performances, N):
         """
         Compute average purity & completeness over folds/trials per class
-        :param results: List of 2D Numpy arrays with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         :param t_performances: Return of self.get_pc_per_trial
         :param N: Number of trials/folds
         """
         # Average purity & completeness over folds/trials (per class)
         avg_comps = {cn: 0 for cn in self.class_labels}
         avg_purities = {cn: 0 for cn in self.class_labels}
-        for c, p in t_performances:
+        for p, c in t_performances:
             for class_name in self.class_labels:
                 avg_purities[class_name] += p[class_name]
                 avg_comps[class_name] += c[class_name]

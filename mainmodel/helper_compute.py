@@ -85,7 +85,7 @@ def compute_performance(class_metrics):
         total = TP + TN + FP + FN
         comps[class_name] = TP / (TP + FN) if (TP + FN) > 0 else None
         purities[class_name] = TP / (TP + FP) if (TP + FP) > 0 else None
-    return comps, purities
+    return purities, comps
 
 
 def compute_confusion_matrix(results, class_labels):
@@ -156,7 +156,6 @@ def compute_confintvls(all_pc, class_labels):
             class_compeleteness = pc[1][class_name]
             class_purities.append(class_purity)
             class_comps.append(class_compeleteness)
-
         # Calculate confidence intervals
         purity_cis[class_name] = get_cis(class_purities, N)
         comp_cis[class_name] = get_cis(class_comps, N)

@@ -121,7 +121,7 @@ class MainModelVisualization:
             # Put probs & labels in same Numpy array
             i_results = np.hstack((top_i_probs, top_i_labels.reshape(-1, 1)))
             metrics = self.compute_metrics(i_results)
-            comps, puritys = compute_performance(metrics)
+            puritys, comps = compute_performance(metrics)
             avg_comp = self.get_average(comps)
             avg_purity = self.get_average(puritys)
             avg_acc = get_accuracy(metrics, N=top_i)
@@ -294,22 +294,20 @@ class MainModelVisualization:
 
         p_intvls, c_intvls = compute_confintvls(all_pc, self.class_labels)
 
-        self.plot_metrics(comps, "Completeness", c_baselines, c_intvls)
         self.plot_metrics(purities, "Purity", p_baselines, p_intvls)
-
-        print("\n\nCompleteness\n")
-        print(str(comps))
-        print("\n\nPurity\n")
-        print(str(purities))
+        self.plot_metrics(comps, "Completeness", c_baselines, c_intvls)
 
     def plot_metrics(self, class_metrics, xlabel, baselines=None, intervals=None):
         """
         Visualizes metric per class with bar graph; with random baseline based on class level in hierarchy.
         :param class_metrics: Mapping from class name to metric value.
         :param xlabel: Metric being plotted =  x-axis label
-        :[optional] param baselines: Mapping from class name to random-baseline performance (get plotted atop the bars)
-        :[optional] param intervals: confidence intervals, map from class 
+        :opt. param baselines: Mapping from class name to random-baseline performance (get plotted atop the bars)
+        :opt. param intervals: confidence intervals, map from class 
         """
+        print("\n\nValues for " + xlabel)
+        print(class_metrics)
+
         class_names, metrics, baselines, intervals = get_ordered_metrics(
             class_metrics,
             baselines,
@@ -330,8 +328,10 @@ class MainModelVisualization:
         # Plot random baselines
         if baselines is not None:
             for index, baseline in enumerate(baselines):
-                plt.vlines(x=baseline, ymin=index - (bar_width / 2),
-                           ymax=index + (bar_width / 2), linestyles='--', colors='red')
+                plt.vlines(x=baseline,
+                           ymin=index - (bar_width / 2),
+                           ymax=index + (bar_width / 2),
+                           linestyles='--', colors='red')
 
         # Format Axes, Labels, and Ticks
         ax.set_xlim(0, 1)
@@ -339,18 +339,12 @@ class MainModelVisualization:
                    str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
 
         plt.xlabel(xlabel, fontsize=12)
-
         for index, cn in enumerate(class_names):
             new_name = cn.replace("unspecified", "unspec.")
             class_names[index] = new_name.strip()
         plt.yticks(y_indices, class_names,  fontsize=12,
                    horizontalalignment='right')
         plt.ylabel('Transient Class', fontsize=12)
-
-        # max_tick_width = self.get_max_tick_width(class_names, tick_size)
-        # yax = ax.get_yaxis()
-        # yax.set_tick_params(pad=max_tick_width)
-
         ax.set_title(xlabel)
         thex_utils.display_and_save_plot(self.dir, self.name + ": " + xlabel)
 
