@@ -148,9 +148,9 @@ def compute_confintvls(all_pc, class_labels):
 
     purity_cis = {}
     comp_cis = {}
-    N_p = N
-    N_c = N
+
     for class_name in class_labels:
+        N_p = N
         class_purities = []
         class_comps = []
         for pc in all_pc:
@@ -168,7 +168,7 @@ def compute_confintvls(all_pc, class_labels):
             class_comps.append(class_compeleteness)
         # Calculate confidence intervals
         purity_cis[class_name] = get_cis(class_purities, N_p)
-        comp_cis[class_name] = get_cis(class_comps, N_c)
+        comp_cis[class_name] = get_cis(class_comps, N)
     return purity_cis, comp_cis
 
 
