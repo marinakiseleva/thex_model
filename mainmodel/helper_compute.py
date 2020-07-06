@@ -162,7 +162,7 @@ def compute_confintvls(all_pc, class_labels):
                 print("No measurable purity for " + class_name)
                 N_p = N_p - 1
 
-            if class_compeleteness not None:
+            if class_compeleteness is None:
                 raise ValueError("Completeness should never be None for " + class_name)
 
             class_comps.append(class_compeleteness)
