@@ -314,23 +314,25 @@ class MainModelVisualization:
             intervals)
 
         # Set constants
-        tick_size = 8
-        bar_width = 0.8
+        bar_width = 0.4
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
                                dpi=DPI, tight_layout=True)
-
         errs = self.prep_err_bars(intervals, metrics)
-        y_indices = np.arange(len(metrics))
-        # Plot metrics
-        ax.barh(y=y_indices, width=metrics, height=bar_width,
-                xerr=errs, capsize=2, ecolor='coral')
+        max_y = (0.4 * len(metrics))
+        if len(metrics) <= 2:
+            max_y = max_y - 0.2
+        y_indices = np.linspace(0, max_y, len(metrics))
+        # Plot bars
+        ax.barh(y=y_indices, width=metrics, height=bar_width, xerr=errs,
+                capsize=2, edgecolor='black', ecolor='coral')
 
         # Plot random baselines
         if baselines is not None:
             for index, baseline in enumerate(baselines):
+                y_val = y_indices[index]
                 plt.vlines(x=baseline,
-                           ymin=index - (bar_width / 2),
-                           ymax=index + (bar_width / 2),
+                           ymin=y_val - (bar_width / 2),
+                           ymax=y_val + (bar_width / 2),
                            linestyles='--', colors='red')
 
         # Format Axes, Labels, and Ticks

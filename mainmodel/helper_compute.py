@@ -148,17 +148,27 @@ def compute_confintvls(all_pc, class_labels):
 
     purity_cis = {}
     comp_cis = {}
+    N_p = N
+    N_c = N
     for class_name in class_labels:
         class_purities = []
         class_comps = []
         for pc in all_pc:
             class_purity = pc[0][class_name]
             class_compeleteness = pc[1][class_name]
-            class_purities.append(class_purity)
+            if class_purity is not None:
+                class_purities.append(class_purity)
+            else:
+                print("No measurable purity for " + class_name)
+                N_p = N_p - 1
+
+            if class_compeleteness not None:
+                raise ValueError("Completeness should never be None for " + class_name)
+
             class_comps.append(class_compeleteness)
         # Calculate confidence intervals
-        purity_cis[class_name] = get_cis(class_purities, N)
-        comp_cis[class_name] = get_cis(class_comps, N)
+        purity_cis[class_name] = get_cis(class_purities, N_p)
+        comp_cis[class_name] = get_cis(class_comps, N_c)
     return purity_cis, comp_cis
 
 

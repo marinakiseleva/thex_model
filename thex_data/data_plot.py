@@ -162,10 +162,16 @@ def plot_class_hist(model_dir, class_names, counts):
     :param class_counts: Map from class name to counts
     """
 
-    class_indices = np.arange(len(class_names))
     f, ax = plt.subplots(figsize=(6, 6), dpi=DPI)
     # Plot data horizontally
-    ax.barh(y=class_indices, width=counts, height=0.7)
+    bar_width = 0.4
+    if len(class_names) <= 2:
+        max_y = (0.4 * len(class_names)) - 0.2
+    else:
+        max_y = 0.4 * (len(class_names))
+    class_indices = np.linspace(0, max_y, len(class_names))
+    ax.barh(y=class_indices, width=counts, height=bar_width, edgecolor='black')
+
     plt.gcf().subplots_adjust(left=0.1)
     # Set logscale for range of values
     if (max(counts) - min(counts)) > 100:

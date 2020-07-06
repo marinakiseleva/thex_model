@@ -506,21 +506,27 @@ class MainModel(ABC, MainModelVisualization):
         # Average purity & completeness over folds/trials (per class)
         avg_comps = {cn: 0 for cn in self.class_labels}
         avg_purities = {cn: 0 for cn in self.class_labels}
+        p_N = N  # N values for purity
         for p, c in t_performances:
             for class_name in self.class_labels:
-                avg_purities[class_name] += p[class_name]
+                if p[class_name] is not None:
+                    avg_purities[class_name] += p[class_name]
+                else:
+                    # Reduce N, since if purity is None for trial, we exclude that trial.
+                    print("No measurable purity for " + class_name)
+                    p_N = p_N - 1
                 avg_comps[class_name] += c[class_name]
         # Get average
         for class_name in self.class_labels:
-            avg_purities[class_name] = avg_purities[class_name] / N
+            avg_purities[class_name] = avg_purities[class_name] / p_N
             avg_comps[class_name] = avg_comps[class_name] / N
 
         return avg_purities, avg_comps
 
-    def get_row_metrics(self, row, class_metrics, index=None, set_totals=None):
+    def get_row_metrics(self, row, class_metrics, index=None):
         """
         Helper function for compute_metrics
-        Get TP, FP, TN, FN metrics for this row & update in passed in dict of class_metrics. If set_totals is not None, update this too. 
+        Get TP, FP, TN, FN metrics for this row & update in passed in dict of class_metrics. 
         :param index: Index of result set
         :param row: Numpy row of probabiliites (last col is label)
         :param class_metrics: Dict to update
