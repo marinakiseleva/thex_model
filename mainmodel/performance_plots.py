@@ -312,7 +312,6 @@ class MainModelVisualization:
             class_metrics,
             baselines,
             intervals)
-
         # Set constants
         bar_width = 0.4
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),

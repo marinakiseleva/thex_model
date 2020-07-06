@@ -506,18 +506,19 @@ class MainModel(ABC, MainModelVisualization):
         # Average purity & completeness over folds/trials (per class)
         avg_comps = {cn: 0 for cn in self.class_labels}
         avg_purities = {cn: 0 for cn in self.class_labels}
-        p_N = N  # N values for purity
-        for p, c in t_performances:
-            for class_name in self.class_labels:
-                if p[class_name] is not None:
-                    avg_purities[class_name] += p[class_name]
-                else:
-                    # Reduce N, since if purity is None for trial, we exclude that trial.
+        for class_name in self.class_labels:
+            p_N = N  # N values for purity
+            # Aggregate over trials/folds
+            for p, c in t_performances:
+                if p[class_name] is None:
+                    # No purity for this trial -> exclude from average
                     print("No measurable purity for " + class_name)
                     p_N = p_N - 1
+                else:
+                    avg_purities[class_name] += p[class_name]
+
                 avg_comps[class_name] += c[class_name]
-        # Get average
-        for class_name in self.class_labels:
+            # Get average
             avg_purities[class_name] = avg_purities[class_name] / p_N
             avg_comps[class_name] = avg_comps[class_name] / N
 
