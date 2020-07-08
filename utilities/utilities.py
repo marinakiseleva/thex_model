@@ -84,10 +84,10 @@ def save_plot(model_dir, file_name, bbox_inches=None, fig=None):
 
     if fig is not None:
         fig.savefig(model_dir + "/" + clean_str(file_name) +
-                    ".png", bbox_inches=bbox_inches)
+                    ".pdf", bbox_inches=bbox_inches)
     else:
         plt.savefig(model_dir + "/" + clean_str(file_name) +
-                    ".png", bbox_inches=bbox_inches)
+                    ".pdf", bbox_inches=bbox_inches)
 
 
 def display_and_save_plot(model_dir, file_name, bbox_inches=None, fig=None):
