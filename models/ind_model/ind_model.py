@@ -75,7 +75,7 @@ class IndModel(MainModel):
             self.models[class_name] = OptimalBinaryClassifier(
                 class_name, X_train, y_relabeled, self.nb, self.dir)
 
-    def get_class_probabilities(self, x, normalize=True):
+    def get_class_probabilities(self, x):
         """
         Calculates probability of each transient class for the single test data point (x).
         :param x: Pandas DF row of features
@@ -93,12 +93,12 @@ class IndModel(MainModel):
                 probabilities[class_name] = MIN_PROB
 
         # Normalize
-        if normalize:
-            probabilities = self.normalize(probabilities)
+        if self.normalize:
+            probabilities = self.normalize_probs(probabilities)
 
         return probabilities
 
-    def normalize(self, probabilities):
+    def normalize_probs(self, probabilities):
         """
         Normalize across probabilities, treating each as independent. So, each is normalized by dividing by the sum of all probabilities.
         :param probabilities: Dict from class names to probabilities, already normalized across disjoint sets

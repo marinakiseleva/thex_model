@@ -35,7 +35,7 @@ class BinaryModel(MainModel):
             self.models[class_name] = OptimalBinaryClassifier(
                 class_name, X_train, y_relabeled, self.nb, self.dir)
 
-    def get_class_probabilities(self, x, normalize=True):
+    def get_class_probabilities(self, x):
         """
         Calculates probability of each transient class for the single test data point (x).
         :param x: Pandas DF row of features
@@ -44,7 +44,7 @@ class BinaryModel(MainModel):
         probabilities = {}
         for class_index, class_name in enumerate(self.class_labels):
             probabilities[class_name] = self.models[
-                class_name].get_class_probability(x, normalize)
+                class_name].get_class_probability(x, self.normalize)
             MIN_PROB = 0.0001  # Min probability to avoid overflow
             if np.isnan(probabilities[class_name]):
                 probabilities[class_name] = MIN_PROB

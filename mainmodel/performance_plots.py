@@ -21,7 +21,7 @@ class MainModelVisualization:
 
     def prep_err_bars(self, intervals, metrics):
         """
-        Convert confidence intervals to specific values to be plotted
+        Convert confidence intervals to specific values to be plotted, for xerr  values are +/- sizes relative to the data:
         """
         if intervals is None:
             return None

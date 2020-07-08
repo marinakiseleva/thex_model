@@ -291,7 +291,7 @@ class MainModel(ABC, MainModelVisualization):
             self.datas.append(X_test)
 
             # Test model
-            probabilities = self.get_all_class_probabilities(X_test, self.normalize)
+            probabilities = self.get_all_class_probabilities(X_test)
             # Add labels as column to probabilities, for later evaluation
             label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
             probabilities = np.hstack((probabilities, label_column))
@@ -361,7 +361,7 @@ class MainModel(ABC, MainModelVisualization):
             self.train_model(X_train, y_train)
 
             # Test model
-            probabilities = self.get_all_class_probabilities(X_test, self.normalize)
+            probabilities = self.get_all_class_probabilities(X_test)
             # Add labels as column to probabilities, for later evaluation
             label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
             probabilities = np.hstack((probabilities, label_column))
@@ -369,14 +369,14 @@ class MainModel(ABC, MainModelVisualization):
 
         return results
 
-    def get_all_class_probabilities(self, X_test, normalize=True):
+    def get_all_class_probabilities(self, X_test):
         """
         Get class probabilities for all test data.
         :return probabilities: Numpy 2D Matrix with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels
         """
         all_probs = np.empty((0, len(self.class_labels)))
         for index, row in X_test.iterrows():
-            row_p = self.get_class_probabilities(row, normalize)
+            row_p = self.get_class_probabilities(row)
             all_probs = np.append(all_probs, [list(row_p.values())], axis=0)
 
         return all_probs
