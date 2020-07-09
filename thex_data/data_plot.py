@@ -179,9 +179,9 @@ def plot_class_hist(model_dir, class_names, counts):
         ax.xaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
         plt.tick_params(axis='x', which='major', rotation=-90)
 
-    plt.yticks(class_indices, class_names, fontsize=8)
-    ax.tick_params(axis='x', which='both', labelsize=8, rotation=-90)
-    ax.tick_params(axis='x', which='minor', labelsize=4)
+    plt.yticks(class_indices, class_names, fontsize=12)
+    ax.tick_params(axis='x', which='both', labelsize=9, rotation=-90)
+    ax.tick_params(axis='x', which='minor', labelsize=9)
 
     plt.ylabel('Class', fontsize=12)
     plt.xlabel('Count', fontsize=12)
