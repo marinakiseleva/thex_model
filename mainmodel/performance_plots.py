@@ -19,20 +19,6 @@ class MainModelVisualization:
     Mixin Class for MainModel performance visualization
     """
 
-    def prep_err_bars(self, intervals, metrics):
-        """
-        Convert confidence intervals to specific values to be plotted, for xerr  values are +/- sizes relative to the data:
-        """
-        if intervals is None:
-            return None
-        errs = [[], []]
-        for index, interval in enumerate(intervals):
-            min_bar = interval[0]
-            max_bar = interval[1]
-            errs[0].append(metrics[index] - min_bar)
-            errs[1].append(max_bar - metrics[index])
-        return errs
-
     def get_max_tick_width(self, class_names, tick_size):
         """
         Get the maximum tick width
@@ -296,6 +282,20 @@ class MainModelVisualization:
 
         self.plot_metrics(purities, "Purity", p_baselines, p_intvls)
         self.plot_metrics(comps, "Completeness", c_baselines, c_intvls)
+
+    def prep_err_bars(self, intervals, metrics):
+        """
+        Convert confidence intervals to specific values to be plotted, for xerr  values are +/- sizes relative to the data:
+        """
+        if intervals is None:
+            return None
+        errs = [[], []]
+        for index, interval in enumerate(intervals):
+            min_bar = interval[0]
+            max_bar = interval[1]
+            errs[0].append(metrics[index] - min_bar)
+            errs[1].append(max_bar - metrics[index])
+        return errs
 
     def plot_metrics(self, class_metrics, xlabel, baselines=None, intervals=None):
         """
