@@ -34,6 +34,7 @@ class MainModel(ABC, MainModelVisualization):
         Initialize model based on user arguments
         """
         self.dir = util.init_file_directories(self.name)
+        init_plot_settings()
         print("Saving " + self.name + " output to directory " + self.dir)
 
         # Must add Unspecifieds to tree, so that when searching for lowest-level
@@ -227,7 +228,6 @@ class MainModel(ABC, MainModelVisualization):
         """
         X = self.X.copy()
         y = self.y.copy()
-        init_plot_settings()
 
         completeness = calculate_completeness(X, y, self.class_labels)
         ordered_comp = get_ordered_metrics(completeness)
