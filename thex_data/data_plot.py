@@ -37,10 +37,10 @@ def get_ordered_features(features):
         if mag in features:
             ordered_features.append(mag)
 
-    # Order features by wavelength, if possible
-    if len(ordered_features) == len(features):
-        features = ordered_features
-    return features
+    if 'redshift' in features:
+        ordered_features.append('redshift')
+
+    return ordered_features
 
 
 def calculate_completeness(X, y, class_labels):
@@ -90,8 +90,10 @@ def visualize_completeness(model_dir, X, class_labels, data_completeness):
     f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
 
     a = plt.pcolor(df, vmin=0, vmax=1, cmap='gist_heat')
-    plt.yticks(np.arange(0.5, len(df.index), 1), df.index)
-    plt.xticks(np.arange(0.5, len(df.columns), 1), df.columns, rotation=-90)
+    plt.yticks(np.linspace(0.5, len(df.index), len(df.index)),
+               df.index, fontsize=9)
+    plt.xticks(np.linspace(0.5, len(df.columns), len(df.columns)),
+               df.columns, rotation=-90, fontsize=9)
     f.colorbar(a)
 
     plt.title("Completeness")
