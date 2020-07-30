@@ -2,6 +2,7 @@
 """
 Class Mixin for MainModel which contains all performance plotting functionality
 """
+import os
 import math
 import numpy as np
 import matplotlib as mpl
@@ -42,23 +43,32 @@ class MainModelVisualization:
             if class_name in thex_utils.convert_str_to_list(labels):
                 true_class_index = class_index
 
-        f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+        f, ax = plt.subplots(figsize=(5, 3), dpi=220)
 
-        colors = ["#b3e0ff"] * len(self.class_labels)
-        colors[true_class_index] = "#005c99"
+        ACC = "#b3e0ff"  # actual class color, light blue
+        DCC = "#005c99"  # default class color, dark blue
+
+        colors = [DCC] * len(self.class_labels)
+        colors[true_class_index] = ACC
         probabilities = row[0:len(row) - 1]
-        x_indices = np.arange(len(self.class_labels))
-        ax.bar(x_indices, probabilities, color=colors)
+        # np.arange(len(self.class_labels))
+        x_indices = np.linspace(0,
+                                len(self.class_labels) * 0.4,
+                                len(self.class_labels))
+        ax.bar(x=x_indices, height=probabilities,  width=0.4, color=colors)
         ax.set_ylim([0, 1])
         plt.ylabel('Probability Assigned', fontsize=12)
         plt.xlabel('Class', fontsize=12)
-        plt.xticks(x_indices, self.class_labels, fontsize=12)
+        plt.xticks(x_indices, self.class_labels, fontsize=9)
         title = "example_output"
         if i is not None:
             title += "_" + str(i)
         if priors is not None:
             title += "_" + str(priors)
-        thex_utils.display_and_save_plot(self.dir, title)
+
+        if not os.path.exists(self.dir + '/examples'):
+            os.mkdir(self.dir + '/examples')
+        thex_utils.display_and_save_plot(self.dir + '/examples', title)
 
     def get_average(self, metrics):
         """
