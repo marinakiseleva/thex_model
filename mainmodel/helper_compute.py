@@ -9,7 +9,7 @@ import utilities.utilities as thex_utils
 from thex_data.data_consts import UNDEF_CLASS, ORDERED_CLASSES
 
 
-def compute_baselines(class_counts, class_labels, y):
+def compute_baselines(class_counts, class_labels, y, num_classes):
     """
     Get random classifier baselines for completeness, specificity (negative recall), and purity
     """
@@ -17,8 +17,7 @@ def compute_baselines(class_counts, class_labels, y):
     spec_baselines = {}
     purity_baselines = {}
     total_count = y.shape[0]
-    class_priors = {c: 1 / len(class_labels)
-                    for c in class_labels}
+    class_priors = {c: 1 / num_classes for c in class_labels}
 
     for class_name in class_labels:
         # Compute baselines

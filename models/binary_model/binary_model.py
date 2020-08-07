@@ -23,6 +23,12 @@ class BinaryModel(MainModel):
         self.name = "Binary Classifiers"
         super(BinaryModel, self).__init__(**data_args)
 
+    def get_num_classes(self):
+        """
+        Return number of classes
+        """
+        return 2
+
     def train_model(self, X_train, y_train):
         """
         Train model using training data. All classes are a single disjoint set, so create a binary classifier for each one
