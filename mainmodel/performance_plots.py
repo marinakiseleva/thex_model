@@ -285,9 +285,8 @@ class MainModelVisualization:
         :param all_pc: Purity & completeness per trial/fold, per class
         :param y: all y dataset 
         """
-        num_classes = self.get_num_classes()
-        c_baselines, s_baselines, p_baselines = compute_baselines(
-            self.class_counts, self.class_labels, y, num_classes)
+        c_baselines, p_baselines = compute_baselines(
+            self.class_counts, self.class_labels, y, self.class_priors)
 
         p_intvls, c_intvls = compute_confintvls(all_pc, self.class_labels)
 

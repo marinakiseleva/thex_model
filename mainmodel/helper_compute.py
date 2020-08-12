@@ -9,24 +9,26 @@ import utilities.utilities as thex_utils
 from thex_data.data_consts import UNDEF_CLASS, ORDERED_CLASSES
 
 
-def compute_baselines(class_counts, class_labels, y, num_classes):
+def compute_baselines(class_counts, class_labels, y, class_priors=None):
     """
-    Get random classifier baselines for completeness, specificity (negative recall), and purity
+    Get random classifier baselines for completeness and purity
     """
     comp_baselines = {}
-    spec_baselines = {}
     purity_baselines = {}
     total_count = y.shape[0]
-    class_priors = {c: 1 / num_classes for c in class_labels}
-
     for class_name in class_labels:
-        # Compute baselines
-        class_freq = class_counts[class_name] / total_count
-        comp_baselines[class_name] = class_priors[class_name]
-        spec_baselines[class_name] = (1 - class_priors[class_name])
-        purity_baselines[class_name] = class_freq
+        if class_priors is not None:
+            class_rate = class_counts[class_name] / total_count
+        else:
+            class_rate = 1 / len(class_labels)
 
-    return comp_baselines, spec_baselines, purity_baselines
+        # Compute baselines
+        TP = class_counts[class_name] * class_rate
+        FP = total_count - class_counts[class_name]
+        purity_baselines[class_name] = TP / (TP + FP)
+        comp_baselines[class_name] = class_rate
+
+    return comp_baselines, purity_baselines
 
 
 def update_class_purities(class_purities, class_metrics, i):
@@ -53,7 +55,7 @@ def update_class_purities(class_purities, class_metrics, i):
 def get_accuracy(class_metrics, N):
     """
     Get accuracy as total # of TP / total # of samples
-    :param class_metrics : Map from class name to metrics (which are map from TP, TN, FP, FN to values) 
+    :param class_metrics : Map from class name to metrics (which are map from TP, TN, FP, FN to values)
     :param N: total number of samples
     """
     if N == 0:
@@ -69,7 +71,7 @@ def get_accuracy(class_metrics, N):
 def compute_performance(class_metrics):
     """
     Get completeness & purity for each class, return as 2 dicts
-    :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values) 
+    :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values)
     """
     purities = {}
     comps = {}
@@ -132,7 +134,7 @@ def compute_confintvls(all_pc, class_labels):
 
     def get_cis(values, N):
         """
-        Calculate confidence intervals [µ − 2σ, µ + 2σ] where 
+        Calculate confidence intervals [µ − 2σ, µ + 2σ] where
         σ = sqrt( (1/ N ) ∑_n (a_i − µ)^2 )
         :param N: number of runs
         """

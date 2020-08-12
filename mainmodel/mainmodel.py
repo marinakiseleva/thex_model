@@ -369,12 +369,6 @@ class MainModel(ABC, MainModelVisualization):
 
         return results
 
-    def get_num_classes(self):
-        """
-        Return number of classes
-        """
-        return len(self.class_labels)
-
     def get_all_class_probabilities(self, X_test):
         """
         Get class probabilities for all test data.

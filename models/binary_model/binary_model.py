@@ -23,12 +23,6 @@ class BinaryModel(MainModel):
         self.name = "Binary Classifiers"
         super(BinaryModel, self).__init__(**data_args)
 
-    def get_num_classes(self):
-        """
-        Return number of classes
-        """
-        return 2
-
     def train_model(self, X_train, y_train):
         """
         Train model using training data. All classes are a single disjoint set, so create a binary classifier for each one
@@ -73,24 +67,24 @@ class BinaryModel(MainModel):
         """
         return row[class_index]
 
-    def compute_baselines(self, class_counts, y):
+    def compute_baselines(self, class_counts, class_labels, y, class_priors=None):
         """
-        Overwrite so that class priors are binary (1/2) instead of proportional to # of classes
-        Get random classifier baselines for recall, specificity (negative recall), and precision
+        Get random classifier baselines for completeness and purity
+        Overwritten so that class priors are binary (1/2) instead of proportional to # of classes
         """
-        pos_baselines = {}
-        neg_baselines = {}
-        precision_baselines = {}
-
+        comp_baselines = {}
+        purity_baselines = {}
         total_count = y.shape[0]
+        for class_name in class_labels:
+            if class_priors is not None:
+                class_rate = class_counts[class_name] / total_count
+            else:
+                class_rate = 1 / 2
 
-        class_priors = {c: 0.5 for c in self.class_labels}
-
-        for class_name in self.class_labels:
             # Compute baselines
-            class_freq = class_counts[class_name] / total_count
-            pos_baselines[class_name] = class_priors[class_name]
-            neg_baselines[class_name] = (1 - class_priors[class_name])
-            precision_baselines[class_name] = class_freq
+            TP = class_counts[class_name] * class_rate
+            FP = total_count - class_counts[class_name]
+            purity_baselines[class_name] = TP / (TP + FP)
+            comp_baselines[class_name] = class_rate
 
-        return pos_baselines, neg_baselines, precision_baselines
+        return comp_baselines, purity_baselines
