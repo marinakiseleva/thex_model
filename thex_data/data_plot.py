@@ -8,7 +8,7 @@ import pandas as pd
 from matplotlib.ticker import FormatStrFormatter
 import matplotlib.pyplot as plt
 
-from .data_consts import TARGET_LABEL, FIG_WIDTH, FIG_HEIGHT, DPI, ORDERED_MAGS
+from .data_consts import *
 import utilities.utilities as util
 
 
@@ -87,12 +87,12 @@ def visualize_completeness(model_dir, X, class_labels, data_completeness):
 
     a = plt.pcolor(df, vmin=0, vmax=1, cmap='gist_heat')
     plt.yticks(np.linspace(0.5, len(df.index), len(df.index)),
-               df.index, fontsize=9)
+               df.index, fontsize=TICK_S)
     plt.xticks(np.linspace(0.5, len(df.columns), len(df.columns)),
-               df.columns, rotation=-90, fontsize=9)
+               df.columns, rotation=-90, fontsize=TICK_S)
     f.colorbar(a)
 
-    plt.title("Completeness")
+    plt.title("Completeness", fontsize=TITLE_S)
     util.display_and_save_plot(model_dir, "Completeness", None, f)
 
 
@@ -147,8 +147,8 @@ def plot_feature_distribution(model_dir, df, feature, class_labels):
         for sorted_index in sorted_indices:
             bars[sorted_index][bin_index].set_zorder(zorder)
             zorder += 1
-    plt.xlabel(feature.capitalize())
-    plt.ylabel("Normalized density")
+    plt.xlabel(feature.capitalize(), fontsize=LAB_S)
+    plt.ylabel("Normalized density", fontsize=LAB_S)
     plt.legend()
     util.display_and_save_plot(model_dir, "Feature distribution")
 
@@ -175,17 +175,14 @@ def plot_class_hist(model_dir, class_names, counts):
     if (max(counts) - min(counts)) > 100:
         ax.set_xscale('log')
         ax.xaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
-        plt.tick_params(axis='x', which='major', rotation=-90)
 
-    plt.yticks(class_indices, class_names, fontsize=12)
-    ax.tick_params(axis='x', which='both', labelsize=9, rotation=-90)
-    ax.tick_params(axis='x', which='minor', labelsize=9)
+    plt.yticks(class_indices, class_names, fontsize=TICK_S)
+    ax.tick_params(axis='x', which='both', labelsize=TICK_S - 1, rotation=-90)
+    ax.tick_params(axis='x', which='minor', labelsize=TICK_S - 3)
 
-    plt.ylabel('Class', fontsize=12)
-    plt.xlabel('Count', fontsize=12)
-
-    plt.title("Class Distribution", fontsize=12)
+    plt.ylabel('Class', fontsize=LAB_S)
+    plt.xlabel('Count', fontsize=LAB_S)
+    plt.title("Class Distribution", fontsize=TITLE_S)
     plt.tight_layout()
-
     util.display_and_save_plot(
         model_dir, "Distribution of Transient Types in Data Sample")
