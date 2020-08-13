@@ -28,6 +28,9 @@ CPU_COUNT = 8
 FIG_WIDTH = 6
 FIG_HEIGHT = 4
 DPI = 600
+TICK_S = 12
+LAB_S = 14
+TITLE_S = 16
 
 # ***************************************************************
 # Transient class variables

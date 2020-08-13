@@ -191,6 +191,30 @@ def get_agg_prob_vs_class_rates(total_count_per_range,  class_labels, class_posi
     return aggregated_rates
 
 
+def prep_err_bars(intervals, metrics):
+    """
+    Convert confidence intervals to specific values to be plotted, for xerr  values are +/- sizes relative to the data:
+    """
+    if intervals is None:
+        return None
+    errs = [[], []]
+    for index, interval in enumerate(intervals):
+        min_bar = interval[0]
+        max_bar = interval[1]
+        errs[0].append(metrics[index] - min_bar)
+        errs[1].append(max_bar - metrics[index])
+    return errs
+
+
+def get_perc_ticks():
+    """
+    Returns [0, 0.1, ..., 1], [0%, 10%, ..., 100%]
+    """
+    indices = np.linspace(0, 1, 6)
+    ticks = [str(int(i)) + "%" for i in indices * 100]
+    return indices, ticks
+
+
 def clean_class_name(class_name):
     pretty_class_name = class_name
     if UNDEF_CLASS in class_name:
@@ -232,9 +256,7 @@ def get_ordered_metrics(class_metrics, baselines=None, intervals=None):
                 if intervals is not None:
                     ordered_intervals.append(intervals[c])
 
-                pretty_class_name = c
-                if UNDEF_CLASS in c:
-                    pretty_class_name = clean_class_name(class_name)
+                pretty_class_name = clean_class_name(c)
                 ordered_formatted_names.append(pretty_class_name)
                 break
 

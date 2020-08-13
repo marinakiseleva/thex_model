@@ -9,7 +9,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 from mainmodel.helper_compute import *
-from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI
+from thex_data.data_consts import *
 import utilities.utilities as thex_utils
 
 
@@ -55,10 +55,10 @@ class MainModelVisualization:
                                 len(self.class_labels))
         ax.bar(x=x_indices, height=probabilities,  width=0.4, color=colors)
         ax.set_ylim([0, 1])
-        plt.ylabel('Probability Assigned', fontsize=12)
-        plt.xlabel('Class', fontsize=12)
+        plt.ylabel('Probability Assigned', fontsize=LAB_S)
+        plt.xlabel('Class', fontsize=LAB_S)
         pretty_class_names = clean_class_name(self.class_labels)
-        plt.xticks(x_indices, pretty_class_names, fontsize=9)
+        plt.xticks(x_indices, pretty_class_names, fontsize=TICK_S)
         title = "example_output"
         if i is not None:
             title += "_" + str(i)
@@ -216,8 +216,8 @@ class MainModelVisualization:
         self.clean_plot(p, ax, "Purity", 'red')
         self.clean_plot(c, ax, "Completeness", 'blue')
         self.clean_plot(a, ax, "Accuracy", 'green')
-        ax.set_xlabel("% Top Densities")
-        ax.set_ylabel("Average %")
+        ax.set_xlabel("% Top Densities", fontsize=LAB_S)
+        ax.set_ylabel("Average %", fontsize=LAB_S)
         ax.set_ylim([0, 1.01])
         ax.tick_params(axis='y')
         ax.legend()
@@ -253,9 +253,10 @@ class MainModelVisualization:
             if star is not None:
                 ax.plot(star[0], star[1], marker='*', color=colors[class_index])
 
-        ax.set_ylabel("Purity")
-        ax.set_xlabel("% Top Densities")
-        ax.legend(loc='upper center', bbox_to_anchor=(1.25, 1), ncol=1, prop={'size': 8})
+        ax.set_ylabel("Purity", fontsize=LAB_S)
+        ax.set_xlabel("% Top Densities", fontsize=LAB_S)
+        ax.legend(loc='upper center', bbox_to_anchor=(
+            1.25, 1), ncol=1, prop={'size': LAB_S})
 
         thex_utils.display_and_save_plot(self.dir, "Prob Density % vs Purities")
 
@@ -264,19 +265,18 @@ class MainModelVisualization:
         Plot confusion matrix 
         :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         """
-
         cm = compute_confusion_matrix(results, self.class_labels)
-        print("\nConfusion Matrix")
-        print(cm)
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         hm = ax.imshow(cm, cmap='Blues', interpolation='nearest')
         indices = list(range(len(self.class_labels)))
-        ax.set_ylabel("Actual", fontsize=10)
-        ax.set_xlabel("Prediction", fontsize=10)
+        ax.set_ylabel("Actual", fontsize=LAB_S)
+        ax.set_xlabel("Prediction", fontsize=LAB_S)
         pretty_class_names = clean_class_names(self.class_labels)
-        plt.yticks(indices, pretty_class_names, fontsize=10)
-        plt.xticks(indices, pretty_class_names, rotation=-90, fontsize=12)
+        plt.yticks(indices, pretty_class_names, fontsize=TICK_S)
+        plt.xticks(indices, pretty_class_names, rotation=-90, fontsize=TICK_S)
         plt.colorbar(hm)
+        print("\nConfusion Matrix")
+        print(cm)
         thex_utils.display_and_save_plot(self.dir, "Confusion Matrix", fig=fig)
 
     def plot_all_metrics(self, purities, comps, all_pc, y):
@@ -294,20 +294,6 @@ class MainModelVisualization:
 
         self.plot_metrics(purities, "Purity", p_baselines, p_intvls)
         self.plot_metrics(comps, "Completeness", c_baselines, c_intvls)
-
-    def prep_err_bars(self, intervals, metrics):
-        """
-        Convert confidence intervals to specific values to be plotted, for xerr  values are +/- sizes relative to the data:
-        """
-        if intervals is None:
-            return None
-        errs = [[], []]
-        for index, interval in enumerate(intervals):
-            min_bar = interval[0]
-            max_bar = interval[1]
-            errs[0].append(metrics[index] - min_bar)
-            errs[1].append(max_bar - metrics[index])
-        return errs
 
     def plot_metrics(self, class_metrics, xlabel, baselines=None, intervals=None):
         """
@@ -328,7 +314,7 @@ class MainModelVisualization:
         bar_width = 0.4
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
                                dpi=DPI, tight_layout=True)
-        errs = self.prep_err_bars(intervals, metrics)
+        errs = prep_err_bars(intervals, metrics)
         max_y = (0.4 * len(metrics))
         if len(metrics) <= 2:
             max_y = max_y - 0.2
@@ -348,15 +334,15 @@ class MainModelVisualization:
 
         # Format Axes, Labels, and Ticks
         ax.set_xlim(0, 1)
-        plt.xticks(list(np.linspace(0, 1, 11)), [
-                   str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
+        x_indices, x_ticks = get_perc_ticks()
+        plt.yticks(x_indices, x_ticks, fontsize=TICK_S)
 
-        plt.xlabel(xlabel, fontsize=12)
+        plt.xlabel(xlabel, fontsize=LAB_S)
         pretty_class_names = clean_class_names(class_names)
-        plt.yticks(y_indices, pretty_class_names,  fontsize=12,
+        plt.yticks(y_indices, pretty_class_names,  fontsize=TICK_S,
                    horizontalalignment='right')
-        plt.ylabel('Transient Class', fontsize=12)
-        ax.set_title(xlabel)
+        plt.ylabel('Transient Class', fontsize=LAB_S)
+        ax.set_title(xlabel, fontsize=TITLE_S)
         thex_utils.display_and_save_plot(self.dir, self.name + ": " + xlabel)
 
     def plot_prob_pc_curves(self, range_metrics, class_counts):
@@ -392,26 +378,30 @@ class MainModelVisualization:
                 comps.append(cur_c)
             purities.reverse()
             comps.reverse()
+
             x_indices = np.linspace(0, 1, len(purities))
 
             color = 'tab:red'
-            ax1.set_xlabel('Probability >=', fontsize=14)
-            ax1.set_ylabel('Purity', color=color, fontsize=14)
+            ax1.set_xlabel('Probability >=', fontsize=LAB_S)
+            ax1.set_ylabel('Purity', color=color, fontsize=LAB_S)
             ax1.scatter(x_indices, purities, color=color, s=4)
             ax1.plot(x_indices, purities, color=color)
-            ax1.tick_params(axis='y', labelcolor=color)
+            ax1.tick_params(axis='y', labelcolor=color, labelsize=TICK_S)
             ax1.set_ylim([0, 1])
 
             ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
             color = 'tab:blue'
-            ax2.set_ylabel('Completeness', color=color, fontsize=14)
+            ax2.set_ylabel('Completeness', color=color, fontsize=LAB_S)
             ax2.scatter(x_indices, comps, color=color, s=4)
             ax2.plot(x_indices, comps, color=color)
-            ax2.tick_params(axis='y', labelcolor=color)
+            ax2.tick_params(axis='y', labelcolor=color, labelsize=TICK_S)
             ax2.set_ylim([0, 1])
             pretty_class_name = clean_class_name(class_name)
 
-            plt.title(pretty_class_name)
+            x_indices, x_ticks = get_perc_ticks()
+            plt.xticks(x_indices, x_ticks, fontsize=TICK_S)
+
+            plt.title(pretty_class_name, fontsize=TITLE_S)
 
             thex_utils.display_and_save_plot(model_dir=self.dir,
                                              file_name=self.name + " Purity and Completeness vs. Probability: " + pretty_class_name,
@@ -426,13 +416,11 @@ class MainModelVisualization:
         """
         if perc_ranges is None:
             perc_ranges = ["10%", "30%", "50%", "70%", "90%"]
-            # perc_ranges = ["5%", "15%", "25%", "35%",
-            #                "45%", "55%", "65%", "75%", "85%", "95%"]
+
         # Set +/- minus range based on number of xticks.
         if len(perc_ranges) == 10:
             pm = 5
         elif len(perc_ranges) == 5:
-            perc_ranges = ["10%", "30%", "50%", "70%", "90%"]
             pm = 10
 
         x_indices = np.arange(len(perc_ranges))
@@ -453,19 +441,17 @@ class MainModelVisualization:
             norm = plt.Normalize(0, max(totals))
             colors = mpl.cm.Blues(norm(totals))
             a = ax.bar(x_indices, prob_rates, color=colors, edgecolor='black')
-            plt.xticks(x_indices, perc_ranges, fontsize=12)
-            plt.yticks(list(np.linspace(0, 1, 11)), [
-                       str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=12)
+            plt.xticks(x_indices, perc_ranges, fontsize=TICK_S)
+            y_indices, y_ticks = get_perc_ticks()
+            plt.yticks(y_indices, y_ticks, fontsize=TICK_S)
             plt.xlabel('Probability of ' + class_name +
-                       ' +/-' + str(pm) + '%', fontsize=14)
-            plt.ylabel('Class Rate', fontsize=14)
-
+                       ' +/-' + str(pm) + '%', fontsize=LAB_S)
+            plt.ylabel('Class Rate', fontsize=LAB_S)
             pretty_class_name = clean_class_name(class_name)
-
-            ax.set_title(pretty_class_name + extra_title, fontsize=16)
+            ax.set_title(pretty_class_name + extra_title, fontsize=TITLE_S)
             m = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
             cbar = plt.colorbar(mappable=m)
-            cbar.ax.tick_params(labelsize=14)
+            cbar.ax.tick_params(labelsize=LAB_S)
 
             print("\nProbability vs Class Rates for: " + str(pretty_class_name))
             print(prob_rates)
@@ -510,15 +496,15 @@ class MainModelVisualization:
 
         # Plot aggregated rates
         ax.bar(x_indices, aggregated_rates, color=colors, edgecolor='black')
+        plt.xticks(x_indices, perc_ranges, fontsize=TICK_S)
 
-        plt.xticks(x_indices, perc_ranges, fontsize=10)
-        plt.yticks(list(np.linspace(0, 1, 11)), [
-            str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
-        plt.xlabel('Probability +/- 5%', fontsize=12)
-        plt.ylabel('Class Rate', fontsize=12)
-        ax.set_title(p_title, fontsize=16)
+        y_indices, y_ticks = get_perc_ticks()
+        plt.yticks(y_indices, y_ticks, fontsize=TICK_S)
+        plt.xlabel('Probability +/- 5%', fontsize=LAB_S)
+        plt.ylabel('Class Rate', fontsize=LAB_S)
+        ax.set_title(p_title, fontsize=TITLE_S)
         m = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
         cbar = plt.colorbar(mappable=m)
-        cbar.ax.tick_params(labelsize=14)
+        cbar.ax.tick_params(labelsize=LAB_S)
 
         thex_utils.display_and_save_plot(self.dir, p_title)
