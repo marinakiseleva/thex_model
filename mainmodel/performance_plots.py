@@ -12,7 +12,7 @@ from mainmodel.helper_compute import *
 import utilities.utilities as thex_utils
 
 
-from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, TREE_ROOT, UNDEF_CLASS, ORDERED_CLASSES
+from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, TREE_ROOT, ORDERED_CLASSES
 
 
 class MainModelVisualization:
@@ -59,7 +59,8 @@ class MainModelVisualization:
         ax.set_ylim([0, 1])
         plt.ylabel('Probability Assigned', fontsize=12)
         plt.xlabel('Class', fontsize=12)
-        plt.xticks(x_indices, self.class_labels, fontsize=9)
+        pretty_class_names = clean_class_name(self.class_labels)
+        plt.xticks(x_indices, pretty_class_names, fontsize=9)
         title = "example_output"
         if i is not None:
             title += "_" + str(i)
@@ -181,22 +182,23 @@ class MainModelVisualization:
         self.plot_probability_vs_class_rates(
             bot_metrics, extra_title=" (bottom half)", perc_ranges=perc_ranges)
 
-    def pre_plot_clean(self, x, y):
-        """
-        Keep only x, y values where y is not None
-        """
-        new_x = []
-        new_y = []
-        for index, value in enumerate(x):
-            if y[index] is not None:
-                new_x.append(value)
-                new_y.append(y[index])
-        return new_x, new_y
-
     def clean_plot(self, y, ax, name, color):
         """
         Helper plotting function for density analysis
         """
+
+        def pre_plot_clean(self, x, y):
+            """
+            Keep only x, y values where y is not None
+            """
+            new_x = []
+            new_y = []
+            for index, value in enumerate(x):
+                if y[index] is not None:
+                    new_x.append(value)
+                    new_y.append(y[index])
+            return new_x, new_y
+
         orig_x = list(range(0, 100, 1))
         x, y = self.pre_plot_clean(orig_x,  y)
         print("\nPlotting " + str(name) + " versus % top densities. Y values:")
@@ -246,9 +248,10 @@ class MainModelVisualization:
                     y.append(TP / den)
                     if round(class_count / total, 1) == 0.5:
                         star = [i, TP / den]
-            print("\n" + class_name + " purities " + str([x for x in zip(x, y)]))
+            pretty_class_name = clean_class_name(class_name)
+            print("\n" + pretty_class_name + " purities " + str([x for x in zip(x, y)]))
             ax.scatter(x, y, color=colors[class_index], s=2)
-            ax.plot(x, y, color=colors[class_index], label=class_name)
+            ax.plot(x, y, color=colors[class_index], label=pretty_class_name)
             if star is not None:
                 ax.plot(star[0], star[1], marker='*', color=colors[class_index])
 
@@ -272,8 +275,9 @@ class MainModelVisualization:
         indices = list(range(len(self.class_labels)))
         ax.set_ylabel("Actual", fontsize=10)
         ax.set_xlabel("Prediction", fontsize=10)
-        plt.yticks(indices, self.class_labels, fontsize=10)
-        plt.xticks(indices, self.class_labels, rotation=-90, fontsize=12)
+        pretty_class_names = clean_class_names(self.class_labels)
+        plt.yticks(indices, pretty_class_names, fontsize=10)
+        plt.xticks(indices, pretty_class_names, rotation=-90, fontsize=12)
         plt.colorbar(hm)
         thex_utils.display_and_save_plot(self.dir, "Confusion Matrix", fig=fig)
 
@@ -350,10 +354,8 @@ class MainModelVisualization:
                    str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
 
         plt.xlabel(xlabel, fontsize=12)
-        for index, cn in enumerate(class_names):
-            new_name = cn.replace("unspecified", "unspec.")
-            class_names[index] = new_name.strip()
-        plt.yticks(y_indices, class_names,  fontsize=12,
+        pretty_class_names = clean_class_names(class_names)
+        plt.yticks(y_indices, pretty_class_names,  fontsize=12,
                    horizontalalignment='right')
         plt.ylabel('Transient Class', fontsize=12)
         ax.set_title(xlabel)
@@ -409,11 +411,12 @@ class MainModelVisualization:
             ax2.plot(x_indices, comps, color=color)
             ax2.tick_params(axis='y', labelcolor=color)
             ax2.set_ylim([0, 1])
+            pretty_class_name = clean_class_name(class_name)
 
-            plt.title(class_name)
+            plt.title(pretty_class_name)
 
             thex_utils.display_and_save_plot(model_dir=self.dir,
-                                             file_name=self.name + " Purity and Completeness vs. Probability: " + class_name,
+                                             file_name=self.name + " Purity and Completeness vs. Probability: " + pretty_class_name,
                                              bbox_inches=None,
                                              fig=fig)
 
@@ -458,15 +461,18 @@ class MainModelVisualization:
             plt.xlabel('Probability of ' + class_name +
                        ' +/-' + str(pm) + '%', fontsize=14)
             plt.ylabel('Class Rate', fontsize=14)
-            ax.set_title(class_name + extra_title, fontsize=16)
+
+            pretty_class_name = clean_class_name(class_name)
+
+            ax.set_title(pretty_class_name + extra_title, fontsize=16)
             m = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
             cbar = plt.colorbar(mappable=m)
             cbar.ax.tick_params(labelsize=14)
 
-            print("\nProbability vs Class Rates for: " + str(class_name))
+            print("\nProbability vs Class Rates for: " + str(pretty_class_name))
             print(prob_rates)
             thex_utils.display_and_save_plot(self.dir,
-                                             "Probability vs Positive Rate: " + class_name + extra_title)
+                                             "Probability vs Positive Rate: " + pretty_class_name + extra_title)
 
         self.plot_agg_prob_vs_class_rates(total_pos_pr, True, perc_ranges)
 

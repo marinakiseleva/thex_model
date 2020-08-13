@@ -41,7 +41,7 @@ class MainModel(ABC, MainModelVisualization):
         # label, the UNDEF one returns.
         self.class_hier = CLASS_HIERARCHY.copy()
         for parent in CLASS_HIERARCHY.keys():
-            self.class_hier[parent].insert(0, UNDEF_CLASS + parent)
+            self.class_hier[parent].insert(0,  UNDEF_CLASS + parent)
         self.tree = util.init_tree(self.class_hier)
         self.class_levels = util.assign_levels(self.tree, {}, self.tree.root, 1)
         data_filters = {'cols': None,  # Names of columns to filter on; default is all numeric cols

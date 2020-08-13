@@ -102,7 +102,6 @@ def compute_confusion_matrix(results, class_labels):
     labels = []  # labels (as class indices)
     for row in results:
         row_labels = thex_utils.convert_str_to_list(row[label_index])
-
         # Sample is an instance of this current class.
         true_labels = list(set(class_labels).intersection(set(row_labels)))
         if len(true_labels) != 1:
@@ -193,6 +192,26 @@ def get_agg_prob_vs_class_rates(total_count_per_range,  class_labels, class_posi
     return aggregated_rates
 
 
+def clean_class_name(class_name):
+    pretty_class_name = class_name
+    if UNDEF_CLASS in class_name:
+        pretty_class_name = class_name.replace(UNDEF_CLASS, "")
+        pretty_class_name = pretty_class_name + " (unspec.)"
+    return pretty_class_name
+
+
+def clean_class_names(class_names):
+    """
+    Update all references to Unspecified class to be class (unspec.)
+    """
+    new_class_names = []
+    for class_name in class_names:
+        pretty_class_name = clean_class_name(class_name)
+        pretty_class_name.strip()
+        new_class_names.append(pretty_class_name)
+    return new_class_names
+
+
 def get_ordered_metrics(class_metrics, baselines=None, intervals=None):
     """
     Reorder metrics and reformat class names in hierarchy groupings
@@ -216,8 +235,7 @@ def get_ordered_metrics(class_metrics, baselines=None, intervals=None):
 
                 pretty_class_name = c
                 if UNDEF_CLASS in c:
-                    pretty_class_name = class_name.replace(UNDEF_CLASS, "")
-                    pretty_class_name = pretty_class_name + " (unspecified)"
+                    pretty_class_name = clean_class_name(class_name)
                 ordered_formatted_names.append(pretty_class_name)
                 break
 
