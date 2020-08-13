@@ -335,11 +335,11 @@ class MainModelVisualization:
         # Format Axes, Labels, and Ticks
         ax.set_xlim(0, 1)
         x_indices, x_ticks = get_perc_ticks()
-        plt.yticks(x_indices, x_ticks, fontsize=TICK_S)
+        plt.xticks(x_indices, x_ticks, fontsize=TICK_S)
 
         plt.xlabel(xlabel, fontsize=LAB_S)
         pretty_class_names = clean_class_names(class_names)
-        plt.yticks(y_indices, pretty_class_names,  fontsize=TICK_S,
+        plt.yticks(y_indices, pretty_class_names,  fontsize=LAB_S,
                    horizontalalignment='right')
         plt.ylabel('Transient Class', fontsize=LAB_S)
         ax.set_title(xlabel, fontsize=TITLE_S)
@@ -379,28 +379,26 @@ class MainModelVisualization:
             purities.reverse()
             comps.reverse()
 
-            x_indices = np.linspace(0, 1, len(purities))
+            def plot_axis(ax, data, label, color):
+                """
+                Plot data on axis in certain color
+                """
+                x_indices = np.linspace(0, 1, len(data))
+                ax.set_ylabel(label, color=color, fontsize=LAB_S)
+                ax.scatter(x_indices, data, color=color, s=4)
+                ax.plot(x_indices, data, color=color, linewidth=4)
+                ax.set_ylim([0, 1])
+                y_indices, y_ticks = get_perc_ticks()
+                plt.yticks(ticks=y_indices, labels=y_ticks, color=color, fontsize=TICK_S)
 
-            color = 'tab:red'
-            ax1.set_xlabel('Probability >=', fontsize=LAB_S)
-            ax1.set_ylabel('Purity', color=color, fontsize=LAB_S)
-            ax1.scatter(x_indices, purities, color=color, s=4)
-            ax1.plot(x_indices, purities, color=color)
-            ax1.tick_params(axis='y', labelcolor=color, labelsize=TICK_S)
-            ax1.set_ylim([0, 1])
-
+            ax1.set_xlabel(r'Probability $\geq$', fontsize=LAB_S)
+            plot_axis(ax1,  purities, "Purity", 'tab:red')
             ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-            color = 'tab:blue'
-            ax2.set_ylabel('Completeness', color=color, fontsize=LAB_S)
-            ax2.scatter(x_indices, comps, color=color, s=4)
-            ax2.plot(x_indices, comps, color=color)
-            ax2.tick_params(axis='y', labelcolor=color, labelsize=TICK_S)
-            ax2.set_ylim([0, 1])
-            pretty_class_name = clean_class_name(class_name)
+            plot_axis(ax2,  comps, "Completeness", 'tab:blue')
 
+            pretty_class_name = clean_class_name(class_name)
             x_indices, x_ticks = get_perc_ticks()
             plt.xticks(x_indices, x_ticks, fontsize=TICK_S)
-
             plt.title(pretty_class_name, fontsize=TITLE_S)
 
             thex_utils.display_and_save_plot(model_dir=self.dir,
@@ -444,10 +442,10 @@ class MainModelVisualization:
             plt.xticks(x_indices, perc_ranges, fontsize=TICK_S)
             y_indices, y_ticks = get_perc_ticks()
             plt.yticks(y_indices, y_ticks, fontsize=TICK_S)
-            plt.xlabel('Probability of ' + class_name +
+            pretty_class_name = clean_class_name(class_name)
+            plt.xlabel('Probability of ' + pretty_class_name +
                        ' +/-' + str(pm) + '%', fontsize=LAB_S)
             plt.ylabel('Class Rate', fontsize=LAB_S)
-            pretty_class_name = clean_class_name(class_name)
             ax.set_title(pretty_class_name + extra_title, fontsize=TITLE_S)
             m = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
             cbar = plt.colorbar(mappable=m)
@@ -502,7 +500,7 @@ class MainModelVisualization:
         plt.yticks(y_indices, y_ticks, fontsize=TICK_S)
         plt.xlabel('Probability +/- 5%', fontsize=LAB_S)
         plt.ylabel('Class Rate', fontsize=LAB_S)
-        ax.set_title(p_title, fontsize=TITLE_S)
+        ax.set_title(p_title, fontsize=TITLE_S, pad=20)
         m = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
         cbar = plt.colorbar(mappable=m)
         cbar.ax.tick_params(labelsize=LAB_S)
