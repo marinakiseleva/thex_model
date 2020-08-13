@@ -162,11 +162,11 @@ def plot_class_hist(model_dir, class_names, counts):
 
     f, ax = plt.subplots(figsize=(6, 6), dpi=DPI)
     # Plot data horizontally
-    bar_width = 0.4
+    bar_width = 0.3
     if len(class_names) <= 2:
-        max_y = (0.4 * len(class_names)) - 0.2
+        max_y = (bar_width * len(class_names)) - (bar_width / 2)
     else:
-        max_y = 0.4 * (len(class_names))
+        max_y = bar_width * (len(class_names))
     class_indices = np.linspace(0, max_y, len(class_names))
     ax.barh(y=class_indices, width=counts, height=bar_width, edgecolor='black')
 
