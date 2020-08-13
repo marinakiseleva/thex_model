@@ -255,6 +255,8 @@ class MainModel(ABC, MainModelVisualization):
         range_metrics = self.compute_probability_range_metrics(
             self.results)
         self.plot_prob_pc_curves(range_metrics, self.class_counts)
+        range_metrics = self.compute_probability_range_metrics(
+            self.results, bin_size=0.2)
         self.plot_probability_vs_class_rates(range_metrics)
 
         N = self.num_runs if self.num_runs is not None else self.num_folds

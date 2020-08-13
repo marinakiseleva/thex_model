@@ -424,11 +424,14 @@ class MainModelVisualization:
         :param extra_title: Extra string to add to title. 
         """
         if perc_ranges is None:
-            perc_ranges = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]
+            perc_ranges = ["10%", "30%", "50%", "70%", "90%"]
+            # perc_ranges = ["5%", "15%", "25%", "35%",
+            #                "45%", "55%", "65%", "75%", "85%", "95%"]
         # Set +/- minus range based on number of xticks.
         if len(perc_ranges) == 10:
             pm = 5
         elif len(perc_ranges) == 5:
+            perc_ranges = ["10%", "30%", "50%", "70%", "90%"]
             pm = 10
 
         x_indices = np.arange(len(perc_ranges))
@@ -449,14 +452,16 @@ class MainModelVisualization:
             norm = plt.Normalize(0, max(totals))
             colors = mpl.cm.Blues(norm(totals))
             a = ax.bar(x_indices, prob_rates, color=colors, edgecolor='black')
-            thex_utils.annotate_plot(ax, x_indices, prob_rates, totals)
-            plt.xticks(x_indices, perc_ranges, fontsize=10)
+            plt.xticks(x_indices, perc_ranges, fontsize=12)
             plt.yticks(list(np.linspace(0, 1, 11)), [
-                       str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
+                       str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=12)
             plt.xlabel('Probability of ' + class_name +
-                       ' +/-' + str(pm) + '%', fontsize=12)
-            plt.ylabel('Class Rate', fontsize=12)
-            ax.set_title(class_name + extra_title)
+                       ' +/-' + str(pm) + '%', fontsize=14)
+            plt.ylabel('Class Rate', fontsize=14)
+            ax.set_title(class_name + extra_title, fontsize=16)
+            m = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
+            cbar = plt.colorbar(mappable=m)
+            cbar.ax.tick_params(labelsize=14)
 
             print("\nProbability vs Class Rates for: " + str(class_name))
             print(prob_rates)
@@ -502,11 +507,14 @@ class MainModelVisualization:
         # Plot aggregated rates
         ax.bar(x_indices, aggregated_rates, color=colors, edgecolor='black')
 
-        thex_utils.annotate_plot(ax, x_indices, aggregated_rates, totals)
         plt.xticks(x_indices, perc_ranges, fontsize=10)
         plt.yticks(list(np.linspace(0, 1, 11)), [
             str(tick) + "%" for tick in list(range(0, 110, 10))], fontsize=10)
         plt.xlabel('Probability +/- 5%', fontsize=12)
         plt.ylabel('Class Rate', fontsize=12)
-        ax.set_title(p_title)
+        ax.set_title(p_title, fontsize=16)
+        m = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
+        cbar = plt.colorbar(mappable=m)
+        cbar.ax.tick_params(labelsize=14)
+
         thex_utils.display_and_save_plot(self.dir, p_title)
