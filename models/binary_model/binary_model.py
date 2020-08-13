@@ -6,12 +6,9 @@ Computes probability of each class entirely independently using optimized binary
 """
 
 import numpy as np
-import pandas as pd
 
 from mainmodel.mainmodel import MainModel
 from classifiers.binary.optbinary import OptimalBinaryClassifier
-import utilities.utilities as thex_utils
-from thex_data.data_consts import TARGET_LABEL, UNDEF_CLASS
 
 
 class BinaryModel(MainModel):

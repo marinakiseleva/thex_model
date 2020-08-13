@@ -1,9 +1,8 @@
 """
 Helper function for computing different performance metrics
 """
-
-from sklearn.metrics import confusion_matrix
 import numpy as np
+from sklearn.metrics import confusion_matrix
 
 import utilities.utilities as thex_utils
 from thex_data.data_consts import UNDEF_CLASS, ORDERED_CLASSES

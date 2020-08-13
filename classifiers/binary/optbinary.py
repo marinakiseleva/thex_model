@@ -16,7 +16,7 @@ from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import brier_score_loss
 from sklearn.utils.class_weight import compute_sample_weight
 
-from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
+from thex_data.data_consts import TARGET_LABEL
 from classifiers.binary.kdeclassifier import KDEClassifier
 from classifiers.binary.dtclassifier import DTClassifier
 from classifiers.binary.svmclassifier import SVMClassifier

@@ -3,8 +3,6 @@ data_prep
 Prepares data before running through a classifier. Contains functionality to pull down data, filter data, enhances features, and split into training and testing sets.
 """
 
-from sklearn.model_selection import train_test_split
-
 from .data_init import collect_data
 from .data_filter import *
 from .data_transform import transform_features

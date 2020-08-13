@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from thex_data.data_consts import TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI
+from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI
 import utilities.utilities as util
 
 

@@ -3,9 +3,7 @@ data_transform
 Enhance features by scaling and transforming them
 """
 import pandas as pd
-
 from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 
 from thex_data.data_consts import ORDERED_MAGS

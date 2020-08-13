@@ -1,8 +1,5 @@
 import os
-import shutil
-from textwrap import wrap
 import matplotlib.pyplot as plt
-
 from hmc import hmc
 
 from thex_data.data_consts import ROOT_DIR, TREE_ROOT, TARGET_LABEL, UNDEF_CLASS

@@ -5,14 +5,10 @@ Functionality to plot data distributions and counts. This includes plotting the 
 
 import numpy as np
 import pandas as pd
-from matplotlib.colors import ListedColormap
-from matplotlib.ticker import MaxNLocator
 from matplotlib.ticker import FormatStrFormatter
-from matplotlib.ticker import LogLocator
 import matplotlib.pyplot as plt
-from sklearn.neighbors.kde import KernelDensity
 
-from .data_consts import TARGET_LABEL, ROOT_DIR, FIG_WIDTH, FIG_HEIGHT, DPI, ORDERED_CLASSES, UNDEF_CLASS, ORDERED_MAGS
+from .data_consts import TARGET_LABEL, FIG_WIDTH, FIG_HEIGHT, DPI, ORDERED_MAGS
 import utilities.utilities as util
 
 

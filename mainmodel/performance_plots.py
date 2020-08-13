@@ -9,10 +9,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 from mainmodel.helper_compute import *
+from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI
 import utilities.utilities as thex_utils
-
-
-from thex_data.data_consts import FIG_WIDTH, FIG_HEIGHT, DPI, TREE_ROOT, ORDERED_CLASSES
 
 
 class MainModelVisualization:

@@ -1,18 +1,12 @@
 """
 Multiclass Model
 
-
 Creates single multiclass classifier that compares all classes at once. Assumes all classes are independent and are not related by any class hierarchy. 
 
 """
 
-import numpy as np
-import pandas as pd
-
 from mainmodel.mainmodel import MainModel
 from classifiers.multi.optmulti import OptimalMultiClassifier
-import utilities.utilities as thex_utils
-from thex_data.data_consts import TARGET_LABEL, UNDEF_CLASS
 
 
 class MultiModel(MainModel):
