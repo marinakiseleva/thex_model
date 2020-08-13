@@ -498,7 +498,7 @@ class MainModelVisualization:
 
         y_indices, y_ticks = get_perc_ticks()
         plt.yticks(y_indices, y_ticks, fontsize=TICK_S)
-        plt.xlabel(r"Probability \pm10%", fontsize=LAB_S)
+        plt.xlabel('Probability ' + r'$\pm$' + '10%', fontsize=LAB_S)
         plt.ylabel('Class Rate', fontsize=LAB_S)
         ax.set_title(p_title, fontsize=TITLE_S, pad=20)
         m = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
