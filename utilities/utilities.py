@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import matplotlib.pyplot as plt
 from hmc import hmc
 
@@ -104,6 +105,8 @@ def init_file_directories(name):
     """
     Initialize new directory by incrementing value of last directory.
     """
+    np.set_printoptions(precision=4)
+
     # Create output directory
     name = clean_str(name)
     output_dir = ROOT_DIR + "/output"
