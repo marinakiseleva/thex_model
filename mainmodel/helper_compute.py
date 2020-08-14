@@ -8,6 +8,19 @@ import utilities.utilities as thex_utils
 from thex_data.data_consts import UNDEF_CLASS, ORDERED_CLASSES
 
 
+def compute_metrics(self, results):
+    """
+    Compute TP, FP, TN, and FN per class and (if as_sets is True) compute those metrics for each class for each fold/run.
+    :param results: List of 2D Numpy arrays with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
+    :return class_metrics: Map from class name to map of {"TP": w, "FP": x, "FN": y, "TN": z}
+    """
+    class_metrics = {cn: {"TP": 0, "FP": 0, "TN": 0, "FN": 0}
+                     for cn in self.class_labels}
+    for row in results:
+        class_metrics = self.get_row_metrics(row, class_metrics)
+    return class_metrics
+
+
 def compute_baselines(class_counts, class_labels, y, class_priors=None):
     """
     Get random classifier baselines for completeness and purity

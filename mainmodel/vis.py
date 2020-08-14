@@ -260,6 +260,98 @@ class MainModelVisualization:
 
         thex_utils.display_and_save_plot(self.dir, "Prob Density % vs Purities")
 
+    def get_pc_per_trial(self, results):
+        """
+        Get purity and completeness per trial/fold, per class
+        Return [[c1,p1], [c2,p2] ..., [cN, pN]] where each c and p is a map from class names to completeness or purity, respectively
+        """
+        t_performances = []  # performance per trial/fold
+        for index, trial in enumerate(results):
+            class_metrics = {cn: {"TP": 0, "FP": 0, "TN": 0, "FN": 0}
+                             for cn in self.class_labels}
+            # For each predicted row
+            for row in trial:
+                class_metrics = self.get_row_metrics(row, class_metrics)
+            # Compute purity & completeness for this trial/fold (per class)
+            puritys, comps = compute_performance(class_metrics)
+            t_performances.append([puritys, comps])
+
+            print("Metrics for trial " + str(index + 1))
+            print("Purity: " + str(puritys))
+            print("Completeness: " + str(comps))
+
+        return t_performances
+
+    def get_avg_pc(self, t_performances, N):
+        """
+        Compute average purity & completeness over folds/trials per class
+        :param t_performances: Return of self.get_pc_per_trial
+        :param N: Number of trials/folds
+        """
+        # Average purity & completeness over folds/trials (per class)
+        avg_comps = {cn: 0 for cn in self.class_labels}
+        avg_purities = {cn: 0 for cn in self.class_labels}
+        for class_name in self.class_labels:
+            p_N = N  # N values for purity
+            # Aggregate over trials/folds
+            for p, c in t_performances:
+                if p[class_name] is None:
+                    # No purity for this trial -> exclude from average
+                    print("No measurable purity for " + class_name)
+                    p_N = p_N - 1
+                else:
+                    avg_purities[class_name] += p[class_name]
+
+                avg_comps[class_name] += c[class_name]
+            # Get average
+            avg_purities[class_name] = avg_purities[class_name] / p_N
+            avg_comps[class_name] = avg_comps[class_name] / N
+
+        return avg_purities, avg_comps
+
+    def get_row_metrics(self, row, class_metrics, index=None):
+        """
+        Helper function for compute_metrics
+        Get TP, FP, TN, FN metrics for this row & update in passed in dict of class_metrics. 
+        :param index: Index of result set
+        :param row: Numpy row of probabiliites (last col is label)
+        :param class_metrics: Dict to update
+        """
+        # Last column is label
+        label_index = len(self.class_labels)
+        labels = row[label_index]
+
+        for class_name in self.class_labels:
+            # Sample is an instance of this current class.
+            is_class = self.is_class(class_name, labels)
+            # Get class index of max prob; exclude last column since it is label
+            max_class_index = np.argmax(row[:len(row) - 1])
+            max_class_name = self.class_labels[max_class_index]
+
+            if class_name == max_class_name:
+                if is_class:
+                    class_metrics[class_name]["TP"] += 1
+                else:
+                    class_metrics[class_name]["FP"] += 1
+            else:
+                if is_class:
+                    class_metrics[class_name]["FN"] += 1
+                else:
+                    class_metrics[class_name]["TN"] += 1
+        return class_metrics
+
+    def compute_metrics(self, results):
+        """
+        Compute TP, FP, TN, and FN per class and (if as_sets is True) compute those metrics for each class for each fold/run.
+        :param results: List of 2D Numpy arrays with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
+        :return class_metrics: Map from class name to map of {"TP": w, "FP": x, "FN": y, "TN": z}
+        """
+        class_metrics = {cn: {"TP": 0, "FP": 0, "TN": 0, "FN": 0}
+                         for cn in self.class_labels}
+        for row in results:
+            class_metrics = self.get_row_metrics(row, class_metrics)
+        return class_metrics
+
     def plot_confusion_matrix(self, results):
         """
         Plot confusion matrix 

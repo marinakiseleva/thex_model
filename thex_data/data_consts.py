@@ -108,12 +108,12 @@ ORDERED_CLASSES = ['Ia',
 
 
 """
-class_to_subclass
+CLASS_HIERARCHY
 {Parent : [Child1, child2, ...] }
 Hierarchy of transient types, used in hierarchical multilabel classifiers
 """
 
-class_to_subclass = {
+CLASS_HIERARCHY = {
     "Ia":                    ["Ia Pec"],
     "Ia Pec":                ["Ia-00cx", "Ia-02cx", "Ia-09dc", "Ia-91T",
                               "Ia-91bg", "Ia-99aa", "Ia-HV", "Ia CSM"],
