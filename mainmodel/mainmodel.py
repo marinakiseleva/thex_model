@@ -130,7 +130,8 @@ class MainModel(ABC, MainModelVisualization):
         Visualize data, run analysis, and record results in self.results, a list of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         """
         print("\nRunning " + str(self.name))
-
+        with open(self.dir + '/y.pickle', 'wb') as f:
+            pickle.dump(self.y, f)
         self.visualize_data()
 
         self.run()
@@ -138,8 +139,6 @@ class MainModel(ABC, MainModelVisualization):
         # Save results in pickle
         with open(self.dir + '/results.pickle', 'wb') as f:
             pickle.dump(self.results, f)
-        with open(self.dir + '/y.pickle', 'wb') as f:
-            pickle.dump(self.y, f)
 
         self.visualize_performance()
 
