@@ -10,10 +10,10 @@ Subclasses differ in how they normalize across the class hierarchy.
 """
 import sys
 import random
+import math
 import pickle
 from abc import ABC, abstractmethod
 import pandas as pd
-from sklearn.model_selection import StratifiedKFold
 
 # local imports
 from mainmodel.helper_compute import get_ordered_metrics, compute_performance
@@ -265,6 +265,33 @@ class MainModel(ABC, MainModelVisualization):
 
         self.plot_all_metrics(ps, cs, pc_per_trial, self.y)
 
+    def kfold_stratify(self):
+        """
+        Stratify into folds, with equal class representation in each fold
+        """
+        fold_indices = {x: [] for x in range(self.num_folds)}
+        for class_name in self.class_labels:
+            class_indices = []
+            for index, row in self.y.iterrows():
+                class_list = util.convert_str_to_list(row[TARGET_LABEL])
+                if class_name in class_list:
+                    class_indices.append(index)
+
+            fold_count = math.floor(len(class_indices) / self.num_folds)
+            excess = len(class_indices) - (self.num_folds * fold_count)
+            for i in range(self.num_folds):
+                a = random.sample(class_indices, fold_count)
+                if excess > 0:
+                    sampled = random.sample(class_indices, fold_count + 1)
+                    excess -= 1
+                else:
+                    sampled = random.sample(class_indices, fold_count)
+                class_indices = [x for x in class_indices if x not in sampled]
+
+                fold_indices[i] += sampled
+
+        return fold_indices
+
     def run_cfv(self, X, y):
         """
         Run k-fold cross validation
@@ -272,14 +299,22 @@ class MainModel(ABC, MainModelVisualization):
         :param X: DataFrame of features data
         :param y: DataFram with TARGET_LABEL column
         """
-        kf = StratifiedKFold(n_splits=self.num_folds, shuffle=True)
+        fold_indices = self.kfold_stratify()
         results = []
         self.datas = []
-        for train_index, test_index in kf.split(X, y):
-            X_train, X_test = X.iloc[train_index].reset_index(
-                drop=True), X.iloc[test_index].reset_index(drop=True)
-            y_train, y_test = y.iloc[train_index].reset_index(
-                drop=True), y.iloc[test_index].reset_index(drop=True)
+        for i in range(self.num_folds):
+            # Select training and test indices for this fold
+            indices = fold_indices[i]
+            test_indices_X = model.X.index.isin(fold_indices[i])
+            test_indices_y = model.y.index.isin(fold_indices[i])
+            X_train = model.X[~test_indices_X].reset_index(
+                drop=True)
+            y_train = model.y[~test_indices_y].reset_index(
+                drop=True)
+            X_test = model.X.iloc[fold_indices[i]].reset_index(
+                drop=True)
+            y_test = model.y.iloc[fold_indices[i]].reset_index(
+                drop=True)
 
             # Scale and apply PCA
             if self.transform_features:
