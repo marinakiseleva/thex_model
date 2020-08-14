@@ -305,15 +305,15 @@ class MainModel(ABC, MainModelVisualization):
         for i in range(self.num_folds):
             # Select training and test indices for this fold
             indices = fold_indices[i]
-            test_indices_X = model.X.index.isin(fold_indices[i])
-            test_indices_y = model.y.index.isin(fold_indices[i])
-            X_train = model.X[~test_indices_X].reset_index(
+            test_indices_X = self.X.index.isin(fold_indices[i])
+            test_indices_y = self.y.index.isin(fold_indices[i])
+            X_train = self.X[~test_indices_X].reset_index(
                 drop=True)
-            y_train = model.y[~test_indices_y].reset_index(
+            y_train = self.y[~test_indices_y].reset_index(
                 drop=True)
-            X_test = model.X.iloc[fold_indices[i]].reset_index(
+            X_test = self.X.iloc[fold_indices[i]].reset_index(
                 drop=True)
-            y_test = model.y.iloc[fold_indices[i]].reset_index(
+            y_test = self.y.iloc[fold_indices[i]].reset_index(
                 drop=True)
 
             # Scale and apply PCA
