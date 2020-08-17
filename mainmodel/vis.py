@@ -192,7 +192,7 @@ class MainModelVisualization:
         plt.xticks(y_indices, y_ticks, fontsize=TICK_S)
         plt.yticks(y_indices, y_ticks, fontsize=TICK_S)
         ax.legend(loc='upper center', bbox_to_anchor=(
-            1.3, 1), ncol=1, prop={'size': LAB_S})
+            1.3, 1), ncol=1, prop={'size': LAB_S - 2})
 
         thex_utils.display_and_save_plot(self.dir, "Prob Density % vs Purities")
 
@@ -441,9 +441,9 @@ class MainModelVisualization:
             thex_utils.display_and_save_plot(self.dir,
                                              "Probability vs Positive Rate: " + pretty_class_name + extra_title)
 
-        self.plot_agg_prob_vs_class_rates(total_pos_pr, True, perc_ranges)
+        # self.plot_agg_prob_vs_class_rates(total_pos_pr, True, perc_ranges)
 
-        self.plot_agg_prob_vs_class_rates(total_pos_pr, False, perc_ranges)
+        # self.plot_agg_prob_vs_class_rates(total_pos_pr, False, perc_ranges)
 
     def plot_agg_prob_vs_class_rates(self, total_pos_pr, weighted, perc_ranges):
         """
