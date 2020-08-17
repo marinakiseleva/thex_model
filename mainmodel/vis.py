@@ -18,16 +18,6 @@ class MainModelVisualization:
     Mixin Class for MainModel performance visualization
     """
 
-    def get_max_tick_width(self, class_names, tick_size):
-        """
-        Get the maximum tick width
-        """
-        max_tick_width = 0
-        for i in class_names:
-            bb = mpl.textpath.TextPath((0, 0), i, size=tick_size).get_extents()
-            max_tick_width = max(bb.width, max_tick_width)
-        return max_tick_width + 2
-
     def plot_example_output(self, row, i=None, priors=None):
         """
         Plots example output for a set of probabilities for a particular host-galaxy
@@ -69,21 +59,6 @@ class MainModelVisualization:
             os.mkdir(self.dir + '/examples')
         thex_utils.display_and_save_plot(self.dir + '/examples', title)
 
-    def get_average(self, metrics):
-        """
-        Gets average if there are values, otherwise 0
-        """
-        avg = 0
-        valid_count = 0
-        for class_name in metrics.keys():
-            if metrics[class_name] is not None:
-                avg += metrics[class_name]
-                valid_count += 1
-        if valid_count > 0:
-            return avg / valid_count
-        else:
-            return None
-
     def get_avg_performances(self, unnorm_results):
         """
         Get average purity, completeness, and accuracy for each threshold of maintaing top i% maximum unnormalized probabilities
@@ -115,10 +90,10 @@ class MainModelVisualization:
 
             # Put probs & labels in same Numpy array
             i_results = np.hstack((top_i_probs, top_i_labels.reshape(-1, 1)))
-            metrics = self.compute_metrics(i_results)
+            metrics = compute_metrics(self.class_labels, i_results)
             puritys, comps = compute_performance(metrics)
-            avg_comp = self.get_average(comps)
-            avg_purity = self.get_average(puritys)
+            avg_comp = get_average(comps)
+            avg_purity = get_average(puritys)
             avg_acc = get_accuracy(metrics, N=top_i)
 
             c.append(avg_comp)
@@ -127,28 +102,6 @@ class MainModelVisualization:
             class_purities = update_class_purities(class_purities, metrics, i)
 
         return p, c, a, class_purities
-
-    def get_proportion_results(self, indices, results):
-        """
-        Reduce results (as probabilities) to those with these indices 
-        :param indices: List of indices to keep 
-        :param results: Results, with density per class and last column has label 
-        """
-        probs_only = results[:, 0:len(self.class_labels)].astype(float)
-
-        # Select rows at those indices
-        densities = np.take(probs_only, indices=indices, axis=0)
-
-        # Normalize these densities to get probabilities
-        probs = densities / densities.sum(axis=1)[:, None]
-
-        labels = np.take(results,
-                         indices=indices,
-                         axis=0)[:, len(self.class_labels)]
-
-        # Put probs & labels in same Numpy array
-        prop_results = np.hstack((probs, labels.reshape(-1, 1)))
-        return prop_results
 
     def plot_density_half_compare(self, unnorm_results):
         """
@@ -164,7 +117,8 @@ class MainModelVisualization:
         top_half = int(len(sorted_indices) * 0.5)
         top_half_indices = sorted_indices[:top_half]
 
-        top_results = self.get_proportion_results(top_half_indices,  unnorm_results)
+        top_results = get_proportion_results(
+            self.class_labels, top_half_indices,  unnorm_results)
         top_metrics = self.compute_probability_range_metrics(
             top_results, bin_size=0.2, concat=False)
         print("\nVisualizing probability vs class rates for top 1/2 ")
@@ -173,36 +127,13 @@ class MainModelVisualization:
             top_metrics, extra_title=" (top half)", perc_ranges=perc_ranges)
 
         bot_half_indices = sorted_indices[top_half:]
-        bot_results = self.get_proportion_results(bot_half_indices,  unnorm_results)
+        bot_results = get_proportion_results(
+            self.class_labels, bot_half_indices,  unnorm_results)
         bot_metrics = self.compute_probability_range_metrics(
             bot_results, bin_size=0.2, concat=False)
         print("\nVisualizing probability vs class rates for bottom 1/2 ")
         self.plot_probability_vs_class_rates(
             bot_metrics, extra_title=" (bottom half)", perc_ranges=perc_ranges)
-
-    def clean_plot(self, y, ax, name, color):
-        """
-        Helper plotting function for density analysis
-        """
-
-        def pre_plot_clean(self, x, y):
-            """
-            Keep only x, y values where y is not None
-            """
-            new_x = []
-            new_y = []
-            for index, value in enumerate(x):
-                if y[index] is not None:
-                    new_x.append(value)
-                    new_y.append(y[index])
-            return new_x, new_y
-
-        orig_x = list(range(0, 100, 1))
-        x, y = self.pre_plot_clean(orig_x,  y)
-        print("\nPlotting " + str(name) + " versus % top densities. Y values:")
-        print(y)
-        ax.scatter(x, y, color=color, s=2)
-        ax.plot(x, y, color=color, label=name)
 
     def plot_density_performance(self, unnorm_results):
         """
@@ -213,9 +144,9 @@ class MainModelVisualization:
         # Plot aggregated performance metrics
         fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
                                dpi=DPI, tight_layout=True)
-        self.clean_plot(p, ax, "Purity", 'red')
-        self.clean_plot(c, ax, "Completeness", 'blue')
-        self.clean_plot(a, ax, "Accuracy", 'green')
+        clean_plot(p, ax, "Purity", 'red')
+        clean_plot(c, ax, "Completeness", 'blue')
+        clean_plot(a, ax, "Accuracy", 'green')
         ax.set_xlabel("% Top Densities", fontsize=LAB_S)
         ax.set_ylabel("Average %", fontsize=LAB_S)
         ax.set_ylim([0, 1.01])
@@ -271,7 +202,7 @@ class MainModelVisualization:
                              for cn in self.class_labels}
             # For each predicted row
             for row in trial:
-                class_metrics = self.get_row_metrics(row, class_metrics)
+                class_metrics = get_row_metrics(self.class_labels, row, class_metrics)
             # Compute purity & completeness for this trial/fold (per class)
             puritys, comps = compute_performance(class_metrics)
             t_performances.append([puritys, comps])
@@ -308,49 +239,6 @@ class MainModelVisualization:
             avg_comps[class_name] = avg_comps[class_name] / N
 
         return avg_purities, avg_comps
-
-    def get_row_metrics(self, row, class_metrics, index=None):
-        """
-        Helper function for compute_metrics
-        Get TP, FP, TN, FN metrics for this row & update in passed in dict of class_metrics. 
-        :param index: Index of result set
-        :param row: Numpy row of probabiliites (last col is label)
-        :param class_metrics: Dict to update
-        """
-        # Last column is label
-        label_index = len(self.class_labels)
-        labels = row[label_index]
-
-        for class_name in self.class_labels:
-            # Sample is an instance of this current class.
-            is_class = self.is_class(class_name, labels)
-            # Get class index of max prob; exclude last column since it is label
-            max_class_index = np.argmax(row[:len(row) - 1])
-            max_class_name = self.class_labels[max_class_index]
-
-            if class_name == max_class_name:
-                if is_class:
-                    class_metrics[class_name]["TP"] += 1
-                else:
-                    class_metrics[class_name]["FP"] += 1
-            else:
-                if is_class:
-                    class_metrics[class_name]["FN"] += 1
-                else:
-                    class_metrics[class_name]["TN"] += 1
-        return class_metrics
-
-    def compute_metrics(self, results):
-        """
-        Compute TP, FP, TN, and FN per class and (if as_sets is True) compute those metrics for each class for each fold/run.
-        :param results: List of 2D Numpy arrays with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
-        :return class_metrics: Map from class name to map of {"TP": w, "FP": x, "FN": y, "TN": z}
-        """
-        class_metrics = {cn: {"TP": 0, "FP": 0, "TN": 0, "FN": 0}
-                         for cn in self.class_labels}
-        for row in results:
-            class_metrics = self.get_row_metrics(row, class_metrics)
-        return class_metrics
 
     def plot_confusion_matrix(self, results):
         """

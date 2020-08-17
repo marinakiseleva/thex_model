@@ -112,7 +112,7 @@ class MainModel(ABC, MainModelVisualization):
         else:
             raise ValueError("Must pass in either number of folds or runs.")
 
-    def analyze_probabilities(self):
+    def run_density_analysis(self):
         """
         Evalaute how well the KDEs fit the data by visualizing the performance at different proportions of top unnormalized probabilities (densities). 
         """

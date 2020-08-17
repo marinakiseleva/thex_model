@@ -7,17 +7,86 @@ from sklearn.metrics import confusion_matrix
 import utilities.utilities as thex_utils
 from thex_data.data_consts import UNDEF_CLASS, ORDERED_CLASSES
 
+# Computing helpers
 
-def compute_metrics(self, results):
+
+def get_ordered_metrics(class_metrics, baselines=None, intervals=None):
+    """
+    Reorder metrics and reformat class names in hierarchy groupings
+    :param class_metrics: Mapping from class name to metric value.
+    :[optional] param baselines: Mapping from class name to random-baseline performance
+    :[optional] param intervals: Mapping from class name to confidence intervals
+    """
+    ordered_formatted_names = []
+    ordered_metrics = []
+    ordered_baselines = [] if baselines is not None else None
+    ordered_intervals = [] if intervals is not None else None
+    for class_name in ORDERED_CLASSES:
+        for c in class_metrics.keys():
+            if c.replace(UNDEF_CLASS, "") == class_name:
+                # Add to metrics and baselines
+                ordered_metrics.append(class_metrics[c])
+                if baselines is not None:
+                    ordered_baselines.append(baselines[c])
+                if intervals is not None:
+                    ordered_intervals.append(intervals[c])
+
+                pretty_class_name = clean_class_name(c)
+                ordered_formatted_names.append(pretty_class_name)
+                break
+
+    ordered_formatted_names.reverse()
+    ordered_metrics.reverse()
+    if baselines is not None:
+        ordered_baselines.reverse()
+    if intervals is not None:
+        ordered_intervals.reverse()
+    return [ordered_formatted_names, ordered_metrics, ordered_baselines, ordered_intervals]
+
+
+def get_row_metrics(class_labels, row, class_metrics, index=None):
+    """
+    Helper function for compute_metrics
+    Get TP, FP, TN, FN metrics for this row & update in passed in dict of class_metrics. 
+    :param index: Index of result set
+    :param row: Numpy row of probabiliites (last col is label)
+    :param class_metrics: Dict to update
+    """
+    # Last column is label
+    label_index = len(class_labels)
+    labels = row[label_index]
+
+    for class_name in class_labels:
+        # Sample is an instance of this current class.
+        is_class = class_name in thex_utils.convert_str_to_list(labels)
+
+        # Get class index of max prob; exclude last column since it is label
+        max_class_index = np.argmax(row[:len(row) - 1])
+        max_class_name = class_labels[max_class_index]
+
+        if class_name == max_class_name:
+            if is_class:
+                class_metrics[class_name]["TP"] += 1
+            else:
+                class_metrics[class_name]["FP"] += 1
+        else:
+            if is_class:
+                class_metrics[class_name]["FN"] += 1
+            else:
+                class_metrics[class_name]["TN"] += 1
+    return class_metrics
+
+
+def compute_metrics(class_labels, results):
     """
     Compute TP, FP, TN, and FN per class and (if as_sets is True) compute those metrics for each class for each fold/run.
     :param results: List of 2D Numpy arrays with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
     :return class_metrics: Map from class name to map of {"TP": w, "FP": x, "FN": y, "TN": z}
     """
     class_metrics = {cn: {"TP": 0, "FP": 0, "TN": 0, "FN": 0}
-                     for cn in self.class_labels}
+                     for cn in class_labels}
     for row in results:
-        class_metrics = self.get_row_metrics(row, class_metrics)
+        class_metrics = get_row_metrics(class_labels, row, class_metrics)
     return class_metrics
 
 
@@ -203,6 +272,8 @@ def get_agg_prob_vs_class_rates(total_count_per_range,  class_labels, class_posi
             aggregated_rates += (1 / len(class_labels)) * pos_prob_rates
     return aggregated_rates
 
+# Plotting helpers
+
 
 def prep_err_bars(intervals, metrics):
     """
@@ -248,35 +319,66 @@ def clean_class_names(class_names):
     return new_class_names
 
 
-def get_ordered_metrics(class_metrics, baselines=None, intervals=None):
-    """
-    Reorder metrics and reformat class names in hierarchy groupings
-    :param class_metrics: Mapping from class name to metric value.
-    :[optional] param baselines: Mapping from class name to random-baseline performance
-    :[optional] param intervals: Mapping from class name to confidence intervals
-    """
-    ordered_formatted_names = []
-    ordered_metrics = []
-    ordered_baselines = [] if baselines is not None else None
-    ordered_intervals = [] if intervals is not None else None
-    for class_name in ORDERED_CLASSES:
-        for c in class_metrics.keys():
-            if c.replace(UNDEF_CLASS, "") == class_name:
-                # Add to metrics and baselines
-                ordered_metrics.append(class_metrics[c])
-                if baselines is not None:
-                    ordered_baselines.append(baselines[c])
-                if intervals is not None:
-                    ordered_intervals.append(intervals[c])
+# Density analysis helpers
 
-                pretty_class_name = clean_class_name(c)
-                ordered_formatted_names.append(pretty_class_name)
-                break
+def clean_plot(y, ax, name, color):
+    """
+    Helper plotting function for density analysis
+    """
+    def pre_plot_clean(x, y):
+        """
+        Keep only x, y values where y is not None
+        """
+        new_x = []
+        new_y = []
+        for index, value in enumerate(x):
+            if y[index] is not None:
+                new_x.append(value)
+                new_y.append(y[index])
+        return new_x, new_y
 
-    ordered_formatted_names.reverse()
-    ordered_metrics.reverse()
-    if baselines is not None:
-        ordered_baselines.reverse()
-    if intervals is not None:
-        ordered_intervals.reverse()
-    return [ordered_formatted_names, ordered_metrics, ordered_baselines, ordered_intervals]
+    orig_x = list(range(0, 100, 1))
+    x, y = pre_plot_clean(orig_x,  y)
+    print("\nPlotting " + str(name) + " versus % top densities. Y values:")
+    print(y)
+    ax.scatter(x, y, color=color, s=2)
+    ax.plot(x, y, color=color, label=name)
+
+
+def get_proportion_results(class_labels, indices, results):
+    """
+    Reduce results (as probabilities) to those with these indices 
+    :param indices: List of indices to keep 
+    :param results: Results, with density per class and last column has label 
+    """
+    probs_only = results[:, 0:len(class_labels)].astype(float)
+
+    # Select rows at those indices
+    densities = np.take(probs_only, indices=indices, axis=0)
+
+    # Normalize these densities to get probabilities
+    probs = densities / densities.sum(axis=1)[:, None]
+
+    labels = np.take(results,
+                     indices=indices,
+                     axis=0)[:, len(class_labels)]
+
+    # Put probs & labels in same Numpy array
+    prop_results = np.hstack((probs, labels.reshape(-1, 1)))
+    return prop_results
+
+
+def get_average(metrics):
+    """
+    Gets average if there are values, otherwise 0
+    """
+    avg = 0
+    valid_count = 0
+    for class_name in metrics.keys():
+        if metrics[class_name] is not None:
+            avg += metrics[class_name]
+            valid_count += 1
+    if valid_count > 0:
+        return avg / valid_count
+    else:
+        return None
