@@ -148,9 +148,11 @@ class MainModelVisualization:
         clean_plot(c, ax, "Completeness", 'blue')
         clean_plot(a, ax, "Accuracy", 'green')
         ax.set_xlabel("% Top Densities", fontsize=LAB_S)
-        ax.set_ylabel("Average %", fontsize=LAB_S)
+        ax.set_ylabel("Performance", fontsize=LAB_S)
         ax.set_ylim([0, 1.01])
-        ax.tick_params(axis='y')
+        y_indices, y_ticks = get_perc_ticks()
+        plt.xticks(y_indices * 100, y_ticks, fontsize=TICK_S)
+        plt.yticks(y_indices, y_ticks, fontsize=TICK_S)
         ax.legend()
 
         thex_utils.display_and_save_plot(
@@ -186,8 +188,11 @@ class MainModelVisualization:
 
         ax.set_ylabel("Purity", fontsize=LAB_S)
         ax.set_xlabel("% Top Densities", fontsize=LAB_S)
+        y_indices, y_ticks = get_perc_ticks()
+        plt.xticks(y_indices, y_ticks, fontsize=TICK_S)
+        plt.yticks(y_indices, y_ticks, fontsize=TICK_S)
         ax.legend(loc='upper center', bbox_to_anchor=(
-            1.25, 1), ncol=1, prop={'size': LAB_S})
+            1.3, 1), ncol=1, prop={'size': LAB_S})
 
         thex_utils.display_and_save_plot(self.dir, "Prob Density % vs Purities")
 
