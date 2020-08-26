@@ -497,6 +497,12 @@ class MainModel(ABC, MainModelVisualization):
 
         return range_metrics
 
+    def get_num_classes(self):
+        """
+        To override in binary classifier
+        """
+        return len(self.class_labels)
+
     @abstractmethod
     def get_class_probabilities(self, x):
         """

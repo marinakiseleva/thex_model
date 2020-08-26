@@ -78,6 +78,9 @@ def visualize_completeness(model_dir, X, class_labels, data_completeness):
     :param data_completeness: list in order of class names, which contains completeness per feature
     """
     features = get_ordered_features(list(X))
+    for index, f in enumerate(features):
+        if '_mag' in f:
+            features[index] = f.replace("_mag", "")
 
     df = pd.DataFrame(data_completeness,
                       index=class_labels,
@@ -86,8 +89,7 @@ def visualize_completeness(model_dir, X, class_labels, data_completeness):
     f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
 
     a = plt.pcolor(df, vmin=0, vmax=1, cmap='gist_heat')
-    plt.yticks(np.linspace(0.5, len(df.index), len(df.index)),
-               df.index, fontsize=TICK_S)
+    plt.yticks(np.arange(len(df.index)) + 0.5, df.index, fontsize=TICK_S)
     plt.xticks(np.linspace(0.5, len(df.columns), len(df.columns)),
                df.columns, rotation=-90, fontsize=TICK_S)
     f.colorbar(a)
@@ -159,15 +161,19 @@ def plot_class_hist(model_dir, class_names, counts):
     :param model_dir: directory of model to save figure
     :param class_counts: Map from class name to counts
     """
-
+    num_classes = len(class_names)
     f, ax = plt.subplots(figsize=(6, 6), dpi=DPI)
     # Plot data horizontally
     bar_width = 0.3
-    if len(class_names) <= 2:
-        max_y = (bar_width * len(class_names)) - (bar_width / 2)
+    if num_classes <= 5:
+        tick_size = TICK_S + 1
+        label_size = LAB_S + 2
+        max_y = (bar_width * num_classes) - (bar_width / 2)
     else:
-        max_y = bar_width * (len(class_names))
-    class_indices = np.linspace(0, max_y, len(class_names))
+        tick_size = TICK_S - 1
+        label_size = LAB_S
+        max_y = bar_width * (num_classes)
+    class_indices = np.linspace(0, max_y, num_classes)
     ax.barh(y=class_indices, width=counts, height=bar_width, edgecolor='black')
 
     plt.gcf().subplots_adjust(left=0.1)
@@ -176,12 +182,12 @@ def plot_class_hist(model_dir, class_names, counts):
         ax.set_xscale('log')
         ax.xaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
 
-    plt.yticks(class_indices, class_names, fontsize=TICK_S)
-    ax.tick_params(axis='x', which='both', labelsize=TICK_S - 1, rotation=-90)
-    ax.tick_params(axis='x', which='minor', labelsize=TICK_S - 3)
+    plt.yticks(class_indices, class_names, fontsize=tick_size)
+    ax.tick_params(axis='x', which='both', labelsize=tick_size - 1, rotation=-90)
+    ax.tick_params(axis='x', which='minor', labelsize=tick_size - 3)
 
-    plt.ylabel('Class', fontsize=LAB_S)
-    plt.xlabel('Count', fontsize=LAB_S)
+    plt.ylabel('Class', fontsize=label_size)
+    plt.xlabel('Count', fontsize=label_size)
     plt.title("Class Distribution", fontsize=TITLE_S)
     plt.tight_layout()
     util.display_and_save_plot(

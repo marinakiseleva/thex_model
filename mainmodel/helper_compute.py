@@ -90,18 +90,21 @@ def compute_metrics(class_labels, results):
     return class_metrics
 
 
-def compute_baselines(class_counts, class_labels, y, class_priors=None):
+def compute_baselines(class_counts, class_labels, y, n, class_priors=None):
     """
     Get random classifier baselines for completeness and purity
+    :param n: Number of classes
     """
     comp_baselines = {}
     purity_baselines = {}
     total_count = y.shape[0]
+
     for class_name in class_labels:
         if class_priors is not None:
+            # If class priors are used - use relative frequency of classes
             class_rate = class_counts[class_name] / total_count
         else:
-            class_rate = 1 / len(class_labels)
+            class_rate = 1 / n
 
         # Compute baselines
         TP = class_counts[class_name] * class_rate

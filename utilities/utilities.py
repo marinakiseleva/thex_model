@@ -66,7 +66,7 @@ def annotate_plot(ax, x, y, annotations):
         # Get class count of current index
         count = str(annotations[index])
         ax.annotate(count, xy=xy, textcoords='data', ha='center',
-                    va='bottom', fontsize=8, rotation=-90)
+                    va='bottom', fontsize=8)
         index += 1
 
 

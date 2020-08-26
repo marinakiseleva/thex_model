@@ -272,8 +272,9 @@ class MainModelVisualization:
         :param all_pc: Purity & completeness per trial/fold, per class
         :param y: all y dataset 
         """
+        n = self.get_num_classes()
         c_baselines, p_baselines = compute_baselines(
-            self.class_counts, self.class_labels, y, self.class_priors)
+            self.class_counts, self.class_labels, y, n, self.class_priors)
 
         p_intvls, c_intvls = compute_confintvls(all_pc, self.class_labels)
 
@@ -424,13 +425,16 @@ class MainModelVisualization:
             norm = plt.Normalize(0, max(totals))
             colors = mpl.cm.Blues(norm(totals))
             a = ax.bar(x_indices, prob_rates, color=colors, edgecolor='black')
+
+            thex_utils.annotate_plot(
+                ax=ax, x=x_indices, y=prob_rates, annotations=totals)
             plt.xticks(x_indices, perc_ranges, fontsize=TICK_S)
             y_indices, y_ticks = get_perc_ticks()
             plt.yticks(y_indices, y_ticks, fontsize=TICK_S)
             pretty_class_name = clean_class_name(class_name)
-            plt.xlabel('Probability of ' + pretty_class_name +
-                       r' $\pm$' + str(pm) + '%', fontsize=LAB_S)
-            plt.ylabel('Class Rate', fontsize=LAB_S)
+            plt.xlabel('Assigned Probability' + r' $\pm$' +
+                       str(pm) + '%', fontsize=LAB_S)
+            plt.ylabel('Empirical Probability', fontsize=LAB_S)
             ax.set_title(pretty_class_name + extra_title, fontsize=TITLE_S)
             m = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
             cbar = plt.colorbar(mappable=m)
@@ -484,7 +488,7 @@ class MainModelVisualization:
         y_indices, y_ticks = get_perc_ticks()
         plt.yticks(y_indices, y_ticks, fontsize=TICK_S)
         plt.xlabel('Probability ' + r'$\pm$' + '10%', fontsize=LAB_S)
-        plt.ylabel('Class Rate', fontsize=LAB_S)
+        plt.ylabel('Empirical Probability', fontsize=LAB_S)
         ax.set_title(p_title, fontsize=TITLE_S, pad=20)
         m = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.Blues)
         cbar = plt.colorbar(mappable=m)
