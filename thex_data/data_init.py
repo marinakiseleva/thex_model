@@ -61,7 +61,7 @@ def collect_data():
     for column in df_bytes:
         if df_bytes[column].dtype == np.dtype('object'):
             df[column + "_str"] = df_bytes[column].str.decode("utf-8")
-            df[column] = df[column + "_str"].copy()
+            df[column] = df[column + "_str"].copy(deep=True)
             df.drop(column + "_str", axis=1, inplace=True)
         else:
             df[column] = df_bytes[column]

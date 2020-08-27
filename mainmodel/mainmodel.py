@@ -14,6 +14,7 @@ import math
 import pickle
 from abc import ABC, abstractmethod
 import pandas as pd
+import copy
 
 # local imports
 from mainmodel.helper_compute import get_ordered_metrics, compute_performance
@@ -39,7 +40,7 @@ class MainModel(ABC, MainModelVisualization):
 
         # Must add Unspecifieds to tree, so that when searching for lowest-level
         # label, the UNDEF one returns.
-        self.class_hier = CLASS_HIERARCHY.copy()
+        self.class_hier = copy.deepcopy(CLASS_HIERARCHY)
         for parent in CLASS_HIERARCHY.keys():
             self.class_hier[parent].insert(0,  UNDEF_CLASS + parent)
         self.tree = util.init_tree(self.class_hier)
@@ -65,8 +66,8 @@ class MainModel(ABC, MainModelVisualization):
             features = collect_cols(data_filters['cols'], data_filters['col_matches'])
             X, y = get_source_target_data(features, data_filters)
         else:
-            X = data_filters['data'][0].copy()
-            y = data_filters['data'][1].copy()
+            X = data_filters['data'][0].copy(deep=True)
+            y = data_filters['data'][1].copy(deep=True)
 
         # Redefine labels with Unspecifieds
         y = util.add_unspecified_labels_to_data(y, self.class_levels)
@@ -164,7 +165,7 @@ class MainModel(ABC, MainModelVisualization):
         """
 
         # Initialize new hierarchy and class counts
-        new_hier = self.class_hier.copy()
+        new_hier = copy.deepcopy(self.class_hier)
 
         # Get counts of all defined classes
         defined_classes = set()
@@ -224,8 +225,8 @@ class MainModel(ABC, MainModelVisualization):
         """
         Visualize data completeness and distribution
         """
-        X = self.X.copy()
-        y = self.y.copy()
+        X = self.X.copy(deep=True)
+        y = self.y.copy(deep=True)
 
         completeness = calculate_completeness(X, y, self.class_labels)
         ordered_comp = get_ordered_metrics(completeness)
@@ -241,7 +242,7 @@ class MainModel(ABC, MainModelVisualization):
         features = list(df)
         if 'redshift' in features:
             plot_feature_distribution(model_dir=self.dir,
-                                      df=df.copy(),
+                                      df=df.copy(deep=True),
                                       feature='redshift',
                                       class_labels=self.class_labels)
 

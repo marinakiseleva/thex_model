@@ -26,7 +26,7 @@ def get_data(col_list, data_filters):
     # Drop empty class labels
     df = df[df[TARGET_LABEL] != ""]
 
-    df = filter_columns(df.copy(), col_list)
+    df = filter_columns(df.copy(deep=True), col_list)
 
     if data_filters['nb']:
         # Naive bayes: if it has at leat 1 non-null item, do not drop
