@@ -253,7 +253,7 @@ class MainModel(ABC, MainModelVisualization):
         self.plot_confusion_matrix(self.results)
         range_metrics = self.compute_probability_range_metrics(
             self.results)
-        self.plot_prob_pc_curves(range_metrics, self.class_counts)
+        self.plot_prob_pc_curves(range_metrics)
         range_metrics = self.compute_probability_range_metrics(
             self.results, bin_size=0.2)
         self.plot_probability_vs_class_rates(range_metrics)

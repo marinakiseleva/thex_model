@@ -331,7 +331,7 @@ class MainModelVisualization:
         ax.set_title(xlabel, fontsize=TITLE_S)
         thex_utils.display_and_save_plot(self.dir, self.name + ": " + xlabel)
 
-    def plot_prob_pc_curves(self, range_metrics, class_counts):
+    def plot_prob_pc_curves(self, range_metrics):
         """
         Plot purity & completeness curves relative to >= probability assigned to event
         :param range_metrics: Map of classes to [TP_range_sums, total_range_sums] where total_range_sums is the number of samples with probability in range for this class and TP_range_sums is the true positives per range
@@ -341,7 +341,7 @@ class MainModelVisualization:
         for index, class_name in enumerate(range_metrics.keys()):
             true_positives, totals = range_metrics[class_name]
             fig, ax1 = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-            class_total = class_counts[class_name]
+            class_total = self.class_counts[class_name]
             if self.num_runs is not None:
                 class_total = self.num_runs * class_total * .33
 
