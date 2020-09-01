@@ -30,6 +30,8 @@ def load_prev_exp(exp_dir, expnum, model):
 
     model.range_metrics = model.compute_probability_range_metrics(
         model.results, bin_size=0.2)
+    model.range_metrics_10 = model.compute_probability_range_metrics(
+        model.results, bin_size=0.1)
     return model
 
 
@@ -132,7 +134,7 @@ def get_pc_per_range(model, class_name):
     if model.num_runs is not None:
         class_total = model.num_runs * class_total * .33
 
-    true_positives, totals = model.range_metrics[class_name]
+    true_positives, totals = model.range_metrics_10[class_name]
     purities = []  # Accuracy per range (true positive/total)
     comps = []
     TP_count = 0
@@ -167,11 +169,14 @@ def plot_model_curves(class_name, model, ax):
         Plot data on axis in certain color
         """
         x_indices = np.linspace(0, 1, len(data))
+
         ax.scatter(x_indices, data, color=color, s=4)
+        print("Data: " + str(data))
         ax.plot(x_indices, data, color=color, linewidth=2)
         ax.set_yticks([])  # same for y ticks
         ax.set_ylim([0, 1])
 
+    print("\n\n P-C metrics for : " + class_name)
     plot_axis(ax, purities, 'tab:red')
     ax2 = ax.twinx()  # instantiate a second axes that shares the same x-axis
     ax2.set_ylim([0, 1])
@@ -228,8 +233,12 @@ def plot_pc_curves_together(binary_model, ensemble_model, multi_model, indices=N
     # x and y indices/ticks are the same
     plt.xticks(y_indices, y_ticks)
 
-    plt.rc('xtick', labelsize=7)
-    plt.rc('ytick', labelsize=7)
+    ticksize = 7
+    if len(indices) <= 6:
+        ticksize = 6
+
+    plt.rc('xtick', labelsize=ticksize)
+    plt.rc('ytick', labelsize=ticksize)
 
     f.text(0.5, 0.08, r'Probability $\geq$', fontsize=10, ha='center')
     f.text(0.0, .5, 'Purity',
