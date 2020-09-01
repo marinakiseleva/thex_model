@@ -211,11 +211,6 @@ class MainModelVisualization:
             # Compute purity & completeness for this trial/fold (per class)
             puritys, comps = compute_performance(class_metrics)
             t_performances.append([puritys, comps])
-
-            print("Metrics for trial " + str(index + 1))
-            print("Purity: " + str(puritys))
-            print("Completeness: " + str(comps))
-
         return t_performances
 
     def get_avg_pc(self, t_performances, N):
@@ -233,7 +228,7 @@ class MainModelVisualization:
             for p, c in t_performances:
                 if p[class_name] is None:
                     # No purity for this trial -> exclude from average
-                    print("No measurable purity for " + class_name)
+                    # print("No measurable purity for " + class_name)
                     p_N = p_N - 1
                 else:
                     avg_purities[class_name] += p[class_name]
