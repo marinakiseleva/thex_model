@@ -13,9 +13,9 @@ cd hmc
 python setup.py install
 cd ../../thex_model
 
-pip install -r requirements.txt
-python setup.py develop
-python -m ipykernel install --user --name thexenv --display-name "THEx env (py3env)"
+pip3 install -r requirements.txt
+python3 setup.py develop
+python3 -m ipykernel install --user --name "thexkernel" --display-name "THEx env (py3env)"
 
 cd notebooks
 jupyter notebook
