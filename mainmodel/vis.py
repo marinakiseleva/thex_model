@@ -323,7 +323,7 @@ class MainModelVisualization:
         plt.yticks(y_indices, pretty_class_names,  fontsize=LAB_S,
                    horizontalalignment='right')
         plt.ylabel('Transient Class', fontsize=LAB_S)
-        ax.set_title(xlabel, fontsize=TITLE_S)
+        # ax.set_title(xlabel, fontsize=TITLE_S)
         thex_utils.display_and_save_plot(self.dir, self.name + ": " + xlabel)
 
     def plot_prob_pc_curves(self, range_metrics):

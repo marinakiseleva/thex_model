@@ -250,6 +250,12 @@ class MainModel(ABC, MainModelVisualization):
         """
         Visualize performance
         """
+        N = self.num_runs if self.num_runs is not None else self.num_folds
+        pc_per_trial = self.get_pc_per_trial(self.results)
+        ps, cs = self.get_avg_pc(pc_per_trial, N)
+
+        self.plot_all_metrics(ps, cs, pc_per_trial, self.y)
+
         self.plot_confusion_matrix(self.results)
         range_metrics = self.compute_probability_range_metrics(
             self.results)
@@ -257,13 +263,6 @@ class MainModel(ABC, MainModelVisualization):
         range_metrics = self.compute_probability_range_metrics(
             self.results, bin_size=0.2)
         self.plot_probability_vs_class_rates(range_metrics)
-
-        N = self.num_runs if self.num_runs is not None else self.num_folds
-
-        pc_per_trial = self.get_pc_per_trial(self.results)
-        ps, cs = self.get_avg_pc(pc_per_trial, N)
-
-        self.plot_all_metrics(ps, cs, pc_per_trial, self.y)
 
     def kfold_stratify(self):
         """
