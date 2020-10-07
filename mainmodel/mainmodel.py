@@ -45,11 +45,12 @@ class MainModel(ABC, MainModelVisualization):
             self.class_hier[parent].insert(0,  UNDEF_CLASS + parent)
         self.tree = util.init_tree(self.class_hier)
         self.class_levels = util.assign_levels(self.tree, {}, self.tree.root, 1)
+        # Default filter values
         data_filters = {'cols': None,  # Names of columns to filter on; default is all numeric cols
                         'col_matches': None,  # String by which columns will be selected
                         'num_runs': None,  # Number of trials
                         'folds': None,  # Number of folds if using k-fold Cross Validation
-                        'transform_features': True,  # Derive mag colors
+                        'transform_features': True,  # Derive mag colors & scale
                         'min_class_size': 9,
                         'max_class_size': None,
                         'pca': None,  # Number of principal components
