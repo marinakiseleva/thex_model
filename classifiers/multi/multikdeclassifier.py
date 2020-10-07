@@ -211,7 +211,7 @@ class MultiKDEClassifier():
         # 'kernel': ['gaussian', 'exponential', 'linear', 'cosine', 'tophat', 'epanechnikov'],
         # 'leaf_size': [10, 30, 40]}
         num_cross_folds = 3  # number of folds in a (Stratified)KFold
-        kde = KernelDensity(metric='euclidean', kernel='gaussian', leaf_size=30)
+        kde = KernelDensity(metric='euclidean', kernel='gaussian')
         clf_optimize = GridSearchCV(estimator=kde,
                                     param_grid=grid,
                                     cv=num_cross_folds,
