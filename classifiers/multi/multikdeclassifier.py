@@ -207,11 +207,11 @@ class MultiKDEClassifier():
         :return: best fitting KDE
         """
         # Create grid to get optimal bandwidth
-        grid = {'bandwidth': np.linspace(0.0001, 1, 100)}
+        grid = {'bandwidth': np.linspace(0.0001, 1, 100),
+                'kernel': ['gaussian', 'exponential', 'linear', 'cosine', 'tophat', 'epanechnikov']
+                'leaf_size': [10, 30, 40]}
         num_cross_folds = 3  # number of folds in a (Stratified)KFold
-        kde = KernelDensity(leaf_size=40,
-                            metric='euclidean',
-                            kernel='exponential')
+        kde = KernelDensity(metric='euclidean')
         clf_optimize = GridSearchCV(estimator=kde,
                                     param_grid=grid,
                                     cv=num_cross_folds,
