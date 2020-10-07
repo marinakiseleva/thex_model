@@ -15,6 +15,8 @@ import pickle
 from abc import ABC, abstractmethod
 import pandas as pd
 import copy
+import time
+
 
 # local imports
 from mainmodel.helper_compute import get_ordered_metrics, compute_performance
@@ -34,6 +36,7 @@ class MainModel(ABC, MainModelVisualization):
         """
         Initialize model based on user arguments
         """
+
         self.dir = util.init_file_directories(self.name)
         init_plot_settings()
         print("Saving " + self.name + " output to directory " + self.dir)
@@ -136,7 +139,12 @@ class MainModel(ABC, MainModelVisualization):
             pickle.dump(self.y, f)
         self.visualize_data()
 
+        start = time.time()
+
         self.run()
+
+        end = time.time()
+        print("\n\n" + str(int(end - start)) + " seconds of runtime.\n")
 
         # Save results in pickle
         with open(self.dir + '/results.pickle', 'wb') as f:
