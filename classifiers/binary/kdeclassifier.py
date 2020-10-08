@@ -1,6 +1,7 @@
 import sys
 import numpy as np
 import multiprocessing
+from functools import partial
 
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import GridSearchCV
@@ -19,9 +20,9 @@ def get_sample_weights(y):
     return compute_sample_weight(class_weight='balanced', y=y)
 
 
-def fit_folds(X, y, leaf_size, bandwidth, kernel):
+def get_params_loss(X, y, kernel, bandwidth):
     """
-    Fit data using this bandwidth and kernel and report back brier score loss average over 3 folds
+    Fit data using this bandwidth and kernel and report back brier score loss average over 3 folds, with samples weighted 
     """
     losses = []
     sample_weights = get_sample_weights(y)
@@ -36,13 +37,11 @@ def fit_folds(X, y, leaf_size, bandwidth, kernel):
         X_neg = X_train.loc[y_train[TARGET_LABEL] == 0]
 
         pos_model = KernelDensity(bandwidth=bandwidth,
-                                  leaf_size=leaf_size,
                                   metric='euclidean',
                                   kernel=kernel
                                   )
         pos_model.fit(X_pos)
         neg_model = KernelDensity(bandwidth=bandwidth,
-                                  leaf_size=leaf_size,
                                   metric='euclidean',
                                   kernel=kernel)
         neg_model.fit(X_neg)
@@ -61,9 +60,10 @@ def fit_folds(X, y, leaf_size, bandwidth, kernel):
         # Evaluate using Brier Score Loss
         weights = np.take(sample_weights, test_index)
 
-        origloss = brier_score_loss(y_test.values.flatten(), pos_probs)
+        # origloss = brier_score_loss(y_test.values.flatten(), pos_probs)
 
-        loss = brier_score_loss(y_test.values.flatten(), pos_probs, weights)
+        loss = brier_score_loss(y_true=y_test.values.flatten(),
+                                y_prob=pos_probs, sample_weight=weights)
 
         losses.append(loss)
     # Average loss for this bandwidth across 3 folds
@@ -71,20 +71,31 @@ def fit_folds(X, y, leaf_size, bandwidth, kernel):
     return avg_loss
 
 
-def fit_kernel(X, y, leaf_size, bandwidths, kernel, record):
+def fit_kernel_parallel(X, y, bandwidths, kernel):
     """
-    Fit all bandwidths for this kernel
+    Fit all bandwidths to kernel, and get min loss bandwidth, in parallel.
     """
+
+    pool = multiprocessing.Pool(CPU_COUNT)
+
+    # Pass in parameters that don't change for parallel processes
+    func = partial(get_params_loss, X, y, kernel)
+
+    losses = []
+    # Multithread over bandwidths
+    losses = pool.map(func, bandwidths)
+    pool.close()
+    pool.join()
+    print("Done processing...")
+
     best_cv_loss = 1000
     best_cv_bw = None
-    for bandwidth in bandwidths:
-        loss = fit_folds(X, y, leaf_size, bandwidth, kernel)
+    for index, bandwidth in enumerate(bandwidths):
+        loss = losses[index]
         # Reset best BW overall.
         if loss < best_cv_loss:
             best_cv_loss = loss
             best_cv_bw = bandwidth
-
-    record[kernel] = [best_cv_loss, best_cv_bw]
 
     return best_cv_loss, best_cv_bw
 
@@ -106,13 +117,6 @@ class KDEClassifier():
         self.pos_class = pos_class
 
         self.train_together(X, y)
-        # Fit KDE to positive samples only.
-        # X_pos = X.loc[y[TARGET_LABEL] == 1]
-        # self.pos_model = self.train(X_pos)
-
-        # # need negative model to normalize over
-        # X_neg = X.loc[y[TARGET_LABEL] == 0]
-        # self.neg_model = self.train(X_neg)
 
     def train_together(self, X, y):
         """
@@ -120,50 +124,23 @@ class KDEClassifier():
         :param X: DataFrame of training data features
         :param y: DataFrame of TARGET_LABEL with 1 for pos_class and 0 for not pos_class
         """
-        leaf_size = 40
-        bandwidths = np.linspace(0.0001, 5, 100)
-        kernels = ['exponential', 'gaussian', 'tophat',
-                   'epanechnikov', 'cosine', 'linear']
-        best_cv_loss = 1000
-        best_cv_bw = None
-        best_kernel = None
+        bandwidths = np.linspace(0.0001, 3, 100)
 
-        # Multiprocess by kernels
-        manager = multiprocessing.Manager()
-        record = manager.dict()
-        jobs = []
-        for kernel in kernels:
-            cur_proc = multiprocessing.Process(
-                target=fit_kernel,
-                args=(X, y, leaf_size, bandwidths, kernel, record))
-            jobs.append(cur_proc)
-            cur_proc.start()
+        best_kernel = 'exponential'
 
-        # Wait for all jobs to finish
-        for job in jobs:
-            job.join()
+        best_cv_loss, best_cv_bw = fit_kernel_parallel(X, y,
+                                                       bandwidths,
+                                                       kernel=best_kernel)
 
-        # Find min loss among all kernels (which is min among bandwidths)
-        for kernel_name in record.keys():
-            best_kernel_loss, bw = record[kernel_name]
-            if best_kernel_loss < best_cv_loss:
-                best_cv_loss = best_kernel_loss
-                best_cv_bw = bw
-                best_kernel = kernel_name
-
-        # Define models based on best bandwidth
-        print("Best bandwidth " + str(best_cv_bw))
-        print("Best kernel " + str(best_kernel))
-        print("With score: " + str(best_cv_loss))
+        print(self.pos_class + " optimal bandwidth: " +
+              str(best_cv_bw) + " with loss: " + str(best_cv_loss))
 
         self.pos_model = KernelDensity(bandwidth=best_cv_bw,
-                                       leaf_size=leaf_size,
                                        kernel=best_kernel,
                                        metric='euclidean')
         self.pos_model.fit(X.loc[y[TARGET_LABEL] == 1])
 
         self.neg_model = KernelDensity(bandwidth=best_cv_bw,
-                                       leaf_size=leaf_size,
                                        kernel=best_kernel,
                                        metric='euclidean')
         self.neg_model.fit(X.loc[y[TARGET_LABEL] == 0])
