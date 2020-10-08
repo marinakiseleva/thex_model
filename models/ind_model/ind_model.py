@@ -25,6 +25,40 @@ class IndModel(MainModel):
             self.init_model = None
         super(IndModel, self).__init__(**data_args)
 
+    def run_cfv(self, X, y):
+        """
+        Overwrite MainModel function to see if results from BinaryModel were passed in
+        """
+        if self.init_model is not None:
+            # Normalize probabilities per row (Except last column which is label)
+            print("Using Binary Model results.")
+            self.class_labels = self.init_model.class_labels
+            self.class_counts = self.init_model.class_counts
+            self.num_folds = self.init_model.num_folds
+            self.X = self.init_model.X
+            self.y = self.init_model.y
+
+            a = np.copy(self.init_model.results)
+            new_results = []
+            for index in range(self.init_model.num_folds):
+                trial_results = []
+                for row_index, row in enumerate(a[index]):
+                    num_classes = len(self.init_model.class_labels)
+
+                    prob_sum = 0  # compute normalizing sum
+                    for class_index in range(num_classes):
+                        prob_sum += row[class_index]
+
+                    new_probs = []
+                    for class_index in range(num_classes):
+                        new_probs.append(row[class_index] / prob_sum)
+                    new_probs.append(row[num_classes])  # Add label
+                    trial_results.append(new_probs)
+                new_results.append(np.array(trial_results, dtype='object'))
+            return new_results
+        else:
+            return super(IndModel, self).run_cfv(X, y)
+
     def run_trials(self, X, y, num_runs):
         """
         Overwrite MainModel function to see if results from BinaryModel were passed in
