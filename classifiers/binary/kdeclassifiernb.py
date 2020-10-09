@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors.kde import KernelDensity
 
-from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
+from thex_data.data_consts import TARGET_LABEL, CPU_COUNT, DEFAULT_KERNEL
 from classifiers.plot_fit import plot_fits
 
 
@@ -51,7 +51,7 @@ class KDENBClassifier():
         num_cross_folds = 3  # number of folds in a (Stratified)KFold
         kde = KernelDensity(leaf_size=40,
                             metric='euclidean',
-                            kernel='exponential')
+                            kernel=DEFAULT_KERNEL)
         clf_optimize = GridSearchCV(estimator=kde,
                                     param_grid=grid,
                                     cv=num_cross_folds,

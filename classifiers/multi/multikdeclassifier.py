@@ -9,7 +9,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.utils.class_weight import compute_sample_weight
 
 import utilities.utilities as thex_utils
-from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
+from thex_data.data_consts import TARGET_LABEL, CPU_COUNT, DEFAULT_KERNEL
 
 
 def get_sample_weights(y):
@@ -100,7 +100,7 @@ def fit_folds(X, y, class_labels, bandwidth):
         for class_name in class_labels:
             mc_kdes[class_name] = KernelDensity(bandwidth=bandwidth,
                                                 metric='euclidean',
-                                                kernel='exponential',
+                                                kernel=DEFAULT_KERNEL,
                                                 leaf_size=40)
             y_relabeled = get_class_data(class_name, y)
             mc_kdes[class_name].fit(X.loc[y_relabeled[TARGET_LABEL] == 1])
@@ -170,7 +170,7 @@ class MultiKDEClassifier():
         for class_name in self.class_labels:
             mc_kdes[class_name] = KernelDensity(bandwidth=best_cv_bw,
                                                 leaf_size=40,
-                                                kernel='exponential',
+                                                kernel=DEFAULT_KERNEL,
                                                 metric='euclidean')
             y_relabeled = self.get_class_data(class_name, y)
             mc_kdes[class_name].fit(X.loc[y_relabeled[TARGET_LABEL] == 1])
@@ -209,7 +209,8 @@ class MultiKDEClassifier():
         # Create grid to get optimal bandwidth
         grid = {'bandwidth': np.linspace(0.0001, 1, 100)}
         num_cross_folds = 3  # number of folds in a (Stratified)KFold
-        kde = KernelDensity(metric='euclidean', kernel='exponential')
+        kde = KernelDensity(metric='euclidean',
+                            kernel=DEFAULT_KERNEL)
         clf_optimize = GridSearchCV(estimator=kde,
                                     param_grid=grid,
                                     cv=num_cross_folds,

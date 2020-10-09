@@ -22,8 +22,9 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
 TREE_ROOT = "_ROOT"
 
 LOSS_FUNCTION = "brier_score_loss"
+DEFAULT_KERNEL = "epanechnikov"
 
-CPU_COUNT = 8
+CPU_COUNT = 12
 
 # Plotting Specifications
 FIG_WIDTH = 6

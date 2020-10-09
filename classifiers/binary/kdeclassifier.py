@@ -9,7 +9,7 @@ from sklearn.neighbors.kde import KernelDensity
 from sklearn.metrics import brier_score_loss
 from sklearn.utils.class_weight import compute_sample_weight
 
-from thex_data.data_consts import TARGET_LABEL, CPU_COUNT
+from thex_data.data_consts import TARGET_LABEL, CPU_COUNT, DEFAULT_KERNEL
 
 
 def get_sample_weights(y):
@@ -126,7 +126,7 @@ class KDEClassifier():
         """
         bandwidths = np.linspace(0.0001, 3, 100)
 
-        best_kernel = 'exponential'
+        best_kernel = DEFAULT_KERNEL
 
         best_cv_loss, best_cv_bw = fit_kernel_parallel(X, y,
                                                        bandwidths,
