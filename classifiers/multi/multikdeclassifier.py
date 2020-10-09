@@ -3,7 +3,7 @@ import multiprocessing
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import KFold
 from sklearn.neighbors.kde import KernelDensity
 from sklearn.model_selection import StratifiedKFold
 from sklearn.utils.class_weight import compute_sample_weight
@@ -121,6 +121,71 @@ def fit_folds(X, y, class_labels, bandwidth):
     return avg_loss
 
 
+def get_params_ll(X, bandwidth_kernel):
+    """
+    Fit data using this bandwidth and kernel and report back average log-likelihood fit over 3-folds
+    :param X: data for only positive class
+    """
+
+    bandwidth = bandwidth_kernel[0]
+    kernel = bandwidth_kernel[1]
+    ll = []  # log likelihood for each fold
+
+    # randomly split X into three equal sizes.
+    kf = KFold(n_splits=3, shuffle=True)
+    for train_index, test_index in kf.split(X):
+        X_train = X.iloc[train_index].reset_index(drop=True)
+        X_test = X.iloc[test_index].reset_index(drop=True)
+
+        kde = KernelDensity(bandwidth=bandwidth,
+                            metric='euclidean',
+                            kernel=kernel
+                            )
+        kde.fit(X_train)
+
+        cur_ll = kde.score(X_test)
+        ll.append(cur_ll)
+
+    # Average loss for this bandwidth across 3 folds
+    avg_ll = sum(ll) / len(ll)
+    return avg_ll
+
+
+def find_best_params(X, bandwidths, kernels):
+    """
+    Find best kernel/bandwidth pair, based on log likelihood fit, in parallel.
+    """
+    bw_k_pairs = []  # bandwidth -kernel pairs
+    for b in bandwidths:
+        for k in kernels:
+            bw_k_pairs.append([b, k])
+    pool = multiprocessing.Pool(CPU_COUNT)
+
+    # Pass in parameters that don't change for parallel processes
+    func = partial(get_params_ll, X)
+
+    lls = []
+    # Multithread over bandwidths
+    lls = pool.map(func, bw_k_pairs)
+    pool.close()
+    pool.join()
+    print("Done processing...")
+
+    print(lls)
+    print(bw_k_pairs)
+    print("\n")
+    best_ll = 0
+    best_bw = None
+    best_kernel = None
+
+    # Minimize negative of the log-likelihood
+    min_index = np.argmin(np.array(lls) * -1)
+    best_bw = bw_k_pairs[min_index][0]
+    best_kernel = bw_k_pairs[min_index][1]
+
+    return best_ll, best_bw, best_kernel
+
+
 class MultiKDEClassifier():
     """
     Multiclass Multivariate KDE classifier
@@ -203,27 +268,23 @@ class MultiKDEClassifier():
 
     def fit_class(self, X):
         """
-        Fit KDE to X & select bandwidth by maximizing log-likelihood 
+        Fit KDE to X & select kernel/bandwidth by maximizing log-likelihood (minimizing negative of log-likelihod)
         :return: best fitting KDE
         """
-        # Create grid to get optimal bandwidth
-        grid = {'bandwidth': np.linspace(0.0001, 1, 100)}
-        num_cross_folds = 3  # number of folds in a (Stratified)KFold
-        kde = KernelDensity(metric='euclidean',
-                            kernel=DEFAULT_KERNEL)
-        clf_optimize = GridSearchCV(estimator=kde,
-                                    param_grid=grid,
-                                    cv=num_cross_folds,
-                                    iid=True,
-                                    n_jobs=CPU_COUNT
-                                    )
-        clf_optimize.fit(X)
-        clf = clf_optimize.best_estimator_
+        bandwidths = np.linspace(0.0001, 1, 100)
+        kernels = ['exponential', 'gaussian']
 
-        print("Optimal KDE Parameters: " + str(clf_optimize.best_params_) +
-              " \nwith log probability density (log-likelihood): " + str(clf.score(X)))
+        best_ll, best_bw, best_kernel = find_best_params(X, bandwidths, kernels)
 
-        return clf
+        print("Best bandwidth " + str(best_bw) + " kernel: " +
+              best_kernel + " with ll: " + str(best_ll))
+
+        kde = KernelDensity(bandwidth=best_bw,
+                            metric='euclidean',
+                            kernel=best_kernel)
+        kde.fit(X)
+
+        return kde
 
     def get_class_probabilities(self, x, normalize=True):
         """
