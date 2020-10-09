@@ -170,12 +170,12 @@ def find_best_params(X, bandwidths, kernels):
     pool.close()
     pool.join()
 
-    best_ll = 0
     best_bw = None
     best_kernel = None
 
     # Minimize negative of the log-likelihood
     min_index = np.argmin(np.array(lls) * -1)
+    best_ll = lls[min_index]
     best_bw = bw_k_pairs[min_index][0]
     best_kernel = bw_k_pairs[min_index][1]
 
@@ -274,7 +274,7 @@ class MultiKDEClassifier():
         best_ll, best_bw, best_kernel = find_best_params(X, bandwidths, kernels)
 
         print("Best bandwidth " + str(best_bw) + " kernel: " +
-              best_kernel + " with ll: " + str(best_ll))
+              best_kernel + " with avg ll: " + str(best_ll))
 
         kde = KernelDensity(bandwidth=best_bw,
                             metric='euclidean',
