@@ -272,7 +272,8 @@ class MultiKDEClassifier():
         :return: best fitting KDE
         """
         bandwidths = np.linspace(0.0001, 1, 100)
-        kernels = ['exponential', 'gaussian']
+        kernels = ['exponential', 'gaussian', 'tophat',
+                   'epanechnikov', 'linear', 'cosine']
 
         best_ll, best_bw, best_kernel = find_best_params(X, bandwidths, kernels)
 
