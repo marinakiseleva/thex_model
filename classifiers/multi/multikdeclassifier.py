@@ -169,11 +169,7 @@ def find_best_params(X, bandwidths, kernels):
     lls = pool.map(func, bw_k_pairs)
     pool.close()
     pool.join()
-    print("Done processing...")
 
-    print(lls)
-    print(bw_k_pairs)
-    print("\n")
     best_ll = 0
     best_bw = None
     best_kernel = None
