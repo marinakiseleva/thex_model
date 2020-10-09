@@ -122,6 +122,6 @@ class OptimalBinaryClassifier():
                 min_loss = loss
                 best_clf = clf
 
-        print("\n\nBest Classifier " + str(best_clf.name) + ' with score ' + str(min_loss))
+        # print("\n\nBest Classifier " + str(best_clf.name) + ' with score ' + str(min_loss))
 
         return best_clf, best_clf.name

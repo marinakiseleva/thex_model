@@ -20,10 +20,13 @@ def get_sample_weights(y):
     return compute_sample_weight(class_weight='balanced', y=y)
 
 
-def get_params_loss(X, y, kernel, bandwidth):
+def get_params_loss(X, y, bandwidth_kernel):
     """
     Fit data using this bandwidth and kernel and report back brier score loss average over 3 folds, with samples weighted 
     """
+    bandwidth = bandwidth_kernel[0]
+    kernel = bandwidth_kernel[1]
+
     losses = []
     sample_weights = get_sample_weights(y)
     skf = StratifiedKFold(n_splits=3, shuffle=True)
@@ -71,33 +74,35 @@ def get_params_loss(X, y, kernel, bandwidth):
     return avg_loss
 
 
-def fit_kernel_parallel(X, y, bandwidths, kernel):
+def find_best_params(X, y, bandwidths, kernels):
     """
-    Fit all bandwidths to kernel, and get min loss bandwidth, in parallel.
+    Find best kernel/bandwidth pair, in parallel
     """
-
+    bw_k_pairs = []  # bandwidth-kernel pairs
+    for b in bandwidths:
+        for k in kernels:
+            bw_k_pairs.append([b, k])
     pool = multiprocessing.Pool(CPU_COUNT)
 
     # Pass in parameters that don't change for parallel processes
-    func = partial(get_params_loss, X, y, kernel)
+    func = partial(get_params_loss, X, y)
 
     losses = []
     # Multithread over bandwidths
-    losses = pool.map(func, bandwidths)
+    losses = pool.map(func, bw_k_pairs)
     pool.close()
     pool.join()
-    print("Done processing...")
 
-    best_cv_loss = 1000
-    best_cv_bw = None
-    for index, bandwidth in enumerate(bandwidths):
-        loss = losses[index]
-        # Reset best BW overall.
-        if loss < best_cv_loss:
-            best_cv_loss = loss
-            best_cv_bw = bandwidth
+    best_bw = None
+    best_kernel = None
 
-    return best_cv_loss, best_cv_bw
+    # Minimize the loss
+    min_index = np.argmin(np.array(losses))
+    best_loss = losses[min_index]
+    best_bw = bw_k_pairs[min_index][0]
+    best_kernel = bw_k_pairs[min_index][1]
+
+    return best_loss, best_bw, best_kernel
 
 
 class KDEClassifier():
@@ -124,23 +129,22 @@ class KDEClassifier():
         :param X: DataFrame of training data features
         :param y: DataFrame of TARGET_LABEL with 1 for pos_class and 0 for not pos_class
         """
-        bandwidths = np.linspace(0.0001, 3, 100)
 
-        best_kernel = DEFAULT_KERNEL
+        bandwidths = np.linspace(0.0001, 1, 100)  # orig max was 3
+        kernels = ['exponential', 'gaussian', 'tophat',
+                   'epanechnikov', 'linear', 'cosine']
 
-        best_cv_loss, best_cv_bw = fit_kernel_parallel(X, y,
-                                                       bandwidths,
-                                                       kernel=best_kernel)
+        best_loss, best_bw, best_kernel = find_best_params(X, y, bandwidths, kernels)
 
-        print(self.pos_class + " optimal bandwidth: " +
-              str(best_cv_bw) + " with loss: " + str(best_cv_loss))
+        print("\n" + self.pos_class + " best bandwidth: " +
+              str(best_bw) + " kernel: " + best_kernel + " with avg loss: " + str(best_loss))
 
-        self.pos_model = KernelDensity(bandwidth=best_cv_bw,
+        self.pos_model = KernelDensity(bandwidth=best_bw,
                                        kernel=best_kernel,
                                        metric='euclidean')
         self.pos_model.fit(X.loc[y[TARGET_LABEL] == 1])
 
-        self.neg_model = KernelDensity(bandwidth=best_cv_bw,
+        self.neg_model = KernelDensity(bandwidth=best_bw,
                                        kernel=best_kernel,
                                        metric='euclidean')
         self.neg_model.fit(X.loc[y[TARGET_LABEL] == 0])
