@@ -147,8 +147,7 @@ def get_params_ll(X, bandwidth_kernel):
         ll.append(cur_ll)
 
     # Average loss for this bandwidth across 3 folds
-    avg_ll = sum(ll) / len(ll)
-    return avg_ll
+    return np.average(np.array(ll))
 
 
 def find_best_params(X, bandwidths, kernels):
@@ -175,6 +174,7 @@ def find_best_params(X, bandwidths, kernels):
 
     # Minimize negative of the log-likelihood
     min_index = np.argmin(np.array(lls) * -1)
+
     best_ll = lls[min_index]
     best_bw = bw_k_pairs[min_index][0]
     best_kernel = bw_k_pairs[min_index][1]
@@ -268,8 +268,8 @@ class MultiKDEClassifier():
         :return: best fitting KDE
         """
         bandwidths = np.linspace(0.0001, 1, 100)
-        kernels = ['exponential', 'gaussian', 'tophat',
-                   'epanechnikov', 'linear', 'cosine']
+        kernels = ['exponential', 'gaussian']
+        # 'tophat',  'epanechnikov', 'linear', 'cosine']
 
         best_ll, best_bw, best_kernel = find_best_params(X, bandwidths, kernels)
 
