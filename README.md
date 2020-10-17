@@ -1,21 +1,13 @@
 # THEx Background
-Source code contributing to the research of the Transient Host Exchange project (THEx) project at the University of Arizona. THEx aims to predict astronomical transients for the Large Synoptic Survey Telescope (LSST) before they occur, in order to expedite their follow up once detected by LSST, by predicting transients using host-galaxy information alone.
+Source code contributing to the research of the Transient Host Exchange project (THEx) project at the University of Arizona. THEx aims to predict astronomical transients for the Large Synoptic Survey Telescope (LSST) before they occur by using host-galaxy photometric data, in expedite their follow up once detected by LSST.
 
 
 # Set-Up
-1. Set up the following directory structure (with the dataset as a FITs file in the data directory). Ensure that thex_data/data_consts.py has the correct LOCAL_DATA_PATH file set. 
-```
-thex_project
-└───thex_code
-│
-└───data
-│   │   [DATA FILES].fits
-```
+1. Data: Make sure to have the correct data file installed at the location pointed to in thex_data.data_consts. Specifically, in your home directory /data/catalogs. 
 
 
-2. Use the following commands to clone this repository and run the install script. The Jupyter Notebook interfaces will be automatically loaded.
+2. Use the following commands to clone this repository and run the install script. Note, additional directories will be created in the current directory. See install.sh for more details. The Jupyter Notebook interfaces will be automatically loaded.
 ```
-cd thex_code
 git clone https://github.com/marinakiseleva/thex_model.git
 cd thex_model
 sh install.sh
@@ -26,12 +18,10 @@ sh install.sh
 ```
 thex_project
 └───thex_code
-|    └───libraries
-|    └───environments
-|    └───thex_model
-│
-└───data
-│   │   THEx-dataset.fits
+     └───libraries
+     └───environments
+     └───thex_model
+
 ```
 4. When you are done developing/running models you may exit virtualenv with the following command.
 ```
@@ -39,22 +29,20 @@ deactivate
 ```
 
 # Running
-Use the Jupyter Notebook [THEx Model Intro](notebooks/THEx%20Model%20Intro.ipynb) located in the notebooks directory to help you get started with running the models. Be sure to use the correct environment with the notebook.
+Use the Jupyter Notebook (notebooks/Models.ipynb) located in the notebooks directory to help you get started with running the models. Be sure to use the correct environment with the notebook.
 
 # Dependencies
-This module requires you have the following already installed:
-- Python 3.6
-- virtualenv (be sure virtualenv uses 3.6 by default)
-<!-- Listed in requirements.txt and the following that needs to be separately installed in another directory. -->
-- hmc fork available here: (https://github.com/marinakiseleva/hmc) 
+This module requires you have the following versions of Python and virtualenv installed. We cannot guarantee it will work with older versions.
+- Python 3.8.59
+- virtualenv (be sure virtualenv uses 3.8.5 by default)
 
-Note: Do not pip install hmc. Download it from the link above and install it using setup.py. This is a forked and edited version, and only this version will work with our project.
+Note: The install script automatically downloads another dependency for you, hmc. This is a forked and edited version, and only this version will work with our project.
 
 # Project Structure
 This module is broken up into smaller modules that each provide different utilities and are described below.
 
 ## classifiers
-Contains the different classifiers explored/used in the project. 
+Contains the different classifiers used in the project. 
 
 ## mainmodel
 Abstract class which all models are built on. 
@@ -63,7 +51,7 @@ Abstract class which all models are built on.
 Directory that contains existing models - which differ based on the underlying computation of probabilities. Each uses kernel density estimation per class.
 
 ### binary_model
-Binary Classifiers: Treats each class as a separate binary classification problem and reports probability of each class versus all other classes. A multivariate Kernel Density Estimate (KDE) is estimated for each class, and for all the samples not with that class. 
+Binary Classifiers: Treats each class as a separate binary classification problem and reports probability of each class versus all other classes. For each class, a multivariate Kernel Density Estimate (KDE) is estimated for the samples in that class, and a separate KDE for all the other samples not in the class. 
 
 ### ind_model
 Ensemble Classifier: Same as binary model except resulting probabilities are normalized together to get multiclass probabilities. 
