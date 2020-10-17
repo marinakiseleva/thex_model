@@ -10,20 +10,20 @@ from mainmodel.mainmodel import MainModel
 from classifiers.binary.optbinary import OptimalBinaryClassifier
 
 
-class IndModel(MainModel):
+class OvAModel(MainModel):
 
     def __init__(self, **data_args):
         """
         Initialize Independent Model - call init method of parent class
         """
-        self.name = "Ensemble Classifier"
-        # Use output of Binary Classifier model for IndModel - just need to
+        self.name = "OVA Classifier"
+        # Use output of Binary Classifier model for OvAModel - just need to
         # normalize those probabilities.
         if 'init_from_binary' in data_args.keys():
             self.init_model = data_args['init_from_binary']
         else:
             self.init_model = None
-        super(IndModel, self).__init__(**data_args)
+        super(OvAModel, self).__init__(**data_args)
 
     def run_cfv(self, X, y):
         """
@@ -57,7 +57,7 @@ class IndModel(MainModel):
                 new_results.append(np.array(trial_results, dtype='object'))
             return new_results
         else:
-            return super(IndModel, self).run_cfv(X, y)
+            return super(OvAModel, self).run_cfv(X, y)
 
     def run_trials(self, X, y, num_runs):
         """
@@ -91,7 +91,7 @@ class IndModel(MainModel):
                 new_results.append(np.array(trial_results, dtype='object'))
             return new_results
         else:
-            return super(IndModel, self).run_trials(X, y, num_runs)
+            return super(OvAModel, self).run_trials(X, y, num_runs)
 
     def train_model(self, X_train, y_train):
         """

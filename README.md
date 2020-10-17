@@ -54,7 +54,7 @@ Directory that contains existing models - which differ based on the underlying c
 Binary Classifiers: Treats each class as a separate binary classification problem and reports probability of each class versus all other classes. For each class, a multivariate Kernel Density Estimate (KDE) is estimated for the samples in that class, and a separate KDE for all the other samples not in the class. 
 
 ### ind_model
-Ensemble Classifier: Same as binary model except resulting probabilities are normalized together to get multiclass probabilities. 
+One-vs-All (OVA) Classifier: Same as binary model except resulting probabilities are normalized together to get multiclass probabilities. 
 
 ### multi_model
 KDE Multiclass Classifier: Multiclass classifier like the previous one, except now KDEs are created for each class, and probabilities are computed over those positive-class KDEs. The negative class space is not fitted.

@@ -155,7 +155,7 @@ class MainModel(ABC, MainModelVisualization):
     def relabel_class_data(self, class_name, y):
         """
         Return DataFrame like y except that TARGET_LABEL values have been replaced with 0 or 1. 1 if class_name is in list of labels.
-        Used in Binary and Ensemble models.
+        Used in Binary and OVA models.
         :param class_name: Positive class
         :return: y, relabeled
         """

@@ -6,7 +6,7 @@ sys.path.append("../../")
 
 from thex_data.data_consts import TARGET_LABEL, UNDEF_CLASS
 
-from models.ind_model.ind_model import IndModel
+from models.ind_model.ind_model import OvAModel
 
 
 import warnings
@@ -14,9 +14,9 @@ import warnings
 
 """
 
-Tests IndModel
+Tests OvAModel
 
-Also test functions in MainModel through IndModel, since MainModel is an abstract class
+Also test functions in MainModel through OvAModel, since MainModel is an abstract class
 
 Run tests with:
 python -m unittest
@@ -24,7 +24,7 @@ python -m unittest
 """
 
 
-class TestIndModel(unittest.TestCase):
+class TestOvAModel(unittest.TestCase):
 
     def generate_data(self, original, num_datapoints):
         data = []
@@ -49,7 +49,7 @@ class TestIndModel(unittest.TestCase):
 
         self.orig_X = fake_X
         self.orig_y = fake_Y
-        self.test_model = IndModel(data=fake_data)
+        self.test_model = OvAModel(data=fake_data)
 
     ##########################################################################
     # MainModel functions
@@ -145,7 +145,7 @@ class TestIndModel(unittest.TestCase):
             raise AssertionError
 
     ##########################################################################
-    # IndModel functions
+    # OvAModel functions
     ##########################################################################
 
     def test_compute_probability_range_metrics(self):

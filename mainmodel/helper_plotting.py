@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from models.binary_model.binary_model import BinaryModel
-from models.ind_model.ind_model import IndModel
+from models.ind_model.ind_model import OvAModel
 from models.multi_model.multi_model import MultiModel
 from mainmodel.helper_compute import get_perc_ticks, clean_class_name
 from thex_data.data_consts import *
@@ -71,13 +71,13 @@ def plot_model_rates(class_name, model, ax):
         index += 1
 
 
-def plot_rates_together(binary_model, ensemble_model, multi_model, indices=None):
+def plot_rates_together(binary_model, ova_model, multi_model, indices=None):
     """
     Plot class versus probability rates of all three classifiers together
     :param indices: class indices to plot
     """
-    class_labels = ensemble_model.class_labels
-    num_classes = len(ensemble_model.class_labels)
+    class_labels = ova_model.class_labels
+    num_classes = len(ova_model.class_labels)
     if indices is not None:
         num_classes = len(indices)
     f, ax = plt.subplots(nrows=num_classes,
@@ -93,12 +93,12 @@ def plot_rates_together(binary_model, ensemble_model, multi_model, indices=None)
         if plot_index == 0:
             # Add titles to top of plots
             ax[plot_index][0].set_title("Binary", fontsize=11)
-            ax[plot_index][1].set_title("Ensemble", fontsize=11)
+            ax[plot_index][1].set_title("OVA", fontsize=11)
             ax[plot_index][2].set_title("Multi", fontsize=11)
 
         class_name = class_labels[class_index]
         plot_model_rates(class_name, binary_model, ax[plot_index][0])
-        plot_model_rates(class_name, ensemble_model, ax[plot_index][1])
+        plot_model_rates(class_name, ova_model, ax[plot_index][1])
         plot_model_rates(class_name, multi_model, ax[plot_index][2])
 
         pretty_class_name = clean_class_name(class_name)
@@ -186,13 +186,13 @@ def plot_model_curves(class_name, model, ax):
     return ax2
 
 
-def plot_pc_curves_together(binary_model, ensemble_model, multi_model, indices=None):
+def plot_pc_curves_together(binary_model, ova_model, multi_model, indices=None):
     """
     Plot class versus probability rates of all three classifiers together
     :param indices: class indices to plot
     """
-    class_labels = ensemble_model.class_labels
-    num_classes = len(ensemble_model.class_labels)
+    class_labels = ova_model.class_labels
+    num_classes = len(ova_model.class_labels)
     if indices is not None:
         num_classes = len(indices)
     f, ax = plt.subplots(nrows=num_classes,
@@ -212,13 +212,13 @@ def plot_pc_curves_together(binary_model, ensemble_model, multi_model, indices=N
         if plot_index == 0:
             # Add titles to top of plots
             ax[plot_index][0].set_title("Binary", fontsize=10)
-            ax[plot_index][1].set_title("Ensemble", fontsize=10)
+            ax[plot_index][1].set_title("OVA", fontsize=10)
             ax[plot_index][2].set_title("Multi", fontsize=10)
 
         class_name = class_labels[class_index]
         plot_model_curves(class_name, binary_model, ax[plot_index][0])
 
-        plot_model_curves(class_name, ensemble_model, ax[plot_index][1])
+        plot_model_curves(class_name, ova_model, ax[plot_index][1])
         mirror_ax = plot_model_curves(class_name, multi_model, ax[plot_index][2])
 
         ax[plot_index][0].set_yticks(ticks=y_indices)
