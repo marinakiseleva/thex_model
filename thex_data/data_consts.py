@@ -5,26 +5,17 @@ Constant data-based information needed in THEx data program. Includes file locat
 
 import os
 
-# ***************************************************************
-# Paths
-
-# FITS file of transient/galaxy data
-
-DATA_PATH = os.environ['HOME'] + \
-    '/data/catalogs/THEx-assembled-v7-mags-legacy-xcalib-minxcal.fits'
-
 # ROOT_DIR = /full/path/up/to/thex_model
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
 
+# Default data path - FITS file of transient/galaxy data
+DATA_PATH = ROOT_DIR + "/../../data/catalogs/THEx-assembled-v7-mags-legacy-xcalib-minxcal.fits"
 
-# ***************************************************************
 # Runtime specs
+CPU_COUNT = 12
 TREE_ROOT = "_ROOT"
-
 LOSS_FUNCTION = "brier_score_loss"
 DEFAULT_KERNEL = "epanechnikov"
-
-CPU_COUNT = 12
 
 # Plotting Specifications
 FIG_WIDTH = 6
@@ -34,12 +25,9 @@ TICK_S = 12
 LAB_S = 14
 TITLE_S = 16
 
-# ***************************************************************
-# Transient class variables
 
-# ORIG_TARGET_LABEL: Database defined column name; converted to TARGET_LABEL in project
+# ORIG_TARGET_LABEL: Database defined column name - converted to TARGET_LABEL in project
 ORIG_TARGET_LABEL = 'claimedtype'
-# TARGET_LABEL: Program-designated label of target
 TARGET_LABEL = 'transient_type'
 UNKNOWN_LABEL = 'Unknown'
 PRED_LABEL = 'predicted_class'
@@ -47,6 +35,7 @@ UNDEF_CLASS = 'Unspecified '
 
 
 """
+ORDERED_CLASSES
 Transient classes in order they are to be visualized. If class is Unspecified, it will take the place of its unspecified name
 """
 ORDERED_CLASSES = ['Ia',
@@ -185,10 +174,10 @@ CLASS_HIERARCHY = {
 
 
 """
-drop_cols
+EXCLUDE_COLS
 Columns with non-numeric values that are not used in analysis
 """
-drop_cols = [
+EXCLUDE_COLS = [
     "_id",  # object
     "name",  # object
     "ra",  # object
@@ -211,7 +200,8 @@ drop_cols = [
 ]
 
 """
-Magnitudes adjacent to one another that can be subtracted to get colors.
+ORDERED_MAGS
+Magnitudes adjacent to one another in spectrum that can be subtracted to get colors.
 """
 ORDERED_MAGS = {
     'NUV_mag': 'FUV_mag',

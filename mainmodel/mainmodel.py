@@ -25,7 +25,7 @@ from thex_data.data_filter import filter_data
 from thex_data.data_prep import get_source_target_data
 from thex_data.data_transform import scale_data, apply_PCA
 from thex_data.data_plot import *
-from thex_data.data_consts import TARGET_LABEL, UNDEF_CLASS, CLASS_HIERARCHY
+from thex_data.data_consts import DATA_PATH, TARGET_LABEL, UNDEF_CLASS, CLASS_HIERARCHY
 from mainmodel.vis import MainModelVisualization
 import utilities.utilities as util
 
@@ -60,14 +60,17 @@ class MainModel(ABC, MainModelVisualization):
                         'class_labels': None,
                         'data': None,  # List of training and test pandas dfs
                         'nb': False,  # Naive Bayes multiclass
-                        'priors': None  # Priors in order of class_labels
+                        'priors': None,  # Priors in order of class_labels
+                        'data_file': DATA_PATH  # Default data file used
                         }
 
         for data_filter in user_data_filters.keys():
             data_filters[data_filter] = user_data_filters[data_filter]
         if data_filters['data'] is None:
             # list of features to use from database
-            features = collect_cols(data_filters['cols'], data_filters['col_matches'])
+            print("Using data: " + data_filters['data_file'])
+            features = collect_cols(data_filters['cols'], data_filters[
+                                    'col_matches'], data_filters['data_file'])
             X, y = get_source_target_data(features, data_filters)
         else:
             X = data_filters['data'][0].copy(deep=True)

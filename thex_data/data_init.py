@@ -1,17 +1,17 @@
-import pandas as pd
-import numpy as np
-from astropy.table import Table
-
-from thex_data.data_consts import DATA_PATH, drop_cols, ORIG_TARGET_LABEL
-
-
 """
 Handles accessing and updating data.
 Initializes data from initial pull. Filters down list of columns based on user-input. 
 """
 
 
-def collect_cols(cols, col_matches):
+import pandas as pd
+import numpy as np
+from astropy.table import Table
+
+from thex_data.data_consts import EXCLUDE_COLS, ORIG_TARGET_LABEL
+
+
+def collect_cols(cols, col_matches, data_file):
     """
     Return all columns that contain at least one string in the list of col_matches or all columns in cols list
     :param cols: List of columns to filter on
@@ -24,7 +24,7 @@ def collect_cols(cols, col_matches):
         col_list = cols
     else:
         # Make list of column/feature names; exlcude error columns
-        all_cols = list(collect_data())
+        all_cols = list(collect_data(data_file))
         if col_matches is not None:
             if not isinstance(col_matches, list):
                 raise TypeError("col_matches in collect_cols must be a list.")
@@ -41,19 +41,18 @@ def collect_cols(cols, col_matches):
     # Drop all non-numeric columns
     column_list_numeric = set()
     for c in col_list:
-        if not any(col in c for col in drop_cols):
+        if not any(col in c for col in EXCLUDE_COLS):
             column_list_numeric.add(c)  # Keep only numeric columns
 
     return list(column_list_numeric)
 
 
-def collect_data():
+def collect_data(data_file):
     """ 
     Sets up Data Object using data 
-    :return: Pandas DataFrame created from DATA_PATH data 
+    :return: Pandas DataFrame created from data_file data 
     """
-    print("Using data from " + str(DATA_PATH))
-    dat = Table.read(DATA_PATH, format='fits')
+    dat = Table.read(data_file, format='fits')
     df_bytes = dat.to_pandas()  # Convert to pandas dataframe
     df = pd.DataFrame()     # Init empty dataframe for converted types
 

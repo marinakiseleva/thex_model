@@ -16,7 +16,7 @@ def get_data(col_list, data_filters):
     :param **data_filters: Mapping of data filters to values passed in by user
     """
 
-    df = collect_data()
+    df = collect_data(data_filters['data_file'])
     # Relabel label column
     df[TARGET_LABEL] = df[ORIG_TARGET_LABEL]
 
