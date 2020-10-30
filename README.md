@@ -1,5 +1,5 @@
 # THEx Background
-Source code contributing to the research of the Transient Host Exchange project (THEx) project at the University of Arizona. THEx aims to predict astronomical transients for the Large Synoptic Survey Telescope (LSST) before they occur by using host-galaxy photometric data, in expedite their follow up once detected by LSST.
+Source code contributing to the research of the Transient Host Exchange (THEx) at the University of Arizona. We classify astronomical transients using host-galaxy photometric data, so that transients detected by the Large Synoptic Survey Telescope (LSST) may be immediately followed-up on after their initial discovery based on their classified type.
 
 
 # Set-Up
