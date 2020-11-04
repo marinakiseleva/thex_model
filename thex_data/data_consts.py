@@ -9,7 +9,7 @@ import os
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
 
 # Default data path - FITS file of transient/galaxy data
-DATA_PATH = ROOT_DIR + "/../../data/catalogs/THEx-assembled-v7-mags-legacy-xcalib-minxcal.fits"
+DATA_PATH = ROOT_DIR + "/../../data/catalogs/v7/THEx-assembled-v7.1a-mags-legacy-xcalib-minxcal.fits"
 
 # Runtime specs
 CPU_COUNT = 12
