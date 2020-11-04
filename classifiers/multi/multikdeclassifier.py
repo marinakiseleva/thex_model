@@ -268,13 +268,13 @@ class MultiKDEClassifier():
         :return: best fitting KDE
         """
         bandwidths = np.linspace(0.0001, 1, 100)
-        kernels = ['exponential', 'gaussian']
+        kernels = ['exponential']
         # 'tophat',  'epanechnikov', 'linear', 'cosine']
 
         best_ll, best_bw, best_kernel = find_best_params(X, bandwidths, kernels)
 
-        print("Best bandwidth " + str(best_bw) + " kernel: " +
-              best_kernel + " with avg ll: " + str(best_ll))
+        print("Best bandwidth " + str(round(best_bw, 2)) + " kernel: " +
+              best_kernel + " with avg ll: " + str(round(best_ll, 2)))
 
         kde = KernelDensity(bandwidth=best_bw,
                             metric='euclidean',
