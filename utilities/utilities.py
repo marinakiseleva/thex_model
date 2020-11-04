@@ -146,3 +146,8 @@ def clean_str(text):
         text = text.replace(r, "_")
     text = text.replace('%', "perc")
     return text
+
+
+def get_runtime(start, end):
+    m = round((end - start) / 60, 2)
+    return "Running: " + str(m) + " mins"
