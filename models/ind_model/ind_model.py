@@ -25,7 +25,7 @@ class OvAModel(MainModel):
             self.init_model = None
         super(OvAModel, self).__init__(**data_args)
 
-    def run_cfv(self, X, y):
+    def run_cfv(self, start_time):
         """
         Overwrite MainModel function to see if results from BinaryModel were passed in
         """
@@ -57,7 +57,7 @@ class OvAModel(MainModel):
                 new_results.append(np.array(trial_results, dtype='object'))
             return new_results
         else:
-            return super(OvAModel, self).run_cfv(X, y)
+            return super(OvAModel, self).run_cfv(start_time)
 
     def run_trials(self, X, y, num_runs):
         """
