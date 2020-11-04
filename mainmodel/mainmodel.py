@@ -109,20 +109,20 @@ class MainModel(ABC, MainModelVisualization):
         if cc != a:
             raise ValueError("Data is not filtered properly.")
 
-    def run(self):
+    def run(self, start_time=None):
         """
         Run model, either by trials or cross fold validation
         """
         if self.num_runs is not None:
             self.results = self.run_trials(self.X, self.y, self.num_runs)
         elif self.num_folds is not None:
-            self.results = self.run_cfv(self.X, self.y)
+            self.results = self.run_cfv(start_time)
         else:
             raise ValueError("Must pass in either number of folds or runs.")
 
     def run_density_analysis(self):
         """
-        Evalaute how well the KDEs fit the data by visualizing the performance at different proportions of top unnormalized probabilities (densities). 
+        Evalaute how well the KDEs fit the data by visualizing the performance at different proportions of top unnormalized probabilities (densities).
         """
         self.normalize = False
         self.run()
@@ -143,11 +143,9 @@ class MainModel(ABC, MainModelVisualization):
         self.visualize_data()
 
         start = time.time()
-
-        self.run()
-
+        self.run(start)
         end = time.time()
-        print("\n\n" + str(int(end - start)) + " seconds of runtime.\n")
+        print(util.get_runtime(start, end))
 
         # Save results in pickle
         with open(self.dir + '/results.pickle', 'wb') as f:
@@ -171,7 +169,7 @@ class MainModel(ABC, MainModelVisualization):
 
     def get_class_labels(self, y, N):
         """
-        Keep all classes with # of samples > N. If a class has only 1 child class that meets this criteria, we only use the parent class and not the children. We ensure each class is greater than N, and then we make disjoint by keeping only leaves of the new class hierarchy tree. 
+        Keep all classes with # of samples > N. If a class has only 1 child class that meets this criteria, we only use the parent class and not the children. We ensure each class is greater than N, and then we make disjoint by keeping only leaves of the new class hierarchy tree.
         :param y: DataFrame with TARGET_LABEL column
         :param N: Minimum # of samples per class to keep it
         """
@@ -302,7 +300,7 @@ class MainModel(ABC, MainModelVisualization):
 
         return fold_indices
 
-    def run_cfv(self, X, y):
+    def run_cfv(self, start_time):
         """
         Run k-fold cross validation
         Number of folds comes from self.num_folds
@@ -313,6 +311,7 @@ class MainModel(ABC, MainModelVisualization):
         results = []
         self.datas = []
         for i in range(self.num_folds):
+            print("\nFold " + str(i) + "\t" + util.get_runtime(start_time, time.time()))
             # Select training and test indices for this fold
             indices = fold_indices[i]
             test_indices_X = self.X.index.isin(fold_indices[i])
