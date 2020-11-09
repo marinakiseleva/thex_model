@@ -264,10 +264,10 @@ class MainModel(ABC, MainModelVisualization):
         df = pd.concat([X, y], axis=1)
         features = list(df)
         if 'redshift' in features:
-            plot_feature_distribution(model_dir=self.dir,
-                                      df=df.copy(deep=True),
-                                      feature='redshift',
-                                      class_labels=self.class_labels)
+            plot_feature_hist(model_dir=self.dir,
+                              df=df.copy(deep=True),
+                              feature='redshift',
+                              class_labels=self.class_labels)
 
     def visualize_performance(self):
         """
