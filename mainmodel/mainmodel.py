@@ -102,7 +102,7 @@ class MainModel(ABC, MainModelVisualization):
         print("\nClasses Used:\n" + str(self.class_labels))
         print("\nFeatures Used:\n" + str(list(X)))
         util.pretty_print_dict(self.class_counts, "Class Counts")
-        if class_priors is not None:
+        if self.class_priors is not None:
             print("\nClass Priors:\n" + str(self.class_priors))
 
         cc = sum(self.class_counts.values())
