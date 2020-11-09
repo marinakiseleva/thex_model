@@ -15,7 +15,7 @@ DATA_PATH = ROOT_DIR + "/../../data/catalogs/v7/THEx-assembled-v7.1a-mags-legacy
 CPU_COUNT = 12
 TREE_ROOT = "_ROOT"
 LOSS_FUNCTION = "brier_score_loss"
-DEFAULT_KERNEL = "epanechnikov"
+DEFAULT_KERNEL = "exponential"
 
 # Plotting Specifications
 FIG_WIDTH = 6
