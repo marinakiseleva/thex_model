@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 from matplotlib.ticker import FormatStrFormatter, ScalarFormatter
 import matplotlib.pyplot as plt
+from scipy.stats import norm
+
 
 from .data_consts import *
 import utilities.utilities as util
@@ -98,15 +100,10 @@ def visualize_completeness(model_dir, X, class_labels, data_completeness):
     util.display_and_save_plot(model_dir, "Completeness", None, f)
 
 
-def plot_feature_distribution(model_dir, df, feature, class_labels):
+def relabel_df(df, class_labels):
     """
-    Plots the distribution of each transient type in df over 'feature'
-    :param model_dir: directory of model to save figure
-    :param df: DataFrame with both feature column and TARGET_LABEL column
-    :param feature: Name of feature to plot distribution over
-    :param class_labels: class labels
+    Helper function for plotting feature distributions. Relabels class label to be just a single label and not a list. The list of class_labels is assumed to be disjoint.
     """
-
     # Relabel DF
     label_col = df.columns.get_loc(TARGET_LABEL)
     for index, row in df.iterrows():
@@ -115,10 +112,50 @@ def plot_feature_distribution(model_dir, df, feature, class_labels):
             if class_name in classes:
                 df.iloc[index, label_col] = class_name
                 break
+    return df
+
+
+def plot_feature_distribution(model_dir, df, feature, class_labels):
+    """
+    Plots the normal distribution of each transient type in df over 'feature'
+    :param model_dir: directory of model to save figure
+    :param df: DataFrame with both feature column and TARGET_LABEL column
+    :param feature: Name of feature to plot distribution over
+    :param class_labels: class labels
+    """
+    df = relabel_df(df, class_labels)
+
+    f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+    min_value = df[feature].min()
+    max_value = df[feature].max()
+    bins = np.linspace(0, max_value, 50)
+    colors = plt.get_cmap('tab20').colors
+    for index, class_name in enumerate(class_labels):
+        class_values = df[df[TARGET_LABEL] == class_name][feature].values
+        mean, std = norm.fit(class_values)
+        x = np.linspace(min_value, max_value, 100)
+        y = norm.pdf(x, mean, std)
+        plt.plot(x, y, color=colors[index], label=class_name)
+    plt.xlabel(feature.capitalize(), fontsize=LAB_S)
+    plt.ylabel("Normalized density", fontsize=LAB_S)
+    plt.legend()
+    plt.show()
+
+
+def plot_feature_hist(model_dir, df, feature, class_labels):
+    """
+    Plots the histogram of each transient type in df over 'feature'
+    :param model_dir: directory of model to save figure
+    :param df: DataFrame with both feature column and TARGET_LABEL column
+    :param feature: Name of feature to plot distribution over
+    :param class_labels: class labels
+    """
+
+    df = relabel_df(df, class_labels)
 
     f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
 
-    max_value = 0.8  # df[feature].max()
+    max_value = df[feature].max()
     bins = np.linspace(0, max_value, 50)
     counts = []
     edges = []
@@ -141,10 +178,8 @@ def plot_feature_distribution(model_dir, df, feature, class_labels):
         bin_counts = []  # Count per class for this bin
         for class_count in counts:
             bin_counts.append(class_count[bin_index])
-
         # Sorted biggest to smallest, indices
         sorted_indices = np.flip(np.argsort(bin_counts))
-
         zorder = 0
         for sorted_index in sorted_indices:
             bars[sorted_index][bin_index].set_zorder(zorder)
@@ -154,7 +189,44 @@ def plot_feature_distribution(model_dir, df, feature, class_labels):
     plt.legend()
     util.display_and_save_plot(model_dir, "Feature distribution")
 
-from matplotlib.ticker import LogLocator
+
+def plot_df_feature_dists(model_dir, df1, df2, df1_name, df2_name, feature, class_labels):
+    """
+    Compare the feature distribution of one dataset vs another
+    :param model_dir: directory of model to save figure 
+    :param feature: Name of feature to plot distribution over 
+    """
+
+    df1 = relabel_df(df1, class_labels)
+    df2 = relabel_df(df2, class_labels)
+
+    f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+
+    min_value = min(df1[feature].min(), df2[feature].min())
+    max_value = max(df1[feature].max(), df2[feature].max())
+
+    x = np.linspace(min_value, max_value, 100)
+
+    bins = np.linspace(0, max_value, 100)
+    colors = plt.get_cmap('tab20').colors
+    color_index = 0
+    for class_name in class_labels:
+        df1_vals = df1[df1[TARGET_LABEL] == class_name][feature].values
+        mean1, std1 = norm.fit(df1_vals)
+        df1_y = norm.pdf(x, mean1, std1)
+
+        df2_vals = df2[df2[TARGET_LABEL] == class_name][feature].values
+        mean2, std2 = norm.fit(df2_vals)
+        df2_y = norm.pdf(x, mean2, std2)
+
+        plt.plot(x, df1_y, color=colors[color_index], label=class_name + " " + df1_name)
+        plt.plot(x, df2_y, color=colors[color_index + 1],
+                 label=class_name + " " + df2_name)
+        color_index += 2
+
+    plt.xlabel(feature.capitalize(), fontsize=LAB_S)
+    plt.ylabel("Normalized density", fontsize=LAB_S)
+    plt.legend()
 
 
 def plot_class_hist(model_dir, class_names, counts):
