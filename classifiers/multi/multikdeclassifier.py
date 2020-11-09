@@ -254,11 +254,13 @@ class MultiKDEClassifier():
 
     def train(self, X, y):
         mc_kdes = {}
+        self.training_lls = {}
         for class_name in self.class_labels:
-            print("\n\nTraining: " + class_name)
+            # print("\nTraining: " + class_name)
             y_relabeled = self.get_class_data(class_name, y)
             X_pos = X.loc[y_relabeled[TARGET_LABEL] == 1]
             mc_kdes[class_name] = self.fit_class(X_pos)
+            self.training_lls[class_name] = self.best_kernel_ll
 
         return mc_kdes
 
@@ -273,13 +275,13 @@ class MultiKDEClassifier():
 
         best_ll, best_bw, best_kernel = find_best_params(X, bandwidths, kernels)
 
-        print("Best bandwidth " + str(round(best_bw, 2)) + " kernel: " +
-              best_kernel + " with avg ll: " + str(round(best_ll, 2)))
-
         kde = KernelDensity(bandwidth=best_bw,
                             metric='euclidean',
                             kernel=best_kernel)
         kde.fit(X)
+
+        self.best_bw = best_bw
+        self.best_kernel_ll = best_ll
 
         return kde
 

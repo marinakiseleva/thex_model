@@ -79,7 +79,7 @@ class OptimalMultiClassifier():
         loss = self.brier_multi(targets=y_onehot,
                                 probs=np.array(probabilities),
                                 sample_weights=sample_weights)
-        print("Brier loss " + str(loss))
+
         return loss
 
     def brier_multi(self, targets, probs, sample_weights):
@@ -119,6 +119,8 @@ class OptimalMultiClassifier():
                 min_loss = loss
                 best_clf = clf
 
-        # print("\nBest Classifier " + str(best_clf.name) + ' with score ' + str(min_loss))
+        print("Brier score (loss): " + str(min_loss) + "\n")
+
+        self.training_lls = best_clf.training_lls
 
         return best_clf, best_clf.name

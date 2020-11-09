@@ -284,8 +284,7 @@ class MainModelVisualization:
         :opt. param baselines: Mapping from class name to random-baseline performance (get plotted atop the bars)
         :opt. param intervals: confidence intervals, map from class 
         """
-        print("\n\nValues for " + xlabel)
-        print(class_metrics)
+        thex_utils.pretty_print_dict(class_metrics, xlabel + " per class")
 
         class_names, metrics, baselines, intervals = get_ordered_metrics(
             class_metrics,

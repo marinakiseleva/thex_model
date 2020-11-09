@@ -151,6 +151,18 @@ class MainModel(ABC, MainModelVisualization):
         with open(self.dir + '/results.pickle', 'wb') as f:
             pickle.dump(self.results, f)
 
+        if self.training_lls is not None:
+            avg_lls = {cn: 0 for cn in self.class_labels}
+            for i_map in self.training_lls:
+                for class_name in self.class_labels:
+                    avg_lls[class_name] += i_map[class_name]
+
+            for cn in self.class_labels:
+                avg_lls[cn] = round(avg_lls[cn] / len(self.training_lls), 2)
+
+            util.pretty_print_dict(
+                avg_lls, "Average negative log-likelihood fit over training data: ")
+
         self.visualize_performance()
 
     def relabel_class_data(self, class_name, y):
@@ -311,7 +323,8 @@ class MainModel(ABC, MainModelVisualization):
         results = []
         self.datas = []
         for i in range(self.num_folds):
-            print("\nFold " + str(i) + "\t" + util.get_runtime(start_time, time.time()))
+            print("\nFold " + str(i + 1) + "\t" +
+                  util.get_runtime(start_time, time.time()))
             # Select training and test indices for this fold
             indices = fold_indices[i]
             test_indices_X = self.X.index.isin(fold_indices[i])

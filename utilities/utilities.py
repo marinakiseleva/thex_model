@@ -137,6 +137,13 @@ def convert_str_to_list(input_string):
     return [item.strip(' ') for item in l]
 
 
+def pretty_print_dict(d, title):
+    print("\n")
+    print("\t\t" + title)
+    for k in d.keys():
+        print(str(k) + " : " + str(d[k]))
+
+
 def clean_str(text):
     """
     Remove unnecessary characters from text (in order to save it as valid file name)
