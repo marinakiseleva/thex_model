@@ -100,9 +100,10 @@ class MainModel(ABC, MainModelVisualization):
         self.normalize = True
 
         print("\nClasses Used:\n" + str(self.class_labels))
-        print("\nClass Priors:\n" + str(self.class_priors))
         print("\nFeatures Used:\n" + str(list(X)))
-        print("\nClass Counts:\n" + str(self.class_counts))
+        util.pretty_print_dict(self.class_counts, "Class Counts")
+        if class_priors is not None:
+            print("\nClass Priors:\n" + str(self.class_priors))
 
         cc = sum(self.class_counts.values())
         a = self.y.shape[0]
