@@ -58,7 +58,7 @@ class MainModel(ABC, MainModelVisualization):
                         'max_class_size': None,
                         'pca': None,  # Number of principal components
                         'class_labels': None,
-                        'data': None,  # List of training and test pandas dfs
+                        'data': None,  # Single Pandas DataFrame of data to use
                         'nb': False,  # Naive Bayes multiclass
                         'priors': None,  # Priors in order of class_labels
                         'data_file': DATA_PATH  # Default data file used
@@ -66,15 +66,12 @@ class MainModel(ABC, MainModelVisualization):
 
         for data_filter in user_data_filters.keys():
             data_filters[data_filter] = user_data_filters[data_filter]
-        if data_filters['data'] is None:
-            # list of features to use from database
-            print("Using data: " + data_filters['data_file'])
-            features = collect_cols(data_filters['cols'], data_filters[
-                                    'col_matches'], data_filters['data_file'])
-            X, y = get_source_target_data(features, data_filters)
-        else:
-            X = data_filters['data'][0].copy(deep=True)
-            y = data_filters['data'][1].copy(deep=True)
+
+        # list of features to use from database
+        print("Using data: " + data_filters['data_file'])
+        features = collect_cols(data_filters['cols'], data_filters[
+                                'col_matches'], data_filters['data_file'])
+        X, y = get_source_target_data(features, data_filters)
 
         # Redefine labels with Unspecifieds
         y = util.add_unspecified_labels_to_data(y, self.class_levels)
