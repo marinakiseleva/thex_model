@@ -31,6 +31,18 @@ df_v7a = collect_data(
 merged_df = df_v4ab.merge(right=df_v7a, how='inner', on=[
                           'name'], suffixes=['_v4', '_v7'])
 
+v4_labels_list = merged_df['claimedtype_v4'].tolist()
+v7_labels_list = merged_df['claimedtype_v7'].tolist()
+
+keep_indices = []
+for index, v4_label in enumerate(v4_labels_list):
+    v7_label = v7_labels_list[index]
+    if v7_label == v4_label:
+        keep_indices.append(index)
+merged_df = merged_df.loc[keep_indices]
+merged_df['claimedtype'] = merged_df['claimedtype_v4']
+
+
 print("V4 Model - Inner.")
 v4_model = MultiModel(
     folds=40,
