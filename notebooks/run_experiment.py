@@ -52,4 +52,4 @@ v4_model = MultiModel(
     data=merged_df,
 )
 
-model.run_model()
+v4_model.run_model()
