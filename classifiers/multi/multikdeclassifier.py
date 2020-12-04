@@ -293,7 +293,8 @@ class MultiKDEClassifier():
         self.best_bw = best_bw
         self.best_kernel_ll = best_ll
 
-        print("Average log-likelihood: " + str(self.best_kernel_ll))
+        print("bandwidth " + str(self.best_bw))
+        print("average log-likelihood: " + str(self.best_kernel_ll))
 
         return kde
 
