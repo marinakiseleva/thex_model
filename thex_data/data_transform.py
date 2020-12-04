@@ -3,7 +3,7 @@ data_transform
 Enhance features by scaling and transforming them
 """
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
 from sklearn.decomposition import PCA
 
 from thex_data.data_consts import ORDERED_MAGS
@@ -38,14 +38,13 @@ def derive_diffs(df):
 
 def scale_data(X_train, X_test):
     """
-    Fit scaling to training data and apply to both training and testing; scale my removing mean and scaling to unit variance. 
+    Fit scaling to training data and apply to both training and testing; scale by removing mean and scaling to unit variance. 
     Returns X_train and X_test as Pandas DataFrames
     :param X_train: Pandas DataFrame of training data
     :param X_test: Pandas DataFrame of testing data
     """
     features_list = list(X_train)
-    # Rescale data: z = (x - mean) / stdev
-    scaler = StandardScaler()
+    scaler = RobustScaler()
 
     scaled_X_train = pd.DataFrame(
         data=scaler.fit_transform(X_train), columns=features_list)
