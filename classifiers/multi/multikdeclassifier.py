@@ -11,6 +11,9 @@ from sklearn.utils.class_weight import compute_sample_weight
 import utilities.utilities as thex_utils
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT, DEFAULT_KERNEL
 
+###########
+#  Helper functions for 'train_together' ; fitting same bandwidth to all classes
+
 
 def get_sample_weights(y):
     """
@@ -120,6 +123,11 @@ def fit_folds(X, y, class_labels, bandwidth):
     print("For bandwidth " + str(bandwidth) + " loss: " + str(avg_loss))
     return avg_loss
 
+###########
+
+###########
+# Find bandwidth using parallel processing
+
 
 def get_params_ll(X, bandwidth_kernel):
     """
@@ -129,7 +137,7 @@ def get_params_ll(X, bandwidth_kernel):
 
     bandwidth = bandwidth_kernel[0]
     kernel = bandwidth_kernel[1]
-    ll = []  # log likelihood for each fold
+    ll_per_fold = []  # log likelihood for each fold
 
     # randomly split X into three equal sizes.
     kf = KFold(n_splits=3, shuffle=True)
@@ -143,11 +151,12 @@ def get_params_ll(X, bandwidth_kernel):
                             )
         kde.fit(X_train)
 
-        cur_ll = kde.score(X_test)
-        ll.append(cur_ll)
+        # Sum over log-likelihood fit of every point in X_test
+        total_ll = kde.score(X_test)
+        ll_per_fold.append(total_ll)
 
-    # Average loss for this bandwidth across 3 folds
-    return np.average(np.array(ll))
+    # Average log-likelihood for this bandwidth across 3 folds
+    return np.average(np.array(ll_per_fold))
 
 
 def find_best_params(X, bandwidths, kernels):
@@ -172,14 +181,15 @@ def find_best_params(X, bandwidths, kernels):
     best_bw = None
     best_kernel = None
 
-    # Minimize negative of the log-likelihood
-    min_index = np.argmin(np.array(lls) * -1)
+    # Maximize the log-likelihood
+    min_index = np.argmax(np.array(lls))
 
     best_ll = lls[min_index]
     best_bw = bw_k_pairs[min_index][0]
     best_kernel = bw_k_pairs[min_index][1]
 
     return best_ll, best_bw, best_kernel
+###########
 
 
 class MultiKDEClassifier():
@@ -256,7 +266,7 @@ class MultiKDEClassifier():
         mc_kdes = {}
         self.training_lls = {}
         for class_name in self.class_labels:
-            # print("\nTraining: " + class_name)
+            print("\nTraining KDE for " + class_name)
             y_relabeled = self.get_class_data(class_name, y)
             X_pos = X.loc[y_relabeled[TARGET_LABEL] == 1]
             mc_kdes[class_name] = self.fit_class(X_pos)
@@ -282,6 +292,8 @@ class MultiKDEClassifier():
 
         self.best_bw = best_bw
         self.best_kernel_ll = best_ll
+
+        print("Average log-likelihood: " + str(self.best_kernel_ll))
 
         return kde
 

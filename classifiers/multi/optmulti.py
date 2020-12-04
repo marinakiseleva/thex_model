@@ -119,7 +119,7 @@ class OptimalMultiClassifier():
                 min_loss = loss
                 best_clf = clf
 
-        print("Brier score (loss): " + str(min_loss) + "\n")
+        print("Brier score multiclass (loss): " + str(min_loss) + "\n")
 
         self.training_lls = best_clf.training_lls
 
