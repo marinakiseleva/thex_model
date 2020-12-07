@@ -279,7 +279,7 @@ class MultiKDEClassifier():
         Fit KDE to X & select kernel/bandwidth by maximizing log-likelihood (minimizing negative of log-likelihod)
         :return: best fitting KDE
         """
-        bandwidths = np.linspace(0.0001, 1, 100)
+        bandwidths = np.linspace(0.0001, 1, 50)
         kernels = ['exponential']
         # 'tophat',  'epanechnikov', 'linear', 'cosine']
 
