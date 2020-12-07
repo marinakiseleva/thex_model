@@ -310,6 +310,38 @@ class MainModel(ABC, MainModelVisualization):
 
         return fold_indices
 
+    def calibrate_probabilities(self, probs, train_results):
+        """
+        Calibrate probabilities using binning; assigning probability based on empirical probability from training data.  
+        :param probs: 2D numpy array with probabilities per row in order
+        of self.class_labels, and last col is label
+        :param train_results: probabilities assigned to training data
+        """
+        # Pass in training data & labels as 2D numpy array
+        train_metrics = self.compute_probability_range_metrics(
+            train_results,  bin_size=0.1, concat=False)
+
+        # train_metrics is dict from class name to
+        # [tp_range_counts, total_range_counts]
+
+        # Recalibrate probs based on those metrics
+        label_index = len(self.class_labels)  # Last column is label
+        for row in probs:
+            for class_index, class_name in enumerate(self.class_labels):
+                TPs, totals = train_metrics[class_name]
+                assigned_prob = row[class_index]
+                # Find what bin the assigned prob is in
+                if assigned_prob == 1:
+                    bin_i = 9
+                else:
+                    bin_i = math.floor(assigned_prob * 10)
+                if totals[bin_i] == 0:
+                    cal_prob = 0
+                else:
+                    cal_prob = TPs[bin_i] / totals[bin_i]
+                row[class_index] = cal_prob
+        return probs
+
     def run_cfv(self, start_time):
         """
         Run k-fold cross validation
@@ -319,6 +351,7 @@ class MainModel(ABC, MainModelVisualization):
         """
         fold_indices = self.kfold_stratify()
         results = []
+        train_results = []
         self.datas = []
         for i in range(self.num_folds):
             print("\nFold " + str(i + 1) + "\t" +
@@ -346,12 +379,20 @@ class MainModel(ABC, MainModelVisualization):
             self.train_model(X_train, y_train)
             self.datas.append(X_test)
 
+            # Save this to recalibrate probabilities
+            train_probs = self.get_all_class_probabilities(X_train)
+            train_labels = y_train[TARGET_LABEL].values.reshape(-1, 1)
+            train_probs = np.hstack((train_probs, train_labels))
+
             # Test model
-            probabilities = self.get_all_class_probabilities(X_test)
+            probs = self.get_all_class_probabilities(X_test)
             # Add labels as column to probabilities, for later evaluation
             label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
-            probabilities = np.hstack((probabilities, label_column))
-            results.append(probabilities)
+            probs = np.hstack((probs, label_column))
+
+            probs = self.calibrate_probabilities(probs, train_probs)
+
+            results.append(probs)
 
         return results
 
