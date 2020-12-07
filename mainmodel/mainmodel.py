@@ -159,7 +159,7 @@ class MainModel(ABC, MainModelVisualization):
                 avg_lls[cn] = round(avg_lls[cn] / len(self.training_lls), 2)
 
             util.pretty_print_dict(
-                avg_lls, "Average negative log-likelihood fit over training data: ")
+                avg_lls, "Average log-likelihood fit over training data: ")
 
         self.visualize_performance()
 
