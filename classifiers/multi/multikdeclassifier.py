@@ -131,7 +131,7 @@ def fit_folds(X, y, class_labels, bandwidth):
 
 def get_params_ll(X, bandwidth_kernel):
     """
-    Fit data using this bandwidth and kernel and report back average log-likelihood fit over 3-folds
+    Fit data using this bandwidth and kernel and report back log-likelihood fit on validation data (30% of training). This works better than 3-fold cross-validation, which was found to overfit data.
     :param X: data for only positive class
     """
 
@@ -139,24 +139,19 @@ def get_params_ll(X, bandwidth_kernel):
     kernel = bandwidth_kernel[1]
     ll_per_fold = []  # log likelihood for each fold
 
-    # randomly split X into three equal sizes.
-    kf = KFold(n_splits=3, shuffle=True)
-    for train_index, test_index in kf.split(X):
-        X_train = X.iloc[train_index].reset_index(drop=True)
-        X_test = X.iloc[test_index].reset_index(drop=True)
+    # randomly split X into training and validation
+    X_train = X.sample(frac=0.7)
+    X_validate = X.drop(X_train.index)
+    X_train = X_train.reset_index(drop=True)
+    X_validate = X_validate.reset_index(drop=True)
 
-        kde = KernelDensity(bandwidth=bandwidth,
-                            metric='euclidean',
-                            kernel=kernel
-                            )
-        kde.fit(X_train)
-
-        # Sum over log-likelihood fit of every point in X_test
-        total_ll = kde.score(X_test)
-        ll_per_fold.append(total_ll)
-
-    # Average log-likelihood for this bandwidth across 3 folds
-    return np.average(np.array(ll_per_fold))
+    kde = KernelDensity(bandwidth=bandwidth,
+                        metric='euclidean',
+                        kernel=kernel
+                        )
+    kde.fit(X_train)
+    ll = kde.score(X_validate)
+    return ll
 
 
 def find_best_params(X, bandwidths, kernels):
