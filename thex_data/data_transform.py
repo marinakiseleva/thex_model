@@ -3,7 +3,7 @@ data_transform
 Enhance features by scaling and transforming them
 """
 import pandas as pd
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
 from thex_data.data_consts import ORDERED_MAGS
@@ -44,7 +44,7 @@ def scale_data(X_train, X_test):
     :param X_test: Pandas DataFrame of testing data
     """
     features_list = list(X_train)
-    scaler = RobustScaler()
+    scaler = StandardScaler()
 
     scaled_X_train = pd.DataFrame(
         data=scaler.fit_transform(X_train), columns=features_list)
