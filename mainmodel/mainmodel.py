@@ -331,6 +331,7 @@ class MainModel(ABC, MainModelVisualization):
 
         # Recalibrate test_probs based on those metrics
         label_index = len(self.class_labels)  # Last column is label
+        index = 0
         for row in test_probs:
             for class_index, class_name in enumerate(self.class_labels):
                 TPs, totals = train_metrics[class_name]
@@ -343,8 +344,13 @@ class MainModel(ABC, MainModelVisualization):
                 if totals[bin_i] == 0:
                     cal_prob = 0
                 else:
+                    # get empirical probability of this bin
                     cal_prob = TPs[bin_i] / totals[bin_i]
                 row[class_index] = cal_prob
+            # Normalize row so it sums to 1
+            test_probs[index] = row / sum(row)
+            index += 1
+
         return test_probs
 
     def run_cfv(self, start_time):
