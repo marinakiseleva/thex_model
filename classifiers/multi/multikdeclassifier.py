@@ -1,6 +1,6 @@
 from functools import partial
 import multiprocessing
-
+from collections import OrderedDict
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold
@@ -299,15 +299,15 @@ class MultiKDEClassifier():
         :param x: Pandas Series (row of DF) of features
         """
         density_sum = 0
-        probabilities = {}
+        probabilities = OrderedDict()
         for class_index, class_name in enumerate(self.class_labels):
-            class_density = np.exp(self.clfs[class_name].score_samples([x.values]))[0]
+            class_ll = self.clfs[class_name].score_samples([x.values])[0]
+            class_density = np.exp(class_ll)
             if self.class_priors is not None:
                 class_density *= self.class_priors[class_index]
             probabilities[class_name] = class_density
             density_sum += class_density
 
-        # Normalize
         if normalize:
             probabilities = {k: probabilities[k] /
                              density_sum for k in probabilities.keys()}
