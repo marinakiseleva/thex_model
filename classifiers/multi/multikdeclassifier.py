@@ -84,67 +84,20 @@ def get_class_probabilities(x, class_labels, clfs):
 
     return probabilities
 
-
-def fit_folds(X, y, class_labels, bandwidth):
-    """
-    Fit data using this bandwidth and kernel and report back brier score loss average over 3 folds
-    """
-    losses = []
-    sample_weights = get_sample_weights(y)
-    y_onehot = get_one_hot(y, class_labels)
-    skf = StratifiedKFold(n_splits=3, shuffle=True)
-    for train_index, test_index in skf.split(X, y):
-        X_train, X_test = X.iloc[train_index].reset_index(
-            drop=True), X.iloc[test_index].reset_index(drop=True)
-        y_train, y_test = y.iloc[train_index].reset_index(
-            drop=True), y.iloc[test_index].reset_index(drop=True)
-
-        mc_kdes = {}
-        for class_name in class_labels:
-            mc_kdes[class_name] = KernelDensity(bandwidth=bandwidth,
-                                                metric='euclidean',
-                                                kernel=DEFAULT_KERNEL,
-                                                leaf_size=40)
-            y_relabeled = get_class_data(class_name, y)
-            mc_kdes[class_name].fit(X.loc[y_relabeled[TARGET_LABEL] == 1])
-
-        probs = []  # 2D List of probabilities
-        for index, x in X_test.iterrows():
-            p = get_class_probabilities(x, class_labels, mc_kdes)
-            probs.append(list(p.values()))
-        probs = np.array(probs)
-        # Evaluate using Brier Score Loss
-        weights = np.take(sample_weights, test_index)
-        labels = np.take(y_onehot, test_index, axis=0)
-        loss = brier_multi(labels, probs, weights)
-        losses.append(loss)
-    # Average loss for this bandwidth across 3 folds
-    avg_loss = sum(losses) / len(losses)
-    print("For bandwidth " + str(bandwidth) + " loss: " + str(avg_loss))
-    return avg_loss
-
 ###########
 
 ###########
 # Find bandwidth using parallel processing
 
 
-def get_params_ll(X, bandwidth_kernel):
+def get_params_ll(X_train, X_validate, bandwidth_kernel):
     """
     Fit data using this bandwidth and kernel and report back log-likelihood fit on validation data (30% of training). This works better than 3-fold cross-validation, which was found to overfit data.
     :param X: data for only positive class
+    :param bandwidth_kernel: list of bandwidth and kernel to evaluate
     """
-
     bandwidth = bandwidth_kernel[0]
     kernel = bandwidth_kernel[1]
-    ll_per_fold = []  # log likelihood for each fold
-
-    # randomly split X into training and validation
-    X_train = X.sample(frac=0.7)
-    X_validate = X.drop(X_train.index)
-    X_train = X_train.reset_index(drop=True)
-    X_validate = X_validate.reset_index(drop=True)
-
     kde = KernelDensity(bandwidth=bandwidth,
                         metric='euclidean',
                         kernel=kernel
@@ -158,6 +111,12 @@ def find_best_params(X, bandwidths, kernels):
     """
     Find best kernel/bandwidth pair, based on log likelihood fit, in parallel.
     """
+    # Use same training/validation split for all evaluation
+    X_train = X.sample(frac=0.7)
+    X_validate = X.drop(X_train.index)
+    X_train = X_train.reset_index(drop=True)
+    X_validate = X_validate.reset_index(drop=True)
+
     bw_k_pairs = []  # bandwidth -kernel pairs
     for b in bandwidths:
         for k in kernels:
@@ -165,7 +124,7 @@ def find_best_params(X, bandwidths, kernels):
     pool = multiprocessing.Pool(CPU_COUNT)
 
     # Pass in parameters that don't change for parallel processes
-    func = partial(get_params_ll, X)
+    func = partial(get_params_ll, X_train, X_validate)
 
     lls = []
     # Multithread over bandwidths
@@ -201,47 +160,47 @@ class MultiKDEClassifier():
         self.class_priors = class_priors
         self.clfs = self.train(X, y)
 
-    def train_together(self, X, y):
-        """
-        Train positive and negative class together using same bandwidth to try and minimize brier score loss instead of maximizing log likelihood of fit
-        :param X: DataFrame of training data features
-        :param y: DataFrame of TARGET_LABEL with 1 for pos_class and 0 for not pos_class
-        """
-        leaf_size = 40
-        bandwidths = np.linspace(0.001, 4, 100)
+    # def train_together(self, X, y):
+    #     """
+    #     Train positive and negative class together using same bandwidth to try and minimize brier score loss instead of maximizing log likelihood of fit
+    #     :param X: DataFrame of training data features
+    #     :param y: DataFrame of TARGET_LABEL with 1 for pos_class and 0 for not pos_class
+    #     """
+    #     leaf_size = 40
+    #     bandwidths = np.linspace(0.001, 4, 100)
 
-        print("Running " + str(CPU_COUNT) + " processes.")
-        pool = multiprocessing.Pool(CPU_COUNT)
+    #     print("Running " + str(CPU_COUNT) + " processes.")
+    #     pool = multiprocessing.Pool(CPU_COUNT)
 
-        # Pass in parameters that don't change for parallel processes
-        func = partial(fit_folds, X, y, self.class_labels)
+    #     # Pass in parameters that don't change for parallel processes
+    #     func = partial(fit_folds, X, y, self.class_labels)
 
-        # Multithread over bandwidths
-        losses = []
-        losses = pool.map(func, bandwidths)
+    #     # Multithread over bandwidths
+    #     losses = []
+    #     losses = pool.map(func, bandwidths)
 
-        pool.close()
-        pool.join()
-        print("Done processing...")
+    #     pool.close()
+    #     pool.join()
+    #     print("Done processing...")
 
-        min_loss_index = losses.index(min(losses))
-        best_cv_loss = losses[min_loss_index]
-        best_cv_bw = bandwidths[min_loss_index]
-        print("Best bandwidth " + str(best_cv_bw))
-        print("With score: " + str(best_cv_loss))
+    #     min_loss_index = losses.index(min(losses))
+    #     best_cv_loss = losses[min_loss_index]
+    #     best_cv_bw = bandwidths[min_loss_index]
+    #     print("Best bandwidth " + str(best_cv_bw))
+    #     print("With score: " + str(best_cv_loss))
 
-        # Define models based on best bandwidth
-        mc_kdes = {}
-        # Make KDE for each class using same bandwidth, leaf size, and kernel
-        for class_name in self.class_labels:
-            mc_kdes[class_name] = KernelDensity(bandwidth=best_cv_bw,
-                                                leaf_size=40,
-                                                kernel=DEFAULT_KERNEL,
-                                                metric='euclidean')
-            y_relabeled = self.get_class_data(class_name, y)
-            mc_kdes[class_name].fit(X.loc[y_relabeled[TARGET_LABEL] == 1])
+    #     # Define models based on best bandwidth
+    #     mc_kdes = {}
+    #     # Make KDE for each class using same bandwidth, leaf size, and kernel
+    #     for class_name in self.class_labels:
+    #         mc_kdes[class_name] = KernelDensity(bandwidth=best_cv_bw,
+    #                                             leaf_size=40,
+    #                                             kernel=DEFAULT_KERNEL,
+    #                                             metric='euclidean')
+    #         y_relabeled = self.get_class_data(class_name, y)
+    #         mc_kdes[class_name].fit(X.loc[y_relabeled[TARGET_LABEL] == 1])
 
-        return mc_kdes
+    #     return mc_kdes
 
     def get_class_data(self, class_name, y):
         """
