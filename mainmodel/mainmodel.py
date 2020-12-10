@@ -317,6 +317,9 @@ class MainModel(ABC, MainModelVisualization):
         of self.class_labels, and last col is label
         :param train_results: probabilities assigned to training data
         """
+
+        print("\nCalibrating probabilities ")
+
         # Pass in training data & labels as 2D numpy array
         train_metrics = self.compute_probability_range_metrics(
             train_probs,  bin_size=0.1, concat=False)
@@ -326,30 +329,39 @@ class MainModel(ABC, MainModelVisualization):
             print(cn)
             print(train_metrics[cn])
 
+        orig_test_metrics = self.compute_probability_range_metrics(
+            test_probs,  bin_size=0.1, concat=False)
+
         # train_metrics is dict from class name to
         # [tp_range_counts, total_range_counts]
 
         # Recalibrate test_probs based on those metrics
-        label_index = len(self.class_labels)  # Last column is label
-        index = 0
+        row_index = 0
         for row in test_probs:
             for class_index, class_name in enumerate(self.class_labels):
                 TPs, totals = train_metrics[class_name]
-                assigned_prob = row[class_index]
+                class_prob = row[class_index]
+                # bins are left inclusive,
+                # so first bin is 0 <= x < .1. ; so last bin <=1.01
                 # Find what bin the assigned prob is in
-                if assigned_prob == 1:
+                if class_prob == 1:
                     bin_i = 9
                 else:
-                    bin_i = math.floor(assigned_prob * 10)
+                    bin_i = math.floor(class_prob * 10)
                 if totals[bin_i] == 0:
                     cal_prob = 0
                 else:
                     # get empirical probability of this bin
-                    cal_prob = TPs[bin_i] / totals[bin_i]
+                    cal_prob = TPs[bin_i] / (totals[bin_i] + 0.0)
+
                 row[class_index] = cal_prob
-            # Normalize row so it sums to 1
-            test_probs[index] = row / sum(row)
-            index += 1
+            # Normalize probs in row so it sums to 1
+            row_sum = sum(row[:-1])
+            if row_sum == 0:
+                test_probs[row_index, :-1] = 0
+            else:
+                test_probs[row_index, :-1] = row[:-1] / row_sum
+            row_index += 1
 
         return test_probs
 
