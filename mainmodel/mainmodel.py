@@ -95,6 +95,7 @@ class MainModel(ABC, MainModelVisualization):
         self.transform_features = data_filters['transform_features']
         self.class_counts = self.get_class_counts(y)
         self.normalize = True
+        self.training_lls = None
 
         print("\nClasses Used:\n" + str(self.class_labels))
         print("\nFeatures Used:\n" + str(list(X)))
