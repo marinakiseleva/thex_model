@@ -415,7 +415,7 @@ class MainModel(ABC, MainModelVisualization):
             test_probs = np.hstack((test_probs, label_column))
 
             # Calibrate probabilities
-            test_probs = self.calibrate_probabilities(test_probs, train_probs)
+            #test_probs = self.calibrate_probabilities(test_probs, train_probs)
 
             results.append(test_probs)
 
