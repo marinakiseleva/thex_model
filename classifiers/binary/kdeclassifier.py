@@ -20,78 +20,77 @@ def get_sample_weights(y):
     return compute_sample_weight(class_weight='balanced', y=y)
 
 
-def get_params_loss(X, y, bandwidth_kernel):
+def get_params_loss(X_train, y_train, X_validate, y_validate, bandwidth_kernel):
     """
-    Fit data using this bandwidth and kernel and report back brier score loss average over 3 folds, with samples weighted 
+    Fit data using this bandwidth and kernel and report back brier score loss for validation set (weighted average loss, considering class sizes.)
     """
     bandwidth = bandwidth_kernel[0]
     kernel = bandwidth_kernel[1]
+    X_pos = X_train.loc[y_train[TARGET_LABEL] == 1]
+    X_neg = X_train.loc[y_train[TARGET_LABEL] == 0]
 
-    losses = []
-    sample_weights = get_sample_weights(y)
-    skf = StratifiedKFold(n_splits=3, shuffle=True)
-    for train_index, test_index in skf.split(X, y):
-        X_train, X_test = X.iloc[train_index].reset_index(
-            drop=True), X.iloc[test_index].reset_index(drop=True)
-        y_train, y_test = y.iloc[train_index].reset_index(
-            drop=True), y.iloc[test_index].reset_index(drop=True)
+    pos_model = KernelDensity(bandwidth=bandwidth,
+                              metric='euclidean',
+                              kernel=kernel)
+    pos_model = pos_model.fit(X_pos)
 
-        X_pos = X_train.loc[y_train[TARGET_LABEL] == 1]
-        X_neg = X_train.loc[y_train[TARGET_LABEL] == 0]
+    neg_model = KernelDensity(bandwidth=bandwidth,
+                              metric='euclidean',
+                              kernel=kernel)
+    neg_model = neg_model.fit(X_neg)
 
-        pos_model = KernelDensity(bandwidth=bandwidth,
-                                  metric='euclidean',
-                                  kernel=kernel
-                                  )
-        pos_model.fit(X_pos)
-        neg_model = KernelDensity(bandwidth=bandwidth,
-                                  metric='euclidean',
-                                  kernel=kernel)
-        neg_model.fit(X_neg)
-
-        pos_probs = []
-        for index, x in X_test.iterrows():
-            pos_density = np.exp(pos_model.score_samples([x.values]))[0]
-            neg_density = np.exp(neg_model.score_samples([x.values]))[0]
-            d = pos_density + neg_density
-            if d == 0:
-                pos_prob = 0
+    pred_probs = []
+    for index, x in X_validate.iterrows():
+        pos_density = pos_model.score_samples([x.values])[0]
+        neg_density = neg_model.score_samples([x.values])[0]
+        d = pos_density + neg_density
+        if pos_density < 0 and neg_density < 0:
+            pos_prob = 1 - (pos_density / d)
+        elif d == 0:
+            pos_prob = 0
+        else:
+            d = np.exp(pos_density) + np.exp(neg_density)
+            if d != 0:
+                pos_prob = np.exp(pos_density) / d
             else:
-                pos_prob = pos_density / (pos_density + neg_density)
-            pos_probs.append(pos_prob)
+                pos_prob = 0
+        pred_probs.append(pos_prob)
 
-        # Evaluate using Brier Score Loss
-        weights = np.take(sample_weights, test_index)
+    # Evaluate using Brier Score Loss
+    # Use sample weights
+    sample_weights = get_sample_weights(y_validate)
+    loss = brier_score_loss(y_true=y_validate.values.flatten(),
+                            y_prob=pred_probs, sample_weight=sample_weights)
 
-        # origloss = brier_score_loss(y_test.values.flatten(), pos_probs)
-
-        loss = brier_score_loss(y_true=y_test.values.flatten(),
-                                y_prob=pos_probs, sample_weight=weights)
-
-        losses.append(loss)
-    # Average loss for this bandwidth across 3 folds
-    avg_loss = sum(losses) / len(losses)
-    return avg_loss
+    return loss
 
 
 def find_best_params(X, y, bandwidths, kernels):
     """
     Find best kernel/bandwidth pair, in parallel
     """
+    X_train = X.sample(frac=0.7)
+    y_train = y.iloc[X_train.index].reset_index(drop=True)
+    X_validate = X.drop(X_train.index).reset_index(drop=True)
+    y_validate = y.drop(X_train.index).reset_index(drop=True)
+    X_train = X_train.reset_index(drop=True)
+
     bw_k_pairs = []  # bandwidth-kernel pairs
     for b in bandwidths:
         for k in kernels:
             bw_k_pairs.append([b, k])
-    pool = multiprocessing.Pool(CPU_COUNT)
-
-    # Pass in parameters that don't change for parallel processes
-    func = partial(get_params_loss, X, y)
-
     losses = []
+
+    pool = multiprocessing.Pool(CPU_COUNT)
+    # Pass in parameters that don't change for parallel processes
+    func = partial(get_params_loss, X_train, y_train, X_validate, y_validate)
     # Multithread over bandwidths
     losses = pool.map(func, bw_k_pairs)
     pool.close()
     pool.join()
+
+    # for bk in bw_k_pairs:
+    #     losses.append(get_params_loss(X_train, y_train, X_validate, y_validate, bk))
 
     best_bw = None
     best_kernel = None
@@ -130,9 +129,9 @@ class KDEClassifier():
         :param y: DataFrame of TARGET_LABEL with 1 for pos_class and 0 for not pos_class
         """
 
-        bandwidths = np.linspace(0.0001, 1, 100)  # orig max was 3
-        kernels = ['exponential', 'gaussian', 'tophat',
-                   'epanechnikov', 'linear', 'cosine']
+        bandwidths = np.linspace(0.0001, 1, 100)
+        kernels = ['exponential', 'gaussian']  # , 'gaussian', 'tophat',
+        #'epanechnikov', 'linear', 'cosine']
 
         best_loss, best_bw, best_kernel = find_best_params(X, y, bandwidths, kernels)
 
