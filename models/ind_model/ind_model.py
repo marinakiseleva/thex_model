@@ -37,6 +37,7 @@ class OvAModel(MainModel):
             self.num_folds = self.init_model.num_folds
             self.X = self.init_model.X
             self.y = self.init_model.y
+            self.results = self.init_model.results
 
             a = np.copy(self.init_model.results)
             new_results = []

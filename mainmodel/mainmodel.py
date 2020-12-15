@@ -505,18 +505,29 @@ class MainModel(ABC, MainModelVisualization):
     def is_class(self, class_name, labels):
         """
         Boolean which returns True if class name is in the list of labels, and False otherwise.
+
         """
         if class_name in util.convert_str_to_list(labels):
             return True
         else:
             return False
 
-    def is_true_positive(self, is_class, row, class_index,  max_class_name, class_name):
+    def is_true_positive(self, row, eval_class_index):
         """
-        Determines if the prediction is a true positive for the class class_name (need this to overwrite in Binary)
-        Row is not used, but is used in binary classifier overwritten version
+        Determines if the prediction is a true positive for the class eval_class (overriden Binary)
+        :param row: Row of probabilities in order of self.class_labels, and last column is label, as list.
+        :param eval_class_index: index of class for which to evaluate on. So if this is the name of the class with the max prob, return True, otherwise, False.
         """
-        return is_class and max_class_name == class_name
+        max_class_index = np.argmax(row[:len(row) - 1])
+        max_class_name = self.class_labels[max_class_index]
+
+        label_index = len(self.class_labels)
+        labels = row[label_index]
+        is_class = self.is_class(max_class_name, labels)
+
+        # This is the max prob class, and its the one we are evaluating.
+        eval_class = self.class_labels[eval_class_index]
+        return is_class and max_class_name == eval_class
 
     def get_true_pos_prob(self, row, class_index, max_class_prob):
         """
@@ -544,7 +555,7 @@ class MainModel(ABC, MainModelVisualization):
         for class_index, class_name in enumerate(self.class_labels):
             tp_probabilities = []  # probabilities for True Positive samples
             pos_probabilities = []  # probabilities for Positive samples
-            total_probabilities = []
+            all_probabilities = []
             for row in results:
                 labels = row[label_index]
 
@@ -559,18 +570,18 @@ class MainModel(ABC, MainModelVisualization):
                 if is_class:
                     pos_probabilities.append(row[class_index])
 
-                is_tp = self.is_true_positive(
-                    is_class, row, class_index,  max_class_name, class_name)
+                is_tp = self.is_true_positive(row, class_index)
                 if is_tp:
-                    pos_prob = self.get_true_pos_prob(row, class_index, max_class_prob)
-                    tp_probabilities.append(pos_prob)
+                    # TP - this class has max prob (or >0.5 for binary)
+                    # Save the prob assigned to this class in TP list.
+                    tp_probabilities.append(row[class_index])
 
-                total_probabilities.append(row[class_index])
+                all_probabilities.append(row[class_index])
 
             # left inclusive, first bin is 0 <= x < .1. ; except last bin <=1
             bins = np.arange(0, 1.01, bin_size)
             tp_range_counts = np.histogram(tp_probabilities, bins=bins)[0].tolist()
-            total_range_counts = np.histogram(total_probabilities, bins=bins)[0].tolist()
+            total_range_counts = np.histogram(all_probabilities, bins=bins)[0].tolist()
 
             range_metrics[class_name] = [tp_range_counts, total_range_counts]
 

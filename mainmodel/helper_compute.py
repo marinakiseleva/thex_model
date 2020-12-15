@@ -44,55 +44,11 @@ def get_ordered_metrics(class_metrics, baselines=None, intervals=None):
     return [ordered_formatted_names, ordered_metrics, ordered_baselines, ordered_intervals]
 
 
-def get_row_metrics(class_labels, row, class_metrics, index=None):
-    """
-    Helper function for compute_metrics
-    Get TP, FP, TN, FN metrics for this row & update in passed in dict of class_metrics. 
-    :param index: Index of result set
-    :param row: Numpy row of probabiliites (last col is label)
-    :param class_metrics: Dict to update
-    """
-    # Last column is label
-    label_index = len(class_labels)
-    labels = row[label_index]
-
-    for class_name in class_labels:
-        # Sample is an instance of this current class.
-        is_class = class_name in thex_utils.convert_str_to_list(labels)
-
-        # Get class index of max prob; exclude last column since it is label
-        max_class_index = np.argmax(row[:len(row) - 1])
-        max_class_name = class_labels[max_class_index]
-
-        if class_name == max_class_name:
-            if is_class:
-                class_metrics[class_name]["TP"] += 1
-            else:
-                class_metrics[class_name]["FP"] += 1
-        else:
-            if is_class:
-                class_metrics[class_name]["FN"] += 1
-            else:
-                class_metrics[class_name]["TN"] += 1
-    return class_metrics
-
-
-def compute_metrics(class_labels, results):
-    """
-    Compute TP, FP, TN, and FN per class and (if as_sets is True) compute those metrics for each class for each fold/run.
-    :param results: List of 2D Numpy arrays with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
-    :return class_metrics: Map from class name to map of {"TP": w, "FP": x, "FN": y, "TN": z}
-    """
-    class_metrics = {cn: {"TP": 0, "FP": 0, "TN": 0, "FN": 0}
-                     for cn in class_labels}
-    for row in results:
-        class_metrics = get_row_metrics(class_labels, row, class_metrics)
-    return class_metrics
-
-
 def compute_baselines(class_counts, class_labels, y, n, class_priors=None):
     """
     Get random classifier baselines for completeness and purity
+    Completeness: 1/ number of classes
+    Purity: class count/ total number of samples
     :param n: Number of classes
     """
     comp_baselines = {}
@@ -107,9 +63,7 @@ def compute_baselines(class_counts, class_labels, y, n, class_priors=None):
             class_rate = 1 / n
 
         # Compute baselines
-        TP = class_counts[class_name] * class_rate
-        FP = total_count - class_counts[class_name]
-        purity_baselines[class_name] = TP / (TP + FP)
+        purity_baselines[class_name] = class_counts[class_name] / total_count
         comp_baselines[class_name] = class_rate
 
     return comp_baselines, purity_baselines

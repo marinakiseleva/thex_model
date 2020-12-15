@@ -58,11 +58,21 @@ class BinaryModel(MainModel):
 
         return probabilities
 
-    def is_true_positive(self, is_class, row, class_index, max_class_name, class_name):
+    def is_true_positive(self, row, eval_class_index):
         """
-        Determines if the prediction is a true positive for the class class_name (need this to overwrite in Binary)
+        Determines if the prediction is a true positive for the class eval_class
+        :param row: Row of probabilities in order of self.class_labels, and last column is label, as list.
+        :param eval_class_index: index of class for which to evaluate on. So if this is the name of the class with the max prob, return True, otherwise, False.
         """
-        return is_class and row[class_index] > 0.5
+        pred_true = row[eval_class_index] > 0.5
+
+        label_index = len(self.class_labels)
+        labels = row[label_index]
+        eval_class_name = self.class_labels[eval_class_index]
+        is_class = self.is_class(eval_class_name, labels)
+
+        # prob >0.5, and this is the true class
+        return is_class and pred_true
 
     def get_true_pos_prob(self, row, class_index, max_class_prob):
         """

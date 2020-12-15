@@ -28,7 +28,7 @@ class MainModelVisualization:
         labels = row[len(row) - 1]
         true_class_index = None
         for class_index, class_name in enumerate(self.class_labels):
-            if class_name in thex_utils.convert_str_to_list(labels):
+            if self.is_class(class_name, labels):
                 true_class_index = class_index
 
         f, ax = plt.subplots(figsize=(5, 3), dpi=220)
@@ -90,7 +90,7 @@ class MainModelVisualization:
 
             # Put probs & labels in same Numpy array
             i_results = np.hstack((top_i_probs, top_i_labels.reshape(-1, 1)))
-            metrics = compute_metrics(self.class_labels, i_results)
+            metrics = self.compute_metrics(i_results)
             puritys, comps = compute_performance(metrics)
             avg_comp = get_average(comps)
             avg_purity = get_average(puritys)
@@ -196,6 +196,73 @@ class MainModelVisualization:
 
         thex_utils.display_and_save_plot(self.dir, "Prob Density % vs Purities")
 
+    def compute_metrics(self, results):
+        """
+        Compute TP, FP, TN, and FN per class
+        :param results: List of 2D Numpy arrays with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
+        :return class_metrics: Map from class name to map of {"TP": w, "FP": x, "FN": y, "TN": z}
+        """
+        class_metrics = {cn: {"TP": 0, "FP": 0, "TN": 0, "FN": 0}
+                         for cn in class_labels}
+        for row in results:
+            class_metrics = self.get_row_metrics(class_labels, row, class_metrics)
+        return class_metrics
+
+    def get_binary_row_metrics(self, row, class_metrics):
+        """
+        Get TP, FP, TN, FN metrics for this row & update in passed in dict of class_metrics.
+        :param row: Numpy row of probabiliites (last col is label)
+        :param class_metrics: Dict to update, of class names to map of metrics
+        """
+        # Last column is label
+        label_index = len(self.class_labels)
+        labels = row[label_index]
+        for class_index, class_name in enumerate(self.class_labels):
+            # Sample is an instance of this current class.
+            prob = row[class_index]
+            is_class = self.is_class(class_name, labels)
+            if prob > 0.5 and is_class:
+                class_metrics[class_name]["TP"] += 1
+            elif prob > 0.5 and not is_class:
+                class_metrics[class_name]["FP"] += 1
+            elif prob <= 0.5 and is_class:
+                class_metrics[class_name]["FN"] += 1
+            elif prob <= 0.5 and not is_class:
+                class_metrics[class_name]["TN"] += 1
+
+        return class_metrics
+
+    def get_row_metrics(self, row, class_metrics):
+        """
+        Get TP, FP, TN, FN metrics for this row & update in passed in dict of class_metrics. 
+        :param row: Numpy row of probabiliites (last col is label)
+        :param class_metrics: Dict to update, of class names to map of metrics
+        """
+        if self.name == "Binary Classifiers":
+            return self.get_binary_row_metrics(row, class_metrics)
+        # Last column is label
+        label_index = len(self.class_labels)
+        labels = row[label_index]
+
+        for class_index, class_name in enumerate(self.class_labels):
+
+            # Get class index of max prob; exclude last column since it is label
+            max_class_index = np.argmax(row[:len(row) - 1])
+            max_class_name = self.class_labels[max_class_index]
+
+            # Sample is an instance of this current class.
+            is_class = self.is_class(class_name, labels)
+
+            if is_class and max_class_name == class_name:
+                class_metrics[class_name]["TP"] += 1
+            elif class_name == max_class_name:
+                class_metrics[class_name]["FP"] += 1
+            elif class_name != max_class_name and is_class:
+                class_metrics[class_name]["FN"] += 1
+            elif class_name != max_class_name and not is_class:
+                class_metrics[class_name]["TN"] += 1
+        return class_metrics
+
     def get_pc_per_trial(self, results):
         """
         Get purity and completeness per trial/fold, per class
@@ -207,7 +274,7 @@ class MainModelVisualization:
                              for cn in self.class_labels}
             # For each predicted row
             for row in trial:
-                class_metrics = get_row_metrics(self.class_labels, row, class_metrics)
+                class_metrics = self.get_row_metrics(row, class_metrics)
             # Compute purity & completeness for this trial/fold (per class)
             puritys, comps = compute_performance(class_metrics)
             t_performances.append([puritys, comps])
