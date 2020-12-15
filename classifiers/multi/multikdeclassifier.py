@@ -160,48 +160,6 @@ class MultiKDEClassifier():
         self.class_priors = class_priors
         self.clfs = self.train(X, y)
 
-    # def train_together(self, X, y):
-    #     """
-    #     Train positive and negative class together using same bandwidth to try and minimize brier score loss instead of maximizing log likelihood of fit
-    #     :param X: DataFrame of training data features
-    #     :param y: DataFrame of TARGET_LABEL with 1 for pos_class and 0 for not pos_class
-    #     """
-    #     leaf_size = 40
-    #     bandwidths = np.linspace(0.001, 4, 100)
-
-    #     print("Running " + str(CPU_COUNT) + " processes.")
-    #     pool = multiprocessing.Pool(CPU_COUNT)
-
-    #     # Pass in parameters that don't change for parallel processes
-    #     func = partial(fit_folds, X, y, self.class_labels)
-
-    #     # Multithread over bandwidths
-    #     losses = []
-    #     losses = pool.map(func, bandwidths)
-
-    #     pool.close()
-    #     pool.join()
-    #     print("Done processing...")
-
-    #     min_loss_index = losses.index(min(losses))
-    #     best_cv_loss = losses[min_loss_index]
-    #     best_cv_bw = bandwidths[min_loss_index]
-    #     print("Best bandwidth " + str(best_cv_bw))
-    #     print("With score: " + str(best_cv_loss))
-
-    #     # Define models based on best bandwidth
-    #     mc_kdes = {}
-    #     # Make KDE for each class using same bandwidth, leaf size, and kernel
-    #     for class_name in self.class_labels:
-    #         mc_kdes[class_name] = KernelDensity(bandwidth=best_cv_bw,
-    #                                             leaf_size=40,
-    #                                             kernel=DEFAULT_KERNEL,
-    #                                             metric='euclidean')
-    #         y_relabeled = self.get_class_data(class_name, y)
-    #         mc_kdes[class_name].fit(X.loc[y_relabeled[TARGET_LABEL] == 1])
-
-    #     return mc_kdes
-
     def get_class_data(self, class_name, y):
         """
         Return DataFrame like y except that TARGET_LABEL values have been replaced with 0 or 1. 1 if class_name is in list of labels.
@@ -259,8 +217,13 @@ class MultiKDEClassifier():
         """
         density_sum = 0
         probabilities = OrderedDict()
+        lls = []
         for class_index, class_name in enumerate(self.class_labels):
             class_ll = self.clfs[class_name].score_samples([x.values])[0]
+            lls.append(class_ll)
+
+        for class_index, class_name in enumerate(self.class_labels):
+            class_ll = lls[class_index]
             class_density = np.exp(class_ll)
             if self.class_priors is not None:
                 class_density *= self.class_priors[class_index]
