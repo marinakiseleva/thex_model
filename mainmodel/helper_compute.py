@@ -207,6 +207,9 @@ def compute_confintvls(all_pc, class_labels):
         # Calculate confidence intervals
         purity_cis[class_name] = get_cis(class_purities, N_p)
         comp_cis[class_name] = get_cis(class_comps, N)
+
+    thex_utils.pretty_print_dict(purity_cis, "Purity confidence intervals")
+    thex_utils.pretty_print_dict(comp_cis, "Completeness confidence intervals")
     return purity_cis, comp_cis
 
 
