@@ -3,30 +3,21 @@ Source code contributing to the research of the Transient Host Exchange (THEx) a
 
 
 # Set-Up
-1. Data: Make sure to have the correct data file installed at the location pointed to in thex_data.data_consts. Specifically, in your home directory /data/catalogs. 
-
-
-2. Use the following commands to clone this repository and run the install script. Note, additional directories will be created in the current directory. See install.sh for more details. The Jupyter Notebook interfaces will be automatically loaded.
-```
-git clone https://github.com/marinakiseleva/thex_model.git
-cd thex_model
-sh install.sh
-```
-
-
-3. The install script sets up a virtual environment. After the script finishes, ensure that virtualenv has  been activated ((thex_env) should be prepended to your shell prompt) and the structure of the project looks like this:
-```
-thex_project
-└───thex_code
-     └───libraries
-     └───environments
-     └───thex_model
 
 ```
-4. When you are done developing/running models you may exit virtualenv with the following command.
+pip install -i https://test.pypi.org/simple/ thex-model==3.0
 ```
-deactivate
+
+And install this version of hmc in the same environment, like so
 ```
+git clone https://github.com/marinakiseleva/hmc.git
+cd hmc
+python setup.py install
+```
+
+Data: Make sure to have the correct data file installed at the location pointed to in thex_data.data_consts. Specifically, in your home directory /data/catalogs. 
+
+
 
 # Running
 Use the Jupyter Notebook (notebooks/Models.ipynb) located in the notebooks directory to help you get started with running the models. Be sure to use the correct environment with the notebook.
