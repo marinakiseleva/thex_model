@@ -311,7 +311,64 @@ class MainModel(ABC, MainModelVisualization):
 
         return fold_indices
 
-    def calibrate_probabilities(self, test_probs, train_probs):
+    def calibrate_probabilities_linear(self, test_probs, train_probs):
+        """
+        Calibrate probabilities by fitting a line to the training probs.  
+        :param train_probs: 2D numpy array with probabilities per row in order
+        of self.class_labels, and last col is label
+        :param train_results: probabilities assigned to training data
+        """
+        print("\nCalibrating probabilities ")
+        # Pass in training data & labels as 2D numpy array
+        train_metrics = self.compute_probability_range_metrics(
+            train_probs,  bin_size=0.1, concat=False)
+        # train_metrics is dict from class name to
+        # [tp_range_counts, total_range_counts]
+        print("Training Metrics")
+        for cn in train_metrics.keys():
+            print(cn)
+            print(train_metrics[cn])
+
+        # Recalibrate test_probs based on those metrics
+        row_index = 0
+        # Get linear calibrator per class
+        calibs = {}
+        for class_index, class_name in enumerate(self.class_labels):
+            TPs, totals = train_metrics[class_name]
+            emp_probs = []
+            for index, tp in enumerate(TPs):
+                if totals[index] == 0:
+                    ratio = 0
+                else:
+                    ratio = tp / totals[index]
+                emp_probs.append(ratio)
+            x = np.arange(0.05, 1, 0.1)
+            z = np.polyfit(x, np.array(emp_probs), 1)
+            p = np.poly1d(z)
+            calibs[class_name] = p
+
+        row_index = 0
+        for row in test_probs:
+            # print("old row " + str(row))
+            for class_index, class_name in enumerate(self.class_labels):
+                class_f = calibs[class_name]
+                new_prob = class_f(row[class_index])
+                if new_prob < 0:
+                    new_prob = 0
+                elif new_prob > 1:
+                    new_prob = 1
+                row[class_index] = new_prob
+            # Normalize probs in row so it sums to 1
+            row_sum = sum(row[:-1])
+            if row_sum == 0:
+                test_probs[row_index, :-1] = 0
+            else:
+                test_probs[row_index, :-1] = row[:-1] / row_sum
+            row_index += 1
+
+        return test_probs
+
+    def calibrate_probabilities_bin(self, test_probs, train_probs):
         """
         Calibrate probabilities using binning; assigning probability based on empirical probability from training data.  
         :param test_probs: 2D numpy array with probabilities per row in order
@@ -415,7 +472,7 @@ class MainModel(ABC, MainModelVisualization):
             test_probs = np.hstack((test_probs, label_column))
 
             # Calibrate probabilities
-            #test_probs = self.calibrate_probabilities(test_probs, train_probs)
+            test_probs = self.calibrate_probabilities_linear(test_probs, train_probs)
 
             results.append(test_probs)
 
