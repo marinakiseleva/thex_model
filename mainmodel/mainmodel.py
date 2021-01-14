@@ -61,7 +61,8 @@ class MainModel(ABC, MainModelVisualization):
                         'data': None,  # Single Pandas DataFrame of data to use
                         'nb': False,  # Naive Bayes multiclass
                         'priors': None,  # Priors in order of class_labels
-                        'data_file': DATA_PATH  # Default data file used
+                        'data_file': DATA_PATH,  # Default data file used
+                        'linear_calib': False
                         }
 
         for data_filter in user_data_filters.keys():
@@ -93,6 +94,7 @@ class MainModel(ABC, MainModelVisualization):
         self.pca = data_filters['pca']
         self.nb = data_filters['nb']
         self.transform_features = data_filters['transform_features']
+        self.linear_calib = data_filters['linear_calib']
         self.class_counts = self.get_class_counts(y)
         self.normalize = True
         self.training_lls = None
@@ -112,7 +114,11 @@ class MainModel(ABC, MainModelVisualization):
         """
         Run model, either by trials or cross fold validation
         """
-        if self.num_runs is not None:
+        if self.linear_calib:
+            if self.num_folds != 3:
+                raise ValueError("Can only do linear calibration w/ 3 folds.")
+            self.results = self.run_3cfv_calib(start_time)
+        elif self.num_runs is not None:
             self.results = self.run_trials(self.X, self.y, self.num_runs)
         elif self.num_folds is not None:
             self.results = self.run_cfv(start_time)
@@ -318,13 +324,13 @@ class MainModel(ABC, MainModelVisualization):
         of self.class_labels, and last col is label
         :param train_results: probabilities assigned to training data
         """
-        print("\nCalibrating probabilities ")
+
         # Pass in training data & labels as 2D numpy array
         train_metrics = self.compute_probability_range_metrics(
             train_probs,  bin_size=0.1, concat=False)
         # train_metrics is dict from class name to
         # [tp_range_counts, total_range_counts]
-        print("Training Metrics")
+        print("Validation Metrics")
         for cn in train_metrics.keys():
             print(cn)
             print(train_metrics[cn])
@@ -423,6 +429,77 @@ class MainModel(ABC, MainModelVisualization):
 
         return test_probs
 
+    def run_3cfv_calib(self, start_time):
+        """
+        Run 3-fold cross validation, using one fold for training, one for validation, and one for testing - and calibrate using validation fold. 
+        Number of folds comes from self.num_folds
+        :param X: DataFrame of features data
+        :param y: DataFram with TARGET_LABEL column
+        """
+        fold_indices = self.kfold_stratify()
+        results = []
+        train_results = []
+        self.datas = []
+        train_folds = [0, 1, 2]
+        test_folds = [1, 2, 0]
+        val_folds = [2, 0, 1]
+        for i in range(3):
+            print("\nFold " + str(i + 1) + "\t" +
+                  util.get_runtime(start_time, time.time()))
+            # Select training, val, and test data
+            train_fold = train_folds[i]
+            X_train = self.X.iloc[fold_indices[train_fold]].reset_index(
+                drop=True)
+            y_train = self.y.iloc[fold_indices[train_fold]].reset_index(
+                drop=True)
+
+            test_fold = test_folds[i]
+            X_test = self.X.iloc[fold_indices[test_fold]].reset_index(
+                drop=True)
+            y_test = self.y.iloc[fold_indices[test_fold]].reset_index(
+                drop=True)
+
+            val_fold = val_folds[i]
+            X_val = self.X.iloc[fold_indices[val_fold]].reset_index(
+                drop=True)
+            y_val = self.y.iloc[fold_indices[val_fold]].reset_index(
+                drop=True)
+
+            # Scale and apply PCA
+            if self.transform_features:
+                X_train, X_test = scale_data(X_train, X_test)
+            if self.pca is not None:
+                X_train, X_test = apply_PCA(X_train, X_test, self.pca)
+
+            # Train
+            self.train_model(X_train, y_train)
+            self.datas.append(X_test)
+
+            # Save this to recalibrate probabilities
+            train_probs = self.get_all_class_probabilities(X_train)
+            train_labels = y_train[TARGET_LABEL].values.reshape(-1, 1)
+            train_probs = np.hstack((train_probs, train_labels))
+
+            # Val model
+            val_probs = self.get_all_class_probabilities(X_val)
+            # Add labels as column to probabilities, for later evaluation
+            label_column = y_val[TARGET_LABEL].values.reshape(-1, 1)
+            val_probs = np.hstack((val_probs, label_column))
+
+            # Test model
+            test_probs = self.get_all_class_probabilities(X_test)
+            # Add labels as column to probabilities, for later evaluation
+            label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
+            test_probs = np.hstack((test_probs, label_column))
+
+            # Calibrate probabilities
+            print("\nCalibrating probabilities using validation data ")
+            test_probs = self.calibrate_probabilities_linear(val_probs, train_probs)
+
+            results.append(test_probs)
+
+        return results
+
     def run_cfv(self, start_time):
         """
         Run k-fold cross validation
@@ -471,8 +548,8 @@ class MainModel(ABC, MainModelVisualization):
             label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
             test_probs = np.hstack((test_probs, label_column))
 
-            # Calibrate probabilities
-            test_probs = self.calibrate_probabilities_linear(test_probs, train_probs)
+            # # Calibrate probabilities
+            # test_probs = self.calibrate_probabilities_linear(test_probs, train_probs)
 
             results.append(test_probs)
 
