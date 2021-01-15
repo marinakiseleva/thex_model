@@ -468,30 +468,27 @@ class MainModel(ABC, MainModelVisualization):
 
             # Scale and apply PCA
             if self.transform_features:
-                X_train, X_test = scale_data(X_train, X_test)
-                X_train, X_val = scale_data(X_train, X_val)
+                X_train, X_test, X_val = scale_data(X_train, X_test, X_val)
             if self.pca is not None:
                 X_train, X_test = apply_PCA(X_train, X_test, self.pca)
-                X_train, X_val = apply_PCA(X_train, X_val, self.pca)
 
             # Train
             self.train_model(X_train, y_train)
             self.datas.append(X_test)
 
-            # Save this to recalibrate probabilities
+            # Get probabilities and labels for training, validation, and test data
             train_probs = self.get_all_class_probabilities(X_train)
+            # Add labels as column to probabilities, for later evaluation
             train_labels = y_train[TARGET_LABEL].values.reshape(-1, 1)
             train_probs = np.hstack((train_probs, train_labels))
 
             # Val model
             val_probs = self.get_all_class_probabilities(X_val)
-            # Add labels as column to probabilities, for later evaluation
             label_column = y_val[TARGET_LABEL].values.reshape(-1, 1)
             val_probs = np.hstack((val_probs, label_column))
 
             # Test model
             test_probs = self.get_all_class_probabilities(X_test)
-            # Add labels as column to probabilities, for later evaluation
             label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
             test_probs = np.hstack((test_probs, label_column))
 
