@@ -122,7 +122,10 @@ def compute_performance(class_metrics):
 
         # Only if there are samples in this class, calculate its metrics
         total = TP + TN + FP + FN
-        comps[class_name] = TP / (TP + FN) if (TP + FN) > 0 else None
+        if TP + FN == 0:
+            raise ValueError(
+                "There should always be samples in each evaluated set. No samples for class " + class_name)
+        comps[class_name] = TP / (TP + FN)
         purities[class_name] = TP / (TP + FP) if (TP + FP) > 0 else None
     return purities, comps
 

@@ -295,13 +295,14 @@ class MainModelVisualization:
             for p, c in t_performances:
                 if p[class_name] is None:
                     # No purity for this trial -> exclude from average
-                    # print("No measurable purity for " + class_name)
                     p_N = p_N - 1
                 else:
                     avg_purities[class_name] += p[class_name]
 
                 avg_comps[class_name] += c[class_name]
             # Get average
+            if p_N == 0 or N == 0:
+                print("T Performances in get_avc_pc " + str(t_performances))
             avg_purities[class_name] = avg_purities[class_name] / p_N
             avg_comps[class_name] = avg_comps[class_name] / N
 
