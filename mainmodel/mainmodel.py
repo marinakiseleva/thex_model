@@ -322,6 +322,7 @@ class MainModel(ABC, MainModelVisualization):
         Calibrate probabilities by fitting a line to the training probs.  
         :param train_probs: 2D numpy array with probabilities per row in order
         of self.class_labels, and last col is label
+        :param test_probs: same structure as train_probs; but it is these probs which we are going to calibrate, based on the empirical probs from train_probs
         :param train_results: probabilities assigned to training data
         """
 
@@ -468,8 +469,10 @@ class MainModel(ABC, MainModelVisualization):
             # Scale and apply PCA
             if self.transform_features:
                 X_train, X_test = scale_data(X_train, X_test)
+                X_train, X_val = scale_data(X_train, X_val)
             if self.pca is not None:
                 X_train, X_test = apply_PCA(X_train, X_test, self.pca)
+                X_train, X_val = apply_PCA(X_train, X_val, self.pca)
 
             # Train
             self.train_model(X_train, y_train)
@@ -494,7 +497,8 @@ class MainModel(ABC, MainModelVisualization):
 
             # Calibrate probabilities
             print("\nCalibrating probabilities using validation data ")
-            test_probs = self.calibrate_probabilities_linear(val_probs, train_probs)
+            test_probs = self.calibrate_probabilities_linear(
+                test_probs=test_probs, train_probs=val_probs)
 
             results.append(test_probs)
 
