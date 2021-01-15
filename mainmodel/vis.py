@@ -301,9 +301,11 @@ class MainModelVisualization:
 
                 avg_comps[class_name] += c[class_name]
             # Get average
-            if p_N == 0 or N == 0:
+            if p_N == 0:
                 print("T Performances in get_avc_pc " + str(t_performances))
-            avg_purities[class_name] = avg_purities[class_name] / p_N
+                avg_purities[class_name] = 0
+            else:
+                avg_purities[class_name] = avg_purities[class_name] / p_N
             avg_comps[class_name] = avg_comps[class_name] / N
 
         return avg_purities, avg_comps
