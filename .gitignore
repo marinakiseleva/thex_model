@@ -1,3 +1,4 @@
+notebooks/special*.ipynb
 output/*
 environments/
 dist/
