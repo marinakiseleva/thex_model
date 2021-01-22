@@ -60,3 +60,6 @@ Data pulling, cleansing, normalizing, preparation, and plotting.
 
 # Acknowledgments
 This project uses a [fork](https://github.com/marinakiseleva/hmc) of [HMC](https://github.com/davidwarshaw/hmc), available by the BSD 3-Clause "New" or "Revised" License.  
+
+We also create another module for visualizing data distributions, here:
+The main project is here: [z_dist](https://github.com/marinakiseleva/z_dist)
