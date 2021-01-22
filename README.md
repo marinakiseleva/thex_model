@@ -3,7 +3,7 @@ Source code contributing to the research of the Transient Host Exchange (THEx) a
 
 
 # Set-Up
-
+To install:
 ```
 pip install -i https://test.pypi.org/simple/ thex-model==3.0
 ```
@@ -14,16 +14,19 @@ git clone https://github.com/marinakiseleva/hmc.git
 cd hmc
 python setup.py install
 ```
+If you plan to use Jupyter Notebook, as recommended, install a Jupyter kernel from this environment:
+```
+python3 -m ipykernel install --user --name "thexkernel" --display-name "THEx env (py3env)"
+```
 
-Data: Make sure to have the correct data file installed at the location pointed to in thex_data.data_consts. Specifically, in your home directory /data/catalogs. 
-
+Make sure to have the correct data file installed at the location pointed to in thex_data.data_consts. Specifically, in your home directory /data/catalogs. 
 
 
 # Running
-Use the Jupyter Notebook (notebooks/Models.ipynb) located in the notebooks directory to help you get started with running the models. Be sure to use the correct environment with the notebook.
+Use [this Jupyter Notebook](notebooks/Models.ipynb) located in the notebooks directory to help you get started with running the models. Be sure to use the correct kernel environment with the notebook.
 
 # Dependencies
-This module requires you have the following versions of Python and virtualenv installed. We cannot guarantee it will work with older versions.
+This module runs on certain versions of Python and virtualenv. We cannot guarantee it will work with other versions.
 - Python 3.8.59
 - virtualenv (be sure virtualenv uses 3.8.5 by default)
 
