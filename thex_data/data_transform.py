@@ -31,7 +31,7 @@ def derive_diffs(df):
                 primary_mag = df[colname1]
                 prev_mag = df[colname2]
                 new_col_name = colname2 + "_minus_" + colname1
-                df[new_col_name] = primary_mag - prev_mag
+                df[new_col_name] = prev_mag - primary_mag
 
     return df
 
