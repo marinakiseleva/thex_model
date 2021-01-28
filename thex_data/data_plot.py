@@ -8,7 +8,7 @@ import pandas as pd
 from matplotlib.ticker import FormatStrFormatter, ScalarFormatter
 import matplotlib.pyplot as plt
 from scipy.stats import norm
-
+import os.path
 
 from .data_consts import *
 import utilities.utilities as util
@@ -90,12 +90,14 @@ def visualize_completeness(model_dir, X, class_labels, data_completeness):
     f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
 
     a = plt.pcolor(df, vmin=0, vmax=1, cmap='gist_heat')
-    plt.yticks(np.arange(len(df.index)) + 0.5, df.index, fontsize=TICK_S - 1)
-    plt.xticks(np.linspace(0.5, len(df.columns), len(df.columns)),
-               df.columns, rotation=-90, fontsize=TICK_S)
+    plt.yticks(ticks=np.arange(len(df.index)) + 0.5,
+               labels=df.index,
+               fontsize=TICK_S + 1)
+    plt.xticks(ticks=np.arange(len(df.columns)) + 0.5,
+               labels=df.columns,
+               fontsize=TICK_S + 2)
     f.colorbar(a)
 
-    plt.title("Completeness", fontsize=TITLE_S)
     util.display_and_save_plot(model_dir, "Completeness", None, f)
 
 
@@ -243,8 +245,8 @@ def plot_class_hist(model_dir, class_names, counts):
         label_size = LAB_S + 2
         max_y = (bar_width * num_classes) - (bar_width / 2)
     else:
-        tick_size = TICK_S
-        label_size = LAB_S + 1
+        tick_size = TICK_S + 3
+        label_size = LAB_S + 2
         max_y = bar_width * (num_classes)
     class_indices = np.linspace(0, max_y, num_classes)
     ax.barh(y=class_indices, width=counts, height=bar_width, edgecolor='black')
@@ -259,8 +261,7 @@ def plot_class_hist(model_dir, class_names, counts):
     ax.tick_params(axis='x', which='both',
                    labelsize=tick_size, rotation=-90)
 
-    plt.ylabel('Class', fontsize=label_size)
-    plt.xlabel('Count', fontsize=label_size)
+    plt.xlabel('Host-Galaxies Count', fontsize=label_size)
     plt.tight_layout()
     util.display_and_save_plot(
         model_dir, "Distribution of Transient Types in Data Sample")
