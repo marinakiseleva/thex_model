@@ -52,7 +52,15 @@ def plot_model_rates(class_name, model, ax):
     true_positives, totals = model.range_metrics[class_name]
     pos_class_counts_per_range = np.array(model.class_positives[class_name])
     prob_rates = model.class_prob_rates[class_name]
-    ax.bar(np.arange(5), prob_rates)
+
+    bins = np.arange(5)
+
+    # color bars based on freq.
+    # norm = plt.Normalize(0, max(totals))
+    # colors = mpl.cm.Blues(norm(totals))
+
+    ax.bar(bins, prob_rates)
+    ax.set_ylim(0, 1)
     for axis in ['top', 'bottom', 'left', 'right']:
         ax.spines[axis].set_linewidth(1.5)
 
@@ -114,13 +122,19 @@ def plot_rates_together(binary_model, ova_model, multi_model, indices=None):
     plt.rc('ytick', labelsize=7)
 
     f.text(0.5, 0.08, 'Assigned Probability' + r' $\pm$10%', fontsize=10, ha='center')
-    f.text(0.0, .5, 'Empirical Probability',
+    f.text(0.0, .5, 'Empirical Probability (TP/Total)',
            fontsize=10, va='center', rotation='vertical')
 
     plt.subplots_adjust(wspace=0, hspace=0.1)
 
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
+
+    # Add colorbar
+    # m = mpl.cm.ScalarMappable(norm=norm,
+    #                           cmap=mpl.cm.Blues)
+    # cbar = plt.colorbar(mappable=m)
+
     f.savefig(ROOT_DIR + "/output/custom_figures/merged_metrics" +
               str(indices) + ".pdf", bbox_inches='tight')
     plt.show()
