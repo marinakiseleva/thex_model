@@ -40,7 +40,7 @@ Transient classes in order they are to be visualized. If class is Unspecified, i
 Update 11/9/2020.
 """
 ORDERED_CLASSES = ['Ia',
-                   # 'Ia Pec',
+                   'Ia Pec',
                    'Ia-91bg',
                    'Ia-91T',
                    'Ia-02cx',
