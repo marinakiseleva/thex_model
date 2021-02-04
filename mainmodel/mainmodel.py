@@ -54,7 +54,7 @@ class MainModel(ABC, MainModelVisualization):
                         'num_runs': None,  # Number of trials
                         'folds': None,  # Number of folds if using k-fold Cross Validation
                         'transform_features': True,  # Derive mag colors & scale
-                        'min_class_size': 9,
+                        'min_class_size': 40,
                         'max_class_size': None,
                         'pca': None,  # Number of principal components
                         'class_labels': None,
