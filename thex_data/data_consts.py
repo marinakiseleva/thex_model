@@ -37,10 +37,10 @@ UNDEF_CLASS = 'Unspecified '
 """
 ORDERED_CLASSES
 Transient classes in order they are to be visualized. If class is Unspecified, it will take the place of its unspecified name
-Update 11/9/2020.
+Update 2/4/2021.
 """
 ORDERED_CLASSES = ['Ia',
-                   'Ia Pec',
+                   # 'Ia Pec',
                    'Ia-91bg',
                    'Ia-91T',
                    'Ia-02cx',
@@ -56,7 +56,7 @@ ORDERED_CLASSES = ['Ia',
                    'Ib',
                    'Ibn',
                    'IIb',
-                   'Ib Pec',
+                   # 'Ib Pec',
                    # 'Ib-Ca',
                    'Ic',
                    'Ic BL',
@@ -69,7 +69,7 @@ ORDERED_CLASSES = ['Ia',
                    'II P',
                    'II L',
                    'IIn',
-                   'IIn Pec',
+                   # 'IIn Pec',
                    # 'IIn-09ip',
                    # 'II Pec',
                    # 'II P Pec',
@@ -107,31 +107,27 @@ Hierarchy of transient types, used in hierarchical multilabel classifiers
 """
 
 CLASS_HIERARCHY = {
-    "Ia":                    ["Ia Pec"],
-    "Ia Pec":                ["Ia-00cx", "Ia-02cx", "Ia-09dc", "Ia-91T",
+    "Ia":                    ["Ia-00cx", "Ia-02cx", "Ia-09dc", "Ia-91T",
                               "Ia-91bg", "Ia-99aa", "Ia-HV", "Ia CSM"],
-    "CC":                    ["nIa", "SE", "II", "SLSN"],
+
+    "CC":                    ["SE", "II", "SLSN"],
 
     "SE":                    ["Ib", "Ic", "Ib/c"],
 
-    "Ib/c":                  ["Ib/c Pec"],
 
-    "Ib":                    ["Ibn", "Ib Pec", "IIb"],
-    "Ib Pec":                ["Ib-Ca"],
-
+    "Ib":                    ["Ibn",   "IIb"],
+    # "Ib Pec":                ["Ib-Ca"],
     # "Ic":                    ["Ic Pec"],
     # "Ic Pec":                ["Ic BL", "Ic-SL"],
+    # "IIb":                   ["IIb Pec"],
+    # "IIb Pec":               ["IIb-n"],
 
-    "IIb":                   ["IIb Pec"],
-    "IIb Pec":               ["IIb-n"],
+    "II":                    ["II L", "II P", "IIn"],
 
-    "II":                    ["II Pec", "II L", "II P", "IIn"],
-
-    "II P":                  ["II P Pec"],
-    "II P Pec":              ["II P-97D"],
-
-    "IIn":                   ["IIn Pec"],
-    "IIn Pec":               ["IIn-09ip"],
+    # "II P":                  ["II P Pec"],
+    # "II P Pec":              ["II P-97D"],
+    # "IIn":                   ["IIn Pec"],
+    # "IIn Pec":               ["IIn-09ip"],
 
     "SLSN":                  ["SLSN-R", "SLSN-I", "SLSN-II"],
 
@@ -140,7 +136,7 @@ CLASS_HIERARCHY = {
     "TDE":                   ["XrayTDE", "UVOptTDE"],
     "XrayTDE":               ["LikelyXrayTDE", "PossibleXrayTDE"],
     "_ROOT":                 ["Ia", "CC",  "TDE", "GRB",
-                              "FRB", "GW", "Kilonova"],
+                              "FRB", "Kilonova", "GW"],
 
     # "MiscRadio":             ["Radio", "maser"],
     # "Other":                 ["NT", "MiscRadio"],
