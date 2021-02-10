@@ -21,10 +21,15 @@ DEFAULT_KERNEL = "exponential"
 FIG_WIDTH = 6
 FIG_HEIGHT = 4
 DPI = 600
-TICK_S = 12
+TICK_S = 16
 LAB_S = 14
 TITLE_S = 16
 
+P_BAR_COLOR = "#005ce6"
+C_BAR_COLOR = "#ff8000"
+INTVL_COLOR = "black"
+BSLN_COLOR = "#ff1a1a"
+BAR_EDGE_COLOR = "black"
 
 # ORIG_TARGET_LABEL: Database defined column name - converted to TARGET_LABEL in project
 ORIG_TARGET_LABEL = 'claimedtype'
