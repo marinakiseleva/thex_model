@@ -369,9 +369,14 @@ class MainModelVisualization:
         if len(metrics) <= 2:
             max_y = max_y - 0.2
         y_indices = np.linspace(0, max_y, len(metrics))
+
+        barcolor = P_BAR_COLOR if xlabel == "Purity" else C_BAR_COLOR
         # Plot bars
         ax.barh(y=y_indices, width=metrics, height=bar_width, xerr=errs,
-                capsize=2, edgecolor='black', ecolor='coral')
+                capsize=3,
+                color=barcolor,
+                edgecolor=BAR_EDGE_COLOR,
+                ecolor=INTVL_COLOR)
 
         # Plot random baselines
         if baselines is not None:
@@ -380,17 +385,15 @@ class MainModelVisualization:
                 plt.vlines(x=baseline,
                            ymin=y_val - (bar_width / 2),
                            ymax=y_val + (bar_width / 2),
-                           linestyles='--', colors='red')
+                           linestyles=(0, (1, 1)), colors=BSLN_COLOR)
 
         # Format Axes, Labels, and Ticks
         ax.set_xlim(0, 1)
         x_indices, x_ticks = get_perc_ticks()
         plt.xticks(x_indices, x_ticks, fontsize=TICK_S)
-
-        plt.xlabel(xlabel, fontsize=LAB_S + 2)
-        pretty_class_names = clean_class_names(class_names)
-        plt.yticks(y_indices, pretty_class_names,  fontsize=LAB_S,
-                   horizontalalignment='right')
+        plt.xlabel(xlabel + " (%)", fontsize=TICK_S)
+        plt.yticks(y_indices,  clean_class_names(class_names),
+                   fontsize=TICK_S,  horizontalalignment='right')
         thex_utils.display_and_save_plot(self.dir, self.name + ": " + xlabel)
 
     def plot_prob_pc_curves(self, range_metrics):

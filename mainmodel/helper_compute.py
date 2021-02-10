@@ -258,7 +258,7 @@ def get_perc_ticks():
     Returns [0, 0.1, ..., 1], [10%, 30%, 50%, 70%, 90%]
     """
     indices = np.linspace(0, 1, 6)
-    ticks = [str(int(i)) + "%" for i in indices * 100]
+    ticks = [str(int(i)) for i in indices * 100]
     return indices, ticks
 
 
