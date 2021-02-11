@@ -14,6 +14,10 @@ from utilities import utilities as thex_utils
 import pickle
 
 
+LSST_COLOR = "#80ccff"
+THEX_COLOR = "#006600"
+
+
 def load_prev_exp(exp_dir, expnum, model):
 
     # with open(pickle_dir + 'density_results.pickle', 'rb') as handle:
