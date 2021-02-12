@@ -25,8 +25,8 @@ TICK_S = 16
 LAB_S = 14
 TITLE_S = 16
 
-P_BAR_COLOR = "#005ce6"
-C_BAR_COLOR = "#ff8000"
+P_BAR_COLOR = "#3385ff"
+C_BAR_COLOR = "#ff9933"
 INTVL_COLOR = "black"
 BSLN_COLOR = "#ff1a1a"
 BAR_EDGE_COLOR = "black"
