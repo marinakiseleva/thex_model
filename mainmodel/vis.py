@@ -340,13 +340,26 @@ class MainModelVisualization:
         n = self.get_num_classes()
         c_baselines, p_baselines = compute_baselines(
             self.class_counts, self.class_labels, y, n, self.class_priors)
-
         p_intvls, c_intvls = compute_confintvls(all_pc, self.class_labels)
 
-        self.plot_metrics(purities, "Purity", p_baselines, p_intvls)
-        self.plot_metrics(comps, "Completeness", c_baselines, c_intvls)
+        f, ax = plt.subplots(nrows=1, ncols=2,
+                             sharex=True, sharey=True,
+                             figsize=(8, 4),  dpi=DPI)
 
-    def plot_metrics(self, class_metrics, xlabel, baselines=None, intervals=None):
+        self.plot_metrics_ax(ax[0], purities, "Purity", p_baselines, p_intvls)
+        y_indices, class_names = self.plot_metrics_ax(
+            ax[1], comps, "Completeness", c_baselines, c_intvls)
+
+        plt.subplots_adjust(wspace=0, hspace=0)
+
+        ax[0].set_yticks(y_indices)
+        ax[0].set_yticklabels(clean_class_names(class_names),
+                              fontsize=18,  horizontalalignment='right')
+
+        thex_utils.display_and_save_plot(
+            self.dir, self.name + "_metrics.pdf", bbox_inches='tight')
+
+    def plot_metrics_ax(self, ax, class_metrics, xlabel, baselines=None, intervals=None):
         """
         Visualizes metric per class with bar graph; with random baseline based on class level in hierarchy.
         :param class_metrics: Mapping from class name to metric value.
@@ -362,8 +375,7 @@ class MainModelVisualization:
             intervals)
         # Set constants
         bar_width = 0.4
-        fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT),
-                               dpi=DPI, tight_layout=True)
+
         errs = prep_err_bars(intervals, metrics)
         max_y = (0.4 * len(metrics))
         if len(metrics) <= 2:
@@ -373,7 +385,7 @@ class MainModelVisualization:
         barcolor = P_BAR_COLOR if xlabel == "Purity" else C_BAR_COLOR
         # Plot bars
         ax.barh(y=y_indices, width=metrics, height=bar_width, xerr=errs,
-                capsize=3,
+                capsize=6,
                 color=barcolor,
                 edgecolor=BAR_EDGE_COLOR,
                 ecolor=INTVL_COLOR)
@@ -385,16 +397,16 @@ class MainModelVisualization:
                 plt.vlines(x=baseline,
                            ymin=y_val - (bar_width / 2),
                            ymax=y_val + (bar_width / 2),
+                           linewidth=3,
                            linestyles=(0, (1, 1)), colors=BSLN_COLOR)
 
         # Format Axes, Labels, and Ticks
         ax.set_xlim(0, 1)
         x_indices, x_ticks = get_perc_ticks()
-        plt.xticks(x_indices, x_ticks, fontsize=TICK_S)
-        plt.xlabel(xlabel + " (%)", fontsize=TICK_S)
-        plt.yticks(y_indices,  clean_class_names(class_names),
-                   fontsize=TICK_S,  horizontalalignment='right')
-        thex_utils.display_and_save_plot(self.dir, self.name + ": " + xlabel)
+        ax.set_xticks(x_indices)
+        ax.set_xticklabels(x_ticks, fontsize=TICK_S)
+        ax.set_xlabel(xlabel + " (%)", fontsize=TICK_S)
+        return y_indices, class_names
 
     def plot_prob_pc_curves(self, range_metrics):
         """

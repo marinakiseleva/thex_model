@@ -3,6 +3,8 @@ Plotting helpers for combining model outputs.
 """
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rc
+import matplotlib as mpl
 
 from models.binary_model.binary_model import BinaryModel
 from models.ind_model.ind_model import OvAModel
@@ -88,6 +90,7 @@ def plot_rates_together(binary_model, ova_model, multi_model, indices=None):
     Plot class versus probability rates of all three classifiers together
     :param indices: class indices to plot
     """
+    rc('text', usetex=True)
     class_labels = ova_model.class_labels
     num_classes = len(ova_model.class_labels)
     if indices is not None:
@@ -95,7 +98,7 @@ def plot_rates_together(binary_model, ova_model, multi_model, indices=None):
     f, ax = plt.subplots(nrows=num_classes,
                          ncols=3,
                          sharex=True, sharey=True,
-                         figsize=(FIG_WIDTH, 10),
+                         figsize=(6, 10),
                          dpi=DPI)
     plot_index = 0
     for class_index in range(len(class_labels)):
@@ -104,9 +107,9 @@ def plot_rates_together(binary_model, ova_model, multi_model, indices=None):
 
         if plot_index == 0:
             # Add titles to top of plots
-            ax[plot_index][0].set_title("Binary", fontsize=TICK_S)
-            ax[plot_index][1].set_title("OVA", fontsize=TICK_S)
-            ax[plot_index][2].set_title("Multi", fontsize=TICK_S)
+            ax[plot_index][0].set_title("Binary", fontsize=16)
+            ax[plot_index][1].set_title("OVA", fontsize=16)
+            ax[plot_index][2].set_title("Multi", fontsize=16)
 
         class_name = class_labels[class_index]
         plot_model_rates(class_name, binary_model, ax[plot_index][0])
@@ -114,7 +117,7 @@ def plot_rates_together(binary_model, ova_model, multi_model, indices=None):
         plot_model_rates(class_name, multi_model, ax[plot_index][2])
 
         pretty_class_name = clean_class_name(class_name)
-        ax[plot_index][0].set_ylabel(pretty_class_name, fontsize=TICK_S)
+        ax[plot_index][0].text(-0.45, 0.81, pretty_class_name, fontsize=14)
         plot_index += 1
 
     y_indices = [0.1, 0.3, 0.5, 0.7, 0.9]
@@ -125,20 +128,13 @@ def plot_rates_together(binary_model, ova_model, multi_model, indices=None):
     plt.rc('xtick', labelsize=10)
     plt.rc('ytick', labelsize=10)
 
-    f.text(0.5, 0.08, 'Assigned Probability ' +
-           r' $\pm$10%', fontsize=TICK_S, ha='center')
-    f.text(0.0, .5, 'Empirical Probability (TP/Total)',
-           fontsize=TICK_S - 4, va='center', rotation='vertical')
+    mpl.rcParams['font.serif'] = ['times', 'times new roman']
+    mpl.rcParams['font.family'] = 'serif'
 
+    f.text(0.5, 0.08, 'Assigned Probability ' + r' $\pm10\%$', fontsize=14, ha='center')
+    f.text(0.03, .5, r'Empirical Probability $\equiv$ TP/Total ($\%$)',
+           fontsize=14, va='center', rotation='vertical')
     plt.subplots_adjust(wspace=0, hspace=0)
-
-    plt.rcParams['font.serif'] = ['Times New Roman']
-
-    # Add colorbar
-    # m = mpl.cm.ScalarMappable(norm=norm,
-    #                           cmap=mpl.cm.Blues)
-    # cbar = plt.colorbar(mappable=m)
-
     f.savefig(ROOT_DIR + "/output/custom_figures/merged_metrics" +
               str(indices) + ".pdf", bbox_inches='tight')
     plt.show()
@@ -218,11 +214,11 @@ def plot_pc_curves_together(binary_model, ova_model, multi_model, indices=None):
                          sharex=True, sharey=True,
                          figsize=(FIG_WIDTH, 10),
                          dpi=DPI)
-    plot_index = 0
 
     y_indices = [0, 0.2, 0.4, 0.6, 0.8, 1]
-    y_ticks = ["", "20", "40", "60", "80", "100"]
+    y_ticks = ["0", "20", "40", "60", "80", ""]
 
+    plot_index = 0
     for class_index in range(len(class_labels)):
         if indices is not None and class_index not in indices:
             continue
@@ -243,30 +239,26 @@ def plot_pc_curves_together(binary_model, ova_model, multi_model, indices=None):
         ax[plot_index][0].set_yticklabels(labels=y_ticks, color=P_BAR_COLOR)
         mirror_ax.set_yticks(ticks=y_indices)
         mirror_ax.set_yticklabels(labels=y_ticks, color=C_BAR_COLOR)
+        ax[plot_index][0].tick_params(axis='both', direction='in', labelsize=10)
+        ax[plot_index][1].tick_params(axis='both', direction='in')
+        ax[plot_index][2].tick_params(axis='both', direction='in', labelsize=10)
 
+        mpl.rcParams['font.serif'] = ['times', 'times new roman']
+        mpl.rcParams['font.family'] = 'serif'
         pretty_class_name = clean_class_name(class_name)
-        ax[plot_index][0].set_ylabel(
-            pretty_class_name, fontsize=TICK_S, labelpad=35, rotation=0)
+        ax[plot_index][0].text(0, 0.85, pretty_class_name, fontsize=14)
         plot_index += 1
 
     plt.xticks(y_indices, y_ticks)
-    ax[plot_index - 1][0].set_yticklabels(["0", "20", "40", "60", "80", "100"])
-
-    ticksize = 10
-
-    plt.rc('xtick', labelsize=ticksize)
-    plt.rc('ytick', labelsize=ticksize)
-
-    f.text(0.5, 0.08, r'Probability $\geq$X%', fontsize=TICK_S, ha='center')
-    f.text(0.03, .5, 'Purity (%)',
+    rc('text', usetex=True)
+    f.text(0.5, 0.08, r'Probability $\geq$X\%', fontsize=TICK_S, ha='center')
+    f.text(0.03, .5, 'Purity (\%)',
            fontsize=TICK_S, va='center', rotation='vertical', color=P_BAR_COLOR)
-
-    f.text(0.98, .5, 'Completeness (%)',
+    f.text(0.98, .5, 'Completeness (\%)',
            fontsize=TICK_S, va='center', rotation='vertical', color=C_BAR_COLOR)
 
     plt.subplots_adjust(wspace=0, hspace=0)
 
-    plt.rcParams["font.family"] = "Times New Roman"
     f.savefig(ROOT_DIR + "/output/custom_figures/merged_pc_curves_" +
               str(indices) + ".pdf", bbox_inches='tight')
     plt.show()
