@@ -357,7 +357,7 @@ class MainModelVisualization:
                               fontsize=18,  horizontalalignment='right')
 
         thex_utils.display_and_save_plot(
-            self.dir, self.name + "_metrics.pdf", bbox_inches='tight')
+            self.dir, self.name + "_metrics.pdf", bbox_inches='tight', fig=f)
 
     def plot_metrics_ax(self, ax, class_metrics, xlabel, baselines=None, intervals=None):
         """
@@ -394,11 +394,11 @@ class MainModelVisualization:
         if baselines is not None:
             for index, baseline in enumerate(baselines):
                 y_val = y_indices[index]
-                plt.vlines(x=baseline,
-                           ymin=y_val - (bar_width / 2),
-                           ymax=y_val + (bar_width / 2),
-                           linewidth=3,
-                           linestyles=(0, (1, 1)), colors=BSLN_COLOR)
+                ax.vlines(x=baseline,
+                          ymin=y_val - (bar_width / 2),
+                          ymax=y_val + (bar_width / 2),
+                          linewidth=3,
+                          linestyles=(0, (1, 1)), colors=BSLN_COLOR)
 
         # Format Axes, Labels, and Ticks
         ax.set_xlim(0, 1)
