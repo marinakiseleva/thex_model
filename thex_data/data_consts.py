@@ -67,6 +67,7 @@ ORDERED_CLASSES = ['Ia',
                    'Ic BL',
                    # 'Ic Pec',
                    # 'Ic-SL',
+                   'Ibc',
                    'Ib/c',
                    # 'Ib/c Pec',
 
