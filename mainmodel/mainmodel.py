@@ -82,7 +82,7 @@ class MainModel(ABC, MainModelVisualization):
                                                   data_filters['min_class_size'])
         # Pre-processing dependent on class labels
         if data_filters['class_labels'] is not None:
-            self.class_labels = data_filters['class_labels']
+            self.class_labels = copy.deepcopy(data_filters['class_labels'])
 
         X, y = filter_data(X, y, data_filters, self.class_labels, self.class_hier)
 
@@ -118,6 +118,8 @@ class MainModel(ABC, MainModelVisualization):
             for c in self.class_labels:
                 self.class_priors[c] = round(self.class_counts[c] / total, 2)
             print("\nClass Priors:\n" + str(self.class_priors))
+        else:
+            self.class_priors = None
 
         print("\nFeatures Used:\n" + str(list(X)))
         util.pretty_print_dict(self.class_counts, "Class Counts")
