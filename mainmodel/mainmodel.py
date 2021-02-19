@@ -62,7 +62,8 @@ class MainModel(ABC, MainModelVisualization):
                         'nb': False,  # Naive Bayes multiclass
                         'priors': None,  # Priors in order of class_labels
                         'data_file': DATA_PATH,  # Default data file used
-                        'linear_calib': False
+                        'linear_calib': False,
+                        'lsst_test': False  # if True, groups Ib/c, Ib, and Ic as Ib/c
                         }
 
         for data_filter in user_data_filters.keys():
@@ -85,7 +86,19 @@ class MainModel(ABC, MainModelVisualization):
 
         X, y = filter_data(X, y, data_filters, self.class_labels, self.class_hier)
 
-        # Save relevant data attributes to self
+        if data_filters['lsst_test']:
+            print("\n\n Special case: LSST Test. Grouping Ib, Ic, and Ib/c all into Ibc class name. ")
+            spec_labels = ["Ib", "Ic", "Ib/c", "Unspecified Ib",  "IIb"]
+            for index, row in y.iterrows():
+                labels = util.convert_str_to_list(row[TARGET_LABEL])
+                com = list(set(spec_labels) & set(labels))
+                if len(com) > 0:
+                    row[TARGET_LABEL] += ", Ibc"
+            for c in spec_labels:
+                if c in self.class_labels:
+                    self.class_labels.remove(c)
+            self.class_labels.append("Ibc")
+
         self.X = X
         self.y = y
         self.class_priors = data_filters['priors']
