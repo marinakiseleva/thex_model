@@ -182,7 +182,7 @@ def plot_model_curves(class_name, model, ax):
         """
         Plot data on axis in certain color
         """
-        x_indices = np.linspace(0, 1, len(data))
+        x_indices = np.linspace(0, 1, 11)[:-1]
 
         ax.scatter(x_indices, data, color=color, s=4)
         print("Data: " + str(data))
@@ -249,7 +249,9 @@ def plot_pc_curves_together(binary_model, ova_model, multi_model, indices=None):
         ax[plot_index][0].text(0, 0.85, pretty_class_name, fontsize=14)
         plot_index += 1
 
-    plt.xticks(y_indices, y_ticks)
+    x_indices = np.linspace(0, 1, 11)[:-1]
+
+    plt.xticks(x_indices, ["", "10", "", "30", "", "50", "", "70", "", "90"])
     rc('text', usetex=True)
     f.text(0.5, 0.08, r'Probability $\geq$X\%', fontsize=TICK_S, ha='center')
     f.text(0.03, .5, 'Purity (\%)',
