@@ -27,7 +27,7 @@ class OptimalMultiClassifier():
         :param X: DataFrame of features
         :param y: DataFrame with TARGET_LABEL column, 1 if it has class, 0 otherwise
         :param class_labels: Class labels to use
-        :param class_priors: Priors as list, in order of class_labels
+        :param class_priors: Priors as dict, from class name to prior prob.
         :param nb: Naive Bayes boolean
         :param dir: Model directory to save files to
         """

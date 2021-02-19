@@ -60,7 +60,7 @@ class MainModel(ABC, MainModelVisualization):
                         'class_labels': None,
                         'data': None,  # Single Pandas DataFrame of data to use
                         'nb': False,  # Naive Bayes multiclass
-                        'priors': None,  # Priors in order of class_labels
+                        'priors': False,  # Priors, boolean
                         'data_file': DATA_PATH,  # Default data file used
                         'linear_calib': False,
                         'lsst_test': False  # if True, groups Ib/c, Ib, and Ic as Ib/c
@@ -101,7 +101,6 @@ class MainModel(ABC, MainModelVisualization):
 
         self.X = X
         self.y = y
-        self.class_priors = data_filters['priors']
         self.num_folds = data_filters['folds']
         self.num_runs = data_filters['num_runs']
         self.pca = data_filters['pca']
@@ -113,10 +112,15 @@ class MainModel(ABC, MainModelVisualization):
         self.training_lls = None
 
         print("\nClasses Used:\n" + str(self.class_labels))
+        if data_filters['priors'] == True:
+            self.class_priors = {}
+            total = sum(self.class_counts.values())
+            for c in self.class_labels:
+                self.class_priors[c] = round(self.class_counts[c] / total, 2)
+            print("\nClass Priors:\n" + str(self.class_priors))
+
         print("\nFeatures Used:\n" + str(list(X)))
         util.pretty_print_dict(self.class_counts, "Class Counts")
-        if self.class_priors is not None:
-            print("\nClass Priors:\n" + str(self.class_priors))
 
         cc = sum(self.class_counts.values())
         a = self.y.shape[0]

@@ -226,7 +226,7 @@ class MultiKDEClassifier():
             class_ll = lls[class_index]
             class_density = np.exp(class_ll)
             if self.class_priors is not None:
-                class_density *= self.class_priors[class_index]
+                class_density *= self.class_priors[class_name]
             probabilities[class_name] = class_density
             density_sum += class_density
 
