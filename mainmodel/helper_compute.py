@@ -167,20 +167,21 @@ def compute_confusion_matrix(results, class_labels):
 
 def compute_confintvls(all_pc, class_labels):
     """
-    Compute 95% confidence intervals, [µ − 2σ, µ + 2σ],
-    for each class
+    Calculate 1sigma error bars for each class
+    [µ − σ, µ + σ], where sigma is the standard deviation
+
     :param all_pc: List with length of N, each item is [pmap, cmap] for that fold/trial, where pmap is map from class name to purity
     """
 
     def get_cis(values, N):
         """
-        Calculate confidence intervals [µ − 2σ, µ + 2σ] where
+        Calculate confidence intervals [µ − 2*SEM, µ + 2*SEM] where
+        SEM = σ/sqrt(N) 
         σ = sqrt( (1/ N ) ∑_n (a_i − µ)^2 )
-        :param N: number of runs
+        :param N: number of runs or folds.
         """
         mean = sum(values) / len(values)
-        a = sum((np.array(values) - mean) ** 2)
-        stdev = np.sqrt((a / (N - 1)))
+        stdev = np.sqrt((sum((np.array(values) - mean) ** 2)) / (N - 1))
         stderr = stdev / np.sqrt(N)
         # 95% confidence intervals, [µ − 1.96σ, µ + 1.96σ]
         return [mean - (1.96 * stderr), mean + (1.96 * stderr)]
@@ -240,6 +241,7 @@ def get_agg_prob_vs_class_rates(total_count_per_range,  class_labels, class_posi
 
 def prep_err_bars(intervals, metrics):
     """
+
     Convert confidence intervals to specific values to be plotted, for xerr  values are +/- sizes relative to the data:
     """
     if intervals is None:
