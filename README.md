@@ -23,7 +23,7 @@ Make sure to have the correct data file installed at the location pointed to in 
 
 
 # Running
-Use [this Jupyter Notebook](notebooks/Models.ipynb) located in the notebooks directory to help you get started with running the models. Be sure to use the correct kernel environment with the notebook.
+Use [this Jupyter Notebook](notebooks/Model.ipynb) located in the notebooks directory to help you get started with running the models. Be sure to use the correct kernel environment with the notebook.
 
 # Dependencies
 This module runs on certain versions of Python and virtualenv. We cannot guarantee it will work with other versions.
