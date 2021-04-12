@@ -101,7 +101,7 @@ class MainModel(ABC, MainModelVisualization):
             self.class_labels.append("Ibc")
 
         if data_filters['Zmodel']:
-            X = X['redshift']
+            X = X[['redshift']]
 
         self.X = X
         self.y = y
