@@ -63,7 +63,8 @@ class MainModel(ABC, MainModelVisualization):
                         'priors': False,  # Priors, boolean
                         'data_file': DATA_PATH,  # Default data file used
                         'linear_calib': False,
-                        'lsst_test': False  # if True, groups Ib/c, Ib, and Ic as Ib/c
+                        'lsst_test': False,  # if True, groups Ib/c, Ib, and Ic as Ib/c
+                        'Zmodel': False
                         }
 
         for data_filter in user_data_filters.keys():
@@ -98,6 +99,9 @@ class MainModel(ABC, MainModelVisualization):
                 if c in self.class_labels:
                     self.class_labels.remove(c)
             self.class_labels.append("Ibc")
+
+        if data_filters['Zmodel']:
+            X = X['redshift']
 
         self.X = X
         self.y = y
