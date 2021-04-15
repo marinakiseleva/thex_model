@@ -19,7 +19,7 @@ import time
 
 
 # local imports
-from mainmodel.helper_compute import get_ordered_metrics, compute_performance
+from mainmodel.helper_compute import get_ordered_metrics
 from thex_data.data_init import *
 from thex_data.data_filter import filter_data
 from thex_data.data_prep import get_source_target_data
@@ -64,7 +64,8 @@ class MainModel(ABC, MainModelVisualization):
                         'data_file': DATA_PATH,  # Default data file used
                         'linear_calib': False,
                         'lsst_test': False,  # if True, groups Ib/c, Ib, and Ic as Ib/c
-                        'Zmodel': False
+                        'Zmodel': False,
+                        'balanced_purity': False
                         }
 
         for data_filter in user_data_filters.keys():
@@ -114,6 +115,7 @@ class MainModel(ABC, MainModelVisualization):
         self.class_counts = self.get_class_counts(y)
         self.normalize = True
         self.training_lls = None
+        self.balanced_purity = data_filters['balanced_purity']
 
         print("\nClasses Used:\n" + str(self.class_labels))
         if data_filters['priors'] == True:

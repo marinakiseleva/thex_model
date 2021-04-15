@@ -63,6 +63,26 @@ class MainModelVisualization:
         """
         Get average purity, completeness, and accuracy for each threshold of maintaing top i% maximum unnormalized probabilities
         """
+        def update_class_purities(class_purities, class_metrics, i):
+            """
+            Helper function.
+            Add next purity to list of purities for each class. If not valid, append None. If there are no new samples (no change in TP+FP), also append None.
+            :param class_purities: Map from class name to list, where we will append [TP, TP+FP, i, class count] based on class metrics
+            :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values)
+            """
+            for class_name in class_purities.keys():
+                metrics = class_metrics[class_name]
+                den = metrics["TP"] + metrics["FP"]
+                v = None
+                if den > 0:
+                    # Get last value, and make sure (TP+FP) counts have changed
+                    last_val = class_purities[class_name][-1]
+                    if last_val is None or last_val[1] < den:
+                        class_count = metrics["TP"] + metrics["FN"]
+                        v = [metrics["TP"], den, i, class_count]
+
+                class_purities[class_name].append(v)
+            return class_purities
         # Init performance metrics
         p = []  # Avg purity for each i
         c = []  # Avg compelteness for each i
@@ -234,7 +254,7 @@ class MainModelVisualization:
 
     def get_row_metrics(self, row, class_metrics):
         """
-        Get TP, FP, TN, FN metrics for this row & update in passed in dict of class_metrics. 
+        Get TP, FP, TN, FN metrics for this row & update in passed in dict of class_metrics.
         :param row: Numpy row of probabiliites (last col is label)
         :param class_metrics: Dict to update, of class names to map of metrics
         """
@@ -276,7 +296,7 @@ class MainModelVisualization:
             for row in trial:
                 class_metrics = self.get_row_metrics(row, class_metrics)
             # Compute purity & completeness for this trial/fold (per class)
-            puritys, comps = compute_performance(class_metrics)
+            puritys, comps = compute_performance(class_metrics, self.balanced_purity)
             t_performances.append([puritys, comps])
         return t_performances
 
@@ -312,7 +332,7 @@ class MainModelVisualization:
 
     def plot_confusion_matrix(self, results):
         """
-        Plot confusion matrix 
+        Plot confusion matrix
         :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
         """
         cm = compute_confusion_matrix(results, self.class_labels)
@@ -335,11 +355,15 @@ class MainModelVisualization:
         :param purities: Average purity across folds/trials, per class (dict)
         :param comps: Average completeness across folds/trials, per class (dict)
         :param all_pc: Purity & completeness per trial/fold, per class
-        :param y: all y dataset 
+        :param y: all y dataset
         """
-        n = self.get_num_classes()
+        a = self.get_num_classes()
         c_baselines, p_baselines = compute_baselines(
-            self.class_counts, self.class_labels, y, n, self.class_priors)
+            self.class_counts,
+            self.class_labels,
+            self.get_num_classes(),
+            self.balanced_purity,
+            self.class_priors)
         p_intvls, c_intvls = compute_confintvls(all_pc, self.class_labels)
 
         f, ax = plt.subplots(nrows=1, ncols=2,
@@ -365,14 +389,19 @@ class MainModelVisualization:
         :param class_metrics: Mapping from class name to metric value.
         :param xlabel: Metric being plotted =  x-axis label
         :opt. param baselines: Mapping from class name to random-baseline performance (get plotted atop the bars)
-        :opt. param intervals: confidence intervals, map from class 
+        :opt. param intervals: confidence intervals, map from class [min, max]
         """
-        thex_utils.pretty_print_dict(class_metrics, xlabel + " per class")
+        # thex_utils.pretty_print_dict(class_metrics, xlabel + " per class")
 
         class_names, metrics, baselines, intervals = get_ordered_metrics(
             class_metrics,
             baselines,
             intervals)
+
+        print("\n " + xlabel)
+        thex_utils.pretty_print_mets(
+            class_names, metrics, baselines, intervals)
+
         # Set constants
         bar_width = 0.4
 
@@ -382,7 +411,7 @@ class MainModelVisualization:
             max_y = max_y - 0.2
         y_indices = np.linspace(0, max_y, len(metrics))
 
-        barcolor = P_BAR_COLOR if xlabel == "Purity" else C_BAR_COLOR
+        barcolor = P_BAR_COLOR if "Purity" in xlabel else C_BAR_COLOR
         # Plot bars
         ax.barh(y=y_indices, width=metrics, height=bar_width, xerr=errs,
                 capsize=6,
@@ -473,7 +502,7 @@ class MainModelVisualization:
         """
         Plots probability assigned to class (x-axis) vs the percentage of assignments that were that class (# of class A / all samples given probability of class in the range A). At top of each bar is AVERAGE  # assigned probability in that range (over runs), and bars are colored accordingly. If using cross-fold, count is just the total.
         :param range_metrics: Map of classes to [TP_range_sums, total_range_sums] from compute_probability_range_metrics
-        :param extra_title: Extra string to add to title. 
+        :param extra_title: Extra string to add to title.
         """
         if perc_ranges is None:
             perc_ranges = ["10%", "30%", "50%", "70%", "90%"]
@@ -529,7 +558,9 @@ class MainModelVisualization:
     def plot_agg_prob_vs_class_rates(self, total_pos_pr, weighted, perc_ranges):
         """
         Aggregates probability versus class rates across all classes.
-        :param total_pos_pr: Numpy array of length 10, with total # of positive class samples per range. So, last index is total number of TP samples with probability in range 90-100%
+        # of positive class samples per range. So, last index is total number of
+        # TP samples with probability in range 90-100%
+        :param total_pos_pr: Numpy array of length 10, with total
         :param weighted: Boolean to weigh by class frequency
         """
         aggregated_rates = get_agg_prob_vs_class_rates(

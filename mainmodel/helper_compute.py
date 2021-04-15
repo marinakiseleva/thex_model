@@ -44,50 +44,33 @@ def get_ordered_metrics(class_metrics, baselines=None, intervals=None):
     return [ordered_formatted_names, ordered_metrics, ordered_baselines, ordered_intervals]
 
 
-def compute_baselines(class_counts, class_labels, y, n, class_priors=None):
+def compute_baselines(class_counts, class_labels, N, balanced_purity, class_priors=None):
     """
     Get random classifier baselines for completeness and purity
     Completeness: 1/ number of classes
-    Purity: class count/ total number of samples
-    :param n: Number of classes
+    Purity: class count/ total count
+    Balanced Purity: 1/ number of classes
+    :param N: Number of classes
     """
     comp_baselines = {}
     purity_baselines = {}
-    total_count = y.shape[0]
-
+    total_count = sum(class_counts.values())
     for class_name in class_labels:
         if class_priors is not None:
             # If class priors are used - use relative frequency of classes
             class_rate = class_counts[class_name] / total_count
         else:
-            class_rate = 1 / n
+            class_rate = 1 / N
 
         # Compute baselines
-        purity_baselines[class_name] = class_counts[class_name] / total_count
         comp_baselines[class_name] = class_rate
+        if balanced_purity:
+            purity_baselines[class_name] = 1 / N
+        else:
+            # Random purity baseline is class count/ total
+            purity_baselines[class_name] = class_counts[class_name] / total_count
 
     return comp_baselines, purity_baselines
-
-
-def update_class_purities(class_purities, class_metrics, i):
-    """
-    Add next purity to list of purities for each class. If not valid, append None. If there are no new samples (no change in TP+FP), also append None.
-    :param class_purities: Map from class name to list, where we will append [TP, TP+FP, i, class count] based on class metrics
-    :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values)
-    """
-    for class_name in class_purities.keys():
-        metrics = class_metrics[class_name]
-        den = metrics["TP"] + metrics["FP"]
-        v = None
-        if den > 0:
-            # Get last value, and make sure (TP+FP) counts have changed
-            last_val = class_purities[class_name][-1]
-            if last_val is None or last_val[1] < den:
-                class_count = metrics["TP"] + metrics["FN"]
-                v = [metrics["TP"], den, i, class_count]
-
-        class_purities[class_name].append(v)
-    return class_purities
 
 
 def get_accuracy(class_metrics, N):
@@ -106,9 +89,11 @@ def get_accuracy(class_metrics, N):
     return TP_total / N
 
 
-def compute_performance(class_metrics):
+def compute_performance(class_metrics, balanced_purity):
     """
-    Get completeness & purity for each class, return as 2 dicts
+    Get completeness & balanced purity for each class, return as 2 dicts.
+    Completeness = TP/(TP+FN)
+    Balanced Purity = TPR/(TPR+FPR)
     :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values)
     """
     purities = {}
@@ -126,7 +111,15 @@ def compute_performance(class_metrics):
             raise ValueError(
                 "There should always be samples in each evaluated set. No samples for class " + class_name)
         comps[class_name] = TP / (TP + FN)
-        purities[class_name] = TP / (TP + FP) if (TP + FP) > 0 else 0
+
+        if balanced_purity:
+            # TPR = TP/P and FPR = FP/N
+            TPR = TP / (TP + FN)
+            FPR = FP / (FP + TN) if (FP + TN) > 0 else 0
+            purities[class_name] = TPR / (TPR + FPR) if (TPR + FPR) > 0 else 0
+        else:
+            # Regular Purity, TP/(TP+FP)
+            purities[class_name] = TP / (TP + FP) if TP + FP > 0 else 0
     return purities, comps
 
 
@@ -175,16 +168,22 @@ def compute_confintvls(all_pc, class_labels):
 
     def get_cis(values, N):
         """
-        Calculate confidence intervals [µ − 2*SEM, µ + 2*SEM] where
+        Calculate confidence intervals [µ − 1.96*SEM, µ + 1.96*SEM] where
         SEM = σ/sqrt(N) 
         σ = sqrt( (1/ N ) ∑_n (a_i − µ)^2 )
         :param N: number of runs or folds.
         """
         mean = sum(values) / len(values)
         stdev = np.sqrt((sum((np.array(values) - mean) ** 2)) / (N - 1))
-        stderr = stdev / np.sqrt(N)
+        SEM = stdev / np.sqrt(N)
         # 95% confidence intervals, [µ − 1.96σ, µ + 1.96σ]
-        return [mean - (1.96 * stderr), mean + (1.96 * stderr)]
+        low_CI = mean - (1.96 * SEM)
+        high_CI = mean + (1.96 * SEM)
+        if low_CI < 0:
+            low_CI = 0
+        if high_CI > 1:
+            high_CI = 1
+        return [low_CI, high_CI]
 
     N = len(all_pc)  # Number of folds/trials
 
@@ -241,8 +240,7 @@ def get_agg_prob_vs_class_rates(total_count_per_range,  class_labels, class_posi
 
 def prep_err_bars(intervals, metrics):
     """
-
-    Convert confidence intervals to specific values to be plotted, for xerr  values are +/- sizes relative to the data:
+    Convert confidence intervals to specific values to be plotted, because xerr values are +/- sizes relative to the data:
     """
     if intervals is None:
         return None
