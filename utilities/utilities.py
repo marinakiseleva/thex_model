@@ -137,6 +137,18 @@ def convert_str_to_list(input_string):
     return [item.strip(' ') for item in l]
 
 
+def pretty_print_mets(class_labels, vals, baselines, intvls):
+    """
+    :param vals: list in order of class labels
+    """
+    for index in range(len(class_labels) - 1, -1, -1):
+        val = round((vals[index] * 100), 2)
+        ci = round(((intvls[index][1] - intvls[index][0]) * 100) / 2, 2)
+        print(class_labels[index] + " : " + str(val) + "\%\pm" + str(ci) + "\%")
+
+    print("\n" + " Baselines " + str(baselines))
+
+
 def pretty_print_dict(d, title):
     print("\n")
     print("\t\t" + title)
