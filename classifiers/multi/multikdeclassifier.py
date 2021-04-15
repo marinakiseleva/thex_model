@@ -215,22 +215,17 @@ class MultiKDEClassifier():
         Get probability of each class for this sample x. Probability of class i  = density_i / (sum_i^N density_i). 
         :param x: Pandas Series (row of DF) of features
         """
-        density_sum = 0
+
         probabilities = OrderedDict()
-        lls = []
         for class_index, class_name in enumerate(self.class_labels):
             class_ll = self.clfs[class_name].score_samples([x.values])[0]
-            lls.append(class_ll)
-
-        for class_index, class_name in enumerate(self.class_labels):
-            class_ll = lls[class_index]
             class_density = np.exp(class_ll)
             if self.class_priors is not None:
                 class_density *= self.class_priors[class_name]
             probabilities[class_name] = class_density
-            density_sum += class_density
 
         if normalize:
+            density_sum = sum(probabilities.values())
             probabilities = {k: probabilities[k] /
                              density_sum for k in probabilities.keys()}
 
