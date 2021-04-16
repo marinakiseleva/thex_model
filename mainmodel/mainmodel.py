@@ -61,6 +61,7 @@ class MainModel(ABC, MainModelVisualization):
                         'data': None,  # Single Pandas DataFrame of data to use
                         'nb': False,  # Naive Bayes multiclass
                         'priors': False,  # Priors, boolean
+                        'reverse_priors': False,
                         'data_file': DATA_PATH,  # Default data file used
                         'linear_calib': False,
                         'lsst_test': False,  # if True, groups Ib/c, Ib, and Ic as Ib/c
@@ -122,7 +123,10 @@ class MainModel(ABC, MainModelVisualization):
             self.class_priors = {}
             total = sum(self.class_counts.values())
             for c in self.class_labels:
-                self.class_priors[c] = round(self.class_counts[c] / total, 2)
+                if data_filters['reverse_priors'] == True:
+                    self.class_priors[c] = 1 - round(self.class_counts[c] / total, 2)
+                else:
+                    self.class_priors[c] = round(self.class_counts[c] / total, 2)
             print("\nClass Priors:\n" + str(self.class_priors))
         else:
             self.class_priors = None
