@@ -273,13 +273,17 @@ class MainModelVisualization:
             # Sample is an instance of this current class.
             is_class = self.is_class(class_name, labels)
 
+            # class_name is actual class, and we got it as the max
             if is_class and max_class_name == class_name:
                 class_metrics[class_name]["TP"] += 1
-            elif class_name == max_class_name:
-                class_metrics[class_name]["FP"] += 1
-            elif class_name != max_class_name and is_class:
+            # class_name is actual, but we didn't get it as max.
+            elif is_class and max_class_name != class_name:
                 class_metrics[class_name]["FN"] += 1
-            elif class_name != max_class_name and not is_class:
+            # class_name is not actual, but we guessed it.
+            elif not is_class and class_name == max_class_name:
+                class_metrics[class_name]["FP"] += 1
+            # class_name is not actual & we did not guess it
+            elif not is_class and class_name != max_class_name:
                 class_metrics[class_name]["TN"] += 1
         return class_metrics
 
@@ -296,7 +300,12 @@ class MainModelVisualization:
             for row in trial:
                 class_metrics = self.get_row_metrics(row, class_metrics)
             # Compute purity & completeness for this trial/fold (per class)
-            puritys, comps = compute_performance(class_metrics, self.balanced_purity)
+
+            puritys, comps = compute_performance(class_metrics)
+            if self.balanced_purity:
+                # overwrite purities with balanced ones.
+                puritys = compute_balanced_purity(
+                    trial, self.class_labels)
             t_performances.append([puritys, comps])
         return t_performances
 

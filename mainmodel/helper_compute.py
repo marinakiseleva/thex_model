@@ -89,11 +89,52 @@ def get_accuracy(class_metrics, N):
     return TP_total / N
 
 
-def compute_performance(class_metrics, balanced_purity):
+def get_class_name(labels, class_names):
+    """
+    get class name for set of labels
+    """
+    for class_name in class_names:
+        if class_name in thex_utils.convert_str_to_list(labels):
+            return class_name
+
+
+def compute_balanced_purity(preds, class_labels):
     """
     Get completeness & balanced purity for each class, return as 2 dicts.
-    Completeness = TP/(TP+FN)
-    Balanced Purity = TPR/(TPR+FPR)
+    :param preds: List of Numpy rows of probabilites (last col is label) 
+    :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values)
+    """
+    purities = {}
+    # assignments: get number of each class predicted as key class
+    # key: predicted class (so all samples in the set are predicted as the
+    # key), value: map from class name to # of samples predicted as key
+    assignments = {cn: {p: 0 for p in class_labels} for cn in class_labels}
+    label_index = len(class_labels)
+    class_counts = {cn: 0 for cn in class_labels}
+    for row in preds:
+        labels = row[label_index]
+        max_class_index = np.argmax(row[:len(row) - 1])
+        max_class_name = class_labels[max_class_index]
+        true_class = get_class_name(labels, class_labels)
+        assignments[max_class_name][true_class] += 1
+        class_counts[true_class] += 1
+
+    for class_name in class_labels:
+        # All assignments for this class.
+        class_assgs = assignments[class_name]
+        TPR = class_assgs[class_name] / class_counts[class_name]
+        den = 0
+        for ck in class_assgs.keys():
+            den += class_assgs[ck] / class_counts[ck]
+        purities[class_name] = TPR / den
+    return purities
+
+
+def compute_performance(class_metrics):
+    """
+    Get completeness & purity for each class, return as 2 dicts.
+    Completeness = TP/(TP+FN) 
+    Purity = TP/(TP+FP)
     :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values)
     """
     purities = {}
@@ -102,24 +143,12 @@ def compute_performance(class_metrics, balanced_purity):
         metrics = class_metrics[class_name]
         TP = metrics["TP"]
         FP = metrics["FP"]
-        TN = metrics["TN"]
         FN = metrics["FN"]
-
-        # Only if there are samples in this class, calculate its metrics
-        total = TP + TN + FP + FN
+        # Ensure there are some samples of this class
         if TP + FN == 0:
-            raise ValueError(
-                "There should always be samples in each evaluated set. No samples for class " + class_name)
+            raise ValueError("No samples for class " + class_name)
         comps[class_name] = TP / (TP + FN)
-
-        if balanced_purity:
-            # TPR = TP/P and FPR = FP/N
-            TPR = TP / (TP + FN)
-            FPR = FP / (FP + TN) if (FP + TN) > 0 else 0
-            purities[class_name] = TPR / (TPR + FPR) if (TPR + FPR) > 0 else 0
-        else:
-            # Regular Purity, TP/(TP+FP)
-            purities[class_name] = TP / (TP + FP) if TP + FP > 0 else 0
+        purities[class_name] = TP / (TP + FP) if TP + FP > 0 else 0
     return purities, comps
 
 
