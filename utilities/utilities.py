@@ -129,6 +129,15 @@ def init_file_directories(name):
     return new_dir
 
 
+def get_class_name(labels, class_names):
+    """
+    get class name for set of labels
+    """
+    for class_name in class_names:
+        if class_name in convert_str_to_list(labels):
+            return class_name
+
+
 def convert_str_to_list(input_string):
     """
     Convert string to list
@@ -146,7 +155,7 @@ def pretty_print_mets(class_labels, vals, baselines, intvls):
         ci = round(((intvls[index][1] - intvls[index][0]) * 100) / 2, 2)
         print(class_labels[index] + " : " + str(val) + "\%\pm" + str(ci) + "\%")
 
-    print("\n" + " Baselines " + str(baselines))
+    print("\n" + "Baselines\n" + str(baselines))
 
 
 def pretty_print_dict(d, title):
