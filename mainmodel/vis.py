@@ -9,6 +9,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 from mainmodel.helper_compute import *
+from mainmodel.helper_plotting import *
 from thex_data.data_consts import *
 import utilities.utilities as thex_utils
 
@@ -111,7 +112,7 @@ class MainModelVisualization:
             # Put probs & labels in same Numpy array
             i_results = np.hstack((top_i_probs, top_i_labels.reshape(-1, 1)))
             metrics = self.compute_metrics(i_results)
-            puritys, comps = compute_performance(metrics)
+            puritys, comps = get_puritys_and_comps(metrics)
             avg_comp = get_average(comps)
             avg_purity = get_average(puritys)
             avg_acc = get_accuracy(metrics, N=top_i)
@@ -301,11 +302,11 @@ class MainModelVisualization:
                 class_metrics = self.get_row_metrics(row, class_metrics)
             # Compute purity & completeness for this trial/fold (per class)
 
-            puritys, comps = compute_performance(class_metrics)
+            puritys, comps = get_puritys_and_comps(class_metrics)
             if self.balanced_purity:
                 # overwrite purities with balanced ones.
                 puritys = compute_balanced_purity(
-                    trial, self.class_labels)
+                    trial, self.class_labels, self.name)
             t_performances.append([puritys, comps])
         return t_performances
 

@@ -3,7 +3,7 @@ Helper function for computing different performance metrics
 """
 import numpy as np
 from sklearn.metrics import confusion_matrix
-
+from collections import OrderedDict
 import utilities.utilities as thex_utils
 from thex_data.data_consts import UNDEF_CLASS, ORDERED_CLASSES
 
@@ -89,48 +89,30 @@ def get_accuracy(class_metrics, N):
     return TP_total / N
 
 
-def get_class_name(labels, class_names):
+def get_completeness_ranges(model, range_metrics, class_name):
     """
-    get class name for set of labels
+    Get completeness, for each probability range threshold, for class class_name
     """
-    for class_name in class_names:
-        if class_name in thex_utils.convert_str_to_list(labels):
-            return class_name
+    true_positives, totals = range_metrics[class_name]
+    class_total = model.class_counts[class_name]
+    comps = []
+    TP_count = 0
+    total_count = 0
+    for index in reversed(range(len(true_positives))):
+        cur_c = 0  # Current completeness
+        TP_count += true_positives[index]
+        total_count += totals[index]
+        if total_count != 0:
+            # positive class samples / totals # with prob in range
+            cur_p = TP_count / total_count
+        if class_total != 0:
+            cur_c = TP_count / class_total
+        comps.append(cur_c)
+    comps.reverse()
+    return comps
 
 
-def compute_balanced_purity(preds, class_labels):
-    """
-    Get completeness & balanced purity for each class, return as 2 dicts.
-    :param preds: List of Numpy rows of probabilites (last col is label) 
-    :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values)
-    """
-    purities = {}
-    # assignments: get number of each class predicted as key class
-    # key: predicted class (so all samples in the set are predicted as the
-    # key), value: map from class name to # of samples predicted as key
-    assignments = {cn: {p: 0 for p in class_labels} for cn in class_labels}
-    label_index = len(class_labels)
-    class_counts = {cn: 0 for cn in class_labels}
-    for row in preds:
-        labels = row[label_index]
-        max_class_index = np.argmax(row[:len(row) - 1])
-        max_class_name = class_labels[max_class_index]
-        true_class = get_class_name(labels, class_labels)
-        assignments[max_class_name][true_class] += 1
-        class_counts[true_class] += 1
-
-    for class_name in class_labels:
-        # All assignments for this class.
-        class_assgs = assignments[class_name]
-        TPR = class_assgs[class_name] / class_counts[class_name]
-        den = 0
-        for ck in class_assgs.keys():
-            den += class_assgs[ck] / class_counts[ck]
-        purities[class_name] = TPR / den
-    return purities
-
-
-def compute_performance(class_metrics):
+def get_puritys_and_comps(class_metrics):
     """
     Get completeness & purity for each class, return as 2 dicts.
     Completeness = TP/(TP+FN) 
@@ -150,6 +132,234 @@ def compute_performance(class_metrics):
         comps[class_name] = TP / (TP + FN)
         purities[class_name] = TP / (TP + FP) if TP + FP > 0 else 0
     return purities, comps
+
+
+#############################################################
+#### BALANCED PURITY HELPERS ########################
+
+
+def compute_binary_balanced_purity(preds, class_labels):
+    """
+    Get completeness & balanced purity for each class, return as 2 dicts.
+    balanced purity = TPR/ (TPR+FPR)
+    :param preds: List of Numpy rows of probabilites (last col is label)  
+    """
+    purities = {}
+    # assignments: get number of class predicted as key class vs. number of
+    # NOT class predicted as key class
+    assignments = {cn: {cn: 0, "NOT": 0} for cn in class_labels}
+    label_index = len(class_labels)
+    class_counts = {cn: 0 for cn in class_labels}
+    for row in preds:
+        labels = row[label_index]
+        max_class_index = np.argmax(row[:len(row) - 1])
+        max_class_name = class_labels[max_class_index]
+        true_class = thex_utils.get_class_name(labels, class_labels)
+        if max_class_name == true_class:
+            assignments[max_class_name][true_class] += 1
+        else:
+            assignments[max_class_name]["NOT"] += 1
+        class_counts[true_class] += 1
+
+    total = sum(class_counts.values())
+    for class_name in class_labels:
+        # All assignments for this class.
+        class_assgs = assignments[class_name]
+        TPR = class_assgs[class_name] / class_counts[class_name]
+        FPR = class_assgs["NOT"] / (total - class_counts[class_name])
+        den = TPR + FPR
+        # if den is 0, there is no purity measure because nothing was classified
+        # as this class
+        purities[class_name] = TPR / den if den > 0 else None
+    return purities
+
+
+def compute_balanced_purity(preds, class_labels, model_name):
+    """
+    Get balanced purity for each class, over all preds.
+    :param preds: List of Numpy rows of probabilites (last col is label) 
+    """
+    if model_name == "Binary Classifiers":
+        return compute_binary_balanced_purity(preds, class_labels)
+    purities = {}
+    # assignments: get number of each class predicted as key class
+    # key: predicted class (so all samples in the set are predicted as the
+    # key), value: map from class name to # of samples predicted as key
+    assignments = {cn: {p: 0 for p in class_labels} for cn in class_labels}
+    label_index = len(class_labels)
+    class_counts = {cn: 0 for cn in class_labels}
+    for row in preds:
+        labels = row[label_index]
+        max_class_index = np.argmax(row[:len(row) - 1])
+        max_class_name = class_labels[max_class_index]
+        true_class = thex_utils.get_class_name(labels, class_labels)
+        assignments[max_class_name][true_class] += 1
+        class_counts[true_class] += 1
+
+    for class_name in class_labels:
+        # All assignments for this class.
+        class_assgs = assignments[class_name]
+        TPR = class_assgs[class_name] / class_counts[class_name]
+        den = 0
+        for ck in class_assgs.keys():
+            den += class_assgs[ck] / class_counts[ck]
+        # if den is 0, there is no purity measure because nothing was classified
+        # as this class
+        purities[class_name] = TPR / den if den > 0 else None
+    return purities
+
+
+############################################
+# Balanced purity helpers for ranged metrics (P-C curves)
+
+def bp_get_class_stats(target_class, prob_range, rows, class_labels):
+    """
+    Return list in order of class_labels, where each value corresponds to number of samples of that class
+    predicted as target class with a probability in the range prob_range.
+    Last value of the list is total # of rows with true label of target_class
+    """
+    assignments = []
+    label_index = len(class_labels)
+    # Get index of target_class in class_labels
+    target_class_index = class_labels.index(target_class)
+
+    class_counts = OrderedDict()
+    for cn in class_labels:
+        class_counts[cn] = 0
+    target_class_count = 0
+    # Iterate over all given rows (each row is probs assigned to classes, and
+    # class label).
+    for row in rows:
+        true_class = thex_utils.get_class_name(row[label_index], class_labels)
+        target_class_prob = row[target_class_index]
+
+        min_prob_inc = prob_range[0]
+        max_prob_exc = prob_range[1]
+
+        max_class_index = np.argmax(row[:len(row) - 1])
+        max_class_prob = row[max_class_index]
+        # if the probability assigned to target_class is within the prob_range,
+        if target_class_prob >= min_prob_inc and target_class_prob < max_prob_exc:
+            # add 1 to that row's true class label's count.
+            max_class_name = class_labels[max_class_index]
+            # Count this class if the max prob is for the target class
+            if max_class_name == target_class:
+                class_counts[true_class] += 1
+
+        # Find all samples with target_class label, and count those that are assigned a probability in this range
+        # to any class
+        if true_class == target_class and max_class_prob >= min_prob_inc and max_class_prob < max_prob_exc:
+            target_class_count += 1
+
+    return list(class_counts.values()) + [target_class_count]
+
+
+def bp_get_assignments(preds, class_labels, bin_size):
+    """
+    Gets # of samples of each class assigned to each target class, by probability range.
+    :param preds: List of Numpy rows of probabilites (last col is label) 
+    :param class_labels: class names in order to be treated
+    :param bin_size: width of probability bin, usually 0.1
+    """
+    assignments = []
+    for i in range(int(1 / (bin_size))):
+        # bins are left inclusive, bin is 0 <= x < .1. ; so last bin <=1.01
+        # Need to round due to strange rounding issue where 0.6 becomes 0.6000...001.
+        min_prob_inc = round(i * bin_size, 2)
+        max_prob_exc = round(min_prob_inc + bin_size, 2)
+        range_a = []
+        for target_class in class_labels:
+            ca = bp_get_class_stats(
+                target_class, [min_prob_inc, max_prob_exc], preds, class_labels)
+            range_a.append(ca)
+        assignments.append(range_a)
+    return assignments
+
+
+def bp_aggregate_assignments(assignments, class_labels, num_bins):
+    """
+    Aggregate assignments from max prob to lower probs (to make it thresholded, <=)
+    Return list in order of class_labels, where each value corresponds to number of samples of that class
+    assigned a probability >= min of that range's prob_range for target_class AND predicted as target class.
+    """
+    agg_assignments = np.zeros(
+        shape=(num_bins, len(class_labels), len(class_labels) + 1))
+
+    for index in reversed(range(num_bins)):
+        for target_class_index, target_class in enumerate(class_labels):
+            agg_assignments[index][target_class_index] = assignments[
+                index][target_class_index]
+            # If there is an index after this, add those (this is the aggregation)
+            if index < (num_bins - 1):
+                agg_assignments[index][target_class_index] = np.add(
+                    agg_assignments[index][target_class_index], agg_assignments[index + 1][target_class_index])
+    return agg_assignments
+
+
+def bp_get_range_bps(assignments, class_labels):
+    """
+    Get balanced purity for each probability range threshold, and each class. For class A, get balanced purity at probs >=10%, probs>=20% and so on. Return as list, in order of ranges; each list contains dict from target/predicted class name to list, containing number of class assignments (in order of class_labels), and the last value is thte total number of target_class samples in the set.
+    :param assignments: aggregated assignments
+    :param class_labels: labels in correct order.
+    """
+    range_class_bps = []
+    class_count_index = len(class_labels)
+    for prob_range_assgns in assignments:
+        class_bps = {cn: [] for cn in class_labels}
+        for targ_class_index, targ_class in enumerate(class_labels):
+            targ_class_assgns = prob_range_assgns[targ_class_index]
+
+            TPR = targ_class_assgns[targ_class_index] / \
+                targ_class_assgns[class_count_index]
+            FPR = 0
+            for alt_class_index, alt_class in enumerate(class_labels):
+                if alt_class == targ_class:
+                    continue
+                # of samples of alt_class predicted as targ_class divided by
+                # total number of alt_class samples assigned targ_class prob in this
+                # range as max prob
+                alt_total = prob_range_assgns[alt_class_index][class_count_index]
+                FPR += targ_class_assgns[alt_class_index] / alt_total
+            class_bps[targ_class] = TPR / (TPR + FPR)
+        range_class_bps.append(class_bps)
+    return range_class_bps
+
+
+def get_balanced_purity_ranges(preds, class_labels, bin_size):
+    """
+    Get balanced purity for each class, for each range of probabilities.  
+    :param preds: List of Numpy rows of probabilites (last col is label) ; comes from np.concatenate(model.results)
+    :param class_labels: class names in order to be treated
+    :param bin_size: width of probability bin, usually 0.1
+    """
+
+    assignments = bp_get_assignments(preds, class_labels, bin_size)
+
+    agg_assignments = bp_aggregate_assignments(assignments, class_labels, num_bins=10)
+
+    range_class_bps = bp_get_range_bps(agg_assignments, class_labels)
+    # Reformat, so that instead of list of dicts, it is a dict from class name to list.
+    class_to_bps = {}
+    for class_name in class_labels:
+        cur_class_bps = []
+        for cur_range_bp in range_class_bps:
+            cur_class_bps.append(cur_range_bp[class_name])
+        class_to_bps[class_name] = cur_class_bps
+    return class_to_bps
+
+
+def get_binary_balanced_purity_ranges(preds, class_labels, bin_size):
+    """
+    Get balanced purity for each class, for each range of probabilities. 
+    Return dict. of class names list of length 10 (when bin_size=0.1), where each value contains samples
+    assigned probabilites in  that range.
+    :param preds: List of Numpy rows of probabilites (last col is label) 
+    :param class_labels: class names in order to be treated
+    :param bin_size: width of probability bin, usually 0.1
+    """
+    # return get_balanced_purity_ranges(preds, class_labels, bin_size)
+    raise ValueError("NOT YET DONE.")
+##########################################################################
 
 
 def compute_confusion_matrix(results, class_labels):
@@ -263,52 +473,6 @@ def get_agg_prob_vs_class_rates(total_count_per_range,  class_labels, class_posi
             # Balanced average = (1/K) * rates
             aggregated_rates += (1 / len(class_labels)) * pos_prob_rates
     return aggregated_rates
-
-# Plotting helpers
-
-
-def prep_err_bars(intervals, metrics):
-    """
-    Convert confidence intervals to specific values to be plotted, because xerr values are +/- sizes relative to the data:
-    """
-    if intervals is None:
-        return None
-    errs = [[], []]
-    for index, interval in enumerate(intervals):
-        min_bar = interval[0]
-        max_bar = interval[1]
-        errs[0].append(metrics[index] - min_bar)
-        errs[1].append(max_bar - metrics[index])
-    return errs
-
-
-def get_perc_ticks():
-    """
-    Returns [0, 0.1, ..., 1], [10%, 30%, 50%, 70%, 90%]
-    """
-    indices = np.linspace(0, 1, 6)
-    ticks = [str(int(i)) for i in indices * 100]
-    return indices, ticks
-
-
-def clean_class_name(class_name):
-    pretty_class_name = class_name
-    if UNDEF_CLASS in class_name:
-        pretty_class_name = class_name.replace(UNDEF_CLASS, "")
-        pretty_class_name = pretty_class_name + " (unspec.)"
-    return pretty_class_name
-
-
-def clean_class_names(class_names):
-    """
-    Update all references to Unspecified class to be class (unspec.)
-    """
-    new_class_names = []
-    for class_name in class_names:
-        pretty_class_name = clean_class_name(class_name)
-        pretty_class_name.strip()
-        new_class_names.append(pretty_class_name)
-    return new_class_names
 
 
 # Density analysis helpers

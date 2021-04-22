@@ -9,7 +9,7 @@ import matplotlib as mpl
 from models.binary_model.binary_model import BinaryModel
 from models.ind_model.ind_model import OvAModel
 from models.multi_model.multi_model import MultiModel
-from mainmodel.helper_compute import get_perc_ticks, clean_class_name
+from mainmodel.helper_compute import *
 from thex_data.data_consts import *
 from utilities import utilities as thex_utils
 
@@ -39,6 +39,52 @@ def load_prev_exp(exp_dir, expnum, model):
     model.range_metrics_10 = model.compute_probability_range_metrics(
         model.results, bin_size=0.1)
     return model
+
+# Plotting formatting
+
+
+def clean_class_name(class_name):
+    pretty_class_name = class_name
+    if UNDEF_CLASS in class_name:
+        pretty_class_name = class_name.replace(UNDEF_CLASS, "")
+        pretty_class_name = pretty_class_name + " (unspec.)"
+    return pretty_class_name
+
+
+def clean_class_names(class_names):
+    """
+    Update all references to Unspecified class to be class (unspec.)
+    """
+    new_class_names = []
+    for class_name in class_names:
+        pretty_class_name = clean_class_name(class_name)
+        pretty_class_name.strip()
+        new_class_names.append(pretty_class_name)
+    return new_class_names
+
+
+def prep_err_bars(intervals, metrics):
+"""
+Convert confidence intervals to specific values to be plotted, because xerr values are +/- sizes relative to the data:
+"""
+if intervals is None:
+    return None
+errs = [[], []]
+for index, interval in enumerate(intervals):
+    min_bar = interval[0]
+    max_bar = interval[1]
+    errs[0].append(metrics[index] - min_bar)
+    errs[1].append(max_bar - metrics[index])
+return errs
+
+
+def get_perc_ticks():
+    """
+    Returns [0, 0.1, ..., 1], [10%, 30%, 50%, 70%, 90%]
+    """
+    indices = np.linspace(0, 1, 6)
+    ticks = [str(int(i)) for i in indices * 100]
+    return indices, ticks
 
 
 def get_rates(class_name, model):
@@ -172,23 +218,29 @@ def get_pc_per_range(model, class_name):
     return purities, comps
 
 
-def plot_model_curves(class_name, model, ax):
+def plot_model_curves(class_name, model, range_metrics, ax):
     """
-    Plots rates for this model/class on axis, with annotations
+    Plots rates for this model/class on axis, with annotations 
     """
-    purities, comps = get_pc_per_range(model, class_name)
-
     def plot_axis(ax, data, color):
         """
         Plot data on axis in certain color
         """
-        x_indices = np.linspace(0, 1, 11)[:-1]
-
+        x_indices = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
         ax.scatter(x_indices, data, color=color, s=4)
-        print("Data: " + str(data))
         ax.plot(x_indices, data, color=color, linewidth=2)
         ax.set_yticks([])  # same for y ticks
         ax.set_ylim([0, 1])
+    # Get balanced purities
+    preds = np.concatenate(model.results)
+    if model.name == "Binary Classifiers":
+        purities = get_binary_balanced_purity_ranges(
+            preds, model.class_labels, 0.1)[class_name]
+    else:
+        purities = get_balanced_purity_ranges(preds, model.class_labels, 0.1)[class_name]
+
+    # Get completenesses
+    comps = get_completeness_ranges(model, range_metrics, class_name)
 
     print("\n\n P-C metrics for : " + class_name)
     plot_axis(ax, comps, C_BAR_COLOR)
@@ -200,16 +252,22 @@ def plot_model_curves(class_name, model, ax):
     return ax2
 
 
-def plot_pc_curves_together(binary_model, ova_model, multi_model, indices=None):
+def plot_pc_curves_together(binary_model, ova_model, multi_model, indices):
     """
-    Plot class versus probability rates of all three classifiers together
-    :param indices: class indices to plot
+    Plot balanced purity and completeness vs probability threshold for each class separately; combine this for all three classifiers onto a single figure.
+    :param indices: class indices to plot (from class_labels)
     """
+    raise ValueError(
+        "Need to finish! Need to implement ranged balance purity for binary classifier. And test all ranged balanced purity functionality.")
+    binary_range_metrics = binary_model.compute_probability_range_metrics(
+        binary_model.results)
+    ova_range_metrics = ova_model.compute_probability_range_metrics(
+        ova_model.results)
+    multi_range_metrics = multi_model.compute_probability_range_metrics(
+        multi_model.results)
+
     class_labels = ova_model.class_labels
-    num_classes = len(ova_model.class_labels)
-    if indices is not None:
-        num_classes = len(indices)
-    f, ax = plt.subplots(nrows=num_classes,
+    f, ax = plt.subplots(nrows=len(indices),
                          ncols=3,
                          sharex=True, sharey=True,
                          figsize=(FIG_WIDTH, 10),
@@ -217,23 +275,21 @@ def plot_pc_curves_together(binary_model, ova_model, multi_model, indices=None):
 
     y_indices = [0, 0.2, 0.4, 0.6, 0.8, 1]
     y_ticks = ["0", "20", "40", "60", "80", ""]
-
     plot_index = 0
-    for class_index in range(len(class_labels)):
-        if indices is not None and class_index not in indices:
+    for class_index, class_name in enumerate(class_labels):
+        if class_index not in indices:
             continue
 
         if plot_index == 0:
             # Add titles to top of plots
-            ax[plot_index][0].set_title("Binary", fontsize=TICK_S)
+            ax[plot_index][0].set_title("ova", fontsize=TICK_S)
             ax[plot_index][1].set_title("OVA", fontsize=TICK_S)
             ax[plot_index][2].set_title("Multi", fontsize=TICK_S)
 
-        class_name = class_labels[class_index]
-        plot_model_curves(class_name, binary_model, ax[plot_index][0])
-
-        plot_model_curves(class_name, ova_model, ax[plot_index][1])
-        mirror_ax = plot_model_curves(class_name, multi_model, ax[plot_index][2])
+        plot_model_curves(class_name, ova_model, ova_range_metrics,  ax[plot_index][0])
+        plot_model_curves(class_name, ova_model, ova_range_metrics,  ax[plot_index][1])
+        mirror_ax = plot_model_curves(
+            class_name, multi_model, multi_range_metrics, ax[plot_index][2])
 
         ax[plot_index][0].set_yticks(ticks=y_indices)
         ax[plot_index][0].set_yticklabels(labels=y_ticks, color=P_BAR_COLOR)
@@ -261,6 +317,6 @@ def plot_pc_curves_together(binary_model, ova_model, multi_model, indices=None):
 
     plt.subplots_adjust(wspace=0, hspace=0)
 
-    f.savefig(ROOT_DIR + "/output/custom_figures/merged_pc_curves_" +
+    f.savefig("../output/custom_figures/merged_pc_curves_" +
               str(indices) + ".pdf", bbox_inches='tight')
     plt.show()
