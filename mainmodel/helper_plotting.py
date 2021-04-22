@@ -6,12 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 import matplotlib as mpl
 
-from models.binary_model.binary_model import BinaryModel
-from models.ind_model.ind_model import OvAModel
-from models.multi_model.multi_model import MultiModel
 from mainmodel.helper_compute import *
 from thex_data.data_consts import *
-from utilities import utilities as thex_utils
 
 import pickle
 
