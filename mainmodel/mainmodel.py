@@ -58,7 +58,7 @@ class MainModel(ABC, MainModelVisualization):
                         'max_class_size': None,
                         'pca': None,  # Number of principal components
                         'class_labels': None,
-                        'data': None,  # Single Pandas DataFrame of data to use
+                        'data': None,  # [X,y] data, as PD dataframes.
                         'nb': False,  # Naive Bayes multiclass
                         'priors': False,  # Priors, boolean
                         'data_file': DATA_PATH,  # Default data file used
@@ -67,18 +67,23 @@ class MainModel(ABC, MainModelVisualization):
                         'Zmodel': False,
                         'balanced_purity': False
                         }
-
+        # Use default for filters not passed in.
         for data_filter in user_data_filters.keys():
             data_filters[data_filter] = user_data_filters[data_filter]
 
-        # list of features to use from database
-        print("Using data: " + data_filters['data_file'])
-        features = collect_cols(data_filters['cols'], data_filters[
-                                'col_matches'], data_filters['data_file'])
-        X, y = get_source_target_data(features, data_filters)
+        # Use passed-in data, if available
+        if data_filters['data'] is not None:
+            X = data_filters['data'][0]
+            y = data_filters['data'][1]
+        else:
+            # list of features to use from database
+            print("Using data: " + data_filters['data_file'])
+            features = collect_cols(data_filters['cols'], data_filters[
+                                    'col_matches'], data_filters['data_file'])
+            X, y = get_source_target_data(features, data_filters)
 
-        # Redefine labels with Unspecifieds
-        y = util.add_unspecified_labels_to_data(y, self.class_levels)
+            # Redefine labels with Unspecifieds
+            y = util.add_unspecified_labels_to_data(y, self.class_levels)
 
         self.class_labels = self.get_class_labels(y,
                                                   data_filters['min_class_size'])
@@ -88,8 +93,10 @@ class MainModel(ABC, MainModelVisualization):
 
         X, y = filter_data(X, y, data_filters, self.class_labels, self.class_hier)
 
+        # Aggregate Ibc class if making LSST-like.
         if data_filters['lsst_test']:
-            print("\n\n Special case: LSST Test. Grouping Ib, Ic, and Ib/c all into Ibc class name. ")
+            print(
+                "\n\n Special case: LSST Test. Grouping Ib, Ic, and Ib/c all into Ibc class name. ")
             spec_labels = ["Ib", "Ic", "Ib/c", "Unspecified Ib",  "IIb"]
             for index, row in y.iterrows():
                 labels = util.convert_str_to_list(row[TARGET_LABEL])
@@ -101,6 +108,7 @@ class MainModel(ABC, MainModelVisualization):
                     self.class_labels.remove(c)
             self.class_labels.append("Ibc")
 
+        # Use only redshift as a feature in Zmodel.
         if data_filters['Zmodel']:
             X = X[['redshift']]
 
@@ -117,7 +125,8 @@ class MainModel(ABC, MainModelVisualization):
         self.training_lls = None
         self.balanced_purity = data_filters['balanced_purity']
 
-        print("\nClasses Used:\n" + str(self.class_labels))
+        # Print helpful info about this model's run.
+        print("\nClasses:\n" + str(self.class_labels))
         if data_filters['priors'] == True:
             self.class_priors = {}
             total = sum(self.class_counts.values())
@@ -127,7 +136,7 @@ class MainModel(ABC, MainModelVisualization):
         else:
             self.class_priors = None
 
-        print("\nFeatures Used:\n" + str(list(X)))
+        print("\nFeatures:\n" + str(list(X)))
         util.pretty_print_dict(self.class_counts, "Class Counts")
 
         cc = sum(self.class_counts.values())

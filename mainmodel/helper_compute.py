@@ -214,9 +214,10 @@ def compute_balanced_purity(preds, class_labels, model_name):
 
 def bp_get_class_stats(target_class, prob_range, rows, class_labels):
     """
-    Return list in order of class_labels, where each value corresponds to number of samples of that class
-    predicted as target class with a probability in the range prob_range.
+    Returns list in order of class_labels, where each value corresponds to number of samples of that class predicted as target class with a probability in the range prob_range.
     Last value of the list is total # of rows with true label of target_class
+    :param prob_range: [min_prob_inclusive, max_prob_exclusive]
+    :param rows: 2d array, each row is probabilities assigned in order of class_labels, and last column is true label
     """
     label_index = len(class_labels)
     # Get index of target_class in class_labels
@@ -326,7 +327,7 @@ def bp_get_range_bps(assignments, class_labels):
 
 def get_balanced_purity_ranges(preds, class_labels, bin_size):
     """
-    Get balanced purity for each class, for each range of probabilities.  
+    Get balanced purity for each class, for each range of probabilities, for multiclass classifiers. 
     :param preds: List of Numpy rows of probabilites (last col is label) ; comes from np.concatenate(model.results)
     :param class_labels: class names in order to be treated
     :param bin_size: width of probability bin, usually 0.1
@@ -345,32 +346,6 @@ def get_balanced_purity_ranges(preds, class_labels, bin_size):
             cur_class_bps.append(cur_range_bp[class_name])
         class_to_bps[class_name] = cur_class_bps
     return class_to_bps
-
-
-def bp_binary_get_range_bps(assignments, class_labels):
-    """
-    Get balanced purity for each probability range threshold, and each class. For class A, get balanced purity at probs >=10%, probs>=20% and so on. Return as list, in order of ranges; each list contains dict from target/predicted class name to balanced purity at threshold.
-    :param assignments: [TP, FP, total P, total N] for each class, in order of class_labels from bp_binary_get_assignments
-    :param class_labels: labels in correct order.
-    """
-    range_class_bps = []
-    class_count_index = len(class_labels)
-    for prob_range_assgns in assignments:
-        class_bps = {cn: [] for cn in class_labels}
-        for targ_class_index, targ_class in enumerate(class_labels):
-            targ_class_assgns = prob_range_assgns[targ_class_index]
-
-            TP = targ_class_assgns[0]
-            FP = targ_class_assgns[1]
-            P = targ_class_assgns[2]
-            N = targ_class_assgns[3]
-
-            TPR = TP / P
-            FPR = FP / N
-            class_bps[targ_class] = TPR / (TPR + FPR)
-
-        range_class_bps.append(class_bps)
-    return range_class_bps
 
 
 def bp_binary_get_class_stats(target_class, prob_range, rows, class_labels):
@@ -399,8 +374,7 @@ def bp_binary_get_class_stats(target_class, prob_range, rows, class_labels):
         max_class_name = class_labels[max_class_index]
         # if the probability assigned to target_class is within the prob_range,
         # and it is the max prob
-        if target_class_prob >= min_prob_inc and target_class_prob <
-            max_prob_exc and max_class_name == target_class:
+        if target_class_prob >= min_prob_inc and target_class_prob < max_prob_exc and max_class_name == target_class:
                 # Add if TP or FP
             if true_class == target_class:
                 TP_count += 1
@@ -411,8 +385,8 @@ def bp_binary_get_class_stats(target_class, prob_range, rows, class_labels):
         # to any class
         if true_class == target_class and max_class_prob >= min_prob_inc and max_class_prob < max_prob_exc:
             target_class_count += 1
-        else:
-            non_target_class_count += 0
+        elif true_class != target_class and max_class_prob >= min_prob_inc and max_class_prob < max_prob_exc:
+            non_target_class_count += 1
 
     return [TP_count, FP_count, target_class_count, non_target_class_count]
 
@@ -439,18 +413,63 @@ def bp_binary_get_assignments(preds, class_labels, bin_size):
     return assignments
 
 
+def bp_binary_aggregate_assignments(assignments, class_labels, num_bins):
+    """
+    Aggregate assignments from max prob to lower probs (to make it thresholded, <=)
+    :param assignments: [TP, FP, total P, total N] for each class, in order of class_labels.
+    """
+    agg_assignments = np.zeros(
+        shape=(num_bins, len(class_labels), 4))
+
+    for index in reversed(range(num_bins)):
+        for target_class_index, target_class in enumerate(class_labels):
+            agg_assignments[index][target_class_index] = assignments[
+                index][target_class_index]
+            # If there is an index after this, add those (this is the aggregation)
+            if index < (num_bins - 1):
+                agg_assignments[index][target_class_index] = np.add(
+                    agg_assignments[index][target_class_index], agg_assignments[index + 1][target_class_index])
+    return agg_assignments
+
+
+def bp_binary_get_range_bps(assignments, class_labels):
+    """
+    Get balanced purity for each probability range threshold, and each class. For class A, get balanced purity at probs >=10%, probs>=20% and so on. Return as list, in order of ranges; each list contains dict from target/predicted class name to balanced purity at threshold.
+    :param assignments: [TP, FP, total P, total N] for each class, in order of class_labels from bp_binary_get_assignments
+    :param class_labels: labels in correct order.
+    """
+    range_class_bps = []
+    class_count_index = len(class_labels)
+    for prob_range_assgns in assignments:
+        class_bps = {cn: [] for cn in class_labels}
+        for targ_class_index, targ_class in enumerate(class_labels):
+            targ_class_assgns = prob_range_assgns[targ_class_index]
+
+            TP = targ_class_assgns[0]
+            FP = targ_class_assgns[1]
+            P = targ_class_assgns[2]
+            N = targ_class_assgns[3]
+
+            TPR = TP / P
+            FPR = FP / N
+            class_bps[targ_class] = TPR / (TPR + FPR)
+
+        range_class_bps.append(class_bps)
+    return range_class_bps
+
+
 def get_binary_balanced_purity_ranges(preds, class_labels, bin_size):
     """
-    Get balanced purity for each class, for each range of probabilities. 
-    Return dict. of class names list of length 10 (when bin_size=0.1), where each value contains samples
-    assigned probabilites in  that range.
+    Get balanced purity for each class, for each range of probabilities, for binary classifier. 
+    Return dict. of class names to balanced purity at each prob threshold (10 thresholds)
     :param preds: List of Numpy rows of probabilites (last col is label) 
     :param class_labels: class names in order to be treated
     :param bin_size: width of probability bin, usually 0.1
     """
     assignments = bp_binary_get_assignments(preds, class_labels, bin_size)
 
-    agg_assignments = bp_binary_get_class_stats(assignments, class_labels, num_bins=10)
+    agg_assignments = bp_binary_aggregate_assignments(
+        assignments, class_labels, num_bins=10)
 
     range_class_bps = bp_binary_get_range_bps(agg_assignments, class_labels)
     # Reformat, so that instead of list of dicts, it is a dict from class name to list.

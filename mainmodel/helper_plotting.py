@@ -60,18 +60,18 @@ def clean_class_names(class_names):
 
 
 def prep_err_bars(intervals, metrics):
-"""
-Convert confidence intervals to specific values to be plotted, because xerr values are +/- sizes relative to the data:
-"""
-if intervals is None:
-    return None
-errs = [[], []]
-for index, interval in enumerate(intervals):
-    min_bar = interval[0]
-    max_bar = interval[1]
-    errs[0].append(metrics[index] - min_bar)
-    errs[1].append(max_bar - metrics[index])
-return errs
+    """
+    Convert confidence intervals to specific values to be plotted, because xerr values are +/- sizes relative to the data:
+    """
+    if intervals is None:
+        return None
+    errs = [[], []]
+    for index, interval in enumerate(intervals):
+        min_bar = interval[0]
+        max_bar = interval[1]
+        errs[0].append(metrics[index] - min_bar)
+        errs[1].append(max_bar - metrics[index])
+    return errs
 
 
 def get_perc_ticks():
@@ -253,8 +253,6 @@ def plot_pc_curves_together(binary_model, ova_model, multi_model, indices):
     Plot balanced purity and completeness vs probability threshold for each class separately; combine this for all three classifiers onto a single figure.
     :param indices: class indices to plot (from class_labels)
     """
-    raise ValueError(
-        "Need to finish! Need to implement ranged balance purity for binary classifier. And test all ranged balanced purity functionality.")
     binary_range_metrics = binary_model.compute_probability_range_metrics(
         binary_model.results)
     ova_range_metrics = ova_model.compute_probability_range_metrics(
@@ -278,7 +276,7 @@ def plot_pc_curves_together(binary_model, ova_model, multi_model, indices):
 
         if plot_index == 0:
             # Add titles to top of plots
-            ax[plot_index][0].set_title("ova", fontsize=TICK_S)
+            ax[plot_index][0].set_title("Binary", fontsize=TICK_S)
             ax[plot_index][1].set_title("OVA", fontsize=TICK_S)
             ax[plot_index][2].set_title("Multi", fontsize=TICK_S)
 
