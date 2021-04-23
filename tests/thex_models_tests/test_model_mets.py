@@ -18,7 +18,7 @@ import warnings
 
 """
 
-Tests Visualization and Performance Measures of models
+Tests to make sure calculations of experimental performance (purity, completeness, balanced purity, aggregated balanced purity, etc.) is all correct.
 
 Test functions in MainModel through BinaryModel, MultiModel, and OvAModel, since MainModel is an abstract class
 
@@ -28,7 +28,7 @@ python -m unittest
 """
 
 
-class TestModelBalancedPurity(unittest.TestCase):
+class TestModelMetrics(unittest.TestCase):
 
     def generate_data(self, original, num_datapoints):
         data = []
@@ -82,6 +82,9 @@ class TestModelBalancedPurity(unittest.TestCase):
         self.agg_results = preds
         self.test_model = BinaryModel(data=fake_data,
                                       class_labels=self.class_labels)
+    ##############################################################
+    ########## BP Ranges                #########################
+    ##############################################################
 
     def test_bp_binary_get_class_stats(self):
         TDE_stats = bp_binary_get_class_stats(target_class="TDE",
@@ -157,7 +160,8 @@ class TestModelBalancedPurity(unittest.TestCase):
     def test_bp_get_class_stats(self):
         """
         bp_get_class_stats
-        Return list in order of class_labels, where each value corresponds to number of samples of that class predicted as target class with a probability in the range prob_range. Last value of the list is total # of rows with true label of target_class
+        # of rows with true label of target_class
+        Return list in order of class_labels, where each value corresponds to number of samples of that class predicted as target class with a probability in the range prob_range. Last value of the list is total
         """
 
         TDE_stats = bp_get_class_stats(target_class="TDE",
@@ -217,12 +221,64 @@ class TestModelBalancedPurity(unittest.TestCase):
         bp6 = np.around(list(range_bps[6].values()), decimals=2)
         self.assertTrue(np.array_equal(bp6, [0.68, 0.55, 0.42]))
 
-        # get_balanced_purity_ranges(preds, class_labels, bin_size)
+    def test_get_balanced_purity_ranges(self):
 
-        # compute_binary_balanced_purity
+        bps = get_balanced_purity_ranges(preds=self.agg_results,
+                                         class_labels=self.class_labels,
+                                         bin_size=0.1)
 
-        # compute_balanced_purity
+        TDE_bps = np.around(list(bps["TDE"]), decimals=2)
+        self.assertTrue(np.array_equal(TDE_bps[6:], [0.68, 0.76, 0.76, 0.75]))
 
-        # get_puritys_and_comps
+        II_bps = np.around(list(bps["II"]), decimals=2)
+        self.assertTrue(np.array_equal(II_bps[6:], [0.55, 0.69, 0.69, 0.67]))
 
-        # get_completeness_ranges
+        Ibc_bps = np.around(list(bps["Ib/c"]), decimals=2)
+        self.assertTrue(np.array_equal(Ibc_bps[6:], [0.42, 1.0, 1.0, 1.0]))
+
+    ##############################################################
+    ########## BP Averages                #########################
+    ##############################################################
+    def test_compute_balanced_purity(self):
+        """
+        Get balanced purity for each class, return as 2 dicts.
+        balanced purity = TPR/ (TPR+FPR)
+        """
+        # Binary
+        purities = compute_binary_balanced_purity(preds=self.agg_results,
+                                                  class_labels=self.class_labels)
+
+        self.assertEqual(round(purities["TDE"], 2), 0.78)
+        self.assertEqual(round(purities["II"], 2), 0.72)
+        self.assertEqual(round(purities["Ib/c"], 2), 0.62)
+        # Multi
+        purities = compute_balanced_purity(preds=self.agg_results,
+                                           class_labels=self.class_labels,
+                                           model_name="multi")
+
+        self.assertEqual(round(purities["TDE"], 2), 0.68)
+        self.assertEqual(round(purities["II"], 2), 0.55)
+        self.assertEqual(round(purities["Ib/c"], 2), 0.42)
+
+    def test_get_puritys_and_comps(self):
+        """
+        get_puritys_and_comps returns dict from class name to purity and a dict from class name to completeness.
+        """
+        class_metrics = {"TDE": {"TP": 10, "FP": 20, "FN": 5, "TN": 40}}
+        p, c = get_puritys_and_comps(class_metrics)
+        self.assertEqual(round(p["TDE"], 2), 0.33)
+        self.assertEqual(round(c["TDE"], 2), 0.67)
+
+    def test_get_completeness_ranges(self):
+        # true_positives, totals = range_metrics[class_name]
+        range_metrics = {}
+        TPS = [20, 10]
+        Totals = [50, 20]
+        range_metrics["TDE"] = [TPS, Totals]
+        class_counts = {}
+        class_counts["TDE"] = 70
+
+        cr = get_completeness_ranges(class_counts, range_metrics, "TDE")
+        print(cr)
+        self.assertEqual(round(cr[0], 2), round(30 / 70, 2))
+        self.assertEqual(round(cr[1], 2), round(10 / 70, 2))
