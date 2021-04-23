@@ -282,7 +282,8 @@ def plot_pc_curves_together(binary_model, ova_model, multi_model, indices):
             ax[plot_index][1].set_title("OVA", fontsize=TICK_S)
             ax[plot_index][2].set_title("Multi", fontsize=TICK_S)
 
-        plot_model_curves(class_name, ova_model, ova_range_metrics,  ax[plot_index][0])
+        plot_model_curves(class_name, binary_model,
+                          binary_range_metrics,  ax[plot_index][0])
         plot_model_curves(class_name, ova_model, ova_range_metrics,  ax[plot_index][1])
         mirror_ax = plot_model_curves(
             class_name, multi_model, multi_range_metrics, ax[plot_index][2])
