@@ -89,22 +89,18 @@ def get_accuracy(class_metrics, N):
     return TP_total / N
 
 
-def get_completeness_ranges(model, range_metrics, class_name):
+def get_completeness_ranges(class_counts, range_metrics, class_name):
     """
     Get completeness, for each probability range threshold, for class class_name
+    :param range_metrics: dict from class name : TPs and Total Ps for each prob range 
     """
     true_positives, totals = range_metrics[class_name]
-    class_total = model.class_counts[class_name]
+    class_total = class_counts[class_name]
     comps = []
     TP_count = 0
-    total_count = 0
     for index in reversed(range(len(true_positives))):
         cur_c = 0  # Current completeness
         TP_count += true_positives[index]
-        total_count += totals[index]
-        if total_count != 0:
-            # positive class samples / totals # with prob in range
-            cur_p = TP_count / total_count
         if class_total != 0:
             cur_c = TP_count / class_total
         comps.append(cur_c)
@@ -117,7 +113,7 @@ def get_puritys_and_comps(class_metrics):
     Get completeness & purity for each class, return as 2 dicts.
     Completeness = TP/(TP+FN) 
     Purity = TP/(TP+FP)
-    :param class_metrics: Map from class name to metrics (which are map from TP, TN, FP, FN to values)
+    :param class_metrics: Map from class name to metrics (which is map from TP, TN, FP, FN to values)
     """
     purities = {}
     comps = {}
@@ -140,11 +136,11 @@ def get_puritys_and_comps(class_metrics):
 
 def compute_binary_balanced_purity(preds, class_labels):
     """
-    Get completeness & balanced purity for each class, return as 2 dicts.
+    Get balanced purity for each class, dict from class name to balanced purity.
     balanced purity = TPR/ (TPR+FPR)
     :param preds: List of Numpy rows of probabilites (last col is label)  
     """
-    purities = {}
+
     # assignments: get number of class predicted as key class vs. number of
     # NOT class predicted as key class
     assignments = {cn: {cn: 0, "NOT": 0} for cn in class_labels}
@@ -162,6 +158,7 @@ def compute_binary_balanced_purity(preds, class_labels):
         class_counts[true_class] += 1
 
     total = sum(class_counts.values())
+    purities = OrderedDict()
     for class_name in class_labels:
         # All assignments for this class.
         class_assgs = assignments[class_name]

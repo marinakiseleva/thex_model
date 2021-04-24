@@ -236,7 +236,7 @@ def plot_model_curves(class_name, model, range_metrics, ax):
         purities = get_balanced_purity_ranges(preds, model.class_labels, 0.1)[class_name]
 
     # Get completenesses
-    comps = get_completeness_ranges(model, range_metrics, class_name)
+    comps = get_completeness_ranges(model.class_counts, range_metrics, class_name)
 
     print("\n\n P-C metrics for : " + class_name)
     plot_axis(ax, comps, C_BAR_COLOR)
