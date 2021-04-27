@@ -39,26 +39,6 @@ def load_prev_exp(exp_dir, expnum, model):
 # Plotting formatting
 
 
-def clean_class_name(class_name):
-    pretty_class_name = class_name
-    if UNDEF_CLASS in class_name:
-        pretty_class_name = class_name.replace(UNDEF_CLASS, "")
-        pretty_class_name = pretty_class_name + " (unspec.)"
-    return pretty_class_name
-
-
-def clean_class_names(class_names):
-    """
-    Update all references to Unspecified class to be class (unspec.)
-    """
-    new_class_names = []
-    for class_name in class_names:
-        pretty_class_name = clean_class_name(class_name)
-        pretty_class_name.strip()
-        new_class_names.append(pretty_class_name)
-    return new_class_names
-
-
 def prep_err_bars(intervals, metrics):
     """
     Convert confidence intervals to specific values to be plotted, because xerr values are +/- sizes relative to the data:
@@ -238,7 +218,12 @@ def plot_model_curves(class_name, model, range_metrics, ax):
     # Get completenesses
     comps = get_completeness_ranges(model.class_counts, range_metrics, class_name)
 
-    print("\n\n P-C metrics for : " + class_name)
+    print("\n\n  Model: " + str(model.name) + ", class: " + class_name)
+    print("Completeness")
+    print(comps)
+    print("Purity")
+    print(purities)
+
     plot_axis(ax, comps, C_BAR_COLOR)
     ax2 = ax.twinx()  # instantiate a second axes that shares the same x-axis
     ax2.set_ylim([0, 1])
@@ -305,7 +290,8 @@ def plot_pc_curves_together(binary_model, ova_model, multi_model, indices):
     plt.xticks(x_indices, ["", "10", "", "30", "", "50", "", "70", "", "90"])
     rc('text', usetex=True)
     f.text(0.5, 0.08, r'Probability $\geq$X\%', fontsize=TICK_S, ha='center')
-    f.text(0.03, .5, 'Purity (\%)',
+    bp = "Balanced " if binary_model.balanced_purity else ""
+    f.text(0.03, .5, bp + 'Purity (\%)',
            fontsize=TICK_S, va='center', rotation='vertical', color=P_BAR_COLOR)
     f.text(0.98, .5, 'Completeness (\%)',
            fontsize=TICK_S, va='center', rotation='vertical', color=C_BAR_COLOR)

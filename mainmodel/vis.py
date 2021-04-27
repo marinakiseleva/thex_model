@@ -288,10 +288,24 @@ class MainModelVisualization:
                 class_metrics[class_name]["TN"] += 1
         return class_metrics
 
+    def get_pc_performance(self, pc_per_trial):
+        """
+        Get balanced purity, purity, and completeness, averaged over folds/trials. Return purity and completeness. (return balanced purity if flag is set)
+        """
+        N = self.num_runs if self.num_runs is not None else self.num_folds
+        bps, ps, cs = self.get_avg_pc(pc_per_trial, N)
+
+        thex_utils.pretty_print_dict(bps, self.name + " Balanced Purity")
+        thex_utils.pretty_print_dict(ps, self.name + " Purity")
+        thex_utils.pretty_print_dict(cs, self.name + " Completeness")
+        if self.balanced_purity:
+            ps = bps
+        return ps, cs
+
     def get_pc_per_trial(self, results):
         """
-        Get purity and completeness per trial/fold, per class
-        Return [[c1,p1], [c2,p2] ..., [cN, pN]] where each c and p is a map from class names to completeness or purity, respectively
+        Get balanced purity, purity, and completeness per trial/fold, per class
+        Return [[bp1,p1,c1], [bp2,p2,c2] ..., [bpN, pN, cN]] where each measure is a map from class names to value.
         """
         t_performances = []  # performance per trial/fold
         for index, trial in enumerate(results):
@@ -303,42 +317,45 @@ class MainModelVisualization:
             # Compute purity & completeness for this trial/fold (per class)
 
             puritys, comps = get_puritys_and_comps(class_metrics)
-            if self.balanced_purity:
-                # overwrite purities with balanced ones.
-                puritys = compute_balanced_purity(
-                    trial, self.class_labels, self.name)
-            t_performances.append([puritys, comps])
+
+            bal_puritys = compute_balanced_purity(
+                trial, self.class_labels, self.name)
+
+            t_performances.append([bal_puritys, puritys, comps])
         return t_performances
 
     def get_avg_pc(self, t_performances, N):
         """
-        Compute average purity & completeness over folds/trials per class
+        Compute average balanced purity, normal purity, and completeness over folds/trials per class
         :param t_performances: Return of self.get_pc_per_trial
-        :param N: Number of trials/folds
+        :param N: Number of folds/trials
         """
         # Average purity & completeness over folds/trials (per class)
-        avg_comps = {cn: 0 for cn in self.class_labels}
-        avg_purities = {cn: 0 for cn in self.class_labels}
+        mets = {v: {cn: 0 for cn in self.class_labels} for v in ["BP", "P", "C"]}
         for class_name in self.class_labels:
-            p_N = N  # N values for purity
+            # Counters for valid values of balanced purity and purity
+            # purity could be None for fold with no TP.
+            p_N = N  # N folds/trials
+            bp_N = N
             # Aggregate over trials/folds
-            for p, c in t_performances:
+            for bp, p, c in t_performances:
+                # No purity for this trial -> exclude from average
+                if bp[class_name] is None:
+                    bp_N = bp_N - 1
+                else:
+                    mets["BP"][class_name] += bp[class_name]
                 if p[class_name] is None:
-                    # No purity for this trial -> exclude from average
                     p_N = p_N - 1
                 else:
-                    avg_purities[class_name] += p[class_name]
+                    mets["P"][class_name] += p[class_name]
 
-                avg_comps[class_name] += c[class_name]
-            # Get average
-            if p_N == 0:
-                print("T Performances in get_avc_pc " + str(t_performances))
-                avg_purities[class_name] = 0
-            else:
-                avg_purities[class_name] = avg_purities[class_name] / p_N
-            avg_comps[class_name] = avg_comps[class_name] / N
+                mets["C"][class_name] += c[class_name]
+            # Average
+            mets["BP"][class_name] = mets["BP"][class_name] / bp_N
+            mets["P"][class_name] = mets["P"][class_name] / p_N
+            mets["C"][class_name] = mets["C"][class_name] / N
 
-        return avg_purities, avg_comps
+        return mets["BP"], mets["P"], mets["C"]
 
     def plot_confusion_matrix(self, results):
         """

@@ -10,6 +10,26 @@ from thex_data.data_consts import UNDEF_CLASS, ORDERED_CLASSES
 # Computing helpers
 
 
+def clean_class_name(class_name):
+    pretty_class_name = class_name
+    if UNDEF_CLASS in class_name:
+        pretty_class_name = class_name.replace(UNDEF_CLASS, "")
+        pretty_class_name = pretty_class_name + " (unspec.)"
+    return pretty_class_name
+
+
+def clean_class_names(class_names):
+    """
+    Update all references to Unspecified class to be class (unspec.)
+    """
+    new_class_names = []
+    for class_name in class_names:
+        pretty_class_name = clean_class_name(class_name)
+        pretty_class_name.strip()
+        new_class_names.append(pretty_class_name)
+    return new_class_names
+
+
 def get_ordered_metrics(class_metrics, baselines=None, intervals=None):
     """
     Reorder metrics and reformat class names in hierarchy groupings
@@ -515,12 +535,11 @@ def compute_confusion_matrix(results, class_labels):
     return cm
 
 
-def compute_confintvls(all_pc, class_labels):
+def compute_confintvls(all_pc, class_labels, balanced_purity):
     """
     Calculate 1sigma error bars for each class
     [µ − σ, µ + σ], where sigma is the standard deviation
-
-    :param all_pc: List with length of N, each item is [pmap, cmap] for that fold/trial, where pmap is map from class name to purity
+    :param all_pc: List with length of N, each item is [bpmap, pmap, cmap] for that fold/trial (balanced purity, purity, completeness maps)
     """
 
     def get_cis(values, N):
@@ -552,14 +571,18 @@ def compute_confintvls(all_pc, class_labels):
         class_purities = []
         class_comps = []
         for pc in all_pc:
-            class_purity = pc[0][class_name]
-            class_compeleteness = pc[1][class_name]
+            if balanced_purity:
+                class_purity = pc[0][class_name]
+            else:
+                class_purity = pc[1][class_name]
+
             if class_purity is not None:
                 class_purities.append(class_purity)
             else:
                 print("No measurable purity for " + class_name)
                 N_p = N_p - 1
 
+            class_compeleteness = pc[2][class_name]
             if class_compeleteness is None:
                 raise ValueError("Completeness should never be None for " + class_name)
 

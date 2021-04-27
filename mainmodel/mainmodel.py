@@ -313,7 +313,7 @@ class MainModel(ABC, MainModelVisualization):
         """
         N = self.num_runs if self.num_runs is not None else self.num_folds
         pc_per_trial = self.get_pc_per_trial(self.results)
-        ps, cs = self.get_avg_pc(pc_per_trial, N)
+        ps, cs = self.get_pc_performance(pc_per_trial)
 
         self.plot_all_metrics(ps, cs, pc_per_trial, self.y)
 
