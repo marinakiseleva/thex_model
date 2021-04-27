@@ -153,7 +153,7 @@ def pretty_print_mets(class_labels, vals, baselines, intvls):
     for index in range(len(class_labels) - 1, -1, -1):
         val = round((vals[index] * 100), 2)
         ci = round(((intvls[index][1] - intvls[index][0]) * 100) / 2, 2)
-        print(class_labels[index] + " : " + str(val) + "\%\pm" + str(ci) + "\%")
+        print(class_labels[index] + " ($" + str(val) + "\%\pm" + str(ci) + "\%$)")
 
     print("\n" + "Baselines\n" + str(baselines))
 
