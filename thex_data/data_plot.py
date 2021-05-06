@@ -140,7 +140,7 @@ def plot_feature_distribution(model_dir, df, feature, class_labels):
     plt.xlabel(feature.capitalize(), fontsize=LAB_S)
     plt.ylabel("Normalized density", fontsize=LAB_S)
     plt.legend()
-    plt.show()
+    util.display_and_save_plot(model_dir, "feature_" + str(feature))
 
 
 def plot_feature_hist(model_dir, df, feature, class_labels):
