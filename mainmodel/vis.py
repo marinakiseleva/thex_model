@@ -391,7 +391,8 @@ class MainModelVisualization:
             self.get_num_classes(),
             self.balanced_purity,
             self.class_priors)
-        p_intvls, c_intvls = compute_confintvls(all_pc, self.class_labels)
+        p_intvls, c_intvls = compute_confintvls(
+            all_pc, self.class_labels, self.balanced_purity)
 
         f, ax = plt.subplots(nrows=1, ncols=2,
                              sharex=True, sharey=True,
