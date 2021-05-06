@@ -91,18 +91,21 @@ class MainModel(ABC, MainModelVisualization):
         if data_filters['class_labels'] is not None:
             self.class_labels = copy.deepcopy(data_filters['class_labels'])
 
+        if data_filters['lsst_test']:
+            self.class_labels = ["Unspecified Ia", "Unspecified II",
+                                 "Ia-91bg", "TDE", "Ic", "Ib/c", "Unspecified Ib",  "IIb"]
+
         X, y = filter_data(X, y, data_filters, self.class_labels, self.class_hier)
 
         # Aggregate Ibc class if making LSST-like.
         if data_filters['lsst_test']:
-            print(
-                "\n\n Special case: LSST Test. Grouping Ib, Ic, and Ib/c all into Ibc class name. ")
-            spec_labels = ["Ib", "Ic", "Ib/c", "Unspecified Ib",  "IIb"]
+            print("\nLSST Test: Grouping Ib, Ic, & Ib/c into Ibc.")
+            spec_labels = ["Ic", "Ib/c", "Unspecified Ib",  "IIb"]
             for index, row in y.iterrows():
-                labels = util.convert_str_to_list(row[TARGET_LABEL])
-                com = list(set(spec_labels) & set(labels))
-                if len(com) > 0:
-                    row[TARGET_LABEL] += ", Ibc"
+                for l in spec_labels:
+                    if l in row[TARGET_LABEL]:
+                        row[TARGET_LABEL] += ", Ibc"
+                        break
             for c in spec_labels:
                 if c in self.class_labels:
                     self.class_labels.remove(c)
