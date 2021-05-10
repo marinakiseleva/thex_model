@@ -261,7 +261,7 @@ def plot_class_hist(model_dir, class_names, counts):
     ax.tick_params(axis='x', which='both',
                    labelsize=tick_size, rotation=-90)
 
-    plt.xlabel('Host-Galaxies Count', fontsize=label_size)
+    plt.xlabel('Host galaxies count (log scale)', fontsize=label_size)
     plt.tight_layout()
     util.display_and_save_plot(
         model_dir, "Distribution of Transient Types in Data Sample")
