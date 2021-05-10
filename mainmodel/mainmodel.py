@@ -573,7 +573,6 @@ class MainModel(ABC, MainModelVisualization):
 
             # Train
             self.train_model(X_train, y_train)
-            self.datas.append(X_test)
 
             # Save this to recalibrate probabilities
             train_probs = self.get_all_class_probabilities(X_train)
@@ -585,6 +584,8 @@ class MainModel(ABC, MainModelVisualization):
             # Add labels as column to probabilities, for later evaluation
             label_column = y_test[TARGET_LABEL].values.reshape(-1, 1)
             test_probs = np.hstack((test_probs, label_column))
+
+            self.datas.append([X_test, test_probs])
 
             # # Calibrate probabilities
             # test_probs = self.calibrate_probabilities_linear(test_probs, train_probs)
