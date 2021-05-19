@@ -4,7 +4,7 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold
-from sklearn.neighbors.kde import KernelDensity
+from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import StratifiedKFold
 from sklearn.utils.class_weight import compute_sample_weight
 

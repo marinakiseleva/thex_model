@@ -5,7 +5,7 @@ from functools import partial
 
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import GridSearchCV
-from sklearn.neighbors.kde import KernelDensity
+from sklearn.neighbors import KernelDensity
 from sklearn.metrics import brier_score_loss
 from sklearn.utils.class_weight import compute_sample_weight
 

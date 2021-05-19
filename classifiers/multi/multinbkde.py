@@ -2,7 +2,7 @@ import sys
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import GridSearchCV
-from sklearn.neighbors.kde import KernelDensity
+from sklearn.neighbors import KernelDensity
 
 import utilities.utilities as thex_utils
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT, DEFAULT_KERNEL

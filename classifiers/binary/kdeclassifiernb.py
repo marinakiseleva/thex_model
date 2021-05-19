@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 from sklearn.model_selection import GridSearchCV
-from sklearn.neighbors.kde import KernelDensity
+from sklearn.neighbors import KernelDensity
 
 from thex_data.data_consts import TARGET_LABEL, CPU_COUNT, DEFAULT_KERNEL
 from classifiers.plot_fit import plot_fits
