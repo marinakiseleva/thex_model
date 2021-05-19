@@ -91,7 +91,7 @@ class MainModel(ABC, MainModelVisualization):
         if data_filters['class_labels'] is not None:
             self.class_labels = copy.deepcopy(data_filters['class_labels'])
 
-        if data_filters['lsst_test']:
+        if data_filters['lsst_test'] and data_filters['class_labels'] is  None:
             self.class_labels = ["Unspecified Ia", "Unspecified II",
                                  "Ia-91bg", "TDE", "Ic", "Ib/c", "Unspecified Ib",  "IIb"]
 
