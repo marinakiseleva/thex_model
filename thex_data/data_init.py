@@ -13,9 +13,11 @@ from thex_data.data_consts import EXCLUDE_COLS, ORIG_TARGET_LABEL
 
 def collect_cols(cols, col_matches, data_file):
     """
-    Return all columns that contain at least one string in the list of col_matches or all columns in cols list
+    Return all columns that contain at least one string in the list of 
+    col_matches or all columns in cols list
     :param cols: List of columns to filter on
-    :param col_matches: List of strings by which columns will be selected. For example: AllWISE will use all AlLWISE columns.
+    :param col_matches: List of strings by which columns will be selected. 
+    For example: AllWISE will use all AlLWISE columns.
     """
     col_list = []
     if cols is not None:
@@ -39,12 +41,12 @@ def collect_cols(cols, col_matches, data_file):
                 col_list.remove(ORIG_TARGET_LABEL)
 
     # Drop all non-numeric columns
-    column_list_numeric = set()
-    for c in col_list:
-        if not any(col in c for col in EXCLUDE_COLS):
-            column_list_numeric.add(c)  # Keep only numeric columns
+    # column_list_numeric = set()
+    # for c in col_list:
+    #     if not any(col in c for col in EXCLUDE_COLS):
+    #         column_list_numeric.add(c)  # Keep only numeric columns
 
-    return list(column_list_numeric)
+    return list(col_list)
 
 
 def collect_data(data_file):

@@ -65,7 +65,8 @@ class MainModel(ABC, MainModelVisualization):
                         'linear_calib': False,
                         'lsst_test': False,  # if True, groups Ib/c, Ib, and Ic as Ib/c
                         'Zmodel': False,
-                        'balanced_purity': False
+                        'balanced_purity': False,
+                        'identified_only': False
                         }
         # Use default for filters not passed in.
         for data_filter in user_data_filters.keys():

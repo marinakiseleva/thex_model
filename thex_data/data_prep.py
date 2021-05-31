@@ -39,6 +39,11 @@ def get_data(col_list, data_filters):
 
     df = drop_conflicts(df)
 
+    if data_filters['identified_only']:
+        df= df.loc[df['is_identified'] == True]
+        df.drop(labels='is_identified',axis=1,inplace=True)
+
+
     if df.shape[0] == 0:
         raise ValueError("\nNo data to run model on.\n")
 
