@@ -44,6 +44,7 @@ def get_data(col_list, data_filters):
 
     if data_filters['case_code'] is not None:
         df= df.loc[df['case_code'].isin(data_filters['case_code'])] 
+        df.drop(labels='case_code',axis=1,inplace=True)
 
 
     if df.shape[0] == 0:
