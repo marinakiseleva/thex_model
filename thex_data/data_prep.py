@@ -15,6 +15,9 @@ def get_data(col_list, data_filters):
     :param data_columns: List of columns to filter data on
     :param **data_filters: Mapping of data filters to values passed in by user
     """
+    if data_filters['case_code'] is not None:
+        col_list.append("case_code")
+
     df = data_filters['data']
     if data_filters['data'] is None:
         df = collect_data(data_filters['data_file'])
@@ -39,9 +42,8 @@ def get_data(col_list, data_filters):
 
     df = drop_conflicts(df)
 
-    if data_filters['identified_only']:
-        df= df.loc[df['is_identified'] == True]
-        df.drop(labels='is_identified',axis=1,inplace=True)
+    if data_filters['case_code'] is not None:
+        df= df.loc[df['case_code'].isin(data_filters['case_code'])] 
 
 
     if df.shape[0] == 0:

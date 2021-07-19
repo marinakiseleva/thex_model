@@ -9,7 +9,7 @@ import os
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
 
 # Default data path - FITS file of transient/galaxy data
-DATA_PATH = ROOT_DIR + "/../../data/catalogs/v7/THEx-assembled-v7.1a-mags-legacy-xcalib-minxcal.fits"
+DATA_PATH = ROOT_DIR + "/../../data/catalogs/v8/THEx-v8.0-release.mags-xcalib.min-xcal.fits"
 
 # Runtime specs
 CPU_COUNT = 12
@@ -32,7 +32,7 @@ BSLN_COLOR = "#ff1a1a"
 BAR_EDGE_COLOR = "black"
 
 # ORIG_TARGET_LABEL: Database defined column name - converted to TARGET_LABEL in project
-ORIG_TARGET_LABEL = 'claimedtype'
+ORIG_TARGET_LABEL = 'revised_type'
 TARGET_LABEL = 'transient_type'
 UNKNOWN_LABEL = 'Unknown'
 PRED_LABEL = 'predicted_class'

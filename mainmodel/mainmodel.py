@@ -66,7 +66,7 @@ class MainModel(ABC, MainModelVisualization):
                         'lsst_test': False,  # if True, groups Ib/c, Ib, and Ic as Ib/c
                         'Zmodel': False,
                         'balanced_purity': False,
-                        'identified_only': False
+                        'case_code': None
                         }
         # Use default for filters not passed in.
         for data_filter in user_data_filters.keys():
@@ -711,9 +711,13 @@ class MainModel(ABC, MainModelVisualization):
 
     def compute_probability_range_metrics(self, results, bin_size=0.1, concat=True):
         """
-        Returns map of class name to true positives & total count per probability bin. Also saves probability rates and # of samples in each class to maps (self.class_prob_rates, self.class_positives)
-        :param results: List of 2D Numpy arrays, with each row corresponding to sample, and each column the probability of that class, in order of self.class_labels & the last column containing the full, true label
-        :param bin_size: Size of each bin (range of probabilities) to consider at a time; must be betwen 0 and 1
+        Returns map of class name to TPs & total count per probability bin. 
+        Saves % of positives in each bin to self.class_prob_rates
+        Saves # of positives in each bin to self.class_positives
+        :param results: List of 2D Numpy arrays, with each row corresponding to sample,
+            and each column the probability of that class,
+            in order of self.class_labels & the last column containing the full, true label
+        :param bin_size: Size of each bin; must be betwen 0 and 1
         :return range_metrics: Map of classes to [TP_range_sums, total_range_sums]
             total_range_sums: # of samples with probability in range for this class
             TP_range_sums: true positives per range

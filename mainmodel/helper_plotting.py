@@ -154,7 +154,7 @@ def plot_rates_together(binary_model, ova_model, multi_model, indices=None):
     mpl.rcParams['font.family'] = 'serif'
 
     f.text(0.5, 0.08, 'Assigned Probability ' + r' $\pm10\%$', fontsize=14, ha='center')
-    f.text(0.03, .5, r'Empirical Probability $\equiv$ TP/Total ($\%$)',
+    f.text(0.03, .5, r'Empirical Probability $\equiv$ P/Total ($\%$)',
            fontsize=14, va='center', rotation='vertical')
     plt.subplots_adjust(wspace=0, hspace=0)
     f.savefig(ROOT_DIR + "/output/custom_figures/merged_metrics" +
