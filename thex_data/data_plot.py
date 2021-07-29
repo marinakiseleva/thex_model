@@ -90,9 +90,9 @@ def visualize_completeness(model_dir, X, class_labels, data_completeness):
     f, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
 
     a = plt.pcolor(df, vmin=0, vmax=1, cmap='gist_heat')
-    plt.yticks(ticks=np.arange(len(df.index)) + 0.5,
+    plt.yticks(ticks=np.arange(len(df.index)) + 0.6,
                labels=df.index,
-               fontsize=TICK_S + 1)
+               fontsize=TICK_S-2)
     plt.xticks(ticks=np.arange(len(df.columns)) + 0.5,
                labels=df.columns,
                fontsize=TICK_S + 2)
