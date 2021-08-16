@@ -144,8 +144,8 @@ def get_puritys_and_comps(class_metrics):
         FN = metrics["FN"]
         # Ensure there are some samples of this class
         if TP + FN == 0:
-            raise ValueError("No samples for class " + class_name)
-        comps[class_name] = TP / (TP + FN)
+            print("No samples for class " + class_name)
+        comps[class_name] = TP / (TP + FN) if TP + FN > 0 else 0
         purities[class_name] = TP / (TP + FP) if TP + FP > 0 else 0
     return purities, comps
 
