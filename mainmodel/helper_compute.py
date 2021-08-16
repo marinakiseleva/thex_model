@@ -219,7 +219,7 @@ def compute_balanced_purity(preds, class_labels, model_name):
         TPR = class_assgs[class_name] / class_counts[class_name]
         den = 0
         for ck in class_assgs.keys():
-            den += class_assgs[ck] / class_counts[ck]
+            den += class_assgs[ck] / class_counts[ck] if class_counts[ck] > 0 else 0
         # if den is 0, there is no purity measure because nothing was classified
         # as this class
         purities[class_name] = TPR / den if den > 0 else None
