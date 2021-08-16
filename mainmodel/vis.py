@@ -351,9 +351,9 @@ class MainModelVisualization:
 
                 mets["C"][class_name] += c[class_name]
             # Average
-            mets["BP"][class_name] = mets["BP"][class_name] / bp_N
-            mets["P"][class_name] = mets["P"][class_name] / p_N
-            mets["C"][class_name] = mets["C"][class_name] / N
+            mets["BP"][class_name] = mets["BP"][class_name] / bp_N if bp_N > 0 else 0
+            mets["P"][class_name] = mets["P"][class_name] / p_N if p_N > 0 else 0
+            mets["C"][class_name] = mets["C"][class_name] / N if N > 0 else 0
 
         return mets["BP"], mets["P"], mets["C"]
 
