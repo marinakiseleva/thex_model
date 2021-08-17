@@ -144,8 +144,8 @@ def get_puritys_and_comps(class_metrics):
         FN = metrics["FN"]
         # Ensure there are some samples of this class
         if TP + FN == 0:
-            raise ValueError("No samples for class " + class_name)
-        comps[class_name] = TP / (TP + FN)
+            print("No samples for class " + class_name)
+        comps[class_name] = TP / (TP + FN) if TP + FN > 0 else 0
         purities[class_name] = TP / (TP + FP) if TP + FP > 0 else 0
     return purities, comps
 
@@ -219,7 +219,7 @@ def compute_balanced_purity(preds, class_labels, model_name):
         TPR = class_assgs[class_name] / class_counts[class_name]
         den = 0
         for ck in class_assgs.keys():
-            den += class_assgs[ck] / class_counts[ck]
+            den += class_assgs[ck] / class_counts[ck] if class_counts[ck] > 0 else 0
         # if den is 0, there is no purity measure because nothing was classified
         # as this class
         purities[class_name] = TPR / den if den > 0 else None

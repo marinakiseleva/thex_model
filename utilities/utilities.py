@@ -34,6 +34,21 @@ def assign_levels(tree, mapping, node, level):
     return mapping
 
 
+def group_labels(y, class_labels, spec_labels, new_label):
+
+    print("\nGrouping " + str(spec_labels) + "into " + new_label)
+    for index, row in y.iterrows():
+        for l in convert_str_to_list(row[TARGET_LABEL]):
+            if l in spec_labels:
+                row[TARGET_LABEL] += ", " + new_label
+                break
+    for c in spec_labels:
+        if c in class_labels:
+            class_labels.remove(c)
+    class_labels.append(new_label)
+    return y, class_labels
+
+
 def add_unspecified_labels_to_data(y, class_levels):
     """
     Add unspecified label for each tree parent in data's list of labels

@@ -70,7 +70,7 @@ ORDERED_CLASSES = ['Ia',
                    'Ibc',
                    'Ib/c',
                    # 'Ib/c Pec',
-
+                   'II (cust.)',
                    'II',
                    'II P',
                    'II L',
