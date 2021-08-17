@@ -93,7 +93,7 @@ class MainModel(ABC, MainModelVisualization):
             self.class_labels = copy.deepcopy(data_filters['class_labels'])
 
         if data_filters['lsst_test'] and data_filters['class_labels'] is None:
-            self.class_labels = ["Unspecified Ia", "Unspecified II", "IIn",
+            self.class_labels = ["Unspecified Ia", "II",
                                  "Ia-91bg", "TDE", "Ic", "Ib/c", "Ib", "SLSN-I"]
 
         X, y = filter_data(X, y, data_filters, self.class_labels, self.class_hier)
@@ -103,9 +103,6 @@ class MainModel(ABC, MainModelVisualization):
 
             y, self.class_labels = util.group_labels(
                 y, self.class_labels, ["Ib", "Ic", "Ib/c"], "Ibc")
-
-            y, self.class_labels = util.group_labels(
-                y, self.class_labels, ["Unspecified II", "IIn"], "II (cust.)")
 
         # Use only redshift as a feature in Zmodel.
         if data_filters['Zmodel']:
