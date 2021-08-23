@@ -92,7 +92,7 @@ class MainModel(ABC, MainModelVisualization):
         if data_filters['class_labels'] is not None:
             self.class_labels = copy.deepcopy(data_filters['class_labels'])
 
-        if data_filters['lsst_test'] and data_filters['class_labels'] is None:
+        if data_filters['lsst_test']:
             self.class_labels = ["Unspecified Ia", "II",
                                  "Ia-91bg", "TDE", "Ic", "Ib/c", "Ib", "SLSN-I"]
 
@@ -100,7 +100,6 @@ class MainModel(ABC, MainModelVisualization):
 
         # Aggregate Ibc class if making LSST-like.
         if data_filters['lsst_test']:
-
             y, self.class_labels = util.group_labels(
                 y, self.class_labels, ["Ib", "Ic", "Ib/c"], "Ibc")
 
@@ -128,6 +127,9 @@ class MainModel(ABC, MainModelVisualization):
             total = sum(self.class_counts.values())
             for c in self.class_labels:
                 self.class_priors[c] = round(self.class_counts[c] / total, 2)
+                if self.class_priors[c] == 0:
+                    # Lowest threshold is 1% prior
+                    self.class_priors[c] = 0.001
             print("\nClass Priors:\n" + str(self.class_priors))
         else:
             self.class_priors = None
