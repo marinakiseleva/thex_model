@@ -163,7 +163,11 @@ def convert_str_to_list(input_string):
 
 def pretty_print_mets(class_labels, vals, baselines, intvls):
     """
-    :param vals: list in order of class labels
+    Print out metrics in Latex style as plus/minus error. 
+    :param class_labels: List of classes in order 
+    :param vals: list of metrics (e.g. purity) in order of class labels
+    :param baselines: random baselines, as list, in order of class labels
+    :param intvls: 2sigma confidence intervals in order of class labels
     """
     for index in range(len(class_labels) - 1, -1, -1):
         val = round((vals[index] * 100), 2)
