@@ -78,7 +78,6 @@ def plot_model_rates(class_name, model, ax):
     Plots rates for this model/class on axis, with annotations
     """
     true_positives, totals = model.range_metrics[class_name]
-    pos_class_counts_per_range = np.array(model.class_positives[class_name])
     prob_rates = model.class_prob_rates[class_name]
 
     bins = np.arange(5)

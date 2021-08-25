@@ -537,7 +537,7 @@ def compute_confusion_matrix(results, class_labels):
 
 def compute_confintvls(all_pc, class_labels, balanced_purity):
     """
-    Calculate 1sigma error bars for each class
+    Calculate 2*sigma error bars for each class
     [µ − σ, µ + σ], where sigma is the standard deviation
     :param all_pc: List with length of N, each item is [bpmap, pmap, cmap] for that fold/trial (balanced purity, purity, completeness maps)
     """
