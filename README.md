@@ -6,7 +6,7 @@ Source code contributing to the research of the Transient Host Exchange (THEx) a
 To install:
 ```
 pip install -r requirements.txt
-python setup.py install
+python setup.py develop
 ```
 
 And install this version of hmc in the same environment, like so
