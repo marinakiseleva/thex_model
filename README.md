@@ -5,7 +5,8 @@ Source code contributing to the research of the Transient Host Exchange (THEx) a
 # Set-Up
 To install:
 ```
-pip install -i https://test.pypi.org/simple/ thex-model==3.6
+pip install -r requirements.txt
+python setup.py install
 ```
 
 And install this version of hmc in the same environment, like so
