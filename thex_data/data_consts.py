@@ -54,6 +54,7 @@ ORDERED_CLASSES = ['Ia',
                    'Ia-02es',
                    'Ia-99aa',
                    'Ia-00cx',
+                   'Ia-HV',
                    'Ca-rich',
 
                    'CC',
