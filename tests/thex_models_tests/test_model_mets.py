@@ -82,6 +82,10 @@ class TestModelMetrics(unittest.TestCase):
         self.agg_results = preds
         self.test_model = BinaryModel(data=fake_data,
                                       class_labels=self.class_labels)
+
+        self.class_counts = self.test_model.get_class_counts(
+            pd.DataFrame(preds).rename({3: "transient_type"}, axis=1))
+
     ##############################################################
     ########## BP Ranges                #########################
     ##############################################################
@@ -91,13 +95,13 @@ class TestModelMetrics(unittest.TestCase):
                                               prob_range=[0.9, 1],
                                               rows=self.agg_results,
                                               class_labels=self.class_labels)
-        self.assertEqual(TDE_stats, [3, 1, 4, 6])  # TP, FP, P, N
+        self.assertEqual(TDE_stats, [3, 1])  # TP, FP, P, N
         II_stats = bp_binary_get_class_stats(target_class="II",
                                              prob_range=[0.9, 1],
                                              rows=self.agg_results,
                                              class_labels=self.class_labels)
 
-        self.assertEqual(II_stats, [2, 2, 2, 8])  # TP, FP, P, N
+        self.assertEqual(II_stats, [2, 2])  # TP, FP, P, N
 
     def test_bp_binary_get_assignments(self):
         """
@@ -106,8 +110,8 @@ class TestModelMetrics(unittest.TestCase):
         assgs = bp_binary_get_assignments(preds=self.agg_results,
                                           class_labels=self.class_labels,
                                           bin_size=0.1)
-        self.assertEqual(assgs[8], [[1, 0, 1, 0], [0, 0, 0, 1], [0, 0, 0, 1]])
-        self.assertEqual(assgs[9], [[3, 1, 4, 6], [2, 2, 2, 8], [2, 0, 4, 6]])
+        self.assertEqual(assgs[8], [[1, 0], [0, 0], [0, 0]])
+        self.assertEqual(assgs[9], [[3, 1], [2, 2], [2, 0]])
 
     def test_bp_binary_aggregate_assignments(self):
         assgs = bp_binary_get_assignments(preds=self.agg_results,
@@ -117,10 +121,10 @@ class TestModelMetrics(unittest.TestCase):
                                                    class_labels=self.class_labels,
                                                    num_bins=10)
         a = np.array_equal(aggassgs[9], np.array(
-            [[3, 1, 4, 6], [2, 2, 2, 8], [2, 0, 4, 6]]))
+            [[3, 1], [2, 2], [2, 0]]))
         self.assertTrue(a)
         b = np.array_equal(aggassgs[8], np.array(
-            [[4, 1, 5, 6], [2, 2, 2, 9], [2, 0, 4, 7]]))
+            [[4, 1], [2, 2], [2, 0]]))
         self.assertTrue(b)
 
     def test_bp_binary_get_range_bps(self):
@@ -133,18 +137,19 @@ class TestModelMetrics(unittest.TestCase):
         aggassgs = bp_binary_aggregate_assignments(assignments=assgs,
                                                    class_labels=self.class_labels,
                                                    num_bins=10)
-        range_bps = bp_binary_get_range_bps(aggassgs, self.class_labels)
-
+        range_bps = bp_binary_get_range_bps(aggassgs,
+                                            self.class_labels,
+                                            total_class_counts=self.class_counts)
         bp9 = np.around(list(range_bps[9].values()), decimals=2)
-        a = np.array_equal(bp9, [0.82, 0.80, 1.0])
+        a = np.array_equal(bp9, [0.78, 0.77, 1.0])
         self.assertTrue(a)
-        bp8 = np.around(list(range_bps[8].values()), decimals=2)
-        b = np.array_equal(bp8, [0.83, 0.82, 1.0])
-        self.assertTrue(b)
 
         bp6 = np.around(list(range_bps[6].values()), decimals=2)
 
-        self.assertTrue(np.array_equal(bp6, [0.78, 0.72, 0.62]))
+        bp6_TDE = round((6 / 10) / ((6 / 10) + (2 / 12)), 2)
+        bp6_II = round((3 / 5) / ((3 / 5) + (4 / 17)), 2)
+        bp6_Ibc = round((3 / 7) / ((3 / 7) + (4 / 15)), 2)
+        self.assertTrue(np.array_equal(bp6, [bp6_TDE, bp6_II, bp6_Ibc]))
 
     def test_get_binary_balanced_purity_ranges(self):
         """
@@ -153,9 +158,15 @@ class TestModelMetrics(unittest.TestCase):
         """
         bps = get_binary_balanced_purity_ranges(preds=self.agg_results,
                                                 class_labels=self.class_labels,
-                                                bin_size=0.1)
+                                                bin_size=0.1,
+                                                total_class_counts=self.class_counts)
         TDE_bps = np.around(list(bps["TDE"]), decimals=2)
-        self.assertTrue(np.array_equal(TDE_bps[6:], [0.78, 0.83, 0.83, 0.82]))
+        bp6_TDE = round((6 / 10) / ((6 / 10) + (2 / 12)), 2)
+        bp7_TDE = round((4 / 10) / ((4 / 10) + (1 / 12)), 2)
+        bp8_TDE = round((4 / 10) / ((4 / 10) + (1 / 12)), 2)
+        bp9_TDE = round((3 / 10) / ((3 / 10) + (1 / 12)), 2)
+        self.assertTrue(np.array_equal(
+            TDE_bps[6:], [bp6_TDE, bp7_TDE, bp8_TDE, bp9_TDE]))
 
     def test_bp_get_class_stats(self):
         """
@@ -168,13 +179,13 @@ class TestModelMetrics(unittest.TestCase):
                                        prob_range=[0.9, 1],
                                        rows=self.agg_results,
                                        class_labels=self.class_labels)
-        self.assertEqual(TDE_stats, [3, 0, 1, 4])
+        self.assertEqual(TDE_stats, [3, 0, 1])
         II_stats = bp_get_class_stats(target_class="II",
                                       prob_range=[0.9, 1],
                                       rows=self.agg_results,
                                       class_labels=self.class_labels)
 
-        self.assertEqual(II_stats, [1, 2, 1, 2])
+        self.assertEqual(II_stats, [1, 2, 1])
 
     def test_bp_get_assignments(self):
         """
@@ -185,8 +196,8 @@ class TestModelMetrics(unittest.TestCase):
         assgs = bp_get_assignments(preds=self.agg_results,
                                    class_labels=self.class_labels,
                                    bin_size=0.1)
-        self.assertEqual(assgs[8], [[1, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0]])
-        self.assertEqual(assgs[9], [[3, 0, 1, 4], [1, 2, 1, 2], [0, 0, 2, 4]])
+        self.assertEqual(assgs[8], [[1, 0, 0], [0, 0, 0], [0, 0, 0]])
+        self.assertEqual(assgs[9], [[3, 0, 1], [1, 2, 1], [0, 0, 2]])
 
     def test_bp_aggregate_assignments(self):
         assgs = bp_get_assignments(preds=self.agg_results,
@@ -197,11 +208,11 @@ class TestModelMetrics(unittest.TestCase):
                                             num_bins=10)
 
         self.assertTrue(np.array_equal(
-            aggassgs[6], [[6, 0, 2, 10], [2, 3, 2, 5], [2, 2, 3, 7]]))
+            aggassgs[6], [[6, 0, 2], [2, 3, 2], [2, 2, 3]]))
         self.assertTrue(np.array_equal(
-            aggassgs[8], [[4, 0, 1, 5], [1, 2, 1, 2], [0, 0, 2, 4]]))
+            aggassgs[8], [[4, 0, 1], [1, 2, 1], [0, 0, 2]]))
         self.assertTrue(np.array_equal(
-            aggassgs[9], [[3, 0, 1, 4], [1, 2, 1, 2], [0, 0, 2, 4]]))
+            aggassgs[9], [[3, 0, 1], [1, 2, 1], [0, 0, 2]]))
 
     def test_bp_get_range_bps(self):
         """
@@ -213,10 +224,12 @@ class TestModelMetrics(unittest.TestCase):
         aggassgs = bp_aggregate_assignments(assignments=assgs,
                                             class_labels=self.class_labels,
                                             num_bins=10)
-        range_bps = bp_get_range_bps(aggassgs, self.class_labels)
+        range_bps = bp_get_range_bps(aggassgs, self.class_labels, self.class_counts)
 
         bp9 = np.around(list(range_bps[9].values()), decimals=2)
-        self.assertTrue(np.array_equal(bp9, [0.75, 0.67, 1.0]))
+        # 0.75 = (0.75) / (0.75+ (1/4))
+        # [0.75, 0.67, 1.0]
+        self.assertTrue(np.array_equal(bp9, [0.68, 0.62, 1.0]))
 
         bp6 = np.around(list(range_bps[6].values()), decimals=2)
         self.assertTrue(np.array_equal(bp6, [0.68, 0.55, 0.42]))
@@ -225,16 +238,67 @@ class TestModelMetrics(unittest.TestCase):
 
         bps = get_balanced_purity_ranges(preds=self.agg_results,
                                          class_labels=self.class_labels,
-                                         bin_size=0.1)
+                                         bin_size=0.1,
+                                         total_class_counts=self.class_counts)
 
         TDE_bps = np.around(list(bps["TDE"]), decimals=2)
-        self.assertTrue(np.array_equal(TDE_bps[6:], [0.68, 0.76, 0.76, 0.75]))
+        self.assertTrue(np.array_equal(TDE_bps[6:], [0.68, 0.74, 0.74, 0.68]))
 
         II_bps = np.around(list(bps["II"]), decimals=2)
-        self.assertTrue(np.array_equal(II_bps[6:], [0.55, 0.69, 0.69, 0.67]))
+        self.assertTrue(np.array_equal(II_bps[6:], [0.55, 0.62, 0.62, 0.62]))
 
         Ibc_bps = np.around(list(bps["Ib/c"]), decimals=2)
         self.assertTrue(np.array_equal(Ibc_bps[6:], [0.42, 1.0, 1.0, 1.0]))
+
+    ##############################################################
+    ########## Empirical Probs           #########################
+    ##############################################################
+    def test_multi_empirical_probabilities(self):
+        """
+        Get empirical probability for each prob range; same as balanced purity by prob range.
+        """
+
+        eps = get_multi_emp_prob_rates(preds=self.agg_results,
+                                       class_labels=self.class_labels,
+                                       bin_size=0.2,
+                                       total_class_counts=self.class_counts)
+
+        TDE_eps = np.around(list(eps["TDE"]), decimals=2)
+        self.assertEqual(TDE_eps[0], 0.06)
+        self.assertEqual(TDE_eps[1], 1)
+        self.assertEqual(TDE_eps[4], 0.74)
+
+        II_eps = np.around(list(eps["II"]), decimals=2)
+        self.assertEqual(II_eps[0], 0)
+        self.assertEqual(II_eps[1], 0.62)
+        self.assertEqual(II_eps[4], 0.62)
+
+        Ibc_eps = np.around(list(eps["Ib/c"]), decimals=2)
+        self.assertEqual(Ibc_eps[0], 0.32)
+        self.assertEqual(Ibc_eps[1], 0)
+        self.assertEqual(Ibc_eps[4], 1)
+
+    def test_binary_empirical_probabilities(self):
+        """
+        Get empirical probability for each prob range; same as balanced purity by prob range.
+        """
+
+        eps = get_binary_emp_prob_rates(preds=self.agg_results,
+                                        class_labels=self.class_labels,
+                                        bin_size=0.2,
+                                        total_class_counts=self.class_counts)
+
+        TDE_eps = np.around(list(eps["TDE"]), decimals=2)
+        self.assertEqual(TDE_eps[3], round((2 / 10) / ((2 / 10) + (1 / 12)), 2))
+        self.assertEqual(TDE_eps[4], round((4 / 10) / ((4 / 10) + (1 / 12)), 2))
+
+        II_eps = np.around(list(eps["II"]), decimals=2)
+        self.assertEqual(II_eps[3], round((1 / 5) / ((1 / 5) + (2 / 17)), 2))
+        self.assertEqual(II_eps[4], round((2 / 5) / ((2 / 5) + (2 / 17)), 2))
+
+        Ibc_eps = np.around(list(eps["Ib/c"]), decimals=2)
+        self.assertEqual(Ibc_eps[3], round((1 / 7) / ((1 / 7) + (4 / 15)), 2))
+        self.assertEqual(Ibc_eps[4], round((2 / 7) / ((2 / 7)), 2))
 
     ##############################################################
     ########## BP Averages                #########################

@@ -63,16 +63,6 @@ def get_perc_ticks():
     return indices, ticks
 
 
-def get_rates(class_name, model):
-    """
-    Get rates for this class under this model
-    """
-    true_positives, totals = model.range_metrics[class_name]
-    pos_class_counts_per_range = np.array(model.class_positives[class_name])
-    prob_rates = model.class_prob_rates[class_name]
-    return prob_rates
-
-
 def plot_model_rates(class_name, model, ax):
     """
     Plots rates for this model/class on axis, with annotations
@@ -111,6 +101,24 @@ def plot_rates_together(binary_model, ova_model, multi_model, indices=None):
     Plot class versus probability rates of all three classifiers together
     :param indices: class indices to plot
     """
+
+    # Compute rates
+    binary_model_preds = np.concatenate(binary_model.results)
+    binary_model.class_prob_rates = get_binary_emp_prob_rates(binary_model_preds,
+                                                              binary_model.class_labels,
+                                                              0.2,
+                                                              binary_model.class_counts)
+    ova_model_preds = np.concatenate(ova_model.results)
+    ova_model.class_prob_rates = get_multi_emp_prob_rates(ova_model_preds,
+                                                          ova_model.class_labels,
+                                                          0.2,
+                                                          ova_model.class_counts)
+    multi_model_preds = np.concatenate(multi_model.results)
+    multi_model.class_prob_rates = get_multi_emp_prob_rates(multi_model_preds,
+                                                            multi_model.class_labels,
+                                                            0.2,
+                                                            multi_model.class_counts)
+
     rc('text', usetex=True)
     class_labels = ova_model.class_labels
     num_classes = len(ova_model.class_labels)
@@ -153,7 +161,7 @@ def plot_rates_together(binary_model, ova_model, multi_model, indices=None):
     mpl.rcParams['font.family'] = 'serif'
 
     f.text(0.5, 0.08, 'Assigned Probability ' + r' $\pm10\%$', fontsize=14, ha='center')
-    f.text(0.03, .5, r'Empirical Probability $\equiv$ P/Total ($\%$)',
+    f.text(0.03, .5, r'Empirical Probability',
            fontsize=14, va='center', rotation='vertical')
     plt.subplots_adjust(wspace=0, hspace=0)
     f.savefig(ROOT_DIR + "/output/custom_figures/merged_metrics" +
@@ -210,9 +218,10 @@ def plot_model_curves(class_name, model, range_metrics, ax):
     preds = np.concatenate(model.results)
     if model.name == "Binary Classifiers":
         purities = get_binary_balanced_purity_ranges(
-            preds, model.class_labels, 0.1)[class_name]
+            preds, model.class_labels, 0.1, model.class_counts)[class_name]
     else:
-        purities = get_balanced_purity_ranges(preds, model.class_labels, 0.1)[class_name]
+        purities = get_balanced_purity_ranges(
+            preds, model.class_labels, 0.1, model.class_counts)[class_name]
 
     # Get completenesses
     comps = get_completeness_ranges(model.class_counts, range_metrics, class_name)
